@@ -26,6 +26,7 @@
   - [[#dired-buffer][Dired buffer]]
   - [[#cmd-shell-buffer][Cmd shell buffer]]
   - [[#shell-buffer][Shell buffer]]
+  - [[#vterm-buffer][Vterm buffer]]
 - [[#language-support][LANGUAGE SUPPORT]]
   - [[#lsp-mode][Lsp Mode]]
 - [[#org-mode][ORG MODE]]
@@ -51,7 +52,8 @@
 ** System
 
 #+begin_src emacs-lisp
-
+  
+  (global-set-key (kbd "C-x u") 'windmove-up)
   (setq evil-want-keybinding nil)
 
   ;; Set directory for undo-tree history files
@@ -349,11 +351,15 @@
 
     (w/leader-keys
       "fr" '(counsel-recentf :wk "Find recent files")
-      "ff" '(counsel-find-file-check-dir :wk "Find file modified"))
+      "ff" '(counsel-find-file-check-dir :wk "Find file modified")
+      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window"))
 
     (w/leader-keys
       "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer"))
-    
+
+    (w/leader-keys
+      "pp" '(git-push :wk "Activate an elisp copy of the git push alias"))
+
     (w/leader-keys
       "zz" '(z :wk "Call zoxide prompt"))
 
@@ -382,7 +388,8 @@
       ;; "tt" '(visual-line-mode :wk "Toggle truncated lines")
       "tc" '(RunCmdShellCommand :wk "Run CMD command")
       "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
-      "tv" '(vterm-toggle :wk "Toggle vterm"))
+      ;; "tv" '(vterm-toggle :wk "Toggle vterm"))
+      "tv" '(OpenVtermBelow :wk "Toggle vterm"))
 
     (w/leader-keys
       "w" '(:ignore t :wk "Windows")
@@ -511,37 +518,12 @@
     ;; (add-hook 'vterm-mode-hook (lambda () (setq evil-default-state 'emacs)))
     (setq vterm-shell "/bin/bash")
     :bind (:map vterm-mode-map
-		("M-e" . (lambda ()
-			   (interactive)
-			   (if (bound-and-true-p evil-local-mode)
-			       (evil-local-mode -1)
-			     (evil-local-mode 1))))))
-
-#+end_src
-
-*** Vterm-Toggle
-
-#+begin_src emacs-lisp
-
-  (use-package vterm-toggle
-    :after vterm
-    :config
-    (setq vterm-toggle-fullscreen-p nil)
-    (setq vterm-toggle-scope 'project)
-    (add-to-list 'display-buffer-alist
-		 '((lambda (buffer-or-name _)
-		       (let ((buffer (get-buffer buffer-or-name)))
-			 (with-current-buffer buffer
-			   (or (equal major-mode 'vterm-mode)
-			       (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
-		    (display-buffer-reuse-window display-buffer-at-bottom)
-		    ;;(display-buffer-reuse-window display-buffer-in-direction)
-		    ;;display-buffer-in-direction/direction/dedicated is added in emacs27
-		    ;;(direction . bottom)
-		    ;;(dedicated . t) ;dedicated is supported in emacs27
-		    (reusable-frames . visible)
-		    (window-height . 0.3))))
-
+                ("M-e" . (lambda ()
+                           (interactive)
+                           (if (bound-and-true-p evil-local-mode)
+                               (evil-local-mode -1)
+                             (evil-local-mode 1))))))
+  
 #+end_src
 
 * Buffers
@@ -644,6 +626,12 @@
       (windmove-right)
       (dired current-dir)))
 
+  (defun OpenDiredBufferInCurrentWindow ()
+    "Open a Dired buffer in the current window, showing the directory of the current buffer."
+    (interactive)
+    (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
+      (dired current-dir)))
+
 #+end_src
 
 ** Cmd shell buffer
@@ -678,6 +666,28 @@
     (split-window-below -10)
     (other-window 1)
     (shell))
+
+#+end_src
+
+** Vterm buffer
+
+#+begin_src emacs-lisp
+
+  (defun OpenVtermBelow ()
+    "Open a `vterm' buffer in a new window below the current one."
+    (interactive)
+    (let ((buf (generate-new-buffer "*vterm*"))
+          (cur-window (selected-window)))
+      (save-excursion
+        (select-window cur-window)
+        (split-window-below)
+        (windmove-down)
+        (switch-to-buffer buf)
+        (vterm)
+        (shrink-window 10)
+        (if (bound-and-true-p evil-local-mode)
+            (evil-local-mode -1)
+          (evil-local-mode 1)))))
 
 #+end_src
 
