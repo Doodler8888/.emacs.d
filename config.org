@@ -27,6 +27,8 @@
   - [[#cmd-shell-buffer][Cmd shell buffer]]
   - [[#shell-buffer][Shell buffer]]
   - [[#vterm-buffer][Vterm buffer]]
+  - [[#eshell-buffer][Eshell buffer]]
+  - [[#transpose-frame][Transpose frame]]
 - [[#language-support][LANGUAGE SUPPORT]]
   - [[#lsp-mode][Lsp Mode]]
 - [[#org-mode][ORG MODE]]
@@ -52,7 +54,7 @@
 ** System
 
 #+begin_src emacs-lisp
-  
+
   (global-set-key (kbd "C-x u") 'windmove-up)
   (setq evil-want-keybinding nil)
 
@@ -367,15 +369,20 @@
       "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split"))
 
     (w/leader-keys
+      "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
+      "es" '(eshell :wk "Eshell"))
+
+    (w/leader-keys
       "e" '(:ignore t :wk "Evaluate/Eshell")    
-      "ee" '(eval-expression :wk "Call the Eval prompt")
       "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
       "ed" '(eval-defun :wk "Evaluate defun containing or after point")
       "ex" '(eval-expression :wk "Evaluate and elisp expression")
       "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
       "er" '(eval-region :wk "Evaluate elisp in region")
-      "es" '(counsel-esh-history :wk "Eshell history")
-      "es" '(eshell :wk "Eshell"))
+      "es" '(counsel-esh-history :wk "Eshell history"))
+
+    (w/leader-keys
+      "bt" '(transpose-frame :wk "Transpose windows"))
 
     ;; (w/leader-keys
     ;;   "h" '(:ignore t :wk "Help")
@@ -523,7 +530,7 @@
                            (if (bound-and-true-p evil-local-mode)
                                (evil-local-mode -1)
                              (evil-local-mode 1))))))
-  
+
 #+end_src
 
 * Buffers
@@ -691,6 +698,27 @@
 
 #+end_src
 
+** Eshell buffer
+
+#+begin_src emacs-lisp
+
+  (defun SpawnEshellSplitBelow ()
+    "Open a shell in a small split below."
+    (interactive)
+    (split-window-below -10)
+    (other-window 1)
+    (eshell))
+  
+#+end_src
+
+** Transpose frame
+
+#+begin_src emacs-lisp
+
+  (use-package transpose-frame)
+  
+#+end_src
+
 * LANGUAGE SUPPORT
 
 #+begin_src emacs-lisp
@@ -721,31 +749,31 @@
 
 #+begin_src emacs-lisp
 
-  ;;   (use-package lsp-mode
-  ;;       :ensure t
-  ;;       :commands lsp
-  ;;       :config 
-  ;;       (add-hook 'haskell-mode-hook #'lsp))
-  ;;       (setq lsp-idle-delay 0.1)
-  ;;       (setq lsp-enable-symbol-highlighting nil)
+    (use-package lsp-mode
+        :ensure t
+        :commands lsp
+        :config 
+        (add-hook 'haskell-mode-hook #'lsp))
+        (setq lsp-idle-delay 0.1)
+        (setq lsp-enable-symbol-highlighting nil)
 
-  ;;   (use-package lsp-ui
-  ;;       :ensure t
-  ;;       :commands lsp-ui-mode)
+    (use-package lsp-ui
+        :ensure t
+        :commands lsp-ui-mode)
 
-  ;;   (use-package lsp-haskell
-  ;;       :ensure t
-  ;;       :init
-  ;;       (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-  ;;       :after lsp
-  ;;       :config
-  ;;       (setq lsp-haskell-check-parents 'AlwaysCheck)
-  ;; )
+    (use-package lsp-haskell
+        :ensure t
+        :init
+        (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+        :after lsp
+        :config
+        (setq lsp-haskell-check-parents 'AlwaysCheck)
+  )
 
-  ;;   (use-package corfu
-  ;;       :ensure t
-  ;;       :bind (("C-." . corfu-next)
-  ;; 	     ("C-," . corfu-prev)))
+    (use-package corfu
+        :ensure t
+        :bind (("C-." . corfu-next)
+               ("C-," . corfu-prev)))
 
 #+end_src
 
