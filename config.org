@@ -311,9 +311,18 @@
 
 #+begin_src emacs-lisp
 
-  (use-package gruvbox-theme
+  (use-package doom-themes
+    :ensure t
     :config
-    (load-theme 'gruvbox t))
+    ;; Global settings (defaults)
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    (load-theme 'doom-one t)
+
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
 
   (when (member "Noto Sans Mono" (font-family-list))
     (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
@@ -730,11 +739,11 @@
     :mode ("README\\.md\\'" . gfm-mode)
     :init (setq markdown-command "multimarkdown")
     :bind (:map markdown-mode-map
-	  ("C-c C-e" . markdown-do)))
+          ("C-c C-e" . markdown-do)))
 
-  ;; (use-package yasnippet
-  ;; :config
-  ;; (yas-global-mode 1))
+  (use-package yasnippet
+  :config
+  (yas-global-mode 1))
 
   ;; (use-package lsp-bridge
   ;; :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
@@ -749,31 +758,31 @@
 
 #+begin_src emacs-lisp
 
-    (use-package lsp-mode
-        :ensure t
-        :commands lsp
-        :config 
-        (add-hook 'haskell-mode-hook #'lsp))
-        (setq lsp-idle-delay 0.1)
-        (setq lsp-enable-symbol-highlighting nil)
+  ;;   (use-package lsp-mode
+  ;;       :ensure t
+  ;;       :commands lsp
+  ;;       :config 
+  ;;       (add-hook 'haskell-mode-hook #'lsp))
+  ;;       (setq lsp-idle-delay 0.1)
+  ;;       (setq lsp-enable-symbol-highlighting nil)
 
-    (use-package lsp-ui
-        :ensure t
-        :commands lsp-ui-mode)
+  ;;   (use-package lsp-ui
+  ;;       :ensure t
+  ;;       :commands lsp-ui-mode)
 
-    (use-package lsp-haskell
-        :ensure t
-        :init
-        (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-        :after lsp
-        :config
-        (setq lsp-haskell-check-parents 'AlwaysCheck)
-  )
+  ;;   (use-package lsp-haskell
+  ;;       :ensure t
+  ;;       :init
+  ;;       (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+  ;;       :after lsp
+  ;;       :config
+  ;;       (setq lsp-haskell-check-parents 'AlwaysCheck)
+  ;; )
 
-    (use-package corfu
-        :ensure t
-        :bind (("C-." . corfu-next)
-               ("C-," . corfu-prev)))
+  ;;   (use-package corfu
+  ;;       :ensure t
+  ;;       :bind (("C-." . corfu-next)
+  ;;              ("C-," . corfu-prev)))
 
 #+end_src
 
