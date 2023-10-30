@@ -303,7 +303,11 @@
     (define-key evil-visual-state-map (kbd "{") 'evil-backward-paragraph)
     (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
     (define-key evil-insert-state-map (kbd "M-f") 'evil-forward-word-begin)
-    (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin))
+    (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin)
+    
+    (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
+    (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
+
 
 #+end_src
 
@@ -311,18 +315,9 @@
 
 #+begin_src emacs-lisp
 
-  (use-package doom-themes
-    :ensure t
+  (use-package gruvbox-theme
     :config
-    ;; Global settings (defaults)
-    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-          doom-themes-enable-italic t) ; if nil, italics is universally disabled
-    (load-theme 'doom-one t)
-
-    ;; Enable flashing mode-line on errors
-    (doom-themes-visual-bell-config)
-    ;; Corrects (and improves) org-mode's native fontification.
-    (doom-themes-org-config))
+    (load-theme 'gruvbox t))
 
   (when (member "Noto Sans Mono" (font-family-list))
     (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
@@ -362,8 +357,9 @@
 
     (w/leader-keys
       "fr" '(counsel-recentf :wk "Find recent files")
-      "ff" '(counsel-find-file-check-dir :wk "Find file modified")
-      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window"))
+      "fd" '(counsel-find-file-check-dir :wk "Find file modified")
+      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
+      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor"))
 
     (w/leader-keys
       "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer"))
@@ -438,14 +434,18 @@
   (use-package sudo-edit
     :config
       (w/leader-keys
-	"fd" '(sudo-edit-find-file :wk "Sudo find file")
-	"fD" '(sudo-edit :wk "Sudo edit file")))
+	"fs" '(sudo-edit-find-file :wk "Sudo find file")
+	"fS" '(sudo-edit :wk "Sudo edit file")))
 
 #+end_src
 
 ** Ivy
 
 #+begin_src emacs-lisp
+
+  (use-package projectile
+    :config
+    (projectile-mode +1))
 
   (use-package counsel
     :after ivy
@@ -475,24 +475,24 @@
     :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
     :custom
     (ivy-virtual-abbreviate 'full
-			    ivy-rich-switch-buffer-align-virtual-buffer t
-			    ivy-rich-path-style 'abbrev)
+                            ivy-rich-switch-buffer-align-virtual-buffer t
+                            ivy-rich-path-style 'abbrev)
     :config
     (ivy-set-display-transformer 'ivy-switch-buffer
-				 'ivy-rich-switch-buffer-transformer))
-  
+                                 'ivy-rich-switch-buffer-transformer))
+
   (defun counsel-find-file-check-dir ()
     "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
     (interactive)
     (ivy-read "Find file: " #'read-file-name-internal
-	      :matcher #'counsel--find-file-matcher
-	      :action #'find-file-check-dir
-	      :preselect (or (buffer-file-name)
-			    (expand-file-name default-directory))
-	      :require-match 'confirm-after-completion
-	      :history 'file-name-history
-	      :keymap counsel-find-file-map
-	      :caller 'counsel-find-file))
+              :matcher #'counsel--find-file-matcher
+              :action #'find-file-check-dir
+              :preselect (or (buffer-file-name)
+                            (expand-file-name default-directory))
+              :require-match 'confirm-after-completion
+              :history 'file-name-history
+              :keymap counsel-find-file-map
+              :caller 'counsel-find-file))
 
   (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
@@ -511,15 +511,29 @@
   ;; eshell-syntax-highlighting -- adds fish/zsh-like syntax highlighting.
   ;; eshell-rc-script -- your profile for eshell; like a bashrc for eshell.
   ;; eshell-aliases-file -- sets an aliases file for the eshell.
-  
+
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
-	eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-	eshell-history-size 5000
-	eshell-buffer-maximum-lines 5000
-	eshell-hist-ignoredups t
-	eshell-scroll-to-bottom-on-input t
-	eshell-destroy-buffer-when-process-dies t
-	eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
+        eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
+        eshell-history-size 5000
+        eshell-buffer-maximum-lines 5000
+        eshell-hist-ignoredups t
+        eshell-scroll-to-bottom-on-input t
+        eshell-destroy-buffer-when-process-dies t
+        eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
+
+  (defun eshell-insert-last-argument ()
+    "Insert the last argument of the previous command."
+    (interactive)
+    (let* ((last-command (eshell-previous-input-string 0))
+          (args (split-string-and-unquote last-command))
+          (last-arg (car (last args))))
+      (when last-arg
+        (insert last-arg))))
+
+  (defun setup-eshell-keys ()
+    (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+
+  (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
 #+end_src
 
@@ -841,6 +855,33 @@
     (org-return))
 
 
-  (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
+  ;; (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
+
+  (defun FormatToThreshold (char-threshold)
+    "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
+    (interactive "nCharacter Threshold: ")
+    (let ((start (region-beginning))
+          (end (region-end))
+          all-text words formatted-text)
+      (save-excursion
+        (setq all-text (buffer-substring start end))
+        (setq words (split-string all-text))
+        (let ((current-line "")
+              (current-length 0))
+          (dolist (word words)
+            (if (> (+ current-length (length word) 1) char-threshold)
+                (progn
+                  (setq formatted-text (concat formatted-text current-line "\n"))
+                  (setq current-line word)
+                  (setq current-length (length word)))
+              (progn
+                (setq current-line (if (string= "" current-line)
+                                      word
+                                    (concat current-line " " word)))
+                (setq current-length (+ current-length (length word) 1)))))
+          (setq formatted-text (concat formatted-text current-line)))
+        (delete-region start end)
+        (goto-char start)
+        (insert formatted-text))))
 
 #+end_src
