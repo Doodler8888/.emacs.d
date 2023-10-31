@@ -321,6 +321,17 @@
     :config
     (load-theme 'gruvbox t))
 
+  ;; (use-package doom-themes
+  ;; :ensure t
+  ;; :config
+  ;; ;; Global settings (defaults)
+  ;; (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+  ;;       doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+  ;; (load-theme 'doom-material-dark t)
+
+  ;; Corrects (and improves) org-mode's native fontification.
+  ;; (doom-themes-org-config))
+
   (when (member "Noto Sans Mono" (font-family-list))
     (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
     )
@@ -367,12 +378,13 @@
     "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
-    
+
     "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
 
     "zz" '(z :wk "Call zoxide prompt")
 
     "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
+    "ld" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
 
     "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
     "es" '(eshell :wk "Eshell")
@@ -392,13 +404,6 @@
     "tc" '(RunCmdShellCommand :wk "Run CMD command")
     "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
     "tv" '(OpenVtermBelow :wk "Toggle vterm")
-
-    "w" '(:ignore t :wk "Windows")
-    "ww" '(evil-window-delete :wk "Close window")
-    "h" '(buf-move-left :wk "Buffer move left")
-    "j" '(buf-move-down :wk "Buffer move down")
-    "k" '(buf-move-up :wk "Buffer move up")
-    "l" '(buf-move-right :wk "Buffer move right")
         )
   )
 
@@ -738,29 +743,30 @@
 
 #+begin_src emacs-lisp
 
-    (use-package haskell-mode)
-    (use-package go-mode)
-    (use-package markdown-mode
-      :ensure t
-      :mode ("README\\.md\\'" . gfm-mode)
-      :init (setq markdown-command "multimarkdown")
-      :bind (:map markdown-mode-map
-            ("C-c C-e" . markdown-do)))
+  (use-package haskell-mode)
+  (use-package go-mode)
+  (use-package markdown-mode
+    :ensure t
+    :mode ("README\\.md\\'" . gfm-mode)
+    :init (setq markdown-command "multimarkdown")
+    :bind (:map markdown-mode-map
+          ("C-c C-e" . markdown-do)))
 
-    (use-package yasnippet
-      :config
-      (yas-global-mode 1))
+  (use-package yasnippet
+    :config
+    (yas-global-mode 1))
 
-    (use-package lsp-bridge
-      :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-                :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-                :build (:not compile))
-      :init
-      (global-lsp-bridge-mode)
-      :config
-      (setq lsp-bridge-complete-manually t)
-      (setq lsp-bridge-enable-log t)
-      (global-set-key (kbd "C-x C-o") 'lsp-bridge-popup-complete-menu))
+  (use-package lsp-bridge
+    :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+              :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+              :build (:not compile))
+    :init
+    (global-lsp-bridge-mode)
+    :config
+    (setq lsp-bridge-complete-manually t)
+    (setq lsp-bridge-enable-log t)
+    (setq lsp-bridge-enable-auto-format-code t)
+    (global-set-key (kbd "C-x C-o") 'lsp-bridge-popup-complete-menu))
 
 #+end_src
 
@@ -768,11 +774,11 @@
 
 #+begin_src emacs-lisp
 
-  (use-package flycheck
-    :init 
-    (add-hook 'after-init-hook #'global-flycheck-mode)
-    :config
-    )
+  ;; (use-package flycheck
+  ;;   :init
+  ;;   (add-hook 'after-init-hook #'global-flycheck-mode)
+  ;;   :config
+  ;;   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
 #+end_src
 
