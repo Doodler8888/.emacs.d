@@ -30,6 +30,7 @@
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
 - [[#language-support][LANGUAGE SUPPORT]]
+  - [[#flycheck][Flycheck]]
   - [[#lsp-mode][Lsp Mode]]
 - [[#org-mode][ORG MODE]]
   - [[#tuning][Tuning]]
@@ -89,10 +90,11 @@
   (setq global-auto-revert-non-file-buffers t)
   (global-auto-revert-mode 1)
 
-
+  (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
+  (add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
+  (add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
 
   (setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
-
 
 #+end_src
 
@@ -355,64 +357,50 @@
       :prefix "SPC" ;; set leader
       :global-prefix "M-SPC") ;; access leader in insert mode
 
-    (w/leader-keys
-      "fr" '(counsel-recentf :wk "Find recent files")
-      "fd" '(counsel-find-file-check-dir :wk "Find file modified")
-      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor"))
+  (w/leader-keys
 
-    (w/leader-keys
-      "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer"))
+    "fr" '(counsel-recentf :wk "Find recent files")
+    "fd" '(counsel-find-file-check-dir :wk "Find file modified")
+    "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
+    "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
 
-    (w/leader-keys
-      "pp" '(git-push :wk "Activate an elisp copy of the git push alias"))
+    "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
-    (w/leader-keys
-      "zz" '(z :wk "Call zoxide prompt"))
+    "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
+    
+    "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
 
-    (w/leader-keys
-      "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split"))
+    "zz" '(z :wk "Call zoxide prompt")
 
-    (w/leader-keys
-      "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
-      "es" '(eshell :wk "Eshell"))
+    "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
 
-    (w/leader-keys
-      "e" '(:ignore t :wk "Evaluate/Eshell")    
-      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-      "ex" '(eval-expression :wk "Evaluate and elisp expression")
-      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-      "er" '(eval-region :wk "Evaluate elisp in region")
-      "es" '(counsel-esh-history :wk "Eshell history"))
+    "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
+    "es" '(eshell :wk "Eshell")
 
-    (w/leader-keys
-      "bt" '(transpose-frame :wk "Transpose windows"))
+    "e" '(:ignore t :wk "Evaluate/Eshell")
+    "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+    "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+    "ex" '(eval-expression :wk "Evaluate and elisp expression")
+    "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+    "er" '(eval-region :wk "Evaluate elisp in region")
+    "es" '(counsel-esh-history :wk "Eshell history")
 
-    ;; (w/leader-keys
-    ;;   "h" '(:ignore t :wk "Help")
-    ;;   "hf" '(describe-function :wk "Describe function")
-    ;;   "hv" '(describe-variable :wk "Describe variable"))
+    "bt" '(transpose-frame :wk "Transpose windows")
 
-    (w/leader-keys
-      "t" '(:ignore t :wk "Toggle")
-      "tl" '(display-line-numbers-mode :wk "Toggle line numbers")
-      ;; "tt" '(visual-line-mode :wk "Toggle truncated lines")
-      "tc" '(RunCmdShellCommand :wk "Run CMD command")
-      "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
-      ;; "tv" '(vterm-toggle :wk "Toggle vterm"))
-      "tv" '(OpenVtermBelow :wk "Toggle vterm"))
+    "t" '(:ignore t :wk "Toggle")
+    "tl" '(display-line-numbers-mode :wk "Toggle line numbers")
+    "tc" '(RunCmdShellCommand :wk "Run CMD command")
+    "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
+    "tv" '(OpenVtermBelow :wk "Toggle vterm")
 
-    (w/leader-keys
-      "w" '(:ignore t :wk "Windows")
-      ;; Window splits
-      "ww" '(evil-window-delete :wk "Close window")
-      ;;Move windows
-      "h" '(buf-move-left :wk "Buffer move left")
-      "j" '(buf-move-down :wk "Buffer move down")
-      "k" '(buf-move-up :wk "Buffer move up")
-      "l" '(buf-move-right :wk "Buffer move right"))
-      )
+    "w" '(:ignore t :wk "Windows")
+    "ww" '(evil-window-delete :wk "Close window")
+    "h" '(buf-move-left :wk "Buffer move left")
+    "j" '(buf-move-down :wk "Buffer move down")
+    "k" '(buf-move-up :wk "Buffer move up")
+    "l" '(buf-move-right :wk "Buffer move right")
+        )
+  )
 
 #+end_src
 
@@ -520,6 +508,10 @@
         eshell-scroll-to-bottom-on-input t
         eshell-destroy-buffer-when-process-dies t
         eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
+
+  (add-hook 'eshell-mode-hook
+          (lambda ()
+            (setq-local scroll-margin 0)))
 
   (defun eshell-insert-last-argument ()
     "Insert the last argument of the previous command."
@@ -746,25 +738,41 @@
 
 #+begin_src emacs-lisp
 
-  (use-package haskell-mode)
-  (use-package go-mode)
-  (use-package markdown-mode
-    :ensure t
-    :mode ("README\\.md\\'" . gfm-mode)
-    :init (setq markdown-command "multimarkdown")
-    :bind (:map markdown-mode-map
-          ("C-c C-e" . markdown-do)))
+    (use-package haskell-mode)
+    (use-package go-mode)
+    (use-package markdown-mode
+      :ensure t
+      :mode ("README\\.md\\'" . gfm-mode)
+      :init (setq markdown-command "multimarkdown")
+      :bind (:map markdown-mode-map
+            ("C-c C-e" . markdown-do)))
 
-  (use-package yasnippet
-  :config
-  (yas-global-mode 1))
+    (use-package yasnippet
+      :config
+      (yas-global-mode 1))
 
-  ;; (use-package lsp-bridge
-  ;; :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-  ;; 	  :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-  ;; 	  :build (:not compile))
-  ;; :init
-  ;; (global-lsp-bridge-mode))
+    (use-package lsp-bridge
+      :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+                :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+                :build (:not compile))
+      :init
+      (global-lsp-bridge-mode)
+      :config
+      (setq lsp-bridge-complete-manually t)
+      (setq lsp-bridge-enable-log t)
+      (global-set-key (kbd "C-x C-o") 'lsp-bridge-popup-complete-menu))
+
+#+end_src
+
+** Flycheck
+
+#+begin_src emacs-lisp
+
+  (use-package flycheck
+    :init 
+    (add-hook 'after-init-hook #'global-flycheck-mode)
+    :config
+    )
 
 #+end_src
 
