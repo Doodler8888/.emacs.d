@@ -317,9 +317,17 @@
 
 #+begin_src emacs-lisp
 
-  (use-package gruvbox-theme
-    :config
-    (load-theme 'gruvbox t))
+  (use-package autothemer
+  :ensure t)
+
+  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
+  (put 'eval 'safe-local-variable #'identity)
+  (load-theme 'spaceway t)
+  ;; (load-theme 'rose-pine t)
+
+  ;; (use-package gruvbox-theme
+  ;;   :config
+  ;;   (load-theme 'gruvbox t))
 
   ;; (use-package doom-themes
   ;; :ensure t
@@ -327,9 +335,9 @@
   ;; ;; Global settings (defaults)
   ;; (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
   ;;       doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-  ;; (load-theme 'doom-material-dark t)
+  ;; (load-theme 'doom-one t)
 
-  ;; Corrects (and improves) org-mode's native fontification.
+  ;; ;; Corrects (and improves) org-mode's native fontification.
   ;; (doom-themes-org-config))
 
   (when (member "Noto Sans Mono" (font-family-list))
@@ -384,7 +392,9 @@
     "zz" '(z :wk "Call zoxide prompt")
 
     "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-    "ld" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
+    
+    "dl" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
+    "dk" '(lsp-bridge-popup-documentation :wk "Open a hover window")
 
     "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
     "es" '(eshell :wk "Eshell")
