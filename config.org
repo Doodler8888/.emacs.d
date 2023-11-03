@@ -19,7 +19,15 @@
   - [[#search][Search]]
   - [[#sudo-edit][Sudo Edit]]
   - [[#ivy][Ivy]]
-  - [[#shells-and-terminals][Shells and Terminals]]
+  - [[#perps-mode][Perps-mode]]
+  - [[#perspective][Perspective]]
+  - [[#tabspaces][Tabspaces]]
+  - [[#bookmarks][Bookmarks]]
+- [[#shells-and-terminals][Shells and Terminals]]
+  - [[#eshell][Eshell]]
+  - [[#vterm][Vterm]]
+  - [[#cmd][Cmd]]
+- [[#sessions][Sessions]]
 - [[#buffers][Buffers]]
   - [[#windmove][Windmove]]
   - [[#messages-buffer][Messages buffer]]
@@ -72,7 +80,10 @@
   (setq backup-directory-alist `(("." . ,(concat user-emacs-directory "backups"))))
   (desktop-save-mode 1)
   (setq desktop-path (list desktop-dirname))
-  (setq desktop-auto-save-timeout 30)
+  ;; (setq desktop-auto-save-timeout 30)
+  (setq desktop-auto-save-timeout nil)
+
+  (global-set-key (kbd "C-c d l") 'load-desktop-with-name)
 
   (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -318,28 +329,22 @@
 
 #+begin_src emacs-lisp
 
-  (use-package autothemer
-  :ensure t)
-
-  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-  (put 'eval 'safe-local-variable #'identity)
-  (load-theme 'spaceway t)
-  ;; (load-theme 'rose-pine t)
+  ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
+  ;; (put 'eval 'safe-local-variable #'identity)
+  ;; (load-theme 'spaceway t)
 
   ;; (use-package gruvbox-theme
   ;;   :config
   ;;   (load-theme 'gruvbox t))
 
-  ;; (use-package doom-themes
-  ;; :ensure t
-  ;; :config
-  ;; ;; Global settings (defaults)
-  ;; (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-  ;;       doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-  ;; (load-theme 'doom-one t)
-
-  ;; ;; Corrects (and improves) org-mode's native fontification.
-  ;; (doom-themes-org-config))
+  (use-package doom-themes
+    :ensure t
+    :config
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+    (load-theme 'doom-one t)
+    ;Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
 
   (when (member "Noto Sans Mono" (font-family-list))
     (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
@@ -368,14 +373,14 @@
     :config
     (general-evil-setup)
 
-    ;; "C-M-j" 'counsel-switch-buffer
+  ;; "C-M-j" 'counsel-switch-buffer
 
-    ;; set up 'SPC' as the global leader key
-    (general-create-definer w/leader-keys
-      :states '(normal insert visual emacs)
-      :keymaps 'override
-      :prefix "SPC" ;; set leader
-      :global-prefix "M-SPC") ;; access leader in insert mode
+  ;; set up 'SPC' as the global leader key
+  (general-create-definer w/leader-keys
+    :states '(normal insert visual emacs)
+    :keymaps 'override
+    :prefix "SPC" ;; set leader
+    :global-prefix "M-SPC") ;; access leader in insert mode
 
   (w/leader-keys
 
@@ -389,6 +394,8 @@
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
     "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
+    
+    "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
 
     "zz" '(z :wk "Call zoxide prompt")
 
@@ -482,10 +489,10 @@
     :custom
     (ivy-virtual-abbreviate 'full
                             ivy-rich-switch-buffer-align-virtual-buffer t
-                            ivy-rich-path-style 'abbrev)
-    :config
-    (ivy-set-display-transformer 'ivy-switch-buffer
-                                 'ivy-rich-switch-buffer-transformer))
+                            ivy-rich-path-style 'abbrev))
+    ;; :config
+    ;; (ivy-set-display-transformer 'ivy-switch-buffer
+    ;;                              'ivy-rich-switch-buffer-transformer))
 
   (defun counsel-find-file-check-dir ()
     "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
@@ -504,8 +511,62 @@
 
 #+end_src
 
-** Shells and Terminals
-*** Eshell
+** Perps-mode
+
+#+begin_src emacs-lisp
+
+  ;; (use-package persp-mode
+  ;;   :init
+  ;;   (persp-mode 1))
+
+#+end_src
+
+** Perspective
+
+#+begin_src emacs-lisp
+
+  ;; (use-package perspective
+  ;;   :bind
+  ;;   ("C-x C-b" . persp-list-buffers)         ; or use a nicer switcher, see below
+  ;;   :custom
+  ;;   (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
+  ;;   :init
+  ;;   (persp-mode))
+
+#+end_src
+
+** Tabspaces
+
+#+begin_src emacs-lisp
+
+  ;; (use-package tabspaces
+  ;;   ;; use this next line only if you also use straight, otherwise ignore it. 
+  ;;   :elpaca (:type git :host github :repo "mclear-tools/tabspaces")
+  ;;   ;; :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
+  ;;   :init (tabspaces-mode 1)
+  ;;   :commands (tabspaces-switch-or-create-workspace
+  ;;             tabspaces-open-or-create-project-and-workspace)
+  ;;   :custom
+  ;;   (tabspaces-use-filtered-buffers-as-default t)
+  ;;   (tabspaces-default-tab "Default")
+  ;;   (tabspaces-remove-to-default t)
+  ;;   (tabspaces-include-buffers '("*scratch*"))
+  ;;   ;; (tabspaces-initialize-project-with-todo t)
+  ;;   ;; (tabspaces-todo-file-name "project-todo.org")
+  ;;   ;; sessions
+  ;;   (tabspaces-session t)
+  ;;   (tabspaces-session-auto-restore t))
+
+#+end_src
+
+** Bookmarks
+
+#+begin_src emacs-lisp
+
+#+end_src
+
+* Shells and Terminals
+** Eshell
 
 #+begin_src emacs-lisp
 
@@ -547,7 +608,7 @@
 
 #+end_src
 
-*** Vterm
+** Vterm
 
 #+begin_src emacs-lisp
 
@@ -563,6 +624,62 @@
                            (if (bound-and-true-p evil-local-mode)
                                (evil-local-mode -1)
                              (evil-local-mode 1))))))
+
+#+end_src
+
+** Cmd
+
+#+begin_src emacs-lisp
+
+  (defun my-hoogle-search (query)
+    "Search Hoogle for QUERY."
+    (interactive "sHoogle search: ") ; Prompt for the search term
+    (shell-command (concat "hoogle search " (shell-quote-argument query))))
+
+#+end_src
+* Sessions
+
+#+begin_src emacs-lisp
+
+  (defun save-desktop-with-name ()
+    "Save the current desktop session with a custom name."
+    (interactive)
+    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+      (unless (file-exists-p desktop-dir)
+        (make-directory desktop-dir))
+      (let* ((session-name (read-string "Session name: "))
+            (session-dir (concat desktop-dir session-name "/")))
+        (unless (file-exists-p session-dir)
+          (make-directory session-dir))
+        (desktop-save session-dir t))))
+  
+  (defun save-current-desktop ()
+    "Save the current desktop session using the current session name."
+    (interactive)
+    (if desktop-dirname
+        (desktop-save desktop-dirname)
+      (message "No desktop session name set!")))
+
+  (defun my-desktop-clear ()
+    "Clear the current desktop session without confirmation."
+    (interactive)
+    (when (desktop-save-mode)
+      (desktop-clear)
+      (desktop-release-lock)
+      (setq desktop-dirname nil)))
+
+  (defun load-desktop-with-name ()
+    "Load a saved desktop session by name from the 'desktop' directory."
+    (interactive)
+    (my-desktop-clear)
+    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+      (unless (file-exists-p desktop-dir)
+        (error "No desktop directory found"))
+      (let* ((dirs (remove "." (remove ".." (directory-files desktop-dir t directory-files-no-dot-files-regexp))))
+            (session-dir (completing-read "Load session: " dirs nil t)))
+        (setq desktop-path (list session-dir))
+        (desktop-read session-dir)
+        (desktop-save-mode 1))))
 
 #+end_src
 

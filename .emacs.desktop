@@ -1,0 +1,79 @@
+;; -*- mode: emacs-lisp; lexical-binding:t; coding: utf-8-emacs; -*-
+;; --------------------------------------------------------------------------
+;; Desktop File for Emacs
+;; --------------------------------------------------------------------------
+;; Created Fri Nov  3 16:07:38 2023
+;; Desktop file format version 208
+;; Emacs version 29.1
+
+;; Global section:
+(setq desktop-saved-frameset [frameset 1 (25924 61594 467473 455000) (desktop . "208") "wurfkreuz@archlinux" nil nil ((((minibuffer . t) (undecorated) (override-redirect) (font . "-GOOG-Noto Sans Mono-medium-normal-normal-*-16-*-*-*-*-0-iso10646-1") (border-width . 0) (internal-border-width . 0) (child-frame-border-width) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars) (horizontal-scroll-bars) (foreground-color . "#ebdbb2") (background-color . "#282828") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 0) (right-fringe . 0) (no-special-glyphs) (scroll-bar-foreground) (scroll-bar-background) (menu-bar-lines . 0) (tab-bar-lines . 0) (tool-bar-lines . 0) (title) (wait-for-wm . t) (tool-bar-position . top) (inhibit-double-buffering) (icon-type . t) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 16) (scroll-bar-height . 16) (alpha) (alpha-background) (no-focus-on-map) (no-accept-focus) (fullscreen . maximized) (visibility . t) (skip-taskbar) (z-group) (display-type . color) (background-mode . dark) (cursor-color . "#ebdbb2") (font-parameter) (sticky) (environment) (last-focus-update . t) (frameset--id . "8459-5E70-F577-0C3C") (frameset--mini t . t) (height . 45) (width . 188) (modeline . t) (unsplittable) (left . 0) (top . 0) (icon-name) (display . "wayland-1") (explicit-name)) ((min-height . 4) (min-width . 10) (min-height-ignore . 2) (min-width-ignore . 2) (min-height-safe . 1) (min-width-safe . 2) (min-pixel-height . 92) (min-pixel-width . 100) (min-pixel-height-ignore . 46) (min-pixel-width-ignore . 20) (min-pixel-height-safe . 23) (min-pixel-width-safe . 20)) leaf (pixel-width . 1880) (pixel-height . 1017) (total-width . 188) (total-height . 44) (normal-height . 1.0) (normal-width . 1.0) (buffer "config.org" (selected . t) (hscroll . 0) (fringes 0 0 nil nil) (margins nil) (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0) (dedicated) (point . 2778) (start . 1868)) (next-buffers ".emacs.d") (prev-buffers (".emacs.d" 1 700) ("config.org" 1868 2506) ("Main.hs" 1 147) ("exe" 1 276) ("flashcards_bot" 1 347) ("*scratch*" 1 146))))])
+(setq desktop-missing-file-warning nil)
+(setq tags-file-name nil)
+(setq tags-table-list nil)
+(setq search-ring nil)
+(setq regexp-search-ring nil)
+(setq register-alist nil)
+(setq file-name-history '(#("/home/wurfkreuz/.emacs.d/" 0 25 (ivy-index 0))))
+
+;; Buffer section -- buffers listed in same order as in buffer list:
+(desktop-create-buffer 208
+  "/home/wurfkreuz/.emacs.d/config.org"
+  "config.org"
+  'org-mode
+  '(font-lock-mode undo-tree-mode evil-local-mode evil-collection-unimpaired-mode org-indent-mode org-bullets-mode evil-org-mode display-line-numbers-mode)
+  2778
+  '(3018 nil)
+  nil
+  nil
+  '((indent-tabs-mode) (buffer-display-time 25924 61592 970810 892000) (buffer-file-coding-system . undecided-unix) (overwrite-mode) (truncate-lines . t))
+  '((mark-ring (2506 2506))))
+
+(desktop-create-buffer 208
+  nil
+  ".emacs.d"
+  'dired-mode
+  '(font-lock-mode evil-local-mode evil-collection-unimpaired-mode all-the-icons-dired-mode)
+  700
+  '(1 nil)
+  t
+  '("/home/wurfkreuz/.emacs.d/")
+  '((buffer-display-time 25924 61447 368565 133000) (overwrite-mode))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/home/wurfkreuz/.projects/flashcards_bot/exe/Main.hs"
+  "Main.hs"
+  'haskell-mode
+  '(font-lock-mode undo-tree-mode evil-local-mode evil-collection-unimpaired-mode interactive-haskell-mode haskell-indentation-mode display-line-numbers-mode)
+  147
+  '(147 nil)
+  nil
+  nil
+  '((tab-width . 8) (indent-tabs-mode) (buffer-display-time 25924 61429 955615 949000) (buffer-file-coding-system . undecided-unix) (overwrite-mode))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "exe"
+  'dired-mode
+  '(font-lock-mode evil-local-mode evil-collection-unimpaired-mode all-the-icons-dired-mode)
+  276
+  '(1 nil)
+  t
+  '("/home/wurfkreuz/.projects/flashcards_bot/exe/")
+  '((buffer-display-time 25924 61380 330821 322000) (overwrite-mode))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "flashcards_bot"
+  'dired-mode
+  '(font-lock-mode evil-local-mode evil-collection-unimpaired-mode all-the-icons-dired-mode)
+  347
+  '(347 nil)
+  t
+  '("/home/wurfkreuz/.projects/flashcards_bot/")
+  '((buffer-display-time 25924 61379 840350 516000) (overwrite-mode))
+  '((mark-ring nil)))
+
