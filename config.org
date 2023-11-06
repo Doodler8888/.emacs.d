@@ -56,14 +56,31 @@
   (setq display-line-numbers 'visual)
   (setq display-line-numbers-type 'relative)
 
-  ;; (defun my-tab-name-format-function (tab i)
-  ;; (let ((current-p (eq (car tab) 'current-tab)))
-  ;;   (format "%s%d: %s"
-  ;;           (if current-p "*" " ")
-  ;;           i
-  ;;           (alist-get 'name (cdr tab)))))
+#+end_src
 
-  ;; (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
+*** Tabs
+
+#+begin_src emacs-lisp
+
+  (setq tab-bar-close-button-show nil
+      tab-bar-new-button-show nil)
+
+  (defun my-tab-name-format-function (tab i)
+    (defface my-active-tab-face
+      '((t :background "#504945" :foreground "#ebdbb2"))
+      ;; '((t :background "#928374" :foreground "#ebdbb2" :weight bold))
+      "Face for the active tab in Gruvbox.")
+    (let ((current-p (eq (car tab) 'current-tab)))
+      (if current-p
+          (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-active-tab-face)
+        (format "%d %s" i (alist-get 'name (cdr tab))))))
+
+  (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
+
+  (dotimes (i 9)
+    (let ((n (1+ i)))  ; Tab numbers start from 1
+      (global-set-key (kbd (format "M-%d" n))
+                      `(lambda () (interactive) (tab-bar-select-tab ,n)))))
 
 #+end_src
 
@@ -620,34 +637,6 @@
 * Sessions
 
 #+begin_src emacs-lisp
-
-  ;; (defvar current-desktop-session-name nil
-  ;;   "The name of the currently loaded desktop session.")
-
-  ;; (defun save-current-desktop-session ()
-  ;;   "Save the current desktop session using the current session name."
-  ;;   (interactive)
-  ;;   (if current-desktop-session-name
-  ;;       (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
-  ;;         (unless (file-exists-p desktop-dir)
-  ;;           (make-directory desktop-dir))
-  ;;         (desktop-save desktop-dir))
-  ;;     (message "No desktop session is currently loaded.")))
-
-  ;; (defun load-desktop-with-name ()
-  ;;   "Load a desktop session by name, chosen from available sessions."
-  ;;   (interactive)
-  ;;   (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-  ;;         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-  ;;         (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
-  ;;     (setq current-desktop-session-name session-name)  ; Save the session name globally
-  ;;     (desktop-change-dir (concat desktop-dir session-name "/"))))
-
-  ;; ;; Disable the default desktop save mode
-  ;; (desktop-save-mode 0)
-
-  ;; ;; Remove the auto-save hook if it was previously added
-  ;; (remove-hook 'auto-save-hook 'my-desktop-autosave)
 
   (defvar current-desktop-session-name nil
     "The name of the currently loaded desktop session.")
