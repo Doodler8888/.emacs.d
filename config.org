@@ -548,12 +548,37 @@
 
 #+begin_src emacs-lisp
 
+  ;; (use-package hydra
+  ;;   :config
+  ;;   (defhydra hydra-window-size (:color red)
+  ;;     "window size"
+  ;;     ("h" (lambda () (interactive) (shrink-window-horizontally 5)) "shrink horizontally")
+  ;;     ("l" (lambda () (interactive) (enlarge-window-horizontally 5)) "enlarge horizontally")
+  ;;     ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
+  ;;     ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
+  ;;     ("t" transpose-frame "transpose windows")
+  ;;     ("q" nil "quit")))
+
+  (defun my-enlarge-window-horizontally ()
+    "Enlarge the current window horizontally in a more intuitive way."
+    (interactive)
+    (if (window-at-side-p (selected-window) 'right)
+        (shrink-window-horizontally 5)
+      (enlarge-window-horizontally 5)))
+
+  (defun my-shrink-window-horizontally ()
+    "Shrink the current window horizontally in a more intuitive way."
+    (interactive)
+    (if (window-at-side-p (selected-window) 'right)
+        (enlarge-window-horizontally 5)
+      (shrink-window-horizontally 5)))
+  
   (use-package hydra
     :config
     (defhydra hydra-window-size (:color red)
       "window size"
-      ("h" (lambda () (interactive) (shrink-window-horizontally 5)) "shrink horizontally")
-      ("l" (lambda () (interactive) (enlarge-window-horizontally 5)) "enlarge horizontally")
+      ("h" my-shrink-window-horizontally "shrink horizontally")
+      ("l" my-enlarge-window-horizontally "enlarge horizontally")
       ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
       ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
       ("t" transpose-frame "transpose windows")
