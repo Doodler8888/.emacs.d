@@ -59,6 +59,15 @@
   (setq display-line-numbers 'visual)
   (setq display-line-numbers-type 'relative)
 
+  ;; (defun my-tab-name-format-function (tab i)
+  ;; (let ((current-p (eq (car tab) 'current-tab)))
+  ;;   (format "%s%d: %s"
+  ;;           (if current-p "*" " ")
+  ;;           i
+  ;;           (alist-get 'name (cdr tab)))))
+
+  ;; (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
+
 #+end_src
 
 ** System
@@ -78,10 +87,11 @@
   (unless (file-exists-p desktop-dirname)
     (make-directory desktop-dirname))
   (setq backup-directory-alist `(("." . ,(concat user-emacs-directory "backups"))))
-  (desktop-save-mode 1)
+  ;; (desktop-save-mode 1)
+  ;; (setq desktop-save 't)
   (setq desktop-path (list desktop-dirname))
   ;; (setq desktop-auto-save-timeout 30)
-  (setq desktop-auto-save-timeout nil)
+  ;; (setq desktop-auto-save-timeout nil)
 
   (global-set-key (kbd "C-c d l") 'load-desktop-with-name)
 
@@ -333,18 +343,18 @@
   ;; (put 'eval 'safe-local-variable #'identity)
   ;; (load-theme 'spaceway t)
 
-  ;; (use-package gruvbox-theme
-  ;;   :config
-  ;;   (load-theme 'gruvbox t))
-
-  (use-package doom-themes
-    :ensure t
+  (use-package gruvbox-theme
     :config
-    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-          doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-    (load-theme 'doom-one t)
-    ;Corrects (and improves) org-mode's native fontification.
-    (doom-themes-org-config))
+    (load-theme 'gruvbox t))
+
+  ;; (use-package doom-themes
+  ;;   :ensure t
+  ;;   :config
+  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+  ;;   (load-theme 'doom-one t)
+  ;;   ;Corrects (and improves) org-mode's native fontification.
+  ;;   (doom-themes-org-config))
 
   (when (member "Noto Sans Mono" (font-family-list))
     (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
@@ -389,15 +399,24 @@
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
 
+    "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
+    "sd" '(delete-desktop-session :wk "Delete selected session")
+    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+
     "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
     "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
-    
+
+    "cc" '(RunCmdShellCommand :wk "Run CMD command")
     "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
 
+    ;; "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
+    
     "zz" '(z :wk "Call zoxide prompt")
+
+    "vv" '(OpenVtermBelow :wk "Toggle vterm")
 
     "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
 
@@ -419,11 +438,6 @@
 
     "bt" '(transpose-frame :wk "Transpose windows")
 
-    "t" '(:ignore t :wk "Toggle")
-    "tl" '(display-line-numbers-mode :wk "Toggle line numbers")
-    "tc" '(RunCmdShellCommand :wk "Run CMD command")
-    "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
-    "tv" '(OpenVtermBelow :wk "Toggle vterm")
         )
   )
 
@@ -637,49 +651,94 @@
     (shell-command (concat "hoogle search " (shell-quote-argument query))))
 
 #+end_src
+
 * Sessions
 
 #+begin_src emacs-lisp
 
-  (defun save-desktop-with-name ()
-    "Save the current desktop session with a custom name."
-    (interactive)
-    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-      (unless (file-exists-p desktop-dir)
-        (make-directory desktop-dir))
-      (let* ((session-name (read-string "Session name: "))
-            (session-dir (concat desktop-dir session-name "/")))
-        (unless (file-exists-p session-dir)
-          (make-directory session-dir))
-        (desktop-save session-dir t))))
-  
-  (defun save-current-desktop ()
-    "Save the current desktop session using the current session name."
-    (interactive)
-    (if desktop-dirname
-        (desktop-save desktop-dirname)
-      (message "No desktop session name set!")))
+  ;; (defvar current-desktop-session-name nil
+  ;;   "The name of the currently loaded desktop session.")
 
-  (defun my-desktop-clear ()
-    "Clear the current desktop session without confirmation."
+  ;; (defun save-current-desktop-session ()
+  ;;   "Save the current desktop session using the current session name."
+  ;;   (interactive)
+  ;;   (if current-desktop-session-name
+  ;;       (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
+  ;;         (unless (file-exists-p desktop-dir)
+  ;;           (make-directory desktop-dir))
+  ;;         (desktop-save desktop-dir))
+  ;;     (message "No desktop session is currently loaded.")))
+
+  ;; (defun load-desktop-with-name ()
+  ;;   "Load a desktop session by name, chosen from available sessions."
+  ;;   (interactive)
+  ;;   (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+  ;;         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+  ;;         (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+  ;;     (setq current-desktop-session-name session-name)  ; Save the session name globally
+  ;;     (desktop-change-dir (concat desktop-dir session-name "/"))))
+
+  ;; ;; Disable the default desktop save mode
+  ;; (desktop-save-mode 0)
+
+  ;; ;; Remove the auto-save hook if it was previously added
+  ;; (remove-hook 'auto-save-hook 'my-desktop-autosave)
+
+  (defvar current-desktop-session-name nil
+    "The name of the currently loaded desktop session.")
+
+  (defvar desktop-autosave-timer nil
+    "Timer object for desktop autosave, to avoid multiple timers running.")
+
+  (defun save-current-desktop-session ()
+    "Save the current desktop session using the current session name.
+  If no session is loaded, prompt to create a new one."
     (interactive)
-    (when (desktop-save-mode)
-      (desktop-clear)
-      (desktop-release-lock)
-      (setq desktop-dirname nil)))
+    (if current-desktop-session-name
+        (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
+          (unless (file-exists-p desktop-dir)
+            (make-directory desktop-dir))
+          (desktop-save desktop-dir))
+      ;; No session is loaded, prompt to create a new one
+      (let ((new-session-name (read-string "Enter new session name: ")))
+        (unless (string-empty-p new-session-name)
+          (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
+            (make-directory new-desktop-dir t)
+            (setq current-desktop-session-name new-session-name)
+            (desktop-save new-desktop-dir))))))
 
   (defun load-desktop-with-name ()
-    "Load a saved desktop session by name from the 'desktop' directory."
+    "Load a desktop session by name, chosen from available sessions."
     (interactive)
-    (my-desktop-clear)
-    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-      (unless (file-exists-p desktop-dir)
-        (error "No desktop directory found"))
-      (let* ((dirs (remove "." (remove ".." (directory-files desktop-dir t directory-files-no-dot-files-regexp))))
-            (session-dir (completing-read "Load session: " dirs nil t)))
-        (setq desktop-path (list session-dir))
-        (desktop-read session-dir)
-        (desktop-save-mode 1))))
+    (when current-desktop-session-name
+      ;; Save the current session before loading a new one, but only if a session is already loaded.
+      (save-current-desktop-session))
+    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+          (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+          (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+      (setq current-desktop-session-name session-name)  ; Save the session name globally
+      (desktop-change-dir (concat desktop-dir session-name "/"))
+      ;; Set up the autosave timer when a new session is loaded
+      (when desktop-autosave-timer
+        (cancel-timer desktop-autosave-timer))
+      (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
+
+  ;; Disable the default desktop save mode
+  (desktop-save-mode 0)
+
+  (defun delete-desktop-session ()
+    "Delete a desktop session by name, chosen from available sessions."
+    (interactive)
+    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+          (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+          (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
+      (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
+        (let ((session-path (concat desktop-dir session-name)))
+          (if (file-directory-p session-path)
+              (progn
+                (delete-directory session-path t)  ; 't' for recursive delete
+                (message "Deleted desktop session '%s'." session-name))
+            (message "No such desktop session '%s'." session-name))))))
 
 #+end_src
 
