@@ -19,10 +19,7 @@
   - [[#search][Search]]
   - [[#sudo-edit][Sudo Edit]]
   - [[#ivy][Ivy]]
-  - [[#perps-mode][Perps-mode]]
-  - [[#perspective][Perspective]]
-  - [[#tabspaces][Tabspaces]]
-  - [[#bookmarks][Bookmarks]]
+  - [[#hydra][Hydra]]
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
   - [[#vterm][Vterm]]
@@ -399,9 +396,15 @@
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
 
+    "w"  'hydra-window-size/body 
+
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
     "sd" '(delete-desktop-session :wk "Delete selected session")
     "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+
+    "tn" '(tab-bar-new-tab :wk "Create a new tab")
+    "tc" '(tab-bar-close-tab :wk "Close a tab")
+    "tr" '(tab-bar-rename-tab :wk "Rename a tab")
 
     "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
@@ -413,7 +416,7 @@
     "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
 
     ;; "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
-    
+
     "zz" '(z :wk "Call zoxide prompt")
 
     "vv" '(OpenVtermBelow :wk "Toggle vterm")
@@ -436,9 +439,7 @@
     "er" '(eval-region :wk "Evaluate elisp in region")
     "es" '(counsel-esh-history :wk "Eshell history")
 
-    "bt" '(transpose-frame :wk "Transpose windows")
-
-        )
+	)
   )
 
 #+end_src
@@ -525,57 +526,21 @@
 
 #+end_src
 
-** Perps-mode
+
+** Hydra
 
 #+begin_src emacs-lisp
 
-  ;; (use-package persp-mode
-  ;;   :init
-  ;;   (persp-mode 1))
-
-#+end_src
-
-** Perspective
-
-#+begin_src emacs-lisp
-
-  ;; (use-package perspective
-  ;;   :bind
-  ;;   ("C-x C-b" . persp-list-buffers)         ; or use a nicer switcher, see below
-  ;;   :custom
-  ;;   (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
-  ;;   :init
-  ;;   (persp-mode))
-
-#+end_src
-
-** Tabspaces
-
-#+begin_src emacs-lisp
-
-  ;; (use-package tabspaces
-  ;;   ;; use this next line only if you also use straight, otherwise ignore it. 
-  ;;   :elpaca (:type git :host github :repo "mclear-tools/tabspaces")
-  ;;   ;; :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
-  ;;   :init (tabspaces-mode 1)
-  ;;   :commands (tabspaces-switch-or-create-workspace
-  ;;             tabspaces-open-or-create-project-and-workspace)
-  ;;   :custom
-  ;;   (tabspaces-use-filtered-buffers-as-default t)
-  ;;   (tabspaces-default-tab "Default")
-  ;;   (tabspaces-remove-to-default t)
-  ;;   (tabspaces-include-buffers '("*scratch*"))
-  ;;   ;; (tabspaces-initialize-project-with-todo t)
-  ;;   ;; (tabspaces-todo-file-name "project-todo.org")
-  ;;   ;; sessions
-  ;;   (tabspaces-session t)
-  ;;   (tabspaces-session-auto-restore t))
-
-#+end_src
-
-** Bookmarks
-
-#+begin_src emacs-lisp
+  (use-package hydra
+    :config
+    (defhydra hydra-window-size (:color red)
+      "window size"
+      ("h" (lambda () (interactive) (shrink-window-horizontally 5)) "shrink horizontally")
+      ("l" (lambda () (interactive) (enlarge-window-horizontally 5)) "enlarge horizontally")
+      ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
+      ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
+      ("t" transpose-frame "transpose windows")
+      ("q" nil "quit")))
 
 #+end_src
 
