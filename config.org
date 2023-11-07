@@ -302,12 +302,7 @@
     :config
     (evil-mode 1)
     (setq evil-shift-width 2)
-    (add-hook 'evil-mode-hook 'undo-tree-mode)
-    ;; Unbind 'K' in 'evil-motion-state-map' which is shared across several states
-    (define-key evil-motion-state-map (kbd "K") nil)
-    ;; Bind 'K' to 'lsp-ui-doc-glance' in 'lsp-mode-map' for 'evil-normal-state'
-    (with-eval-after-load 'lsp-ui
-      (evil-define-key 'normal lsp-mode-map (kbd "K") 'lsp-ui-doc-glance)))
+    (add-hook 'evil-mode-hook 'undo-tree-mode))
 
 
   (setq evil-undo-system 'undo-tree)
