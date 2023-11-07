@@ -1,8 +1,7 @@
 ;; -*- mode: emacs-lisp; eval: (progn (pp-buffer) (indent-buffer)) -*-
 ((def-persp nil
 	    ((def-buffer "config.org" "/home/wurfkreuz/.emacs.d/config.org" org-mode)
-	     (def-buffer "exe" "~/.projects/flashcards_bot/exe/" dired-mode)
-	     (def-buffer "flashcards_bot" "~/.projects/flashcards_bot/" dired-mode))
+	     (def-buffer ".emacs.d" "~/.emacs.d/" dired-mode))
 	    (def-wconf
 	     (((min-height . 4)
 	       (min-width . 10)
@@ -18,9 +17,9 @@
 	       (min-pixel-width-safe . 20))
 	      leaf
 	      (pixel-width . 1880)
-	      (pixel-height . 1017)
+	      (pixel-height . 994)
 	      (total-width . 188)
-	      (total-height . 44)
+	      (total-height . 43)
 	      (normal-height . 1.0)
 	      (normal-width . 1.0)
 	      (buffer "config.org"
@@ -31,13 +30,11 @@
 		      (scroll-bars nil 0 t nil 0 t nil)
 		      (vscroll . 0)
 		      (dedicated)
-		      (point . 15037)
-		      (start . 14740))
-	      (next-buffers "*elpaca-log*")
+		      (point . 23033)
+		      (start . 22166))
 	      (prev-buffers
-	       ("*elpaca-log*" 1 30)
-	       ("config.org" 14740 15037)
-	       ("*scratch*" 1 1))))
+	       ("*eshell*" 1 80)
+	       ("config.org" 20037 20037))))
 	    (def-params nil)
 	    t nil nil)
  (def-persp "Main" nil
@@ -78,8 +75,7 @@
 	       ("*scratch*" 1 1))))
 	    (def-params nil)
 	    nil nil nil)
- (def-persp "bot"
-	    ((def-buffer "Main.hs" "/home/wurfkreuz/.projects/flashcards_bot/exe/Main.hs" haskell-mode))
+ (def-persp "bot" nil
 	    (def-wconf
 	     (((min-height . 4)
 	       (min-width . 10)

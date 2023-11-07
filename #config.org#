@@ -297,18 +297,12 @@
   (use-package evil
     :init
     (setq evil-want-C-u-scroll t
-          evil-want-C-i-jump nil
-          evil-want-integration t)
+	  evil-want-C-i-jump nil
+	  evil-want-integration t)
     :config
     (evil-mode 1)
     (setq evil-shift-width 2)
-    (add-hook 'evil-mode-hook 'undo-tree-mode)
-    ;; Unbind 'K' in 'evil-motion-state-map' which is shared across several states
-    (define-key evil-motion-state-map (kbd "K") nil)
-    ;; Bind 'K' to 'lsp-ui-doc-glance' in 'lsp-mode-map' for 'evil-normal-state'
-    (with-eval-after-load 'lsp-ui
-      (evil-define-key 'normal lsp-mode-map (kbd "K") 'lsp-ui-doc-glance)))
-
+    (add-hook 'evil-mode-hook 'undo-tree-mode))
 
   (setq evil-undo-system 'undo-tree)
 
@@ -330,8 +324,8 @@
     (evil-org-agenda-set-keys)
     (add-hook 'org-mode-hook 'evil-org-mode)
     (add-hook 'evil-org-mode-hook
-              (lambda ()
-                (evil-org-set-key-theme)))
+	      (lambda ()
+		(evil-org-set-key-theme)))
     :ensure nil)
 
 
@@ -987,6 +981,12 @@
     (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
     :hook (lsp-mode . lsp-ui-mode))
 
+  (use-package evil
+    :ensure t
+    :config
+    ;; Unbind 'K' in 'evil-motion-state-map' which is shared across several states
+    (define-key evil-motion-state-map (kb
+  
   (defun my/lsp-ui-doc-hide ()
     (unless (eq this-command 'lsp-ui-doc-focus-frame)
       (lsp-ui-doc-hide)))
