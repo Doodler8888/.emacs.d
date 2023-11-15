@@ -359,6 +359,9 @@
 ** Theme and Font
 
  #+begin_src emacs-lisp
+   
+   (require 'color)
+   (hl-line-mode 1) 
 
    (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
    (put 'eval 'safe-local-variable #'identity)

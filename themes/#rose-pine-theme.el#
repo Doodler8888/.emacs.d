@@ -11,10 +11,7 @@
       (rose-pine-highlight "#26233a")
       (rose-pine-subtext1 "#6e6a86")
       (rose-pine-subtext0 "#908caa")
-      (rose-pine-blendedfoam "#403d52")
-      (rose-pine-region (if (display-graphic-p) 
-			      `(:background ,(color-lighten-name "#403d52" 1) :foreground nil :distant-foreground nil)
-			      'unspecified)))
+      (rose-pine-blendedfoam "#403d52"))
 
   (custom-theme-set-faces
    'rose-pine
@@ -41,8 +38,9 @@
    `(line-number ((,class (:foreground ,rose-pine-subtext1))))
    `(line-number-current-line ((,class (:foreground ,rose-pine-fg))))
 
-   ;; Region
-   `(region ((,class ,rose-pine-region)))
+   ;; Region highlight
+   `(hl-line ((,class (:extend t) 
+                    (:background ,))))
 
    ;; Mode line
    `(mode-line ((,class (:foreground ,rose-pine-iris 
