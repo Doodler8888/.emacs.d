@@ -8,6 +8,42 @@
 - [[#general-emacs-setting][GENERAL EMACS SETTING]]
   - [[#visual][Visual]]
   - [[#system][System]]
+  - [[#custom-commands][Custom Commands]]
+  - [[#cursor][Cursor]]
+  - [[#find-file][Find-file]]
+- [[#packages][PACKAGES]]
+  - [[#elpaca-package-manager][Elpaca Package Manager]]
+  - [[#evil-mode][Evil Mode]]
+  - [[#theme-and-font][Theme and Font]]
+  - [[#general][General]]
+  - [[#search][Search]]
+  - [[#sudo-edit][Sudo Edit]]
+  - [[#ivy][Ivy]]
+  - [[#hydra][Hydra]]
+- [[#shells-and-terminals][Shells and Terminals]]
+  - [[#eshell][Eshell]]
+  - [[#vterm][Vterm]]
+  - [[#cmd][Cmd]]
+- [[#sessions][Sessions]]
+- [[#buffers][Buffers]]
+  - [[#windmove][Windmove]]
+  - [[#messages-buffer][Messages buffer]]
+  - [[#dired-buffer][Dired buffer]]
+  - [[#cmd-shell-buffer][Cmd shell buffer]]
+  - [[#shell-buffer][Shell buffer]]
+  - [[#vterm-buffer][Vterm buffer]]
+  - [[#eshell-buffer][Eshell buffer]]
+  - [[#transpose-frame][Transpose frame]]
+- [[#language-support][LANGUAGE SUPPORT]]
+  - [[#lsp-bridge][Lsp-bridge]]
+  - [[#flycheck][Flycheck]]
+  - [[#lsp-mode][Lsp Mode]]
+- [[#org-mode][ORG MODE]]
+  - [[#tuning][Tuning]]
+  - [[#bullets][Bullets]]
+  - [[#source-block-tag-expansion-cheetsheat][Source Block Tag Expansion Cheetsheat]]
+  - [[#enabling-table-of-contents][Enabling Table of Contents]]
+  - [[#custom-key-bindings][Custom key bindings]]
 
 * GENERAL EMACS SETTING
 ** Visual
@@ -31,7 +67,7 @@
 
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
-      '((t :background "#454b52" :foreground "#c0c5ce"))  ; A brighter blue for the background
+      '((t :background "#373c42" :foreground "#c0c5ce"))  ; A brighter blue for the background
       "Face for the active tab in Doom One.")
     (defface my-inactive-tab-face
       '((t :background "#21242b" :foreground "#5B6268"))
@@ -104,7 +140,7 @@
 
 #+end_src
 
- *** Garbage Collection
+*** Garbage Collection
 
  #+begin_src emacs-lisp
 
@@ -119,7 +155,7 @@
 
  #+end_src
 
- ** Custom Commands
+** Custom Commands
 
  #+begin_src emacs-lisp
 
@@ -170,7 +206,7 @@
 
  #+end_src
 
- ** Cursor
+** Cursor
 
  #+begin_src emacs-lisp
 
@@ -180,7 +216,7 @@
 
  #+end_src
 
- ** Find-file
+** Find-file
 
  #+begin_src emacs-lisp
 
@@ -198,8 +234,8 @@
 
  #+end_src
 
- * PACKAGES
- ** Elpaca Package Manager
+* PACKAGES
+** Elpaca Package Manager
 
  #+begin_src emacs-lisp
 
@@ -252,7 +288,7 @@
 
  #+end_src
 
- ** Evil Mode
+** Evil Mode
 
  #+begin_src emacs-lisp
 
@@ -303,7 +339,7 @@
 
  #+end_src
 
- *** Custom keybindings
+*** Custom keybindings
 
  #+begin_src emacs-lisp
 
@@ -320,26 +356,26 @@
 
  #+end_src
 
- ** Theme and Font
+** Theme and Font
 
  #+begin_src emacs-lisp
 
-   ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-   ;; (put 'eval 'safe-local-variable #'identity)
-   ;; (load-theme 'spaceway t)
+   (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
+   (put 'eval 'safe-local-variable #'identity)
+   (load-theme 'rose-pine t)
 
    ;; (use-package gruvbox-theme
    ;;   :config
    ;;   (load-theme 'gruvbox t))
 
-   (use-package doom-themes
-     :ensure t
-     :config
-     (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-           doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-     (load-theme 'doom-one t)
-     ;Corrects (and improves) org-mode's native fontification.
-     (doom-themes-org-config))
+   ;; (use-package doom-themes
+   ;;   :ensure t
+   ;;   :config
+   ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+   ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+   ;;   (load-theme 'doom-one t)
+   ;;   ;Corrects (and improves) org-mode's native fontification.
+   ;;   (doom-themes-org-config))
 
    (when (member "Noto Sans Mono" (font-family-list))
      (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
@@ -347,7 +383,7 @@
 
  #+end_src
 
- *** Icons
+*** Icons
 
  #+begin_src emacs-lisp
 
@@ -360,7 +396,7 @@
 
  #+end_src
 
- ** General
+** General
 
  #+begin_src emacs-lisp
 
@@ -379,20 +415,29 @@
 
    (w/leader-keys
 
+     ;; Fuzzy finder
      "fr" '(counsel-recentf :wk "Find recent files")
      "fd" '(counsel-find-file-check-dir :wk "Find file modified")
      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
 
-     "w"  'hydra-window-size/body 
-
+     ;; Session management
      "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
      "sd" '(delete-desktop-session :wk "Delete selected session")
      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
 
+     ;; Tab management
      "tn" '(tab-bar-new-tab :wk "Create a new tab")
      "tc" '(tab-bar-close-tab :wk "Close a tab")
      "tr" '(tab-bar-rename-tab :wk "Rename a tab")
+
+     "w"  'hydra-window-size/body 
+
+     ;; Window swapping
+     "bk" '(buf-move-up :wk "Swap with buffer above")
+     "bj" '(buf-move-down :wk "Swap with buffer below")
+     "bh" '(buf-move-left :wk "Swap with buffer left")
+     "bl" '(buf-move-right :wk "Swap with buffer right")
 
      "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
@@ -420,6 +465,7 @@
      "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
      "es" '(eshell :wk "Eshell")
 
+     ;; Evaluation
      "e" '(:ignore t :wk "Evaluate/Eshell")
      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
@@ -433,7 +479,7 @@
 
  #+end_src
 
- ** Search
+** Search
 
  #+begin_src emacs-lisp
 
@@ -444,7 +490,7 @@
   
  #+end_src
 
- ** Sudo Edit
+** Sudo Edit
 
  #+begin_src emacs-lisp
 
@@ -456,7 +502,7 @@
 
  #+end_src
 
- ** Ivy
+** Ivy
 
  #+begin_src emacs-lisp
 
@@ -515,8 +561,7 @@
 
  #+end_src
 
-
- ** Hydra
+** Hydra
 
  #+begin_src emacs-lisp
 
@@ -558,8 +603,8 @@
 
  #+end_src
 
- * Shells and Terminals
- ** Eshell
+* Shells and Terminals
+** Eshell
 
  #+begin_src emacs-lisp
 
@@ -601,7 +646,7 @@
 
  #+end_src
 
- ** Vterm
+** Vterm
 
  #+begin_src emacs-lisp
 
@@ -620,7 +665,7 @@
 
  #+end_src
 
- ** Cmd
+** Cmd
 
  #+begin_src emacs-lisp
 
@@ -631,89 +676,89 @@
 
  #+end_src
 
- * Sessions
+* Sessions
 
  #+begin_src emacs-lisp
 
-  (defvar current-desktop-session-name nil
-    "The name of the currently loaded desktop session.")
+(defvar current-desktop-session-name nil
+  "The name of the currently loaded desktop session.")
 
-  (defvar desktop-autosave-timer nil
-    "Timer object for desktop autosave, to avoid multiple timers running.")
+(defvar desktop-autosave-timer nil
+  "Timer object for desktop autosave, to avoid multiple timers running.")
 
-  (defun save-eshell-buffer (desktop-dirname)
-    ;; Save the current working directory.
-    default-directory)
+(defun save-eshell-buffer (desktop-dirname)
+  ;; Save the current working directory.
+  default-directory)
 
-  (defun restore-eshell-buffer (_file-name buffer-name misc)
-    "MISC is the value returned by `save-eshell-buffer'.
-  _FILE-NAME is nil."
-    (let ((default-directory misc))
-      ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
-      (eshell buffer-name)))
+(defun restore-eshell-buffer (_file-name buffer-name misc)
+  "MISC is the value returned by `save-eshell-buffer'.
+_FILE-NAME is nil."
+  (let ((default-directory misc))
+    ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
+    (eshell buffer-name)))
 
-  ;; Save all eshell-mode buffers.
-  (add-hook 'eshell-mode-hook
-            (lambda ()
-              (setq-local desktop-save-buffer #'save-eshell-buffer)))
+;; Save all eshell-mode buffers.
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (setq-local desktop-save-buffer #'save-eshell-buffer)))
 
-  ;; Restore all eshell-mode buffers.
-  (add-to-list 'desktop-buffer-mode-handlers '(eshell-mode . restore-eshell-buffer))
+;; Restore all eshell-mode buffers.
+(add-to-list 'desktop-buffer-mode-handlers '(eshell-mode . restore-eshell-buffer))
 
-  (defun save-current-desktop-session ()
-    "Save the current desktop session using the current session name.
-  If no session is loaded, prompt to create a new one."
-    (interactive)
-    (if current-desktop-session-name
-        (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
-          (unless (file-exists-p desktop-dir)
-            (make-directory desktop-dir))
-          (desktop-save desktop-dir))
-      ;; No session is loaded, prompt to create a new one
-      (let ((new-session-name (read-string "Enter new session name: ")))
-        (unless (string-empty-p new-session-name)
-          (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
-            (make-directory new-desktop-dir t)
-            (setq current-desktop-session-name new-session-name)
-            (desktop-save new-desktop-dir))))))
+(defun save-current-desktop-session ()
+  "Save the current desktop session using the current session name.
+If no session is loaded, prompt to create a new one."
+  (interactive)
+  (if current-desktop-session-name
+      (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
+        (unless (file-exists-p desktop-dir)
+          (make-directory desktop-dir))
+        (desktop-save desktop-dir))
+    ;; No session is loaded, prompt to create a new one
+    (let ((new-session-name (read-string "Enter new session name: ")))
+      (unless (string-empty-p new-session-name)
+        (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
+          (make-directory new-desktop-dir t)
+          (setq current-desktop-session-name new-session-name)
+          (desktop-save new-desktop-dir))))))
 
-  (defun load-desktop-with-name ()
-    "Load a desktop session by name, chosen from available sessions."
-    (interactive)
-    (when current-desktop-session-name
-      ;; Save the current session before loading a new one, but only if a session is already loaded.
-      (save-current-desktop-session))
-    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-          (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-          (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
-      (setq current-desktop-session-name session-name)  ; Save the session name globally
-      (desktop-change-dir (concat desktop-dir session-name "/"))
-      ;; Set up the autosave timer when a new session is loaded
-      (when desktop-autosave-timer
-        (cancel-timer desktop-autosave-timer))
-      (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
+(defun load-desktop-with-name ()
+  "Load a desktop session by name, chosen from available sessions."
+  (interactive)
+  (when current-desktop-session-name
+    ;; Save the current session before loading a new one, but only if a session is already loaded.
+    (save-current-desktop-session))
+  (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+         (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+    (setq current-desktop-session-name session-name)  ; Save the session name globally
+    (desktop-change-dir (concat desktop-dir session-name "/"))
+    ;; Set up the autosave timer when a new session is loaded
+    (when desktop-autosave-timer
+      (cancel-timer desktop-autosave-timer))
+    (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
 
-  ;; Disable the default desktop save mode
-  (desktop-save-mode 0)
+;; Disable the default desktop save mode
+(desktop-save-mode 0)
 
-  (defun delete-desktop-session ()
-    "Delete a desktop session by name, chosen from available sessions."
-    (interactive)
-    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-          (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-          (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
-      (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
-        (let ((session-path (concat desktop-dir session-name)))
-          (if (file-directory-p session-path)
-              (progn
-                (delete-directory session-path t)  ; 't' for recursive delete
-                (message "Deleted desktop session '%s'." session-name))
-            (message "No such desktop session '%s'." session-name))))))
+(defun delete-desktop-session ()
+  "Delete a desktop session by name, chosen from available sessions."
+  (interactive)
+  (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+         (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
+    (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
+      (let ((session-path (concat desktop-dir session-name)))
+        (if (file-directory-p session-path)
+            (progn
+              (delete-directory session-path t)  ; 't' for recursive delete
+              (message "Deleted desktop session '%s'." session-name))
+          (message "No such desktop session '%s'." session-name))))))
 
  #+end_src
 
- * Buffers
- ** Windmove
+* Buffers
+** Windmove
 
  #+begin_src emacs-lisp
 
@@ -788,7 +833,7 @@
 
  #+end_src
 
- ** Messages buffer
+** Messages buffer
 
  #+begin_src emacs-lisp
 
@@ -800,7 +845,7 @@
 
  #+end_src
 
- ** Dired buffer
+** Dired buffer
 
  #+begin_src emacs-lisp
 
@@ -820,7 +865,7 @@
 
  #+end_src
 
- ** Cmd shell buffer
+** Cmd shell buffer
 
  #+begin_src emacs-lisp
 
@@ -832,7 +877,7 @@
 
  #+end_src
 
- ** Shell buffer
+** Shell buffer
 
  #+begin_src emacs-lisp
 
@@ -855,7 +900,7 @@
 
  #+end_src
 
- ** Vterm buffer
+** Vterm buffer
 
  #+begin_src emacs-lisp
 
@@ -877,7 +922,7 @@
 
  #+end_src
 
- ** Eshell buffer
+** Eshell buffer
 
  #+begin_src emacs-lisp
 
@@ -890,7 +935,7 @@
  
  #+end_src
 
- ** Transpose frame
+** Transpose frame
 
  #+begin_src emacs-lisp
 
@@ -898,22 +943,23 @@
  
  #+end_src
 
- * LANGUAGE SUPPORT
+* LANGUAGE SUPPORT
 
  #+begin_src emacs-lisp
 
-   (use-package haskell-mode)
-   (use-package go-mode)
-   (use-package markdown-mode
-     :ensure t
-     :mode ("README\\.md\\'" . gfm-mode)
-     :init (setq markdown-command "multimarkdown")
-     :bind (:map markdown-mode-map
-           ("C-c C-e" . markdown-do)))
+   ;; (use-package haskell-mode)
+   ;; (use-package lua-mode)
+   ;; (use-package go-mode)
+   ;; (use-package markdown-mode
+   ;;   :ensure t
+   ;;   :mode ("README\\.md\\'" . gfm-mode)
+   ;;   :init (setq markdown-command "multimarkdown")
+   ;;   :bind (:map markdown-mode-map
+   ;;         ("C-c C-e" . markdown-do)))
 
  #+end_src
 
- ** Lsp-bridge
+** Lsp-bridge
 
  #+begin_src emacs-lisp
 
@@ -935,7 +981,7 @@
 
  #+end_src
 
- ** Flycheck
+** Flycheck
 
  #+begin_src emacs-lisp
 
@@ -947,7 +993,7 @@
 
  #+end_src
 
- ** Lsp Mode
+** Lsp Mode
 
  #+begin_src emacs-lisp
 
@@ -989,8 +1035,8 @@
 
  #+end_src
 
- * ORG MODE
- ** Tuning
+* ORG MODE
+** Tuning
 
  #+begin_src emacs-lisp
 
@@ -1001,7 +1047,7 @@
 
  #+end_src
 
- ** Bullets
+** Bullets
 
  #+begin_src emacs-lisp
 
@@ -1011,7 +1057,7 @@
 
  #+end_src
 
- ** Source Block Tag Expansion Cheetsheat
+** Source Block Tag Expansion Cheetsheat
 
     | Name | Description |
     |------+-------------|
@@ -1020,7 +1066,7 @@
     |      |             |
 
   
- ** Enabling Table of Contents
+** Enabling Table of Contents
 
  #+begin_src emacs-lisp
 
@@ -1030,7 +1076,7 @@
 
  #+end_src
 
- ** Custom key bindings
+** Custom key bindings
 
  #+begin_src emacs-lisp
 
