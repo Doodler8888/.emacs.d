@@ -4,6 +4,7 @@
       (rose-pine-fg "#e0def4")
       (rose-pine-bg "#1d1f21")
       (rose-pine-love "#eb6f92") 
+      (rose-pine-blendedlove "#2e202f") 
       (rose-pine-gold "#f6c177")
       (rose-pine-pine "#31748f")
       (rose-pine-foam "#9ccfd8")
@@ -13,7 +14,7 @@
       (rose-pine-subtext0 "#908caa")
       (rose-pine-blendedfoam "#403d52")
       (rose-pine-region (if (display-graphic-p) 
-			      `(:background ,(color-lighten-name "#403d52" 1) :foreground nil :distant-foreground nil)
+			      `(:background ,(color-lighten-name "#403d53" 1) :foreground nil :distant-foreground nil)
 			      'unspecified)))
 
   (custom-theme-set-faces
@@ -45,12 +46,15 @@
    `(region ((,class ,rose-pine-region)))
 
    ;; Mode line
-   `(mode-line ((,class (:foreground ,rose-pine-iris 
-                                    :background ,rose-pine-highlight
-                                    :box (:line-width 1 :color ,rose-pine-bg)))))
+   `(mode-line-buffer-id ((,class (:weight normal))))
+   `(mode-line ((,class (:foreground ,rose-pine-love 
+			      :background ,rose-pine-blendedlove
+			      :box (:line-width 1 :color ,rose-pine-bg)
+			      :weight normal))))  ; Set the weight to normal
    `(mode-line-inactive ((,class (:foreground ,rose-pine-subtext1
-                                             :background ,rose-pine-bg
-                                             :box (:line-width 1 :color ,rose-pine-bg)))))
+					      :background ,rose-pine-bg
+					      :box (:line-width 1 :color ,rose-pine-bg)
+					      :weight normal))))  ; Also for inactive
 
    ;; More faces
    `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))

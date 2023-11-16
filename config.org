@@ -56,6 +56,19 @@
   (setq display-line-numbers 'visual)
   (setq display-line-numbers-type 'relative)
 
+  (defun my-mode-line-major-mode ()
+    "Returns the name of the current major mode."
+    (format-mode-line mode-name))
+
+  (setq-default mode-line-format
+                '("%e"
+                  mode-line-front-space
+                  mode-line-buffer-identification  ; Buffer name
+                  " "
+                  (:eval (my-mode-line-major-mode))  ; Custom major mode display
+                  (:eval (propertize " " 'display '(space :align-to (- right 12))))
+                  (vc-mode vc-mode)))  ; Git branch information
+
 #+end_src
 
 *** Tabs
