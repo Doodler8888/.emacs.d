@@ -2,6 +2,7 @@
 
 (let ((class '((class color) (min-colors 89)))
       (rose-pine-fg "#e0def4")
+      (rose-pine-blendedbg "#17191a")
       (rose-pine-bg "#1d1f21")
       (rose-pine-rose "#ebbcba") 
       (rose-pine-love "#eb6f92") 
@@ -52,6 +53,9 @@
    `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
  
    ;; Org mode
+   `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
+   `(org-block-begin-line ((t (:background ,rose-pine-blendedbg))))  ; Background for begin line
+   `(org-block-end-line ((t (:background ,rose-pine-blendedbg))))  ; Background for end line
    `(org-block ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
    `(org-block-begin-line ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
    `(org-block-end-line ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
