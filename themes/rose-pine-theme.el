@@ -3,6 +3,7 @@
 (let ((class '((class color) (min-colors 89)))
       (rose-pine-fg "#e0def4")
       (rose-pine-bg "#1d1f21")
+      (rose-pine-rose "#ebbcba") 
       (rose-pine-love "#eb6f92") 
       (rose-pine-blendedlove "#2e202f") 
       (rose-pine-gold "#f6c177")
@@ -30,17 +31,36 @@
    ;; Font lock
    `(font-lock-builtin-face ((,class (:foreground ,rose-pine-love))))
    `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
-   `(font-lock-function-name-face ((,class (:foreground ,rose-pine-fg))))
+   `(font-lock-function-name-face ((,class (:foreground ,rose-pine-rose))))
    `(font-lock-keyword-face ((,class (:foreground ,rose-pine-pine))))
-   `(font-lock-string-face ((,class (:foreground ,rose-pine-foam))))
+   `(font-lock-string-face ((,class (:foreground ,rose-pine-gold))))
    `(font-lock-type-face ((,class (:foreground ,rose-pine-iris))))
    `(font-lock-variable-name-face ((,class (:foreground ,rose-pine-fg))))
    `(font-lock-comment-face ((,class (:foreground ,rose-pine-subtext1))))
+   `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-fg))))
+   ;; `(font-lock-doc-face ((,class (:foreground ,rose-pine-fg))))
+   ;; `(font-lock-preprocessor-face ((,class (:foreground ,rose-pine-fg))))
+   ;; `(font-lock-warning-face ((,class (:foreground ,rose-pine-fg))))
+   ;; `(font-lock-regexp-grouping-construct ((t (:foreground ,rose-pine-fg :bold t))))
+   ;; `(font-lock-regexp-grouping-backslash ((t (:foreground ,rose-pine-fg :bold t))))
+
+   ;; Haskell mode specific faces
+   `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
+   `(haskell-constructor-face ((,class (:foreground ,rose-pine-foam))))  ; For type constructors like 'IO'
+   `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext1))))  ; For operators
+   `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
+   `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
+ 
+   ;; Org mode
+   `(org-block ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
+   `(org-block-begin-line ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
+   `(org-block-end-line ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
+   `(org-code ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
 
    ;; Line numbers
    `(linum ((,class (:foreground ,rose-pine-subtext1))))
    `(line-number ((,class (:foreground ,rose-pine-subtext1))))
-   `(line-number-current-line ((,class (:foreground ,rose-pine-fg))))
+   ;; `(line-number-current-line ((,class (:foreground ,rose-pine-fg))))
 
    ;; Region
    `(region ((,class ,rose-pine-region)))
@@ -51,13 +71,14 @@
 			      :background ,rose-pine-blendedlove
 			      :box (:line-width 1 :color ,rose-pine-bg)
 			      :weight normal))))  ; Set the weight to normal
-   `(mode-line-inactive ((,class (:foreground ,rose-pine-subtext1
-					      :background ,rose-pine-bg
-					      :box (:line-width 1 :color ,rose-pine-bg)
-					      :weight normal))))  ; Also for inactive
+   `(mode-line-inactive ((,class (:foreground ,rose-pine-love 
+			      :background ,rose-pine-blendedlove
+			      :box (:line-width 1 :color ,rose-pine-bg)
+			      :weight normal))))  ; Set the weight to normal
 
    ;; More faces
    `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
+   `(show-paren-match ((t (:background ,rose-pine-subtext1 :foreground ,rose-pine-fg :weight bold))))  ; Customize matching bracket appearance
    `(match ((,class (:background ,rose-pine-love :foreground ,rose-pine-bg))))
    `(minibuffer-prompt ((,class (:foreground ,rose-pine-iris))))
    `(trailing-whitespace ((,class (:background ,rose-pine-love))))

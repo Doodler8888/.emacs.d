@@ -57,9 +57,10 @@
   (setq display-line-numbers-type 'relative)
 
   (defun my-mode-line-major-mode ()
-    "Returns the name of the current major mode."
-    (format-mode-line mode-name))
-
+    "Returns a clean name of the current major mode."
+    (let ((mode (format "%s" major-mode)))
+      (replace-regexp-in-string "-mode$" "" mode)))  
+  
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
