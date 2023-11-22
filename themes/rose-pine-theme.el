@@ -38,7 +38,7 @@
    `(font-lock-type-face ((,class (:foreground ,rose-pine-iris))))
    `(font-lock-variable-name-face ((,class (:foreground ,rose-pine-fg))))
    `(font-lock-comment-face ((,class (:foreground ,rose-pine-subtext1))))
-   `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-fg))))
+   `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-subtext1))))
    ;; `(font-lock-doc-face ((,class (:foreground ,rose-pine-fg))))
    ;; `(font-lock-preprocessor-face ((,class (:foreground ,rose-pine-fg))))
    ;; `(font-lock-warning-face ((,class (:foreground ,rose-pine-fg))))
@@ -52,6 +52,24 @@
    `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
    `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
  
+   ;; Dired mode
+   ;; `(diredp-date-time ((,class (:foreground ,spaceway-fg))))
+   `(dired-directory ((,class (:foreground ,rose-pine-gold))))
+   ;; `(diredp-deletion ((,class (:foreground ,spaceway-red-0 :background ,spaceway-bg))))
+   ;; `(diredp-dir-heading ((,class (:foreground ,spaceway-yellow-0 :background ,spaceway-bg))))
+   `(diredp-dir-name ((,class (:foreground ,rose-pine-gold :background ,rose-pine-bg))))
+   ;; `(diredp-dir-priv ((,class (:foreground ,spaceway-green-2 :background ,spaceway-bg))))
+   ;; `(diredp-exec-priv ((,class (:foreground ,spaceway-fg :background ,spaceway-bg))))
+   ;; `(diredp-file-name ((,class (:foreground ,spaceway-fg))))
+   ;; `(diredp-file-suffix ((,class (:foreground ,spaceway-fg))))
+   ;; `(diredp-link-priv ((,class (:foreground ,spaceway-fg))))
+   ;; `(diredp-number ((,class (:foreground ,spaceway-fg))))
+   ;; `(diredp-no-priv ((,class (:foreground ,spaceway-fg :background ,spaceway-bg))))
+   ;; `(diredp-rare-priv ((,class (:foreground ,spaceway-red-0 :background ,spaceway-bg))))
+   ;; `(diredp-read-priv ((,class (:foreground ,spaceway-fg :background ,spaceway-bg))))
+   ;; `(diredp-symlink ((,class (:foreground ,spaceway-red-3))))
+   ;; `(diredp-write-priv ((,class (:foreground ,spaceway-fg :background ,spaceway-bg))))
+   
    ;; Org mode
    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
    `(org-block-begin-line ((t (:background ,rose-pine-blendedbg))))  ; Background for begin line
