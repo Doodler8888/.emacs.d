@@ -67,7 +67,10 @@
 
    ;; Ivy
    `(ivy-current-match ((,class (:background ,rose-pine-subtext1))))   
-   `(ivy-virtual ((,class (:foreground ,rose-pine-fg))))
+   ;; `(ivy-minibuffer-match-face-1 ((,class (:foreground ,rose-pine-fg))))
+   ;; `(ivy-minibuffer-match-face-2 ((,class (:foreground ,rose-pine-fg))))
+   ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
+   ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
 
    ;; Line numbers
    `(linum ((,class (:foreground ,rose-pine-subtext1))))
