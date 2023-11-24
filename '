@@ -590,7 +590,7 @@
   (defun fzf-from-home-with-fd ()
     "Starts fzf from the user's home directory using fd to include hidden files and exclude certain directories."
     (interactive)
-    (let ((process-environment (cons "FZF_DEFAULT_COMMAND=fd --type f --hidden --follow --exclude .git . ~ | sed -e 's/ /\\\\ /g'"
+    (let ((process-environment (cons "FZF_DEFAULT_COMMAND=fd --type f --hidden --follow --exclude .git --full-path . ~"
                                     process-environment))
           (default-directory "~/"))
       (fzf-directory)))

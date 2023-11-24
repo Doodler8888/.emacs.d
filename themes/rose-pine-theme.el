@@ -21,7 +21,7 @@
 
   (custom-theme-set-faces
    'rose-pine
-   
+
    ;; Default faces
    `(default ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
    `(fringe ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
