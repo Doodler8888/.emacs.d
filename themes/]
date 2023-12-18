@@ -46,6 +46,7 @@
 
    ;; Miscellanious
     (set-face-attribute 'vertical-border nil :foreground rose-pine-subtext)
+   `(truncation ((,class :foreground ,rose-pine-subtext)))
 
    ;; Haskell mode specific faces
    `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
@@ -62,8 +63,6 @@
    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
-    (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
-    (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
    ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
