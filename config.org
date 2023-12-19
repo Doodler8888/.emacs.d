@@ -109,7 +109,6 @@
 #+begin_src emacs-lisp
 
   ;; (server-start)
-  (setq shell-command-switch "-ic")
   (global-set-key (kbd "C-x u") 'windmove-up)
   (setq evil-want-keybinding nil)
 
@@ -383,7 +382,7 @@
 #+begin_src emacs-lisp
 
   (require 'color)
-  (hl-line-mode 1) 
+  ;; (hl-line-mode 1) 
 
   (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
   (load-theme 'rose-pine t)
@@ -519,12 +518,12 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package treesit-auto
-  ;;   :custom
-  ;;   (treesit-auto-install 'prompt)
-  ;;   :config
-  ;;   (treesit-auto-add-to-auto-mode-alist 'all)
-  ;;   (global-treesit-auto-mode))  
+  (use-package treesit-auto
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))  
 
 
   ;; (use-package tree-sitter
