@@ -58,12 +58,13 @@
   (setq inhibit-startup-screen t)
   (setq display-line-numbers 'visual)
   (setq display-line-numbers-type 'relative)
+  (setq-default truncate-lines nil)
 
   (defun my-mode-line-major-mode ()
     "Returns a clean name of the current major mode."
     (let ((mode (format "%s" major-mode)))
       (replace-regexp-in-string "-mode$" "" mode)))  
-  
+
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
@@ -84,10 +85,10 @@
 
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
-      '((t :background "#373c42" :foreground "#c0c5ce"))  ; A brighter blue for the background
+      '((t :background "#2e2c3d" :foreground "#c0c5ce"))  ;; #373c42 - previous background color
       "Face for the active tab.")
     (defface my-inactive-tab-face
-      '((t :background "#21242b" :foreground "#5B6268"))
+      '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
       "Face for the inactive tab.")
     (let ((current-p (eq (car tab) 'current-tab)))
       (if current-p
@@ -443,6 +444,7 @@
     "fd" '(counsel-find-file-check-dir :wk "Find file modified")
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+    "fz" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
 
     ;; Session management
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -516,35 +518,35 @@
 
 #+begin_src emacs-lisp
 
-  (use-package treesit-auto
-    :custom
-    (treesit-auto-install 'prompt)
-    :config
-    (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode))  
+  ;; (use-package treesit-auto
+  ;;   :custom
+  ;;   (treesit-auto-install 'prompt)
+  ;;   :config
+  ;;   (treesit-auto-add-to-auto-mode-alist 'all)
+  ;;   (global-treesit-auto-mode))  
 
 
-  (use-package tree-sitter
-    :config
-    (require 'tree-sitter-langs)
-    (global-tree-sitter-mode)
-    (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))  
+  ;; (use-package tree-sitter
+  ;;   :config
+  ;;   (require 'tree-sitter-langs)
+  ;;   (global-tree-sitter-mode)
+  ;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))  
 
-  (use-package tree-sitter-langs)
+  ;; (use-package tree-sitter-langs)
 
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+  ;; (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
-  (defvar tree-sitter-go-face-map
-    '((identifier . font-lock-variable-name-face)
-      (string . font-lock-string-face)
-      (comment . font-lock-comment-face)))
+  ;; (defvar tree-sitter-go-face-map
+  ;;   '((identifier . font-lock-variable-name-face)
+  ;;     (string . font-lock-string-face)
+  ;;     (comment . font-lock-comment-face)))
 
-  (defun tree-sitter-go--hl-face-mapping-function ()
-      tree-sitter-go-face-map)
-    (add-hook 'go-mode-hook
-              (lambda ()
-                (setq-local tree-sitter-hl-face-mapping-function
-                            #'tree-sitter-go--hl-face-mapping-function)))
+  ;; (defun tree-sitter-go--hl-face-mapping-function ()
+  ;;     tree-sitter-go-face-map)
+  ;;   (add-hook 'go-mode-hook
+  ;;             (lambda ()
+  ;;               (setq-local tree-sitter-hl-face-mapping-function
+  ;;                           #'tree-sitter-go--hl-face-mapping-function)))
 
   ;; (setq treesit-language-source-alist
   ;;  '((bash "https://github.com/tree-sitter/tree-sitter-bash")
@@ -643,9 +645,8 @@
   (defun fzf-from-home-with-fd ()
     "Starts fzf from the user's home directory using fd to include hidden files and exclude certain directories."
     (interactive)
-    (let ((process-environment (cons "FZF_DEFAULT_COMMAND=fd --type f --hidden --follow --exclude .git . ~ | sed -e 's/ /\\\\ /g'"
-                                    process-environment))
-          (default-directory "~/"))
+    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git .")
+    (let ((default-directory "~/"))
       (fzf-directory)))
 
   (defun fzf-from-home ()

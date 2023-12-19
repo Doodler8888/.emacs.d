@@ -46,6 +46,14 @@
 
    ;; Miscellanious
     (set-face-attribute 'vertical-border nil :foreground rose-pine-subtext)
+    (set-face-attribute 'tab-bar nil :background "color1")
+    (set-face-attribute 'tab-bar nil :height 1.05)
+    (set-face-attribute 'tab-bar nil
+                    :font "Noto Sans Mono-12:weight=medium")
+
+    (set-face-attribute 'tab-bar-tab nil
+			:font "Noto Sans Mono-12:weight=medium")
+
 
    ;; Haskell mode specific faces
    `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
@@ -78,7 +86,6 @@
    ;; Line numbers
    `(linum ((,class (:foreground ,rose-pine-subtext))))
    `(line-number ((,class (:foreground ,rose-pine-subtext))))
-   ;; `(line-number-current-line ((,class (:foreground ,rose-pine-fg))))
 
    ;; Region
    `(region ((,class ,rose-pine-region)))
