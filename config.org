@@ -108,7 +108,8 @@
 
 #+begin_src emacs-lisp
 
-  (server-start)
+  ;; (server-start)
+  (setq shell-command-switch "-ic")
   (global-set-key (kbd "C-x u") 'windmove-up)
   (setq evil-want-keybinding nil)
 
