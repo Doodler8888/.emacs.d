@@ -1,0 +1,50 @@
+echo "we hooked on silver, see things in mono"
+hi
+priv
+cd
+cd home/
+cd site/
+la
+cd home/wurfkreuz/
+ls
+cd /home/wurfkreuz
+laa
+ls
+cd /home/wurfkreuz/
+cd /home/
+/scp:root@159.89.97.125:/
+/ssh:root@159.89.97.125:/
+ls
+cd
+/scp:root@159.89.97.125:/
+ls
+cd /home/wurfkreuz/
+(tramp-cleanup-all-connections)
+/ssh:root@159.89.97.125:/
+ls
+cd  /home/wurfkreuz/site
+cd  /home/wurfkreuz
+cd  /home/wurfkreuz/asite
+/ssh:root@159.89.97.125:/
+sudo useradd -m newuser && echo 'newuser:password' | sudo chpasswd && sudo usermod -aG wheel newuser && sudo sed -i '/^# %wheel ALL=(ALL) ALL$/c\%wheel ALL=(ALL) ALL' /etc/sudoers
+ls
+cd home
+ls
+cd /home/newuser/
+/ssh:root@159.89.97.125:/
+ls
+cd /home/newuser
+ls
+/ssh:root@159.89.97.125:/
+cd /home
+/ssh:root@159.89.97.125:/
+cd /home
+/ssh:root@159.89.97.125:/home
+cd wurfkreuz/
+ls
+cd site/
+ls
+cd ..
+/scp:root@159.89.97.125:/home
+cd wurfkreuz/
+la

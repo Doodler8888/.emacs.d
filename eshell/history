@@ -1,0 +1,40 @@
+touch 123.go
+touch test.el
+la
+ls 
+ls
+go mode init blog
+go mod init blog
+mkdir services shared frontend deployment test 
+cd .local/share/
+ls
+mkdir trash
+cd .projects/blog/
+clear
+eshell/counsel-find-file-root
+eshell/counsel-file-jump-root
+my/counsel-file-jump
+counsel-find-file-root
+counsel-file-jump-from-root
+counsel-file-jump-from
+fzf-search-from-root
+fzf-directory
+fzf
+fzf-from-home
+cd
+..
+ls -la
+rm -rf .git
+git init
+git remote add origin git@github.com:Doodler8888/.dotfiles.git
+git push -u origin master
+git commit -m 'n'
+git add .
+git commit -m 'n'
+git push -u origin master
+git push -fu origin master
+cd /ssh:root@159.89.97.125:/home/
+adduser wurfkreuz
+su wurfkreuz/
+su wurfkreuz
+exit

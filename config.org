@@ -17,12 +17,14 @@
   - [[#theme-and-font][Theme and Font]]
   - [[#general][General]]
   - [[#search][Search]]
+  - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
   - [[#ivy][Ivy]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
   - [[#dired-keybindings][Dired keybindings]]
+- [[#tramp][Tramp]]
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
   - [[#vterm][Vterm]]
@@ -136,7 +138,7 @@
 
   (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
-  ;; Save cursos position
+  ;; Save cursor position
   (unless (file-exists-p (concat user-emacs-directory "saveplace/"))
     (make-directory (concat user-emacs-directory "saveplace/")))
   (save-place-mode 1)
@@ -158,6 +160,10 @@
   (setq-default truncate-lines t)
 
   (setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
+
+  (setq scroll-conservatively 101)
+  (setq scroll-margin 5)
+  (setq scroll-step 1)
 
 #+end_src
 
@@ -204,7 +210,7 @@
     (evil-ex-define-cmd "so" 'so))
 
   (defun z (q)
-    "Query zoxide  and launch dired."
+    "Query zoxide and launch dired."
     (interactive "sZoxide: ")
     (if-let
         ((zoxide (executable-find "zoxide"))
@@ -386,7 +392,6 @@
 
   (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
   (load-theme 'rose-pine t)
-  ;; (load-theme 'spaceway t)
 
   ;; (use-package gruvbox-theme
   ;;   :config
@@ -442,8 +447,9 @@
     ;; Fuzzy finder
     "fr" '(counsel-recentf :wk "Find recent files")
     "fd" '(counsel-find-file-check-dir :wk "Find file modified")
+    "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-    "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+    ;; "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
     "fz" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
 
     ;; Session management
@@ -514,16 +520,27 @@
   
 #+end_src
 
+** Acess to ENV variables
+
+#+begin_src emacs-lisp
+
+  (use-package exec-path-from-shell
+    :config
+    (exec-path-from-shell-initialize)
+    (exec-path-from-shell-copy-env "SSH_AUTH_SOCK"))
+
+#+end_src
+
 ** Treesitter
 
 #+begin_src emacs-lisp
 
-  (use-package treesit-auto
-    :custom
-    (treesit-auto-install 'prompt)
-    :config
-    (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode))  
+  ;; (use-package treesit-auto
+  ;;   :custom
+  ;;   (treesit-auto-install 'prompt)
+  ;;   :config
+  ;;   (treesit-auto-add-to-auto-mode-alist 'all)
+  ;;   (global-treesit-auto-mode))  
 
 
   ;; (use-package tree-sitter
@@ -584,12 +601,13 @@
 
   (use-package projectile
     :config
-    (projectile-mode +1))
+    (projectile-mode 1))
 
   (use-package counsel
     :after ivy
     :config 
     (counsel-mode))
+    ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
 
   (use-package ivy
     :bind
@@ -602,6 +620,15 @@
     (setq enable-recursive-minibuffers t)
     :config
     (ivy-mode))
+
+  (use-package ivy-posframe
+    :ensure t
+    :after ivy
+    :config
+    (ivy-posframe-mode 1))
+    (setq ivy-posframe-width 50)
+    (setq ivy-posframe-display-functions-alist
+        '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
   (use-package all-the-icons-ivy-rich
     :ensure t
@@ -643,17 +670,19 @@
   (use-package fzf)
 
   (defun fzf-from-home-with-fd ()
-    "Starts fzf from the user's home directory using fd to include hidden files and exclude certain directories."
+    "Starts fzf from the user's home directory using fd to include hidden files
+    and exclude certain directories but with an ability to interactively change
+    the searching directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git .")
     (let ((default-directory "~/"))
       (fzf-directory)))
 
-  (defun fzf-from-home ()
-    "Starts fzf from the user's home directory."
-    (interactive)
-    (let ((default-directory "~/"))
-      (fzf-directory)))
+  ;; (defun fzf-from-home ()
+  ;;   "Starts fzf from the user's home directory."
+  ;;   (interactive)
+  ;;   (let ((default-directory "~/"))
+  ;;     (fzf-directory)))
 
 #+end_src
 
@@ -725,6 +754,29 @@
   
 #+end_src
 
+* Tramp
+
+#+begin_src emacs-lisp
+
+  (require 'tramp)
+
+  (setq remote-file-name-inhibit-cache nil)
+  (setq vc-ignore-dir-regexp
+      (format "%s\\|%s"
+                    vc-ignore-dir-regexp
+                    tramp-file-name-regexp))
+
+  (with-eval-after-load 'tramp
+  (setq tramp-inline-compress-start-size 1000)
+  (setq tramp-copy-size-limit 10000)
+  (setq vc-handled-backends '(Git))
+  (setq tramp-verbose 1)
+  (setq tramp-default-method "scp")
+  (setq tramp-use-ssh-controlmaster-options nil)
+  (setq projectile--mode-line "Projectile"))
+
+#+end_src
+
 * Shells and Terminals
 ** Eshell
 
@@ -743,6 +795,8 @@
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
         eshell-history-size 5000
         eshell-buffer-maximum-lines 5000
+        eshell-save-history-on-exit t
+        eshell-history-file-name "~/.emacs.d/eshell_history"
         eshell-hist-ignoredups t
         eshell-scroll-to-bottom-on-input t
         eshell-destroy-buffer-when-process-dies t
@@ -763,8 +817,13 @@
 
   (defun setup-eshell-keys ()
     (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+    ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
   (add-hook 'eshell-mode-hook 'setup-eshell-keys)
+
+  (with-eval-after-load 'evil
+    (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+    (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
   ;; (defun my/counsel-file-jump ()
   ;;   "Jump to a file beneath the current directory using a custom find command to avoid permission errors."
