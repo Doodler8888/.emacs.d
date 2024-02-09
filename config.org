@@ -431,6 +431,7 @@
 
 #+begin_src emacs-lisp
 
+  ;;
   (use-package general
     :config
     (general-evil-setup)
@@ -509,12 +510,12 @@
 
         )
     (dotimes (i 9)
-	(let ((n (1+ i))) ; Tab numbers start from 1
-	  (general-def
-	    :states '(normal insert visual emacs)
-	    :keymaps 'override
-	    :prefix "SPC"
-	    (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
+        (let ((n (1+ i))) ; Tab numbers start from 1
+          (general-def
+            :states '(normal insert visual emacs)
+            :keymaps 'override
+            :prefix "SPC"
+            (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
   )
 
 #+end_src
