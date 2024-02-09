@@ -364,6 +364,20 @@
 
   ;; (global-set-key (kbd "C-x f") 'find-file)
 
+  (defun my/evil-terminal-cursor-change ()
+  (unless (display-graphic-p)
+    (cond
+     ((string= evil-state "insert")
+      (send-string-to-terminal "\033[6 q")) ; Line
+     ((string= evil-state "normal")
+      (send-string-to-terminal "\033[2 q"))))) ; Block
+
+  (add-hook 'evil-insert-state-entry-hook 'my/evil-terminal-cursor-change)
+  (add-hook 'evil-insert-state-exit-hook 'my/evil-terminal-cursor-change)
+  (add-hook 'evil-normal-state-entry-hook 'my/evil-terminal-cursor-change)
+  (add-hook 'evil-normal-state-exit-hook 'my/evil-terminal-cursor-change)
+
+
 #+end_src
 
 *** Custom keybindings
