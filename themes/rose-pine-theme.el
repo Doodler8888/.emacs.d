@@ -49,10 +49,10 @@
     (set-face-attribute 'tab-bar nil :background "color1")
     (set-face-attribute 'tab-bar nil :height 1.05)
     (set-face-attribute 'tab-bar nil
-                    :font "Noto Sans Mono-12:weight=medium")
+                    :font "NotoSansM Nerd Font Mono-12:weight=medium")
 
     (set-face-attribute 'tab-bar-tab nil
-			:font "Noto Sans Mono-12:weight=medium")
+			:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
 
    ;; Haskell mode specific faces

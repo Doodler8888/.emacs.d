@@ -387,15 +387,17 @@
 
 #+begin_src emacs-lisp
 
-  (require 'color)
-  ;; (hl-line-mode 1) 
+  ;; (require 'color)
+  ;;  (hl-line-mode 1) 
 
-  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
-  (load-theme 'rose-pine t)
+  ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
+  ;; (load-theme 'rose-pine t)
 
-  ;; (use-package gruvbox-theme
-  ;;   :config
-  ;;   (load-theme 'gruvbox t))
+  (use-package gruvbox-theme
+    :config
+    (load-theme 'gruvbox-dark-hard t))
+
+  ;; (use-package darcula-theme)
 
   ;; (use-package doom-themes
   ;;   :ensure t
@@ -406,8 +408,8 @@
   ;;   ;Corrects (and improves) org-mode's native fontification.
   ;;   (doom-themes-org-config))
 
-  (when (member "Noto Sans Mono" (font-family-list))
-    (set-face-attribute 'default nil :font "Noto Sans Mono-12:weight=medium")
+  (when (member "NotoSansM Nerd Font Mono" (font-family-list))
+    (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
     )
 
 #+end_src
@@ -449,7 +451,7 @@
     "fd" '(counsel-find-file-check-dir :wk "Find file modified")
     "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-    ;; "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+    "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
     "fz" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
 
     ;; Session management
@@ -506,6 +508,13 @@
     "es" '(counsel-esh-history :wk "Eshell history")
 
         )
+    (dotimes (i 9)
+	(let ((n (1+ i))) ; Tab numbers start from 1
+	  (general-def
+	    :states '(normal insert visual emacs)
+	    :keymaps 'override
+	    :prefix "SPC"
+	    (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
   )
 
 #+end_src
@@ -542,6 +551,8 @@
   ;;   (treesit-auto-add-to-auto-mode-alist 'all)
   ;;   (global-treesit-auto-mode))  
 
+  ;; (add-hook 'python-mode-hook #'tree-sitter-hl-mode)
+  ;; (add-hook 'go-mode-hook #'tree-sitter-hl-mode)
 
   ;; (use-package tree-sitter
   ;;   :config
@@ -620,7 +631,7 @@
     (setq enable-recursive-minibuffers t)
     :config
     (ivy-mode))
-
+  
   (use-package ivy-posframe
     :ensure t
     :after ivy
@@ -631,7 +642,6 @@
         '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
   (use-package all-the-icons-ivy-rich
-    :ensure t
     :init
     (all-the-icons-ivy-rich-mode 1))
 
@@ -1150,6 +1160,7 @@
   (use-package haskell-mode)
   ;; (use-package lua-mode)
   (use-package go-mode)
+  (use-package raku-mode)
   ;; (use-package markdown-mode
   ;;   :ensure t
   ;;   :mode ("README\\.md\\'" . gfm-mode)

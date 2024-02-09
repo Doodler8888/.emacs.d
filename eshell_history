@@ -4,7 +4,6 @@ priv
 cd
 cd home/
 cd site/
-la
 cd home/wurfkreuz/
 ls
 cd /home/wurfkreuz

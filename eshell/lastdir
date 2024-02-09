@@ -27,3 +27,4 @@
 ~
 /scp:root@159.89.97.125:/home
 /scp:root@159.89.97.125:/home/wurfkreuz
+/home/wurfkreuz/.dotfiles/scripts/raku
