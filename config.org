@@ -431,7 +431,6 @@
 
 #+begin_src emacs-lisp
 
-  ;;
   (use-package general
     :config
     (general-evil-setup)
