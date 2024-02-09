@@ -472,6 +472,7 @@
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
     "sd" '(delete-desktop-session :wk "Delete selected session")
     "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+    "sr" '(rename-desktop-session :wk "Rename a desktop session")
 
     ;; Tab management
     "tn" '(tab-bar-new-tab :wk "Create a new tab")
@@ -922,20 +923,20 @@
   If no session is loaded, prompt to create a new one. If MANUAL-SAVE is non-nil, show a message for existing sessions."
     (interactive "p") ; "p" passes a prefix argument, which is non-nil when called interactively
     (if current-desktop-session-name
-	(let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
-	  (unless (file-exists-p desktop-dir)
-	    (make-directory desktop-dir))
-	  (desktop-save desktop-dir)
-	  (when manual-save
-	    (message "Session '%s' saved." current-desktop-session-name)))
+        (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
+          (unless (file-exists-p desktop-dir)
+            (make-directory desktop-dir))
+          (desktop-save desktop-dir)
+          (when manual-save
+            (message "Session '%s' saved." current-desktop-session-name)))
       ;; No session is loaded, prompt to create a new one
       (let ((new-session-name (read-string "Enter new session name: ")))
-	(unless (string-empty-p new-session-name)
-	  (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
-	    (make-directory new-desktop-dir t)
-	    (setq current-desktop-session-name new-session-name)
-	    (desktop-save new-desktop-dir))))))
-    
+        (unless (string-empty-p new-session-name)
+          (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
+            (make-directory new-desktop-dir t)
+            (setq current-desktop-session-name new-session-name)
+            (desktop-save new-desktop-dir))))))
+
   (defun load-desktop-with-name ()
     "Load a desktop session by name, chosen from available sessions."
     (interactive)
@@ -968,6 +969,24 @@
                 (delete-directory session-path t)  ; 't' for recursive delete
                 (message "Deleted desktop session '%s'." session-name))
             (message "No such desktop session '%s'." session-name))))))
+  
+  (defun rename-desktop-session ()
+    "Renames the currently loaded desktop session."
+    (interactive)
+    ;; Check if there's a session loaded.
+    (if (not current-desktop-session-name)
+        (message "No desktop session is currently loaded.")
+      (let* ((new-name (read-string "New session name: "))
+            (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
+            (new-dir (concat user-emacs-directory "desktop/" new-name)))
+        ;; Check if the new session name is empty or the session already exists.
+        (if (or (string-empty-p new-name)
+                (file-exists-p new-dir))
+            (message "Invalid new session name or session already exists.")
+          ;; Rename the directory and update the session name.
+          (rename-file old-dir new-dir)
+          (setq current-desktop-session-name new-name)
+          (message "Session renamed to '%s'." new-name)))))
 
 #+end_src
 
