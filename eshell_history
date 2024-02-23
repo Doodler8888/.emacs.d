@@ -47,3 +47,5 @@ cd ..
 /scp:root@159.89.97.125:/home
 cd wurfkreuz/
 la
+which python
+which python3

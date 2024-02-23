@@ -116,6 +116,8 @@
 
   (setq vc-follow-symlinks t)
 
+  (setq python-shell-interpreter "/usr/bin/python3")
+
   (defalias 'yes-or-no-p 'y-or-n-p)
 
   ;; Set directory for undo-tree history files
@@ -347,35 +349,22 @@
     (setq evil-collection-mode-list '(dashboard eshell dired ibuffer vterm))
     (evil-collection-init))
 
-  (use-package evil-org
-    :after org
-    :config 
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys)
-    (add-hook 'org-mode-hook 'evil-org-mode)
-    (add-hook 'evil-org-mode-hook
-              (lambda ()
-                (evil-org-set-key-theme)))
-    :ensure nil)
+  ;; (use-package evil-org
+  ;;   :after org
+  ;;   :config 
+  ;;   (require 'evil-org-agenda)
+  ;;   (evil-org-agenda-set-keys)
+  ;;   (add-hook 'org-mode-hook 'evil-org-mode)
+  ;;   (add-hook 'evil-org-mode-hook
+  ;;             (lambda ()
+  ;;               (evil-org-set-key-theme)))
+  ;;   :ensure nil)
 
 
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
   ;; (global-set-key (kbd "C-x f") 'find-file)
-
-  (defun my/evil-terminal-cursor-change ()
-  (unless (display-graphic-p)
-    (cond
-     ((string= evil-state "insert")
-      (send-string-to-terminal "\033[6 q")) ; Line
-     ((string= evil-state "normal")
-      (send-string-to-terminal "\033[2 q"))))) ; Block
-
-  (add-hook 'evil-insert-state-entry-hook 'my/evil-terminal-cursor-change)
-  (add-hook 'evil-insert-state-exit-hook 'my/evil-terminal-cursor-change)
-  (add-hook 'evil-normal-state-entry-hook 'my/evil-terminal-cursor-change)
-  (add-hook 'evil-normal-state-exit-hook 'my/evil-terminal-cursor-change)
 
 
 #+end_src
@@ -526,7 +515,7 @@
     (dotimes (i 9)
         (let ((n (1+ i))) ; Tab numbers start from 1
           (general-def
-            :states '(normal insert visual emacs)
+            :states '(normal emacs)
             :keymaps 'override
             :prefix "SPC"
             (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
@@ -1363,3 +1352,4 @@
         (insert formatted-text))))
 
 #+end_src
+
