@@ -1,4 +1,3 @@
-~/.projects/blog
 /home/wurfkreuz/.local/share
 /home/wurfkreuz/.projects/blog
 ~/.projects/blog
@@ -30,3 +29,5 @@
 /home/wurfkreuz/.dotfiles/scripts/raku
 ~/.projects
 /home/wurfkreuz/.projects
+/home/wurfkreuz/.dotfiles/scripts/python
+/home/wurfkreuz/.dotfiles/scripts/python

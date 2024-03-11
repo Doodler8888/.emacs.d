@@ -400,8 +400,6 @@
     :config
     (load-theme 'gruvbox-dark-hard t))
 
-  ;; (use-package darcula-theme)
-
   ;; (use-package doom-themes
   ;;   :ensure t
   ;;   :config
