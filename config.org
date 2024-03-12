@@ -396,9 +396,9 @@
   ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
   ;; (load-theme 'rose-pine t)
 
-  (use-package gruvbox-theme
-    :config
-    (load-theme 'gruvbox-dark-hard t))
+  ;; (use-package gruvbox-theme
+  ;;   :config
+  ;;   (load-theme 'gruvbox-dark-hard t))
 
   ;; (use-package doom-themes
   ;;   :ensure t
@@ -546,12 +546,12 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package treesit-auto
-  ;;   :custom
-  ;;   (treesit-auto-install 'prompt)
-  ;;   :config
-  ;;   (treesit-auto-add-to-auto-mode-alist 'all)
-  ;;   (global-treesit-auto-mode))  
+  (use-package treesit-auto
+    ;; :custom
+    ;; (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))  
 
   ;; (add-hook 'python-mode-hook #'tree-sitter-hl-mode)
   ;; (add-hook 'go-mode-hook #'tree-sitter-hl-mode)
