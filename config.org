@@ -29,6 +29,7 @@
   - [[#eshell][Eshell]]
   - [[#vterm][Vterm]]
   - [[#cmd][Cmd]]
+- [[#database][Database]]
 - [[#sessions][Sessions]]
 - [[#buffers][Buffers]]
   - [[#windmove][Windmove]]
@@ -396,9 +397,9 @@
   ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
   ;; (load-theme 'rose-pine t)
 
-  ;; (use-package gruvbox-theme
-  ;;   :config
-  ;;   (load-theme 'gruvbox-dark-hard t))
+  (use-package gruvbox-theme
+    :config
+    (load-theme 'gruvbox-dark-hard t))
 
   ;; (use-package doom-themes
   ;;   :ensure t
@@ -876,6 +877,20 @@
 
 #+end_src
 
+* Database
+
+#+begin_src emacs-lisp
+
+  ;; (use-package emacs-edbi
+  ;;   :ensure t   ;; Ensure the package is installed
+  ;;   ;; :config     ;; Optional: Add your configuration here
+  ;;   ;;   ;; Example configuration:
+  ;;   ;;   (setq edbi-default-connection-alist
+  ;;   ;;         '(("my-db" . ("localhost" 3306 "my_database")))) 
+  ;; )
+
+#+end_src
+
 * Sessions
 
 #+begin_src emacs-lisp
@@ -1236,19 +1251,19 @@
       (setq lsp-idle-delay 0.1)
       (setq lsp-enable-symbol-highlighting nil)
 
-  (use-package lsp-ui
-    :after lsp-mode
-    :commands lsp-ui-mode
-    :custom
-    (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
-    (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
-    :hook (lsp-mode . lsp-ui-mode))
+  ;; (use-package lsp-ui
+  ;;   :after lsp-mode
+  ;;   :commands lsp-ui-mode
+  ;;   :custom
+  ;;   (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
+  ;;   (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
+  ;;   :hook (lsp-mode . lsp-ui-mode))
 
-  (defun my/lsp-ui-doc-hide ()
-    (unless (eq this-command 'lsp-ui-doc-focus-frame)
-      (lsp-ui-doc-hide)))
+  ;; (defun my/lsp-ui-doc-hide ()
+  ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
+  ;;     (lsp-ui-doc-hide)))
 
-  (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
+  ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
 
   (use-package lsp-haskell
       :ensure t
