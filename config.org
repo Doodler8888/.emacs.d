@@ -16,6 +16,7 @@
   - [[#evil-mode][Evil Mode]]
   - [[#theme-and-font][Theme and Font]]
   - [[#general][General]]
+  - [[#async][Async]]
   - [[#search][Search]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
@@ -451,11 +452,12 @@
   (w/leader-keys
 
     ;; Fuzzy finder
-    "fr" '(counsel-recentf :wk "Find recent files")
     "fd" '(counsel-find-file-check-dir :wk "Find file modified")
     "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+    "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
+    "ft" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
     "fz" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
 
     ;; Session management
@@ -521,6 +523,17 @@
             :prefix "SPC"
             (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
   )
+
+#+end_src
+
+** Async
+
+#+begin_src emacs-lisp
+
+  (use-package async
+    :config
+    (autoload 'dired-async-mode "dired-async.el" nil t)
+    (dired-async-mode 1))
 
 #+end_src
 
@@ -640,7 +653,7 @@
 
 #+end_src
 
-*** Fuzzy search
+*** Fzf
 
 #+begin_src emacs-lisp
 
@@ -648,12 +661,40 @@
 
   (defun fzf-from-home-with-fd ()
     "Starts fzf from the user's home directory using fd to include hidden files
-    and exclude certain directories but with an ability to interactively change
-    the searching directory."
+      and exclude certain directories but with an ability to interactively change
+      the searching directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git .")
     (let ((default-directory "~/"))
       (fzf-directory)))
+
+  (defun fzf-from-root-no-prompt ()
+    "Starts fzf from the user's root directory using fd to include hidden files
+    and exclude certain directories without prompting for a directory."
+    (interactive)
+    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+    (fzf))
+  
+  (defun fzf-from-home-no-prompt ()
+    "Starts fzf from the user's home directory using fd to include hidden files
+    and exclude certain directories without prompting for a directory."
+    (interactive)
+    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git . ~/")
+    (fzf))
+
+  (defun fzf-from-current-with-fd ()
+    "Starts fzf from the current directory using fd to include hidden files
+   and exclude certain directories. Works both locally and on remote servers."
+    (interactive)
+    ;; Set the FZF_DEFAULT_COMMAND environment variable
+    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git .")
+    ;; Check if the current directory is a TRAMP directory
+    (let ((tramp-address (file-remote-p default-directory)))
+      (if tramp-address
+          ;; If we're in a TRAMP directory, use the extracted address
+          (fzf-directory tramp-address)
+        ;; If not in a TRAMP directory, use the local home directory
+        (fzf-directory "~/"))))
 
   ;; (defun fzf-from-home ()
   ;;   "Starts fzf from the user's home directory."
@@ -737,20 +778,25 @@
 
   (require 'tramp)
 
-  (setq remote-file-name-inhibit-cache nil)
-  (setq vc-ignore-dir-regexp
-      (format "%s\\|%s"
-                    vc-ignore-dir-regexp
-                    tramp-file-name-regexp))
+  (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
+  (add-to-list 'tramp-connection-properties
+             (list (regexp-quote "/ssh:")
+                   "direct-async-process" t))
 
-  (with-eval-after-load 'tramp
-  (setq tramp-inline-compress-start-size 1000)
-  (setq tramp-copy-size-limit 10000)
-  (setq vc-handled-backends '(Git))
-  (setq tramp-verbose 1)
-  (setq tramp-default-method "scp")
-  (setq tramp-use-ssh-controlmaster-options nil)
-  (setq projectile--mode-line "Projectile"))
+  ;; (setq remote-file-name-inhibit-cache nil)
+  ;; (setq vc-ignore-dir-regexp
+  ;;     (format "%s\\|%s"
+  ;;                   vc-ignore-dir-regexp
+  ;;                   tramp-file-name-regexp))
+
+  ;; (with-eval-after-load 'tramp
+  ;; (setq tramp-inline-compress-start-size 1000)
+  ;; (setq tramp-copy-size-limit 10000)
+  ;; (setq vc-handled-backends '(Git))
+  ;; (setq tramp-verbose 1)
+  ;; (setq tramp-default-method "scp")
+  ;; (setq tramp-use-ssh-controlmaster-options nil)
+  ;; (setq projectile--mode-line "Projectile"))
 
 #+end_src
 
@@ -802,16 +848,27 @@
     (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
     (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
-  (add-hook 'eshell-first-time-mode-hook
-            #'eat-eshell-visual-command-mode)
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
-  
   ;; (defun my/counsel-file-jump ()
   ;;   "Jump to a file beneath the current directory using a custom find command to avoid permission errors."
   ;;   (interactive)
   ;;   (let ((default-directory "/")
   ;;         (counsel-file-jump-args '("-type" "f" "-not" "-path" "*/\\.*" "-not" "-path" "./proc/*" "-not" "-path" "./sys/*" "-not" "-path" "./dev/*" "-not" "-path" "./run/*" "-print")))
   ;;     (counsel-file-jump)))
+
+  (defun eshell/edit (filename)
+    "Open FILENAME in the current buffer, using the current TRAMP address."
+    (interactive "sEnter the filename to edit: ")
+    ;; Extract the current TRAMP address from the Eshell buffer's default directory
+    (let ((tramp-address (file-remote-p default-directory)))
+        (if tramp-address
+            ;; If we're in a TRAMP directory, use the extracted address
+            (find-file (concat tramp-address filename))
+          ;; If not in a TRAMP directory, fall back to a default address or prompt the user
+          (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
+          ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
+          )))
+  
+  (defalias 'e 'eshell/edit)
 
 #+end_src
 
@@ -821,6 +878,10 @@
 
   (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
   (require 'eat)
+
+  (add-hook 'eshell-first-time-mode-hook
+            #'eat-eshell-visual-command-mode)
+  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
 
   ;; (use-package emacs-eat
   ;; :elpaca '(emasc-eat :type git :host github :repo "kephale/emacs-eat"
@@ -1173,10 +1234,8 @@
 
 #+begin_src emacs-lisp
 
-  (use-package haskell-mode)
-  ;; (use-package lua-mode)
-  (use-package go-mode)
   (use-package raku-mode)
+  (use-package lua-mode)
   ;; (use-package markdown-mode
   ;;   :ensure t
   ;;   :mode ("README\\.md\\'" . gfm-mode)
