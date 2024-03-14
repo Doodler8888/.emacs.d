@@ -1222,7 +1222,7 @@
         (eshell/cd buffer-dir))))  
 
   (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory-popper))
+    (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
 #+end_src
 
