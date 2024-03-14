@@ -27,6 +27,7 @@
 - [[#tramp][Tramp]]
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
+  - [[#eat][EAT]]
   - [[#vterm][Vterm]]
   - [[#cmd][Cmd]]
 - [[#database][Database]]
@@ -269,7 +270,7 @@
 
 #+begin_src emacs-lisp
 
-  (defvar elpaca-installer-version 0.6)
+  (defvar elpaca-installer-version 0.7)
   (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
   (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
   (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -343,25 +344,26 @@
     :config
     (evil-commentary-mode))
 
+  (use-package evil-org
+    :after org
+    :config 
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys)
+    (add-hook 'org-mode-hook 'evil-org-mode)
+    (add-hook 'evil-org-mode-hook
+              (lambda ()
+                (evil-org-set-key-theme)))
+    )
+    ;; :ensure nil)
+
   (use-package evil-collection
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired ibuffer vterm))
+    (setq evil-collection-mode-list '(dashboard eshell dired ibuffer org emacs-eat vterm))
     (evil-collection-init))
 
-  ;; (use-package evil-org
-  ;;   :after org
-  ;;   :config 
-  ;;   (require 'evil-org-agenda)
-  ;;   (evil-org-agenda-set-keys)
-  ;;   (add-hook 'org-mode-hook 'evil-org-mode)
-  ;;   (add-hook 'evil-org-mode-hook
-  ;;             (lambda ()
-  ;;               (evil-org-set-key-theme)))
-  ;;   :ensure nil)
-
-
+  
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
@@ -554,46 +556,7 @@
     (treesit-auto-add-to-auto-mode-alist 'all)
     (global-treesit-auto-mode))  
 
-  ;; (add-hook 'python-mode-hook #'tree-sitter-hl-mode)
-  ;; (add-hook 'go-mode-hook #'tree-sitter-hl-mode)
-
-  ;; (use-package tree-sitter
-  ;;   :config
-  ;;   (require 'tree-sitter-langs)
-  ;;   (global-tree-sitter-mode)
-  ;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))  
-
-  ;; (use-package tree-sitter-langs)
-
-  ;; (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-
-  ;; (defvar tree-sitter-go-face-map
-  ;;   '((identifier . font-lock-variable-name-face)
-  ;;     (string . font-lock-string-face)
-  ;;     (comment . font-lock-comment-face)))
-
-  ;; (defun tree-sitter-go--hl-face-mapping-function ()
-  ;;     tree-sitter-go-face-map)
-  ;;   (add-hook 'go-mode-hook
-  ;;             (lambda ()
-  ;;               (setq-local tree-sitter-hl-face-mapping-function
-  ;;                           #'tree-sitter-go--hl-face-mapping-function)))
-
-  ;; (setq treesit-language-source-alist
-  ;;  '((bash "https://github.com/tree-sitter/tree-sitter-bash")
-  ;;    (cmake "https://github.com/uyha/tree-sitter-cmake")
-  ;;    (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-  ;;    (go "https://github.com/tree-sitter/tree-sitter-go")
-  ;;    (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
-  ;;    (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-  ;;    (html "https://github.com/tree-sitter/tree-sitter-html")
-  ;;    (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-  ;;    (json "https://github.com/tree-sitter/tree-sitter-json")
-  ;;    (make "https://github.com/alemuller/tree-sitter-make")
-  ;;    (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-  ;;    (python "https://github.com/tree-sitter/tree-sitter-python")
-  ;;    (toml "https://github.com/tree-sitter/tree-sitter-toml")
-  ;;    (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+  ;; (use-package font-lock)
 
 #+end_src
 
@@ -634,7 +597,7 @@
     (setq enable-recursive-minibuffers t)
     :config
     (ivy-mode))
-  
+
   (use-package ivy-posframe
     :ensure t
     :after ivy
@@ -644,6 +607,7 @@
     (setq ivy-posframe-display-functions-alist
         '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
+  ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
   (use-package all-the-icons-ivy-rich
     :init
     (all-the-icons-ivy-rich-mode 1))
@@ -816,21 +780,21 @@
         eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
 
   (add-hook 'eshell-mode-hook
-          (lambda ()
-            (setq-local scroll-margin 0)))
+            (lambda ()
+              (setq-local scroll-margin 0)))
 
   (defun eshell-insert-last-argument ()
     "Insert the last argument of the previous command."
     (interactive)
     (let* ((last-command (eshell-previous-input-string 0))
-          (args (split-string-and-unquote last-command))
-          (last-arg (car (last args))))
+           (args (split-string-and-unquote last-command))
+           (last-arg (car (last args))))
       (when last-arg
         (insert last-arg))))
 
   (defun setup-eshell-keys ()
     (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
-    ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+  ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
   (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
@@ -838,6 +802,10 @@
     (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
     (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
+  (add-hook 'eshell-first-time-mode-hook
+            #'eat-eshell-visual-command-mode)
+  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
+  
   ;; (defun my/counsel-file-jump ()
   ;;   "Jump to a file beneath the current directory using a custom find command to avoid permission errors."
   ;;   (interactive)
@@ -847,22 +815,35 @@
 
 #+end_src
 
+** EAT
+
+#+begin_src emacs-lisp
+
+  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
+  (require 'eat)
+
+  ;; (use-package emacs-eat
+  ;; :elpaca '(emasc-eat :type git :host github :repo "kephale/emacs-eat"
+  ;;           :build (:not compile)))
+
+#+end_src
+
 ** Vterm
 
 #+begin_src emacs-lisp
 
-  (use-package vterm
-    :ensure t
-    :config
-    ;; (add-hook 'vterm-mode-hook #'evil-insert-state)
-    ;; (add-hook 'vterm-mode-hook (lambda () (setq evil-default-state 'emacs)))
-    (setq vterm-shell "/bin/bash")
-    :bind (:map vterm-mode-map
-                ("M-e" . (lambda ()
-                           (interactive)
-                           (if (bound-and-true-p evil-local-mode)
-                               (evil-local-mode -1)
-                             (evil-local-mode 1))))))
+  ;; (use-package vterm
+  ;;   :ensure t
+  ;;   :config
+  ;;   ;; (add-hook 'vterm-mode-hook #'evil-insert-state)
+  ;;   ;; (add-hook 'vterm-mode-hook (lambda () (setq evil-default-state 'emacs)))
+  ;;   (setq vterm-shell "/bin/bash")
+  ;;   :bind (:map vterm-mode-map
+  ;;               ("M-e" . (lambda ()
+  ;;                          (interactive)
+  ;;                          (if (bound-and-true-p evil-local-mode)
+  ;;                              (evil-local-mode -1)
+  ;;                            (evil-local-mode 1))))))
 
 #+end_src
 
