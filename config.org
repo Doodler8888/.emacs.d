@@ -29,8 +29,8 @@
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
   - [[#eat][EAT]]
-  - [[#vterm][Vterm]]
   - [[#cmd][Cmd]]
+  - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
 - [[#sessions][Sessions]]
 - [[#buffers][Buffers]]
@@ -42,6 +42,8 @@
   - [[#vterm-buffer][Vterm buffer]]
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
+  - [[#posframe][Posframe]]
+  - [[#popper][Popper]]
 - [[#language-support][LANGUAGE SUPPORT]]
   - [[#lsp-bridge][Lsp-bridge]]
   - [[#flycheck][Flycheck]]
@@ -58,26 +60,25 @@
 
 #+begin_src emacs-lisp
 
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (setq inhibit-startup-screen t)
-  (setq display-line-numbers 'visual)
-  (setq display-line-numbers-type 'relative)
-  (setq-default truncate-lines nil)
+   (menu-bar-mode -1)
+   (tool-bar-mode -1)
+   (setq inhibit-startup-screen t)
+   (setq display-line-numbers 'visual)
+   (setq display-line-numbers-type 'relative)
 
-  (defun my-mode-line-major-mode ()
-    "Returns a clean name of the current major mode."
-    (let ((mode (format "%s" major-mode)))
-      (replace-regexp-in-string "-mode$" "" mode)))  
+   (defun my-mode-line-major-mode ()
+     "Returns a clean name of the current major mode."
+     (let ((mode (format "%s" major-mode)))
+       (replace-regexp-in-string "-mode$" "" mode)))  
 
-  (setq-default mode-line-format
-                '("%e"
-                  mode-line-front-space
-                  mode-line-buffer-identification  ; Buffer name
-                  " "
-                  (:eval (my-mode-line-major-mode))  ; Custom major mode display
-                  (:eval (propertize " " 'display '(space :align-to (- right 12))))
-                  (vc-mode vc-mode)))  ; Git branch information
+   (setq-default mode-line-format
+                 '("%e"
+                   mode-line-front-space
+                   mode-line-buffer-identification  ; Buffer name
+                   " "
+                   (:eval (my-mode-line-major-mode))  ; Custom major mode display
+                   (:eval (propertize " " 'display '(space :align-to (- right 12))))
+                   (vc-mode vc-mode)))  ; Git branch information
 
 #+end_src
 
@@ -90,10 +91,12 @@
 
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
-      '((t :background "#2e2c3d" :foreground "#c0c5ce"))  ;; #373c42 - previous background color
+      ;; '((t :background "#2e2c3d" :foreground "#c0c5ce"))  ;; #373c42 - previous background color
+      '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; #373c42 - previous background color
       "Face for the active tab.")
     (defface my-inactive-tab-face
-      '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
+    ;;   '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
+      '((t :background "#1d2021" :foreground "#a89984")) ;; #21242b - previous background color
       "Face for the inactive tab.")
     (let ((current-p (eq (car tab) 'current-tab)))
       (if current-p
@@ -479,6 +482,8 @@
     "bh" '(buf-move-left :wk "Swap with buffer left")
     "bl" '(buf-move-right :wk "Swap with buffer right")
 
+    "bc" '(kill-buffer :wk "Close selecetd buffer")
+
     "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
@@ -512,7 +517,10 @@
     "ex" '(eval-expression :wk "Evaluate and elisp expression")
     "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
     "er" '(eval-region :wk "Evaluate elisp in region")
+
+    ;; Eshell
     "es" '(counsel-esh-history :wk "Eshell history")
+    ;; "ef" '(vertico-buffers/eshell :wk "test")
 
         )
     (dotimes (i 9)
@@ -664,7 +672,7 @@
       and exclude certain directories but with an ability to interactively change
       the searching directory."
     (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git .")
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
     (let ((default-directory "~/"))
       (fzf-directory)))
 
@@ -672,22 +680,24 @@
     "Starts fzf from the user's root directory using fd to include hidden files
     and exclude certain directories without prompting for a directory."
     (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (fzf))
-  
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+    (let ((default-directory "~/"))
+    (fzf)))
+
   (defun fzf-from-home-no-prompt ()
     "Starts fzf from the user's home directory using fd to include hidden files
     and exclude certain directories without prompting for a directory."
     (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git . ~/")
-    (fzf))
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . ~/")
+    (let ((default-directory "~/"))
+    (fzf)))
 
   (defun fzf-from-current-with-fd ()
     "Starts fzf from the current directory using fd to include hidden files
    and exclude certain directories. Works both locally and on remote servers."
     (interactive)
     ;; Set the FZF_DEFAULT_COMMAND environment variable
-    (setenv "FZF_DEFAULT_COMMAND" "fd --type f --hidden --follow --exclude .git .")
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
     ;; Check if the current directory is a TRAMP directory
     (let ((tramp-address (file-remote-p default-directory)))
       (if tramp-address
@@ -889,25 +899,6 @@
 
 #+end_src
 
-** Vterm
-
-#+begin_src emacs-lisp
-
-  ;; (use-package vterm
-  ;;   :ensure t
-  ;;   :config
-  ;;   ;; (add-hook 'vterm-mode-hook #'evil-insert-state)
-  ;;   ;; (add-hook 'vterm-mode-hook (lambda () (setq evil-default-state 'emacs)))
-  ;;   (setq vterm-shell "/bin/bash")
-  ;;   :bind (:map vterm-mode-map
-  ;;               ("M-e" . (lambda ()
-  ;;                          (interactive)
-  ;;                          (if (bound-and-true-p evil-local-mode)
-  ;;                              (evil-local-mode -1)
-  ;;                            (evil-local-mode 1))))))
-
-#+end_src
-
 ** Cmd
 
 #+begin_src emacs-lisp
@@ -916,6 +907,20 @@
     "Search Hoogle for QUERY."
     (interactive "sHoogle search: ") ; Prompt for the search term
     (shell-command (concat "hoogle search " (shell-quote-argument query))))
+
+#+end_src
+
+** Cursor changer
+
+#+begin_src emacs-lisp
+
+  (use-package evil-terminal-cursor-changer
+    :config
+    (unless (display-graphic-p)
+      (require 'evil-terminal-cursor-changer)
+      (evil-terminal-cursor-changer-activate) ; or (etcc-on)
+      ) 
+    )
 
 #+end_src
 
@@ -1115,10 +1120,8 @@
 #+begin_src emacs-lisp
 
   (defun open-messages-buffer-in-split ()
-     (interactive)
-     (split-window-horizontally)
-     (other-window 1)
-     (switch-to-buffer "*Messages*"))
+    (interactive)
+    (switch-to-buffer "*Messages*"))
 
 #+end_src
 
@@ -1165,8 +1168,6 @@
 
   (setq explicit-shell-file-name "/usr/bin/bash")  ; your shell path here
   (setq explicit-bash-args '("--login" "-i"))
-
-  (add-hook 'shell-mode-hook 'ShellModeSetup)
 
   (defun SpawnShellSplitBelow ()
     "Open a shell in a small split below."
@@ -1219,7 +1220,10 @@
           (eshell-buffer (eshell 'N)))
       (with-current-buffer eshell-buffer
         (eshell/cd buffer-dir))))  
-  
+
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory-popper))
+
 #+end_src
 
 ** Transpose frame
@@ -1228,6 +1232,33 @@
 
   (use-package transpose-frame)
  
+#+end_src
+
+** Posframe
+
+#+begin_src emacs-lisp
+
+  (use-package vertico-posframe)
+
+#+end_src
+
+** Popper
+
+#+begin_src emacs-lisp
+
+  (use-package popper
+      :config
+      (popper-mode 1))
+
+  (defun my-popper-toggle-and-resize ()
+    "Toggle the Popper window and resize it to one-third of the frame height."
+    (interactive)
+    (popper-toggle)
+    (enlarge-window (- (floor (* 0.33 (frame-height))) (window-height))))
+
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "M-f") 'my-popper-toggle-and-resize))
+
 #+end_src
 
 * LANGUAGE SUPPORT

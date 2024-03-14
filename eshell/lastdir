@@ -1,10 +1,3 @@
-/ssh:root@159.89.97.125:/home/wurfkreuz
-/ssh:root@159.89.97.125:/home/wurfkreuz/site
-/ssh:root@159.89.97.125:/home/wurfkreuz
-/home/wurfkreuz/.emacs.d
-/ssh:root@159.89.97.125:/home/wurfkreuz
-/scp:root@159.89.97.125:
-/ssh:root@159.89.97.125:
 /home
 /
 /ssh:root@159.89.97.125:/home
@@ -20,7 +13,6 @@
 /home/wurfkreuz/.dotfiles/scripts/python
 /home/wurfkreuz/.dotfiles/scripts/python
 /home/wurfkreuz/.emacs.d/lisp
-/home/wurfkreuz/.emacs.d
 ~/.emacs.d/lisp
 /home/wurfkreuz/.emacs.d/lisp
 ~
@@ -30,3 +22,11 @@
 /ssh:root@164.92.138.157:/proc
 /ssh:root@164.92.138.157:
 /ssh:root@164.92.138.157:/root
+/home/wurfkreuz/.projects/shelf/cmd
+/home/wurfkreuz/.emacs.d
+/home/wurfkreuz/.emacs.d
+~
+/home/wurfkreuz/.emacs.d
+/home/wurfkreuz
+/home/wurfkreuz/Downloads
+/home/wurfkreuz/.emacs.d

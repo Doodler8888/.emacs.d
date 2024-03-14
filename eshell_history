@@ -62,13 +62,9 @@ emacs .bashrc
 dired
 cd snap
 ../
-la
 dired
-la
 ../
-la
 proc/
-la
 cd
 cd -
 cat version
@@ -79,10 +75,10 @@ emacs keys
 ~/
 cd -
 ../
-la
 root/
 ff .bashrc 
-la
 edit .bashrc
 e .bashrc 
 edit .bashrc 
+sudo pacman -S tree-sitter
+la
