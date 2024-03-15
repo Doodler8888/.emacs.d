@@ -1,1 +1,2 @@
 alias la ls -la
+alias install sudo pacman -Syu

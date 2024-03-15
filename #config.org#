@@ -111,18 +111,21 @@
       (global-set-key (kbd (format "M-%d" n))
                       `(lambda () (interactive) (tab-bar-select-tab ,n)))))
 
-  (defun my-create-or-switch-to-scratch-tab ()
-    "Create a new tab named 'scratch' with a scratch buffer, or switch to an existing 'scratch' tab."
-    (interactive)
-    (let* ((tabs (tab-bar-tabs))
-          (scratch-tab (seq-find (lambda (tab)
-                                    (string= (alist-get 'name tab) "scratch"))
-                                  tabs)))
-      (if scratch-tab
-          (tab-bar-select-tab (seq-position tabs scratch-tab))
-        (tab-bar-new-tab)
-        (tab-bar-rename-tab "scratch")
-        (switch-to-buffer (get-buffer-create "*scratch*")))))
+(defun my-create-or-switch-to-scratch-tab ()
+  "Create a new tab named 'scratch' with a scratch buffer, or switch to an existing 'scratch' tab."
+  (interactive)
+  (let* ((tabs (tab-bar-tabs))
+         (scratch-tab (seq-find (lambda (tab)
+                                  (string= (alist-get 'name tab) "scratch"))
+                                tabs)))
+    (if scratch-tab
+        (progn
+          (message "Switching to existing 'scratch' tab")
+          (tab-bar-select-tab-by-name "scratch"))
+      (message "Creating a new 'scratch' tab")
+      (tab-bar-new-tab)
+      (tab-bar-rename-tab "scratch")
+      (switch-to-buffer (get-buffer-create "*scratch*")))))
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "M-f") 'my-create-or-switch-to-scratch-tab))
@@ -1222,32 +1225,65 @@
 
 #+begin_src emacs-lisp
 
-  (defun SpawnEshellSplitBelow ()
-    "Open a shell in a small split below."
-    (interactive)
+    ;; (defun SpawnEshellSplitBelow ()
+    ;;   "Open a shell in a small split below."
+    ;;   (interactive)
+    ;;   (split-window-below -10)
+    ;;   (other-window 1)
+    ;;   (open-eshell-in-current-directory))
+
+    ;; (defun open-eshell-in-current-directory ()
+    ;;   "Open eshell in the directory of the current buffer."
+    ;;   (interactive)
+    ;;   (let* ((buffer-dir (if (buffer-file-name)
+    ;;                         (file-name-directory (buffer-file-name))
+    ;;                       default-directory))
+    ;;         (eshell-buffer (eshell 'N)))
+    ;;     (with-current-buffer eshell-buffer
+    ;;       (eshell/cd buffer-dir))))  
+
+(defvar eshell-toggle-window-configuration nil
+  "Variable to store the window configuration before opening eshell.")
+
+(defun SpawnEshellSplitBelow ()
+  "Open a shell in a small split below or toggle it if already open."
+  (interactive)
+  (if (eq major-mode 'eshell-mode)
+      (progn
+        (when eshell-toggle-window-configuration
+          (set-window-configuration eshell-toggle-window-configuration)
+          (setq eshell-toggle-window-configuration nil))
+        (other-window 1))
+    (setq eshell-toggle-window-configuration (current-window-configuration))
     (split-window-below -10)
     (other-window 1)
-    (open-eshell-in-current-directory))
+    (open-eshell-in-current-directory)))
 
-  (defun open-eshell-in-current-directory ()
-    "Open eshell in the directory of the current buffer."
-    (interactive)
-    (let* ((buffer-dir (if (buffer-file-name)
-                          (file-name-directory (buffer-file-name))
-                        default-directory))
-          (eshell-buffer (eshell 'N)))
-      (with-current-buffer eshell-buffer
-        (eshell/cd buffer-dir))))  
+(defun open-eshell-in-current-directory ()
+  "Open eshell in the directory of the current buffer.
+If an eshell buffer for the directory already exists, switch to it."
+  (interactive)
+  (let* ((buffer-dir (if (buffer-file-name)
+                         (file-name-directory (buffer-file-name))
+                       default-directory))
+         (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+    (if existing-eshell-buffer
+        (switch-to-buffer existing-eshell-buffer)
+      (let ((eshell-buffer (eshell 'N)))
+        (with-current-buffer eshell-buffer
+          (rename-buffer eshell-buffer-name)
+          (eshell/cd buffer-dir))))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
+    (with-eval-after-load 'evil
+      (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
-  (defun kill-all-eshell-buffers ()
-    "Kill all Eshell buffers."
-    (interactive)
-    (dolist (buffer (buffer-list))
-      (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
-        (kill-buffer buffer))))
+    (defun kill-all-eshell-buffers ()
+      "Kill all Eshell buffers."
+      (interactive)
+      (dolist (buffer (buffer-list))
+        (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
+          (kill-buffer buffer))))
 
 #+end_src
 
@@ -1302,35 +1338,6 @@
   ;;   (define-key evil-normal-state-map (kbd "M-n") 'my-popper-and-resize-new)
   ;;   (define-key evil-normal-state-map (kbd "M-f") 'my-popper-toggle))
 
-#+end_src
-
-
-** Scratch
-
-#+begin_src emacs-lisp
-
-    (defvar persistent-scratch-buffer nil
-    "The persistent scratch buffer.")
-
-  (defun toggle-persistent-scratch-buffer ()
-    "Toggle the visibility of the persistent scratch buffer."
-    (interactive)
-    (if (and persistent-scratch-buffer (buffer-live-p persistent-scratch-buffer))
-        (let ((window (get-buffer-window persistent-scratch-buffer)))
-          (if window
-              (delete-window window)
-            (pop-to-buffer persistent-scratch-buffer)))
-      (setq persistent-scratch-buffer (get-buffer-create "*persistent-scratch*"))
-      (switch-to-buffer persistent-scratch-buffer)))
-
-  (defun persistent-scratch-buffer-setup ()
-    "Set up the persistent scratch buffer."
-    (when (eq (current-buffer) persistent-scratch-buffer)
-      (emacs-lock-mode 'kill)
-      (setq buffer-offer-save t)))
-
-  (add-hook 'persistent-scratch-buffer-setup-hook 'persistent-scratch-buffer-setup)
-  
 #+end_src
 
 * LANGUAGE SUPPORT
