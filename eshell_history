@@ -82,3 +82,80 @@ e .bashrc
 edit .bashrc 
 sudo pacman -S tree-sitter
 la
+echo sometihgi
+install qemu
+install qemu-base
+md .virtual_machines
+la
+take test1
+take -h
+take test1
+take
+take testdir
+..
+rm -rf testdir/
+la
+la .emacs.d/
+so
+d .virtual_machines/
+d .virtual_machines
+cd
+d .virtual_machines/
+take zellij
+qemu-img create -f qcow2 zellij-vm.qcow2 20G
+qemu-system-x86_64 -m 2048 -hda zellij-vm.qcow2 -cdrom /path/to/minimal-iso-image.iso -boot d
+la
+curl -L -o ~/Downloads/archlinux-2024.03.01-x86_64.iso https://geo.mirror.pkgbuild.com/iso/2024.03.01/archlinux-2024.03.01-x86_64.iso
+qemu-system-x86_64 -m 2048 -hda zellij-vm.qcow2 -cdrom ~/Downloads/archlinux-2024.03.01-x86_64.iso -boot d
+install virtualbox-host-modules-arch
+install  virtualbox 
+virtualbox
+install vagrant
+vagrant init archlinux/archlinux
+sudo vagrant init archlinux/archlinux
+sudo usermod -aG vboxusers $USER
+sudo vagrant init archlinux/archlinux
+ls -ld /usr/lib/locale
+su
+which vagrant
+sudo /usr/bin/vagrant init archlinux/archlinux
+sudo pacman -Rs virtualbox
+vagrant
+/usr/lib/locale
+la
+..
+ld /usr/lib/locale/
+la
+sudo /usr/bin/vagrant init archlinux/archlinux
+sudo /usr/bin/vagrant init archlinux/archlinux --debug
+vboxmanage --version
+which virtualbox
+install virtaulbox
+install virtualbox
+which virtualbox
+vboxmanage --version
+sudo /sbin/vboxconfig
+install virtualbox-host-modules-arch
+uname -r
+sudo modprobe vboxdrv
+sudo modprobe vboxnetadp
+sudo modprobe vboxnetflt
+lsmod | grep vbox
+vboxmanage --version
+install sudo-askpass
+(alias-table)
+grep SUDO_ASKPASS ~/.zshrc
+(alias-table)(function-table)
+sudo visudo
+sudo -v
+(eshell-path-env)
+print eshell-path-env
+print $eshell-path-env
+which sudo
+ls -la | grep zsh
+ls -la
+clear
+which *sudo
+sudo ls
+which eshell
+which sudo

@@ -1,2 +1,7 @@
-alias la ls -la
-alias install sudo pacman -Syu
+alias la ls -la $1
+alias install sudo pacman -Syu $1
+alias md mkdir $1
+alias take mkdir $1 && cd $1
+alias rf rm -rf $1
+alias d cd $1 && ls -la
+alias sudo eshell/sudo $*

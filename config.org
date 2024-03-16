@@ -44,7 +44,6 @@
   - [[#transpose-frame][Transpose frame]]
   - [[#posframe][Posframe]]
   - [[#popper][Popper]]
-  - [[#scratch][Scratch]]
 - [[#language-support][LANGUAGE SUPPORT]]
   - [[#lsp-bridge][Lsp-bridge]]
   - [[#flycheck][Flycheck]]
@@ -55,6 +54,7 @@
   - [[#source-block-tag-expansion-cheetsheat][Source Block Tag Expansion Cheetsheat]]
   - [[#enabling-table-of-contents][Enabling Table of Contents]]
   - [[#custom-key-bindings][Custom key bindings]]
+- [[#custom-functions][Custom functions]]
 
 * GENERAL EMACS SETTING
 ** Visual
@@ -70,7 +70,7 @@
    (defun my-mode-line-major-mode ()
      "Returns a clean name of the current major mode."
      (let ((mode (format "%s" major-mode)))
-       (replace-regexp-in-string "-mode$" "" mode)))  
+       (replace-regexp-in-string "-mode$" "" mode)))
 
    (setq-default mode-line-format
                  '("%e"
@@ -88,7 +88,7 @@
 #+begin_src emacs-lisp
 
   (setq tab-bar-close-button-show nil
-      tab-bar-new-button-show nil)
+        tab-bar-new-button-show nil)
 
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
@@ -96,7 +96,7 @@
       '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; #373c42 - previous background color
       "Face for the active tab.")
     (defface my-inactive-tab-face
-    ;;   '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
+      ;;   '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
       '((t :background "#1d2021" :foreground "#a89984")) ;; #21242b - previous background color
       "Face for the inactive tab.")
     (let ((current-p (eq (car tab) 'current-tab)))
@@ -115,19 +115,27 @@
     "Create a new tab named 'scratch' with a scratch buffer, or switch to an existing 'scratch' tab."
     (interactive)
     (let* ((tabs (tab-bar-tabs))
-          (scratch-tab (seq-find (lambda (tab)
+           (scratch-tab (seq-find (lambda (tab)
                                     (string= (alist-get 'name tab) "scratch"))
                                   tabs)))
       (if scratch-tab
-          (tab-bar-select-tab (seq-position tabs scratch-tab))
+          (progn
+            (message "Switching to existing 'scratch' tab")
+            (tab-bar-select-tab-by-name "scratch"))
+        (message "Creating a new 'scratch' tab")
         (tab-bar-new-tab)
         (tab-bar-rename-tab "scratch")
-        (switch-to-buffer (get-buffer-create "*scratch*")))))
+        (switch-to-buffer (get-buffer-create "scratch")))))
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "M-f") 'my-create-or-switch-to-scratch-tab))
-  
-#+end_src
+
+  (defun tab-bar-tab-exists (name)
+    (member name
+            (mapcar #'(lambda (tab) (alist-get 'name tab))
+                    (tab-bar-tabs))))
+
+    #+end_src
 
 ** System
 
@@ -142,6 +150,15 @@
   (setq python-shell-interpreter "/usr/bin/python3")
 
   (defalias 'yes-or-no-p 'y-or-n-p)
+
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+  (setq-default indent-tabs-mode nil)
+  (electric-pair-mode 1)
+  (savehist-mode 1)
+
+  ;; Executable on save if starts with '#!'
+  (add-hook 'after-save-hook
+          'executable-make-buffer-file-executable-if-script-p)
 
   ;; Set directory for undo-tree history files
   (setq undo-tree-auto-save-history t)
@@ -192,21 +209,6 @@
 
 #+end_src
 
-*** Garbage Collection
-
-#+begin_src emacs-lisp
-
-   (defun my-minibuffer-setup-hook ()
-     (setq gc-cons-threshold most-positive-fixnum))
-
-   (defun my-minibuffer-exit-hook ()
-     (setq gc-cons-threshold 800000))
-
-   (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
-   (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
-
-#+end_src
- 
 ** Custom Commands
 
 #+begin_src emacs-lisp
@@ -215,6 +217,11 @@
     "Open a specific file."
     (interactive)
     (find-file "~/.emacs.d/config.org"))
+
+  (defun alc ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.dotfiles/zellij/config.kdl"))
 
   (defun zsh ()
     "Open a specific file."
@@ -367,7 +374,7 @@
 
   (use-package evil-org
     :after org
-    :config 
+    :config
     (require 'evil-org-agenda)
     (evil-org-agenda-set-keys)
     (add-hook 'org-mode-hook 'evil-org-mode)
@@ -384,7 +391,7 @@
     (setq evil-collection-mode-list '(dashboard eshell dired ibuffer org emacs-eat vterm))
     (evil-collection-init))
 
-  
+
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
@@ -403,7 +410,7 @@
     (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
     (define-key evil-insert-state-map (kbd "M-f") 'evil-forward-word-begin)
     (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin)
-  
+
     (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
     (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
 
@@ -415,23 +422,23 @@
 #+begin_src emacs-lisp
 
   ;; (require 'color)
-  ;;  (hl-line-mode 1) 
+  ;;  (hl-line-mode 1)
 
   ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
   ;; (load-theme 'rose-pine t)
 
-  (use-package gruvbox-theme
-    :config
-    (load-theme 'gruvbox-dark-hard t))
-
-  ;; (use-package doom-themes
-  ;;   :ensure t
+  ;; (use-package gruvbox-theme
   ;;   :config
-  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-  ;;   (load-theme 'doom-one t)
-  ;;   ;Corrects (and improves) org-mode's native fontification.
-  ;;   (doom-themes-org-config))
+  ;;   (load-theme 'gruvbox-dark-hard t))
+
+  (use-package doom-themes
+    :ensure t
+    :config
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+    (load-theme 'doom-one t)
+    ;Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
 
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
@@ -479,6 +486,7 @@
     "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
     "ft" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
     "fz" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
+    "fr" '(fzf-from-root-no-prompt :wk "Fzf with fd and hidden files form root")
 
     ;; Session management
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -491,7 +499,7 @@
     "tx" '(tab-bar-close-tab :wk "Close a tab")
     "tr" '(tab-bar-rename-tab :wk "Rename a tab")
 
-    "w"  'hydra-window-size/body 
+    "w"  'hydra-window-size/body
 
     ;; Window swapping
     "bk" '(buf-move-up :wk "Swap with buffer above")
@@ -570,7 +578,7 @@
   (use-package rg
    :config
    (rg-enable-default-bindings))
-  
+
 #+end_src
 
 ** Acess to ENV variables
@@ -593,7 +601,7 @@
     ;; (treesit-auto-install 'prompt)
     :config
     (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode))  
+    (global-treesit-auto-mode))
 
   ;; (use-package font-lock)
 
@@ -621,7 +629,7 @@
 
   (use-package counsel
     :after ivy
-    :config 
+    :config
     (counsel-mode))
     ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
 
@@ -784,8 +792,8 @@
 
   (setq delete-by-moving-to-trash t
         trash-directory "~/.local/share/trash")
-  
-  (setq wdired-allow-to-create-files t) 
+
+  (setq wdired-allow-to-create-files t)
   (setq wdired-allow-to-change-permissions t)
 
   (setq evil-move-cursor-back nil)
@@ -800,7 +808,7 @@
 
   ;; (evil-define-key 'normal dired-mode-map
   ;;   (kbd "+") 'dired-create-directory))
-  
+
 #+end_src
 
 * Tramp
@@ -811,23 +819,25 @@
 
   (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
   (add-to-list 'tramp-connection-properties
-             (list (regexp-quote "/ssh:")
-                   "direct-async-process" t))
+               (list (regexp-quote "/ssh:")
+                     "direct-async-process" t))
 
-  ;; (setq remote-file-name-inhibit-cache nil)
-  ;; (setq vc-ignore-dir-regexp
-  ;;     (format "%s\\|%s"
-  ;;                   vc-ignore-dir-regexp
-  ;;                   tramp-file-name-regexp))
+  ;; cache file-name forever
+  (setq remote-file-name-inhibit-cache nil)
 
-  ;; (with-eval-after-load 'tramp
-  ;; (setq tramp-inline-compress-start-size 1000)
-  ;; (setq tramp-copy-size-limit 10000)
-  ;; (setq vc-handled-backends '(Git))
-  ;; (setq tramp-verbose 1)
-  ;; (setq tramp-default-method "scp")
-  ;; (setq tramp-use-ssh-controlmaster-options nil)
-  ;; (setq projectile--mode-line "Projectile"))
+  ;; make sure vc stuff is not making tramp slower
+  (setq vc-ignore-dir-regexp
+        (format "%s\\|%s"
+                vc-ignore-dir-regexp
+                tramp-file-name-regexp))
+
+  ;; not sure why we have this? just cargo-culting from an answer I saw
+  ;; online.
+  (setq tramp-verbose 1)
+
+  ;; projectile has the fun side-effect of wanting to calculate the
+  ;; project name, which makes tramp oh-so-much-slower.
+  (setq projectile-mode-line "Projectile")
 
 #+end_src
 
@@ -843,7 +853,7 @@
 
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-        eshell-history-size 5000
+        eshell-history-size 1000000
         eshell-buffer-maximum-lines 5000
         eshell-save-history-on-exit t
         eshell-history-file-name "~/.emacs.d/eshell_history"
@@ -898,6 +908,11 @@
 
   (defalias 'e 'eshell/edit)
 
+  (require 'em-tramp) ; to load eshell’s sudo
+  (setq eshell-prefer-lisp-functions t)
+  (setq password-cache t) ; enable password caching
+  (setq password-cache-expiry 3600) ; for one hour (time in secs)
+
 #+end_src
 
 ** Eat
@@ -937,7 +952,7 @@
     (unless (display-graphic-p)
       (require 'evil-terminal-cursor-changer)
       (evil-terminal-cursor-changer-activate) ; or (etcc-on)
-      ) 
+      )
     )
 
 #+end_src
@@ -951,7 +966,7 @@
   ;;   ;; :config     ;; Optional: Add your configuration here
   ;;   ;;   ;; Example configuration:
   ;;   ;;   (setq edbi-default-connection-alist
-  ;;   ;;         '(("my-db" . ("localhost" 3306 "my_database")))) 
+  ;;   ;;         '(("my-db" . ("localhost" 3306 "my_database"))))
   ;; )
 
 #+end_src
@@ -1004,6 +1019,30 @@
             (setq current-desktop-session-name new-session-name)
             (desktop-save new-desktop-dir))))))
 
+  (defun load-desktop-session (session-name)
+    "Load a desktop session by name."
+    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+      (setq current-desktop-session-name session-name)
+      (desktop-change-dir (concat desktop-dir session-name "/"))
+      ;; Set up the autosave timer when a new session is loaded
+      (when desktop-autosave-timer
+        (cancel-timer desktop-autosave-timer))
+      (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
+
+  ;; (defun load-desktop-session (session-name)
+  ;; "Load a desktop session by name."
+  ;; (interactive "sEnter session name: ")
+  ;; (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+  ;;   (when current-desktop-session-name
+  ;;     ;; Save the current session before loading a new one, but only if a session is already loaded.
+  ;;     (save-current-desktop-session))
+  ;;   (setq current-desktop-session-name session-name)
+  ;;   (desktop-change-dir (concat desktop-dir session-name "/"))
+  ;;   ;; Set up the autosave timer when a new session is loaded
+  ;;   (when desktop-autosave-timer
+  ;;     (cancel-timer desktop-autosave-timer))
+  ;;   (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
+
   (defun load-desktop-with-name ()
     "Load a desktop session by name, chosen from available sessions."
     (interactive)
@@ -1011,8 +1050,8 @@
       ;; Save the current session before loading a new one, but only if a session is already loaded.
       (save-current-desktop-session))
     (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-          (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-          (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+           (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
       (setq current-desktop-session-name session-name)  ; Save the session name globally
       (desktop-change-dir (concat desktop-dir session-name "/"))
       ;; Set up the autosave timer when a new session is loaded
@@ -1027,8 +1066,8 @@
     "Delete a desktop session by name, chosen from available sessions."
     (interactive)
     (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-          (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-          (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
+           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+           (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
       (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
         (let ((session-path (concat desktop-dir session-name)))
           (if (file-directory-p session-path)
@@ -1036,7 +1075,7 @@
                 (delete-directory session-path t)  ; 't' for recursive delete
                 (message "Deleted desktop session '%s'." session-name))
             (message "No such desktop session '%s'." session-name))))))
-  
+
   (defun rename-desktop-session ()
     "Renames the currently loaded desktop session."
     (interactive)
@@ -1044,8 +1083,8 @@
     (if (not current-desktop-session-name)
         (message "No desktop session is currently loaded.")
       (let* ((new-name (read-string "New session name: "))
-            (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
-            (new-dir (concat user-emacs-directory "desktop/" new-name)))
+             (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
+             (new-dir (concat user-emacs-directory "desktop/" new-name)))
         ;; Check if the new session name is empty or the session already exists.
         (if (or (string-empty-p new-name)
                 (file-exists-p new-dir))
@@ -1090,7 +1129,7 @@
      (interactive)
      (let* ((other-win (windmove-find-other-window 'down))
  	   (buf-this-buf (window-buffer (selected-window))))
-       (if (or (null other-win) 
+       (if (or (null other-win)
  	      (string-match "^ \\*Minibuf" (buffer-name (window-buffer other-win))))
  	  (error "No window under this one")
  	;; swap top with this one
@@ -1222,25 +1261,65 @@
 
 #+begin_src emacs-lisp
 
+  ;; (defun SpawnEshellSplitBelow ()
+  ;;   "Open a shell in a small split below."
+  ;;   (interactive)
+  ;;   (split-window-below -10)
+  ;;   (other-window 1)
+  ;;   (open-eshell-in-current-directory))
+
+  ;; (defun open-eshell-in-current-directory ()
+  ;;   "Open eshell in the directory of the current buffer."
+  ;;   (interactive)
+  ;;   (let* ((buffer-dir (if (buffer-file-name)
+  ;;                         (file-name-directory (buffer-file-name))
+  ;;                       default-directory))
+  ;;         (eshell-buffer (eshell 'N)))
+  ;;     (with-current-buffer eshell-buffer
+  ;;       (eshell/cd buffer-dir))))
+
+  (defvar
+eshell-toggle-window-configuration nil
+    "Variable to store the window configuration before opening eshell.")
+
+  (defvar eshell-toggle-selected-window nil
+    "Variable to store the selected window before opening eshell.")
+
   (defun SpawnEshellSplitBelow ()
-    "Open a shell in a small split below."
+    "Open a shell in a small split below or toggle it if already open."
     (interactive)
-    (split-window-below -10)
-    (other-window 1)
-    (open-eshell-in-current-directory))
+    (if (eq major-mode 'eshell-mode)
+        (progn
+          (when eshell-toggle-window-configuration
+            (set-window-configuration eshell-toggle-window-configuration)
+            (setq eshell-toggle-window-configuration nil))
+          (when eshell-toggle-selected-window
+            (select-window eshell-toggle-selected-window)
+            (setq eshell-toggle-selected-window nil)))
+      (setq eshell-toggle-window-configuration (current-window-configuration))
+      (setq eshell-toggle-selected-window (selected-window))
+      (split-window-below -10)
+      (other-window 1)
+      (open-eshell-in-current-directory)))
 
   (defun open-eshell-in-current-directory ()
-    "Open eshell in the directory of the current buffer."
+    "Open eshell in the directory of the current buffer.
+  If an eshell buffer for the directory already exists, switch to it."
     (interactive)
     (let* ((buffer-dir (if (buffer-file-name)
-                          (file-name-directory (buffer-file-name))
-                        default-directory))
-          (eshell-buffer (eshell 'N)))
-      (with-current-buffer eshell-buffer
-        (eshell/cd buffer-dir))))  
+                           (file-name-directory (buffer-file-name))
+                         default-directory))
+           (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+           (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+      (if existing-eshell-buffer
+          (switch-to-buffer existing-eshell-buffer)
+        (let ((eshell-buffer (eshell 'N)))
+          (with-current-buffer eshell-buffer
+            (rename-buffer eshell-buffer-name)
+            (eshell/cd buffer-dir))))))
 
   (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
+    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
 
   (defun kill-all-eshell-buffers ()
     "Kill all Eshell buffers."
@@ -1256,7 +1335,7 @@
 #+begin_src emacs-lisp
 
   (use-package transpose-frame)
- 
+
 #+end_src
 
 ** Posframe
@@ -1304,41 +1383,13 @@
 
 #+end_src
 
-
-** Scratch
-
-#+begin_src emacs-lisp
-
-    (defvar persistent-scratch-buffer nil
-    "The persistent scratch buffer.")
-
-  (defun toggle-persistent-scratch-buffer ()
-    "Toggle the visibility of the persistent scratch buffer."
-    (interactive)
-    (if (and persistent-scratch-buffer (buffer-live-p persistent-scratch-buffer))
-        (let ((window (get-buffer-window persistent-scratch-buffer)))
-          (if window
-              (delete-window window)
-            (pop-to-buffer persistent-scratch-buffer)))
-      (setq persistent-scratch-buffer (get-buffer-create "*persistent-scratch*"))
-      (switch-to-buffer persistent-scratch-buffer)))
-
-  (defun persistent-scratch-buffer-setup ()
-    "Set up the persistent scratch buffer."
-    (when (eq (current-buffer) persistent-scratch-buffer)
-      (emacs-lock-mode 'kill)
-      (setq buffer-offer-save t)))
-
-  (add-hook 'persistent-scratch-buffer-setup-hook 'persistent-scratch-buffer-setup)
-  
-#+end_src
-
 * LANGUAGE SUPPORT
 
 #+begin_src emacs-lisp
 
   (use-package raku-mode)
   (use-package lua-mode)
+  (use-package terraform-mode)
   ;; (use-package markdown-mode
   ;;   :ensure t
   ;;   :mode ("README\\.md\\'" . gfm-mode)
@@ -1377,8 +1428,6 @@
   (use-package flycheck
     :init
     (add-hook 'after-init-hook #'global-flycheck-mode))
-    ;; :config
-    ;; (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
 #+end_src
 
@@ -1387,12 +1436,19 @@
 #+begin_src emacs-lisp
 
   (use-package lsp-mode
-      :ensure t
-      :commands lsp
-      :config 
-      (add-hook 'haskell-mode-hook #'lsp))
-      (setq lsp-idle-delay 0.1)
-      (setq lsp-enable-symbol-highlighting nil)
+    :ensure t
+    :commands lsp
+    :config
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                      :major-modes '(go-mode)
+                      :server-id 'gopls))
+    (add-hook 'go-mode-hook #'lsp)
+    (setq lsp-idle-delay 0.1)
+    (setq lsp-enable-symbol-highlighting nil))
+
+  (setq gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 1024 1024))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode
@@ -1409,18 +1465,18 @@
   ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
 
   (use-package lsp-haskell
-      :ensure t
-      :init
-      (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-      :after lsp
-      :config
-      ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-  )
+    :ensure t
+    :init
+    (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+    :after lsp
+    :config
+    ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
+    )
 
-    ;;   (use-package corfu
-    ;;       :ensure t
-    ;;       :bind (("C-." . corfu-next)
-    ;;              ("C-," . corfu-prev)))
+  ;;   (use-package corfu
+  ;;       :ensure t
+  ;;       :bind (("C-." . corfu-next)
+  ;;              ("C-," . corfu-prev)))
 
 #+end_src
 
@@ -1454,7 +1510,7 @@
     |------+-------------|
     |      |             |
 
-  
+
 ** Enabling Table of Contents
 
 #+begin_src emacs-lisp
@@ -1509,3 +1565,21 @@
 
 #+end_src
 
+* Custom functions
+
+#+begin_src emacs-lisp
+
+    (defun print-commands-starting-with (input)
+  "Print all Emacs commands starting with INPUT to a scratch buffer."
+  (interactive "sInput: ")
+  (let ((command-list (apropos-internal input 'commandp))
+        (output-buffer (get-buffer-create "*Commands*")))
+    (with-current-buffer output-buffer
+      (erase-buffer)
+      (insert (format "Commands starting with '%s':\n\n" input))
+      (dolist (command command-list)
+        (insert (format "%s\n" command)))
+      (goto-char (point-min)))
+    (display-buffer output-buffer)))
+
+#+end_src
