@@ -908,8 +908,8 @@
 
   (defalias 'e 'eshell/edit)
 
-  (require 'em-tramp) ; to load eshell’s sudo
-  (setq eshell-prefer-lisp-functions t)
+  ;; (require 'em-tramp) ; to load eshell’s sudo
+  ;; (setq eshell-prefer-lisp-functions t)
   (setq password-cache t) ; enable password caching
   (setq password-cache-expiry 3600) ; for one hour (time in secs)
 

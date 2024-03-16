@@ -151,7 +151,6 @@ sudo -v
 (eshell-path-env)
 print eshell-path-env
 print $eshell-path-env
-which sudo
 ls -la | grep zsh
 ls -la
 clear
@@ -159,3 +158,4 @@ which *sudo
 sudo ls
 which eshell
 which sudo
+ sudo ls
