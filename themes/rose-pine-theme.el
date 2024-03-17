@@ -4,20 +4,18 @@
       (rose-pine-fg "#e0def4")
       (rose-pine-blendedbg "#17191a")
       (rose-pine-bg "#1d1f21")
-      (rose-pine-rose "#ebbcba") 
-      (rose-pine-love "#eb6f92") 
-      (rose-pine-blendedlove "#2e202f") 
+      (rose-pine-rose "#ebbcba")
+      (rose-pine-love "#eb6f92")
+      (rose-pine-blendedlove "#2e202f")
       (rose-pine-gold "#f6c177")
       (rose-pine-pine "#31748f")
       (rose-pine-foam "#9ccfd8")
       (rose-pine-iris "#c4a7e7")
-      (rose-pine-highlight "#26233a")
+      ;; (rose-pine-highlight "#26233a")
+      (rose-pine-highlight "#403d52")
       (rose-pine-subtext "#6e6a86")
       (rose-pine-subtext0 "#908caa")
-      (rose-pine-blendedfoam "#403d52")
-      (rose-pine-region (if (display-graphic-p) 
-			      `(:background ,(color-lighten-name "#403d53" 1) :foreground nil :distant-foreground nil)
-			      'unspecified)))
+      (rose-pine-blendedfoam "#403d52"))
 
   (custom-theme-set-faces
    'rose-pine
@@ -27,7 +25,7 @@
 
    ;; Line highlight
    ;; `(hl-line ((,class (:background ,rose-pine-highlight))))
-   
+
    ;; Font lock
    `(font-lock-builtin-face ((,class (:foreground ,rose-pine-love))))
    `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
@@ -61,7 +59,7 @@
    `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For operators
    `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
    `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
- 
+
    ;; Haskell mode specific faces
    ;; `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
    ;; `(haskell-constructor-face ((,class (:foreground ,rose-pine-foam))))  ; For type constructors like 'IO'
@@ -72,7 +70,7 @@
    ;; Dired mode
    `(dired-directory ((,class (:foreground ,rose-pine-gold))))
    `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
-   
+
    ;; Org mode
    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
@@ -84,7 +82,7 @@
    ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
 
    ;; Ivy
-   `(ivy-current-match ((,class (:background ,rose-pine-subtext))))   
+   `(ivy-current-match ((,class (:background ,rose-pine-subtext))))
    ;; `(ivy-minibuffer-match-face-1 ((,class (:foreground ,rose-pine-fg))))
    ;; `(ivy-minibuffer-match-face-2 ((,class (:foreground ,rose-pine-fg))))
    ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
@@ -95,15 +93,15 @@
    `(line-number ((,class (:foreground ,rose-pine-subtext))))
 
    ;; Region
-   `(region ((,class ,rose-pine-region)))
+   `(region ((,class (:background ,rose-pine-highlight :foreground ,rose-pine-fg))))
 
    ;; Mode line
    `(mode-line-buffer-id ((,class (:weight normal))))
-   `(mode-line ((,class (:foreground ,rose-pine-love 
+   `(mode-line ((,class (:foreground ,rose-pine-love
 			      :background ,rose-pine-blendedlove
 			      :box (:line-width 1 :color ,rose-pine-bg)
 			      :weight normal))))  ; Set the weight to normal
-   `(mode-line-inactive ((,class (:foreground ,rose-pine-love 
+   `(mode-line-inactive ((,class (:foreground ,rose-pine-love
 			      :background ,rose-pine-blendedlove
 			      :box (:line-width 1 :color ,rose-pine-bg)
 			      :weight normal))))  ; Set the weight to normal

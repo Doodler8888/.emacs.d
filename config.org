@@ -93,11 +93,13 @@
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
       ;; '((t :background "#2e2c3d" :foreground "#c0c5ce"))  ;; #373c42 - previous background color
-      '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; #373c42 - previous background color
+      ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
+      '((t :background "#282c34" :foreground "#bbc2cf"))
       "Face for the active tab.")
     (defface my-inactive-tab-face
-      ;;   '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
-      '((t :background "#1d2021" :foreground "#a89984")) ;; #21242b - previous background color
+        '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
+      ;; '((t :background "#1d2021" :foreground "#a89984"))
+      ;; '((t :background "#21242b" :foreground "#83898d"))
       "Face for the inactive tab.")
     (let ((current-p (eq (car tab) 'current-tab)))
       (if current-p
@@ -362,6 +364,7 @@
           evil-want-integration t)
     :config
     (evil-mode 1)
+    (evil-set-initial-state 'custom-theme-choose-mode 'normal)
     (setq evil-shift-width 2)
     (add-hook 'evil-mode-hook 'undo-tree-mode))
 
@@ -382,7 +385,7 @@
               (lambda ()
                 (evil-org-set-key-theme)))
     )
-    ;; :ensure nil)
+  ;; :ensure nil)
 
   (use-package evil-collection
     :after evil
@@ -424,21 +427,21 @@
   ;; (require 'color)
   ;;  (hl-line-mode 1)
 
-  ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
-  ;; (load-theme 'rose-pine t)
+  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
+  (load-theme 'rose-pine t)
 
   ;; (use-package gruvbox-theme
   ;;   :config
   ;;   (load-theme 'gruvbox-dark-hard t))
 
-  (use-package doom-themes
-    :ensure t
-    :config
-    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-          doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-    (load-theme 'doom-one t)
-    ;Corrects (and improves) org-mode's native fontification.
-    (doom-themes-org-config))
+  ;; (use-package doom-themes
+  ;;   :ensure t
+  ;;   :config
+  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+  ;;   (load-theme 'doom-one t)
+  ;;   ;Corrects (and improves) org-mode's native fontifcation.
+  ;;   (doom-themes-org-config))
 
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
@@ -1279,7 +1282,7 @@
   ;;       (eshell/cd buffer-dir))))
 
   (defvar
-eshell-toggle-window-configuration nil
+    eshell-toggle-window-configuration nil
     "Variable to store the window configuration before opening eshell.")
 
   (defvar eshell-toggle-selected-window nil

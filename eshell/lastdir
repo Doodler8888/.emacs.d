@@ -1,6 +1,3 @@
-/scp:root@159.89.97.125:/home/wurfkreuz/site
-/scp:root@159.89.97.125:/home/wurfkreuz
-/scp:root@159.89.97.125:/home
 /scp:root@159.89.97.125:/home/wurfkreuz
 /home/wurfkreuz/.dotfiles/scripts/raku
 ~/.projects
@@ -29,3 +26,7 @@
 /home/wurfkreuz/.projects/shelf/cmd
 /usr/lib
 /home/wurfkreuz/.emacs.d
+/home/wurfkreuz
+/home/wurfkreuz/.emacs.d
+/home/wurfkreuz
+/home/wurfkreuz/.projects/shelf/cmd
