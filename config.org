@@ -92,9 +92,9 @@
 
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
-      ;; '((t :background "#2e2c3d" :foreground "#c0c5ce"))  ;; #373c42 - previous background color
+      '((t :background "#2e2c3d" :foreground "#e0def4"))  ;; #373c42 - previous background color
       ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
-      '((t :background "#282c34" :foreground "#bbc2cf"))
+      ;; '((t :background "#282c34" :foreground "#bbc2cf"))
       "Face for the active tab.")
     (defface my-inactive-tab-face
         '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
@@ -391,7 +391,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired ibuffer org emacs-eat vterm))
+    (setq evil-collection-mode-list '(dashboard eshell dired ibuffer org emacs-eat))
     (evil-collection-init))
 
 
@@ -600,13 +600,38 @@
 #+begin_src emacs-lisp
 
   (use-package treesit-auto
-    ;; :custom
-    ;; (treesit-auto-install 'prompt)
     :config
-    (treesit-auto-add-to-auto-mode-alist 'all)
+    (treesit-auto-add-to-auto-mode-alist
+    '(("\\.py$" . python-ts-mode)
+      ("\\.rb$" . ruby-ts-mode)
+      ("\\.go$" . go-ts-mode)
+      ("\\.bashrc\\'" . shell-mode)
+      ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
     (global-treesit-auto-mode))
 
-  ;; (use-package font-lock)
+  ;; (setq treesit-language-source-alist
+  ;;       '((yaml "https://github.com/tree-sitter/tree-sitter-yaml")
+  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
+  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
+  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
+  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")))
+
+  ;; (dolist (lang treesit-language-source-alist)
+  ;;   (unless (treesit-language-available-p (car lang))
+  ;;     (treesit-install-language-grammar (car lang))))
+
+  ;; (defun my-treesitter-hooks ()
+  ;;   (when (equal major-mode 'fundamental-mode)
+  ;;     (let ((filename (buffer-file-name)))
+  ;;       (cl-case filename
+  ;;         (".py$" (python-ts-mode))
+  ;;         (".go$" (go-ts-mode))
+  ;;         (".bashrc$" (bash-ts-mode))
+  ;;         (".bashrc$" (bash-ts-mode))
+  ;;         ; Add more cases as needed
+  ;;         ))))
+
+  ;; (add-hook 'find-file-hook 'my-treesitter-hooks)
 
 #+end_src
 
@@ -913,8 +938,29 @@
 
   (require 'em-tramp) ; to load eshell’s sudo
   ;; (setq eshell-prefer-lisp-functions t)
-  (setq password-cache t) ; enable password caching
-  (setq password-cache-expiry 3600) ; for one hour (time in secs)
+  ;; (setq eshell-prefer-lisp-variables t)
+  ;; (setq password-cache t) ; enable password caching
+  ;; (setq password-cache-expiry 10) ; for one hour (time in secs)
+  ;; alias sudo eshell/sudo $*
+  ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+
+  ;; (defun clear-authinfo-and-reset ()
+  ;;   "Clears the .authinfo file and resets password cache and TRAMP sessions."
+  ;;   (let* ((authinfo-file (expand-file-name "~/.authinfo"))
+  ;;         (expiry-seconds 10) ;; Expiry time in seconds.
+  ;;         (current-time (current-time))
+  ;;         (last-modified (nth 5 (file-attributes authinfo-file)))
+  ;;         (time-difference (float-time (time-subtract current-time last-modified))))
+  ;;     (when (> time-difference expiry-seconds)
+  ;;       (tramp-cleanup-all-connections)
+  ;;       (message "Authentication info and sessions reset due to expiry."))))
+
+  ;; ;; Optionally, set up a periodic check.
+  ;; (run-with-timer 0 10 'clear-authinfo-and-reset) ;; Check every 60 seconds.
+
+  ;; (setq auth-sources '("~/.authinfo"))
+
+  ;; (run-with-timer 0 10 (lambda () (password-cache-remove '("sudo" "archlinux" "wurfkreuz" "sudo"))))
 
 #+end_src
 
@@ -922,12 +968,12 @@
 
 #+begin_src emacs-lisp
 
-  ;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
-  ;; (require 'eat)
+  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
+  (require 'eat)
 
-  ;; (add-hook 'eshell-first-time-mode-hook
-  ;;           #'eat-eshell-visual-command-mode)
-  ;; (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
+  (add-hook 'eshell-first-time-mode-hook
+            #'eat-eshell-visual-command-mode)
+  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
 
   ;; (use-package emacs-eat
   ;; :elpaca '(emasc-eat :type git :host github :repo "kephale/emacs-eat"
@@ -1393,6 +1439,12 @@
   (use-package raku-mode)
   (use-package lua-mode)
   (use-package terraform-mode)
+  (use-package dockerfile-mode)
+
+  (when (require 'dockerfile-mode nil 'noerror)
+    ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
+    (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
+
   ;; (use-package markdown-mode
   ;;   :ensure t
   ;;   :mode ("README\\.md\\'" . gfm-mode)
