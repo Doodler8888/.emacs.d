@@ -18,6 +18,7 @@
   - [[#general][General]]
   - [[#async][Async]]
   - [[#search][Search]]
+  - [[#consult][Consult]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
@@ -29,6 +30,7 @@
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
   - [[#eat][Eat]]
+  - [[#aweshell][Aweshell]]
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
@@ -97,7 +99,7 @@
       ;; '((t :background "#282c34" :foreground "#bbc2cf"))
       "Face for the active tab.")
     (defface my-inactive-tab-face
-        '((t :background "#1d1f21" :foreground "#5B6268")) ;; #21242b - previous background color
+        '((t :background "#1d1f21" :foreground "#6e6a86")) ;; #21242b - previous background color
       ;; '((t :background "#1d2021" :foreground "#a89984"))
       ;; '((t :background "#21242b" :foreground "#83898d"))
       "Face for the inactive tab.")
@@ -113,29 +115,29 @@
       (global-set-key (kbd (format "M-%d" n))
                       `(lambda () (interactive) (tab-bar-select-tab ,n)))))
 
-  (defun my-create-or-switch-to-scratch-tab ()
-    "Create a new tab named 'scratch' with a scratch buffer, or switch to an existing 'scratch' tab."
-    (interactive)
-    (let* ((tabs (tab-bar-tabs))
-           (scratch-tab (seq-find (lambda (tab)
-                                    (string= (alist-get 'name tab) "scratch"))
-                                  tabs)))
-      (if scratch-tab
-          (progn
-            (message "Switching to existing 'scratch' tab")
-            (tab-bar-select-tab-by-name "scratch"))
-        (message "Creating a new 'scratch' tab")
-        (tab-bar-new-tab)
-        (tab-bar-rename-tab "scratch")
-        (switch-to-buffer (get-buffer-create "scratch")))))
+  ;; (defun my-create-or-switch-to-scratch-tab ()
+  ;;   "Create a new tab named 'scratch' with a scratch buffer, or switch to an existing 'scratch' tab."
+  ;;   (interactive)
+  ;;   (let* ((tabs (tab-bar-tabs))
+  ;;          (scratch-tab (seq-find (lambda (tab)
+  ;;                                   (string= (alist-get 'name tab) "scratch"))
+  ;;                                 tabs)))
+  ;;     (if scratch-tab
+  ;;         (progn
+  ;;           (message "Switching to existing 'scratch' tab")
+  ;;           (tab-bar-select-tab-by-name "scratch"))
+  ;;       (message "Creating a new 'scratch' tab")
+  ;;       (tab-bar-new-tab)
+  ;;       (tab-bar-rename-tab "scratch")
+  ;;       (switch-to-buffer (get-buffer-create "scratch")))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-f") 'my-create-or-switch-to-scratch-tab))
+  ;; (with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-f") 'my-create-or-switch-to-scratch-tab))
 
-  (defun tab-bar-tab-exists (name)
-    (member name
-            (mapcar #'(lambda (tab) (alist-get 'name tab))
-                    (tab-bar-tabs))))
+  ;; (defun tab-bar-tab-exists (name)
+  ;;   (member name
+  ;;           (mapcar #'(lambda (tab) (alist-get 'name tab))
+  ;;                   (tab-bar-tabs))))
 
     #+end_src
 
@@ -155,7 +157,6 @@
 
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
   (setq-default indent-tabs-mode nil)
-  (electric-pair-mode 1)
   (savehist-mode 1)
 
   ;; Executable on save if starts with '#!'
@@ -357,16 +358,35 @@
     :config
     (global-undo-tree-mode))
 
+  ;; (use-package evil
+  ;;   :init
+  ;;   (setq evil-want-C-u-scroll t
+  ;;         evil-want-C-i-jump nil
+  ;;         evil-want-integration t)
+  ;;   :config
+  ;;   (evil-mode 1)
+  ;;   (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+  ;;   (setq evil-shift-width 2)
+  ;;   (add-hook 'evil-mode-hook 'undo-tree-mode))
+
+  ;; (add-hook 'after-init-hook
+  ;;         (lambda ()
+  ;;           (add-hook 'evil-local-mode-hook 'turn-on-undo-tree-mode)))
+
   (use-package evil
-    :init
-    (setq evil-want-C-u-scroll t
-          evil-want-C-i-jump nil
-          evil-want-integration t)
-    :config
-    (evil-mode 1)
-    (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (setq evil-shift-width 2)
-    (add-hook 'evil-mode-hook 'undo-tree-mode))
+  :init
+  (setq evil-want-C-u-scroll t
+        evil-want-C-i-jump nil
+        evil-want-integration t
+        evil-undo-system 'undo-tree) ;; Move this line here
+  :config
+  (evil-mode 1)
+  (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+  (setq evil-shift-width 2))
+
+  (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
+  (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
+  (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
 
 
   (setq evil-undo-system 'undo-tree)
@@ -391,7 +411,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired ibuffer org emacs-eat))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu))
     (evil-collection-init))
 
 
@@ -584,6 +604,20 @@
 
 #+end_src
 
+** Consult
+
+#+begin_src emacs-lisp
+
+  ;; (use-package consult)
+
+  ;; (defun consult-fd-from-home ()
+  ;;   "Starts a consult-find search from the user's home directory using fd,
+  ;; including hidden files and excluding certain directories."
+  ;;   (interactive)
+  ;;   (let ((consult-find-command "fd --hidden --exclude .git --color=never --full-path"))
+  ;;     (consult-find "~/")))
+
+#+end_src
 ** Acess to ENV variables
 
 #+begin_src emacs-lisp
@@ -735,16 +769,14 @@
     and exclude certain directories without prompting for a directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (let ((default-directory "~/"))
-    (fzf)))
+    (fzf))
 
   (defun fzf-from-home-no-prompt ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-    and exclude certain directories without prompting for a directory."
+    ;; "Starts fzf from the user's home directory using fd to include hidden files
+    ;; and exclude certain directories without prompting for a directory."
     (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . ~/")
-    (let ((default-directory "~/"))
-    (fzf)))
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz ")
+    (fzf))
 
   (defun fzf-from-current-with-fd ()
     "Starts fzf from the current directory using fd to include hidden files
@@ -926,23 +958,34 @@
     (interactive "sEnter the filename to edit: ")
     ;; Extract the current TRAMP address from the Eshell buffer's default directory
     (let ((tramp-address (file-remote-p default-directory)))
-        (if tramp-address
-            ;; If we're in a TRAMP directory, use the extracted address
-            (find-file (concat tramp-address filename))
-          ;; If not in a TRAMP directory, fall back to a default address or prompt the user
-          (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
-          ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
-          )))
+      (if tramp-address
+          ;; If we're in a TRAMP directory, use the extracted address
+          (find-file (concat tramp-address filename))
+        ;; If not in a TRAMP directory, fall back to a default address or prompt the user
+        (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
+        ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
+        )))
 
   (defalias 'e 'eshell/edit)
 
   (require 'em-tramp) ; to load eshell’s sudo
-  ;; (setq eshell-prefer-lisp-functions t)
-  ;; (setq eshell-prefer-lisp-variables t)
-  ;; (setq password-cache t) ; enable password caching
-  ;; (setq password-cache-expiry 10) ; for one hour (time in secs)
-  ;; alias sudo eshell/sudo $*
+  (setq eshell-prefer-lisp-functions t)
+  (setq eshell-prefer-lisp-variables t)
+  (setq password-cache t) ; enable password caching
+  (setq password-cache-expiry 10)
   ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+
+  (with-eval-after-load 'tramp
+    (let ((sudo-method (assoc "sudo" tramp-methods)))
+      (when sudo-method
+        (let ((session-timeout (assoc 'tramp-session-timeout (cdr sudo-method))))
+          (if session-timeout
+              ;; If the tramp-session-timeout entry exists, just set its value.
+              ;; Ensure the value is a list.
+              (setcdr session-timeout '(1))
+            ;; Otherwise, add the tramp-session-timeout entry.
+            ;; Again, ensure the value is specified as a list.
+            (setcdr sudo-method (cons '(tramp-session-timeout 1) (cdr sudo-method))))))))
 
   ;; (defun clear-authinfo-and-reset ()
   ;;   "Clears the .authinfo file and resets password cache and TRAMP sessions."
@@ -978,6 +1021,15 @@
   ;; (use-package emacs-eat
   ;; :elpaca '(emasc-eat :type git :host github :repo "kephale/emacs-eat"
   ;;           :build (:not compile)))
+
+#+end_src
+
+** Aweshell
+
+#+begin_src emacs-lisp
+
+  ;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/aweshell"))
+  ;; (require 'aweshell)
 
 #+end_src
 
