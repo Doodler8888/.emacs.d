@@ -30,7 +30,6 @@
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
   - [[#eat][Eat]]
-  - [[#aweshell][Aweshell]]
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
@@ -41,7 +40,6 @@
   - [[#dired-buffer][Dired buffer]]
   - [[#cmd-shell-buffer][Cmd shell buffer]]
   - [[#shell-buffer][Shell buffer]]
-  - [[#vterm-buffer][Vterm buffer]]
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
   - [[#posframe][Posframe]]
@@ -418,8 +416,14 @@
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-  ;; (global-set-key (kbd "C-x f") 'find-file)
+  (defun my-eshell-evil-yank-to-end-of-line ()
+    "Yank text from the current point to the end of the line in Eshell."
+    (interactive)
+    (evil-yank (point) (line-end-position)))
 
+  (with-eval-after-load 'eshell
+    (require 'evil)
+    (evil-define-key 'normal eshell-mode-map (kbd "Y") 'my-eshell-evil-yank-to-end-of-line))
 
 #+end_src
 
@@ -764,19 +768,51 @@
     (let ((default-directory "~/"))
       (fzf-directory)))
 
-  (defun fzf-from-root-no-prompt ()
-    "Starts fzf from the user's root directory using fd to include hidden files
-    and exclude certain directories without prompting for a directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (fzf))
+   ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
 
-  (defun fzf-from-home-no-prompt ()
-    ;; "Starts fzf from the user's home directory using fd to include hidden files
-    ;; and exclude certain directories without prompting for a directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz ")
-    (fzf))
+  ;; (defun fzf-from-root-no-prompt ()
+  ;;   "Starts fzf from the user's root directory using fd to include hidden files
+  ;;   and exclude certain directories without prompting for a directory."
+  ;;   (interactive)
+  ;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+  ;;   (fzf))
+
+  ;; (defun fzf-from-home-no-prompt ()
+  ;;   "Starts fzf from the user's home directory using fd to include hidden files
+  ;;   and exclude certain directories without prompting for a directory."
+  ;;   (interactive)
+  ;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz ")
+  ;;   (fzf))
+
+(defun fzf-from-root-no-prompt ()
+  "Starts fzf from the user's root directory using fd to include hidden files
+   and exclude certain directories without prompting for a directory."
+  (interactive)
+  ;; Remember the current buffer.
+  (let ((current-buffer (current-buffer)))
+    ;; Switch to the *scratch* buffer.
+    (switch-to-buffer (get-buffer-create "*scratch*"))
+    ;; Set the environment variable.
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+    ;; Switch back to the original buffer.
+    (switch-to-buffer current-buffer))
+  ;; Execute fzf.
+  (fzf))
+
+(defun fzf-from-home-no-prompt ()
+  "Starts fzf from the user's home directory using fd to include hidden files
+   and exclude certain directories without prompting for a directory."
+  (interactive)
+  ;; Remember the current buffer.
+  (let ((current-buffer (current-buffer)))
+    ;; Switch to the *scratch* buffer.
+    (switch-to-buffer (get-buffer-create "*scratch*"))
+    ;; Set the environment variable.
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
+    ;; Switch back to the original buffer.
+    (switch-to-buffer current-buffer))
+  ;; Execute fzf.
+  (fzf))
 
   (defun fzf-from-current-with-fd ()
     "Starts fzf from the current directory using fd to include hidden files
@@ -792,11 +828,7 @@
         ;; If not in a TRAMP directory, use the local home directory
         (fzf-directory "~/"))))
 
-  ;; (defun fzf-from-home ()
-  ;;   "Starts fzf from the user's home directory."
-  ;;   (interactive)
-  ;;   (let ((default-directory "~/"))
-  ;;     (fzf-directory)))
+  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
 
 #+end_src
 
@@ -969,41 +1001,11 @@
   (defalias 'e 'eshell/edit)
 
   (require 'em-tramp) ; to load eshell’s sudo
-  (setq eshell-prefer-lisp-functions t)
-  (setq eshell-prefer-lisp-variables t)
-  (setq password-cache t) ; enable password caching
-  (setq password-cache-expiry 10)
-  ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
-
-  (with-eval-after-load 'tramp
-    (let ((sudo-method (assoc "sudo" tramp-methods)))
-      (when sudo-method
-        (let ((session-timeout (assoc 'tramp-session-timeout (cdr sudo-method))))
-          (if session-timeout
-              ;; If the tramp-session-timeout entry exists, just set its value.
-              ;; Ensure the value is a list.
-              (setcdr session-timeout '(1))
-            ;; Otherwise, add the tramp-session-timeout entry.
-            ;; Again, ensure the value is specified as a list.
-            (setcdr sudo-method (cons '(tramp-session-timeout 1) (cdr sudo-method))))))))
-
-  ;; (defun clear-authinfo-and-reset ()
-  ;;   "Clears the .authinfo file and resets password cache and TRAMP sessions."
-  ;;   (let* ((authinfo-file (expand-file-name "~/.authinfo"))
-  ;;         (expiry-seconds 10) ;; Expiry time in seconds.
-  ;;         (current-time (current-time))
-  ;;         (last-modified (nth 5 (file-attributes authinfo-file)))
-  ;;         (time-difference (float-time (time-subtract current-time last-modified))))
-  ;;     (when (> time-difference expiry-seconds)
-  ;;       (tramp-cleanup-all-connections)
-  ;;       (message "Authentication info and sessions reset due to expiry."))))
-
-  ;; ;; Optionally, set up a periodic check.
-  ;; (run-with-timer 0 10 'clear-authinfo-and-reset) ;; Check every 60 seconds.
-
-  ;; (setq auth-sources '("~/.authinfo"))
-
-  ;; (run-with-timer 0 10 (lambda () (password-cache-remove '("sudo" "archlinux" "wurfkreuz" "sudo"))))
+  ;; (setq eshell-prefer-lisp-functions t)
+  ;; (setq eshell-prefer-lisp-variables t)
+  ;; (setq password-cache t) ; enable password caching
+  ;; (setq password-cache-expiry 10)
+  ;; ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
 
 #+end_src
 
@@ -1017,19 +1019,6 @@
   (add-hook 'eshell-first-time-mode-hook
             #'eat-eshell-visual-command-mode)
   (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
-
-  ;; (use-package emacs-eat
-  ;; :elpaca '(emasc-eat :type git :host github :repo "kephale/emacs-eat"
-  ;;           :build (:not compile)))
-
-#+end_src
-
-** Aweshell
-
-#+begin_src emacs-lisp
-
-  ;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/lisp/aweshell"))
-  ;; (require 'aweshell)
 
 #+end_src
 
@@ -1333,28 +1322,6 @@
     (split-window-below -10)
     (other-window 1)
     (shell))
-
-#+end_src
-
-** Vterm buffer
-
-#+begin_src emacs-lisp
-
-  (defun OpenVtermBelow ()
-    "Open a `vterm' buffer in a new window below the current one."
-    (interactive)
-    (let ((buf (generate-new-buffer "*vterm*"))
-          (cur-window (selected-window)))
-      (save-excursion
-        (select-window cur-window)
-        (split-window-below)
-        (windmove-down)
-        (switch-to-buffer buf)
-        (vterm)
-        (shrink-window 10)
-        (if (bound-and-true-p evil-local-mode)
-            (evil-local-mode -1)
-          (evil-local-mode 1)))))
 
 #+end_src
 

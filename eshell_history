@@ -227,3 +227,6 @@ fzf-from-home-no-prompt
 last
 cd
 date
+airsetn airose tnaoirsetn aoirsetn aoir
+(setenv "XYZ" "abc")
+(setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")

@@ -1,7 +1,3 @@
-/home/wurfkreuz/.projects/shelf/cmd
-/home/wurfkreuz/.projects/shelf/cmd
-/home/wurfkreuz/.projects/shelf/cmd
-/home/wurfkreuz/testdir
 /home/wurfkreuz/.virtual_machines
 /home/wurfkreuz/.virtual_machines/zellij
 /usr/lib/locale
@@ -17,7 +13,6 @@
 /ssh:root@139.59.209.14:/root
 ~
 /ssh:wurfkreuz@161.35.16.201:/root
-/home/wurfkreuz/.emacs.d
 /home/wurfkreuz/.source/paru
 /home/wurfkreuz/.source
 /ssh:root@161.35.16.201:/root
@@ -29,3 +24,10 @@
 ~/.source
 /ssh:root@165.232.116.20:
 /home/wurfkreuz
+/home/wurfkreuz/.emacs.d
+~
+/home/wurfkreuz/.emacs.d
+~
+/home/wurfkreuz/.emacs.d
+~
+/home/wurfkreuz/.emacs.d
