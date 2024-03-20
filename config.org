@@ -264,6 +264,11 @@
       (call-process-shell-command "git add . && git commit -m 'n' && git push" nil output-buffer)
       (display-buffer output-buffer)))
 
+  (defun s ()
+    "Reload the ~/.zshrc file in the current shell."
+    (interactive)
+    (call-process-shell-command "source ~/.zshrc" nil 0))
+
 #+end_src
 
 ** Cursor
@@ -510,10 +515,10 @@
     "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
-    "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
+    ;; "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
     "ft" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
-    "fz" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
-    "fr" '(fzf-from-root-no-prompt :wk "Fzf with fd and hidden files form root")
+    "fh" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
+    "fr" '(fzf-from-root-with-fd :wk "Fzf with fd and hidden files form root")
 
     ;; Session management
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -768,51 +773,30 @@
     (let ((default-directory "~/"))
       (fzf-directory)))
 
+    (defun fzf-from-root-with-fd ()
+    "Starts fzf from the user's home directory using fd to include hidden files
+      and exclude certain directories but with an ability to interactively change
+      the searching directory."
+    (interactive)
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+    (let ((default-directory "/"))
+      (fzf-directory)))
+
    ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
 
-  ;; (defun fzf-from-root-no-prompt ()
-  ;;   "Starts fzf from the user's root directory using fd to include hidden files
-  ;;   and exclude certain directories without prompting for a directory."
-  ;;   (interactive)
-  ;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-  ;;   (fzf))
-
-  ;; (defun fzf-from-home-no-prompt ()
-  ;;   "Starts fzf from the user's home directory using fd to include hidden files
-  ;;   and exclude certain directories without prompting for a directory."
-  ;;   (interactive)
-  ;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz ")
-  ;;   (fzf))
-
-(defun fzf-from-root-no-prompt ()
-  "Starts fzf from the user's root directory using fd to include hidden files
-   and exclude certain directories without prompting for a directory."
-  (interactive)
-  ;; Remember the current buffer.
-  (let ((current-buffer (current-buffer)))
-    ;; Switch to the *scratch* buffer.
-    (switch-to-buffer (get-buffer-create "*scratch*"))
-    ;; Set the environment variable.
+  (defun fzf-from-root-no-prompt ()
+    "Starts fzf from the user's root directory using fd to include hidden files
+    and exclude certain directories without prompting for a directory."
+    (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    ;; Switch back to the original buffer.
-    (switch-to-buffer current-buffer))
-  ;; Execute fzf.
-  (fzf))
+    (fzf))
 
-(defun fzf-from-home-no-prompt ()
-  "Starts fzf from the user's home directory using fd to include hidden files
-   and exclude certain directories without prompting for a directory."
-  (interactive)
-  ;; Remember the current buffer.
-  (let ((current-buffer (current-buffer)))
-    ;; Switch to the *scratch* buffer.
-    (switch-to-buffer (get-buffer-create "*scratch*"))
-    ;; Set the environment variable.
+  (defun fzf-from-home-no-prompt ()
+    "Starts fzf from the user's home directory using fd to include hidden files
+    and exclude certain directories without prompting for a directory."
+    (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
-    ;; Switch back to the original buffer.
-    (switch-to-buffer current-buffer))
-  ;; Execute fzf.
-  (fzf))
+    (fzf))
 
   (defun fzf-from-current-with-fd ()
     "Starts fzf from the current directory using fd to include hidden files
@@ -1005,7 +989,7 @@
   ;; (setq eshell-prefer-lisp-variables t)
   ;; (setq password-cache t) ; enable password caching
   ;; (setq password-cache-expiry 10)
-  ;; ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+  ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
 
 #+end_src
 

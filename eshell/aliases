@@ -1,7 +1,7 @@
+alias sudo eshell/sudo $*
+alias md mkdir $*
 alias la ls -la $*
 alias install sudo pacman -Syu $*
-alias md mkdir $*
 alias take mkdir $* && cd $*
 alias rf rm -rf $*
 alias d cd $* && ls -la
-alias sudo eshell/sudo $*
