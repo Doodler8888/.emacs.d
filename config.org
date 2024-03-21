@@ -1104,20 +1104,6 @@
         (cancel-timer desktop-autosave-timer))
       (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
 
-  ;; (defun load-desktop-session (session-name)
-  ;; "Load a desktop session by name."
-  ;; (interactive "sEnter session name: ")
-  ;; (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-  ;;   (when current-desktop-session-name
-  ;;     ;; Save the current session before loading a new one, but only if a session is already loaded.
-  ;;     (save-current-desktop-session))
-  ;;   (setq current-desktop-session-name session-name)
-  ;;   (desktop-change-dir (concat desktop-dir session-name "/"))
-  ;;   ;; Set up the autosave timer when a new session is loaded
-  ;;   (when desktop-autosave-timer
-  ;;     (cancel-timer desktop-autosave-timer))
-  ;;   (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
-
   (defun load-desktop-with-name ()
     "Load a desktop session by name, chosen from available sessions."
     (interactive)
