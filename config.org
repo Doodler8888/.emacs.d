@@ -90,23 +90,23 @@
   (setq tab-bar-close-button-show nil
         tab-bar-new-button-show nil)
 
-  (defun my-tab-name-format-function (tab i)
-    (defface my-active-tab-face
-      '((t :background "#2e2c3d" :foreground "#e0def4"))  ;; #373c42 - previous background color
-      ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
-      ;; '((t :background "#282c34" :foreground "#bbc2cf"))
-      "Face for the active tab.")
-    (defface my-inactive-tab-face
-        '((t :background "#1d1f21" :foreground "#6e6a86")) ;; #21242b - previous background color
-      ;; '((t :background "#1d2021" :foreground "#a89984"))
-      ;; '((t :background "#21242b" :foreground "#83898d"))
-      "Face for the inactive tab.")
-    (let ((current-p (eq (car tab) 'current-tab)))
-      (if current-p
-          (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-active-tab-face)
-        (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-inactive-tab-face))))
+  ;; (defun my-tab-name-format-function (tab i)
+  ;;   (defface my-active-tab-face
+  ;;     '((t :background "#2e2c3d" :foreground "#e0def4"))  ;; #373c42 - previous background color
+  ;;     ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
+  ;;     ;; '((t :background "#282c34" :foreground "#bbc2cf"))
+  ;;     "Face for the active tab.")
+  ;;   (defface my-inactive-tab-face
+  ;;       '((t :background "#1d1f21" :foreground "#6e6a86")) ;; #21242b - previous background color
+  ;;     ;; '((t :background "#1d2021" :foreground "#a89984"))
+  ;;     ;; '((t :background "#21242b" :foreground "#83898d"))
+  ;;     "Face for the inactive tab.")
+  ;;   (let ((current-p (eq (car tab) 'current-tab)))
+  ;;     (if current-p
+  ;;         (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-active-tab-face)
+  ;;       (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-inactive-tab-face))))
 
-  (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
+  ;; (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
 
   (dotimes (i 9)
     (let ((n (1+ i)))  ; Tab numbers start from 1
@@ -148,6 +148,8 @@
   (setq evil-want-keybinding nil)
 
   (setq vc-follow-symlinks t)
+
+  (setq desktop-load-locked-desktop t)
 
   (setq python-shell-interpreter "/usr/bin/python3")
 
@@ -237,6 +239,7 @@
   (defun so ()
     "Reload the Emacs configuration."
     (interactive)
+    (load-file "~/.emacs.d/init.el")
     (load-file "~/.emacs.d/init.el"))
 
   (with-eval-after-load 'evil
@@ -457,21 +460,21 @@
   ;; (require 'color)
   ;;  (hl-line-mode 1)
 
-  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
-  (load-theme 'rose-pine t)
+  ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
+  ;; (load-theme 'rose-pine t)
 
   ;; (use-package gruvbox-theme
   ;;   :config
   ;;   (load-theme 'gruvbox-dark-hard t))
 
-  ;; (use-package doom-themes
-  ;;   :ensure t
-  ;;   :config
-  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-  ;;   (load-theme 'doom-one t)
-  ;;   ;Corrects (and improves) org-mode's native fontifcation.
-  ;;   (doom-themes-org-config))
+  (use-package doom-themes
+    :ensure t
+    :config
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+    (load-theme 'doom-one t)
+    ;Corrects (and improves) org-mode's native fontifcation.
+    (doom-themes-org-config))
 
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
