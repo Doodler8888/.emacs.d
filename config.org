@@ -550,11 +550,15 @@
 
     "bc" '(kill-buffer :wk "Close selecetd buffer")
 
-    "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
+    ;; "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
 
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
-    "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
+    ;; "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
+
+    ;; Popper
+    ;; "pm" '(popper-messages :wk "Open a pop window with the messages buffer")
+    ;; "pa" '(popper-async-shell-command :wk "Perform async shell command in a pop window")
 
     "cc" '(RunCmdShellCommand :wk "Run CMD command")
     "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
@@ -1507,35 +1511,63 @@
 #+begin_src emacs-lisp
 
   (use-package popper
-    :config
-    (popper-mode 1))
+    ;; :bind (("C-`"   . popper-toggle)
+    ;;       ("M-`"   . popper-cycle)
+    ;;       ("C-M-`" . popper-toggle-type))
+    :init
+    (setq popper-reference-buffers
+          '(("\\*Messages\\*" . hide)
+            "Output\\*$"
+            "\\*Async Shell Command\\*"
+            help-mode
+            compilation-mode))
+    (popper-mode +1)
+    (popper-echo-mode +1))                ; For echo area hints
 
-  (defun my-popper-toggle ()
-    "Toggle the Popper window and resize it to one-third of the frame height."
+  (defun popper-message ()
+    "Popper window specifically with the Messages buffer."
     (interactive)
-    (popper-toggle))
+    (popper-toggle)
+    (switch-to-buffer "*Messages*"))
 
-  (defun my-popper-and-resize-new ()
-    "Toggle the Popper window and resize it to one-third of the frame height."
-    (interactive)
-    (open-eshell-in-current-directory)
-    ;; (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
-    ;;   (dired current-dir))
-    (popper-toggle-type))
+  (defun popper-async-shell-command (input)
+    "Popper window specifically with the async shell command buffer."
+    (interactive "MAsync shell command: ") ; Prompt for command
+    (async-shell-command input)
+    (popper-toggle)
+    (switch-to-buffer "*Async Shell Command*"))
 
-  (defun fix-cycle ()
-    (interactive)
-    (popper-cycle 1))
+  (funcall-interactively #'popper-async-shell-command)
 
-  (defun fix-cycle-backwards ()
-    (interactive)
-    (popper-cycle-backwards -1))
+  ;; (use-package popper
+  ;;   :config
+  ;;   (popper-mode 1))
+
+  ;; (defun my-popper-toggle ()
+  ;;   "Toggle the Popper window and resize it to one-third of the frame height."
+  ;;   (interactive)
+  ;;   (popper-toggle))
+
+  ;; (defun popper-message ()
+  ;;   "Popper window with the message buffer"
+  ;;   (interactive)
+  ;;   (unless (get-buffer-window "*Messages*") ;; Check if buffer is displayed
+  ;;     (switch-to-buffer "*Messages*"))
+  ;;   (popper-toggle))
+
+  ;; (defun fix-cycle ()
+  ;;   (interactive)
+  ;;   (popper-cycle 1))
+
+  ;; (defun fix-cycle-backwards ()
+  ;;   (interactive)
+  ;;   (popper-cycle-backwards -1))
 
   ;; (with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-  ;;   (define-key evil-normal-state-map (kbd "M-n") 'my-popper-and-resize-new)
-  ;;   (define-key evil-normal-state-map (kbd "M-f") 'my-popper-toggle))
+  ;; ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+  ;; ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+  ;; ;;   (define-key evil-normal-state-map (kbd "M-n") 'my-popper-and-resize-new)
+  ;;   (define-key evil-normal-state-map (kbd "M-m") 'popper-message))
 
 #+end_src
 
