@@ -61,25 +61,27 @@
 
 #+begin_src emacs-lisp
 
-   (menu-bar-mode -1)
-   (tool-bar-mode -1)
-   (setq inhibit-startup-screen t)
-   (setq display-line-numbers 'visual)
-   (setq display-line-numbers-type 'relative)
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (setq inhibit-startup-screen t)
+  (setq display-line-numbers 'visual)
+  (setq display-line-numbers-type 'relative)
+  (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
+  (add-hook 'conf-mode-hook 'display-line-numbers-mode)
 
-   (defun my-mode-line-major-mode ()
-     "Returns a clean name of the current major mode."
-     (let ((mode (format "%s" major-mode)))
-       (replace-regexp-in-string "-mode$" "" mode)))
+  (defun my-mode-line-major-mode ()
+    "Returns a clean name of the current major mode."
+    (let ((mode (format "%s" major-mode)))
+      (replace-regexp-in-string "-mode$" "" mode)))
 
-   (setq-default mode-line-format
-                 '("%e"
-                   mode-line-front-space
-                   mode-line-buffer-identification  ; Buffer name
-                   " "
-                   (:eval (my-mode-line-major-mode))  ; Custom major mode display
-                   (:eval (propertize " " 'display '(space :align-to (- right 12))))
-                   (vc-mode vc-mode)))  ; Git branch information
+  (setq-default mode-line-format
+                '("%e"
+                  mode-line-front-space
+                  mode-line-buffer-identification  ; Buffer name
+                  " "
+                  (:eval (my-mode-line-major-mode))  ; Custom major mode display
+                  (:eval (propertize " " 'display '(space :align-to (- right 12))))
+                  (vc-mode vc-mode)))  ; Git branch information
 
 #+end_src
 
@@ -90,23 +92,23 @@
   (setq tab-bar-close-button-show nil
         tab-bar-new-button-show nil)
 
-  ;; (defun my-tab-name-format-function (tab i)
-  ;;   (defface my-active-tab-face
-  ;;     '((t :background "#2e2c3d" :foreground "#e0def4"))  ;; #373c42 - previous background color
-  ;;     ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
-  ;;     ;; '((t :background "#282c34" :foreground "#bbc2cf"))
-  ;;     "Face for the active tab.")
-  ;;   (defface my-inactive-tab-face
-  ;;       '((t :background "#1d1f21" :foreground "#6e6a86")) ;; #21242b - previous background color
-  ;;     ;; '((t :background "#1d2021" :foreground "#a89984"))
-  ;;     ;; '((t :background "#21242b" :foreground "#83898d"))
-  ;;     "Face for the inactive tab.")
-  ;;   (let ((current-p (eq (car tab) 'current-tab)))
-  ;;     (if current-p
-  ;;         (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-active-tab-face)
-  ;;       (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-inactive-tab-face))))
+  (defun my-tab-name-format-function (tab i)
+    (defface my-active-tab-face
+      '((t :background "#2e2c3d" :foreground "#e0def4"))  ;; #373c42 - previous background color
+      ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
+      ;; '((t :background "#282c34" :foreground "#bbc2cf"))
+      "Face for the active tab.")
+    (defface my-inactive-tab-face
+        '((t :background "#1d1f21" :foreground "#6e6a86")) ;; #21242b - previous background color
+      ;; '((t :background "#1d2021" :foreground "#a89984"))
+      ;; '((t :background "#21242b" :foreground "#83898d"))
+      "Face for the inactive tab.")
+    (let ((current-p (eq (car tab) 'current-tab)))
+      (if current-p
+          (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-active-tab-face)
+        (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-inactive-tab-face))))
 
-  ;; (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
+  (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
 
   (dotimes (i 9)
     (let ((n (1+ i)))  ; Tab numbers start from 1
@@ -312,9 +314,9 @@
   (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
   (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
   (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-			  :ref nil
-			  :files (:defaults (:exclude "extensions"))
-			  :build (:not elpaca--activate-package)))
+                          :ref nil
+                          :files (:defaults (:exclude "extensions"))
+                          :build (:not elpaca--activate-package)))
   (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
    (build (expand-file-name "elpaca/" elpaca-builds-directory))
    (order (cdr elpaca-order))
@@ -325,16 +327,16 @@
       (when (< emacs-major-version 28) (require 'subr-x))
       (condition-case-unless-debug err
     (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-	     ((zerop (call-process "git" nil buffer t "clone"
-				   (plist-get order :repo) repo)))
-	     ((zerop (call-process "git" nil buffer t "checkout"
-				   (or (plist-get order :ref) "--"))))
-	     (emacs (concat invocation-directory invocation-name))
-	     ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-				   "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-	     ((require 'elpaca))
-	     ((elpaca-generate-autoloads "elpaca" repo)))
-	(kill-buffer buffer)
+             ((zerop (call-process "git" nil buffer t "clone"
+                                   (plist-get order :repo) repo)))
+             ((zerop (call-process "git" nil buffer t "checkout"
+                                   (or (plist-get order :ref) "--"))))
+             (emacs (concat invocation-directory invocation-name))
+             ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                   "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+             ((require 'elpaca))
+             ((elpaca-generate-autoloads "elpaca" repo)))
+        (kill-buffer buffer)
       (error "%s" (with-current-buffer buffer (buffer-string))))
   ((error) (warn "%s" err) (delete-directory repo 'recursive))))
     (unless (require 'elpaca-autoloads nil t)
@@ -353,6 +355,10 @@
   ;; Block until current queue processed.
   (elpaca-wait)
    (setq package-enable-at-startup nil)
+
+  ;; Example of using recipe
+  ;; (use-package blimpy
+  ;;    :elpaca (blimpy :host github :repo "username/reponame"))
 
 #+end_src
 
@@ -425,14 +431,13 @@
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-  (defun my-eshell-evil-yank-to-end-of-line ()
-    "Yank text from the current point to the end of the line in Eshell."
+  (defun my-evil-yank-to-end-of-line ()
+    "Yank text from the current point to the end of the line."
     (interactive)
     (evil-yank (point) (line-end-position)))
 
-  (with-eval-after-load 'eshell
-    (require 'evil)
-    (evil-define-key 'normal eshell-mode-map (kbd "Y") 'my-eshell-evil-yank-to-end-of-line))
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
 #+end_src
 
@@ -460,21 +465,21 @@
   ;; (require 'color)
   ;;  (hl-line-mode 1)
 
-  ;; (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
-  ;; (load-theme 'rose-pine t)
+  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
+  (load-theme 'rose-pine t)
 
   ;; (use-package gruvbox-theme
   ;;   :config
   ;;   (load-theme 'gruvbox-dark-hard t))
 
-  (use-package doom-themes
-    :ensure t
-    :config
-    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-          doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-    (load-theme 'doom-one t)
-    ;Corrects (and improves) org-mode's native fontifcation.
-    (doom-themes-org-config))
+  ;; (use-package doom-themes
+  ;;   :ensure t
+  ;;   :config
+  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+  ;;   (load-theme 'doom-one t)
+  ;;   ;Corrects (and improves) org-mode's native fontifcation.
+  ;;   (doom-themes-org-config))
 
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
@@ -966,13 +971,6 @@
     (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
     (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
-  ;; (defun my/counsel-file-jump ()
-  ;;   "Jump to a file beneath the current directory using a custom find command to avoid permission errors."
-  ;;   (interactive)
-  ;;   (let ((default-directory "/")
-  ;;         (counsel-file-jump-args '("-type" "f" "-not" "-path" "*/\\.*" "-not" "-path" "./proc/*" "-not" "-path" "./sys/*" "-not" "-path" "./dev/*" "-not" "-path" "./run/*" "-print")))
-  ;;     (counsel-file-jump)))
-
   (defun eshell/edit (filename)
     "Open FILENAME in the current buffer, using the current TRAMP address."
     (interactive "sEnter the filename to edit: ")
@@ -1065,7 +1063,7 @@
 
   (defun restore-eshell-buffer (_file-name buffer-name misc)
     "MISC is the value returned by `save-eshell-buffer'.
-  _FILE-NAME is nil."
+        _FILE-NAME is nil."
     (let ((default-directory misc))
       ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
       (eshell buffer-name)))
@@ -1080,22 +1078,23 @@
 
   (defun save-current-desktop-session (&optional manual-save)
     "Save the current desktop session using the current session name.
-  If no session is loaded, prompt to create a new one. If MANUAL-SAVE is non-nil, show a message for existing sessions."
+      If no session is loaded, prompt to create a new one. If MANUAL-SAVE is non-nil, show a message for existing sessions."
     (interactive "p") ; "p" passes a prefix argument, which is non-nil when called interactively
     (if current-desktop-session-name
         (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
           (unless (file-exists-p desktop-dir)
             (make-directory desktop-dir))
           (desktop-save desktop-dir)
-          (when manual-save
+          (when (or manual-save (not (called-interactively-p 'any)))
             (message "Session '%s' saved." current-desktop-session-name)))
-      ;; No session is loaded, prompt to create a new one
-      (let ((new-session-name (read-string "Enter new session name: ")))
-        (unless (string-empty-p new-session-name)
-          (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
-            (make-directory new-desktop-dir t)
-            (setq current-desktop-session-name new-session-name)
-            (desktop-save new-desktop-dir))))))
+      ;; No session is loaded, prompt to create a new one (only when called interactively)
+      (when (called-interactively-p 'any)
+        (let ((new-session-name (read-string "Enter new session name: ")))
+          (unless (string-empty-p new-session-name)
+            (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
+              (make-directory new-desktop-dir t)
+              (setq current-desktop-session-name new-session-name)
+              (desktop-save new-desktop-dir)))))))
 
   (defun load-desktop-session (session-name)
     "Load a desktop session by name."
@@ -1157,6 +1156,8 @@
           (rename-file old-dir new-dir)
           (setq current-desktop-session-name new-name)
           (message "Session renamed to '%s'." new-name)))))
+
+  (add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
 #+end_src
 
@@ -1287,21 +1288,134 @@
 
   (add-hook 'shell-mode-hook 'my-shell-mode-hook)
 
-  (setq explicit-shell-file-name "/usr/bin/bash")  ; your shell path here
+  (setq explicit-shell-file-name "/usr/bin/zsh")  ; your shell path here
   (setq explicit-bash-args '("--login" "-i"))
 
-  (defun SpawnShellSplitBelow ()
-    "Open a shell in a small split below."
+  ;; (defvar
+  ;;   shell-toggle-window-configuration nil
+  ;;   "Variable to store the window configuration before opening shell.")
+
+  ;; (defvar shell-toggle-selected-window nil
+  ;;   "Variable to store the selected window before opening shell.")
+
+  ;; (defun SpawnShellSplitBelow ()
+  ;;   "Open a shell in a small split below or toggle it if already open."
+  ;;   (interactive)
+  ;;   (if (eq major-mode 'shell-mode)
+  ;;       (progn
+  ;;         (when shell-toggle-window-configuration
+  ;;           (set-window-configuration shell-toggle-window-configuration)
+  ;;           (setq shell-toggle-window-configuration nil))
+  ;;         (when shell-toggle-selected-window
+  ;;           (select-window shell-toggle-selected-window)
+  ;;           (setq shell-toggle-selected-window nil)))
+  ;;     (setq shell-toggle-window-configuration (current-window-configuration))
+  ;;     (setq shell-toggle-selected-window (selected-window))
+  ;;     (split-window-below -10)
+  ;;     (other-window 1)
+  ;;     (open-shell-in-current-directory)))
+
+  ;; (defun open-shell-in-current-directory ()
+  ;;   "Open shell in the directory of the current buffer.
+  ;; If a shell buffer for the directory already exists, switch to it."
+  ;;   (interactive)
+  ;;   (let* ((buffer-dir (if (buffer-file-name)
+  ;;                         (file-name-directory (buffer-file-name))
+  ;;                       default-directory))
+  ;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
+  ;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
+  ;;     (if existing-shell-buffer
+  ;;         (switch-to-buffer existing-shell-buffer)
+  ;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
+  ;;         (shell (generate-new-buffer-name shell-buffer-name))))))
+
+  ;; (with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
+
+  (defvar spawn-toggle-window-configuration nil
+    "Variable to store the window configuration before opening eshell or shell.")
+
+  (defvar spawn-toggle-selected-window nil
+    "Variable to store the selected window before opening eshell or shell.")
+
+  (defun SpawnEshellSplitBelow ()
+    "Open a shell in a small split below or toggle it if already open.
+  If the current buffer is a shell buffer, switch to an eshell buffer instead."
     (interactive)
+    (if (eq major-mode 'shell-mode)
+        (open-eshell-in-current-directory)
+      (if (eq major-mode 'eshell-mode)
+          (SpawnToggleOff)
+        (SpawnToggleOn)
+        (open-eshell-in-current-directory))))
+
+  (defun open-eshell-in-current-directory ()
+    "Open eshell in the directory of the current buffer.
+  If an eshell buffer for the directory already exists, switch to it."
+    (interactive)
+    (let* ((buffer-dir (if (buffer-file-name)
+                          (file-name-directory (buffer-file-name))
+                        default-directory))
+          (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+          (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+      (if existing-eshell-buffer
+          (switch-to-buffer existing-eshell-buffer)
+        (let ((eshell-buffer (eshell 'N)))
+          (with-current-buffer eshell-buffer
+            (rename-buffer eshell-buffer-name)
+            (eshell/cd buffer-dir))))))
+
+  (defun SpawnShellSplitBelow ()
+    "Open a shell in a small split below or toggle it if already open.
+  If the current buffer is an eshell buffer, switch to a shell buffer instead."
+    (interactive)
+    (if (eq major-mode 'eshell-mode)
+        (open-shell-in-current-directory)
+      (if (eq major-mode 'shell-mode)
+          (SpawnToggleOff)
+        (SpawnToggleOn)
+        (open-shell-in-current-directory))))
+
+  (defun open-shell-in-current-directory ()
+    "Open shell in the directory of the current buffer.
+  If a shell buffer for the directory already exists, switch to it."
+    (interactive)
+    (let* ((buffer-dir (if (buffer-file-name)
+                          (file-name-directory (buffer-file-name))
+                        default-directory))
+          (shell-buffer-name (format "*shell: %s*" buffer-dir))
+          (existing-shell-buffer (get-buffer shell-buffer-name)))
+      (if existing-shell-buffer
+          (switch-to-buffer existing-shell-buffer)
+        (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
+          (shell (generate-new-buffer-name shell-buffer-name))))))
+
+  (defun SpawnToggleOff ()
+    "Toggle off eshell or shell buffer and restore the previous window configuration."
+    (when spawn-toggle-window-configuration
+      (set-window-configuration spawn-toggle-window-configuration)
+      (setq spawn-toggle-window-configuration nil))
+    (when spawn-toggle-selected-window
+      (select-window spawn-toggle-selected-window)
+      (setq spawn-toggle-selected-window nil)))
+
+  (defun SpawnToggleOn ()
+    "Store the current window configuration and selected window before spawning eshell or shell."
+    (setq spawn-toggle-window-configuration (current-window-configuration))
+    (setq spawn-toggle-selected-window (selected-window))
     (split-window-below -10)
-    (other-window 1)
-    (shell))
+    (other-window 1))
+
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
+    (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
 
 #+end_src
 
 ** Eshell buffer
 
 #+begin_src emacs-lisp
+
 
   ;; (defun SpawnEshellSplitBelow ()
   ;;   "Open a shell in a small split below."
@@ -1320,55 +1434,55 @@
   ;;     (with-current-buffer eshell-buffer
   ;;       (eshell/cd buffer-dir))))
 
-  (defvar
-    eshell-toggle-window-configuration nil
-    "Variable to store the window configuration before opening eshell.")
+  ;; (defvar
+  ;;   eshell-toggle-window-configuration nil
+  ;;   "Variable to store the window configuration before opening eshell.")
 
-  (defvar eshell-toggle-selected-window nil
-    "Variable to store the selected window before opening eshell.")
+  ;; (defvar eshell-toggle-selected-window nil
+  ;;   "Variable to store the selected window before opening eshell.")
 
-  (defun SpawnEshellSplitBelow ()
-    "Open a shell in a small split below or toggle it if already open."
-    (interactive)
-    (if (eq major-mode 'eshell-mode)
-        (progn
-          (when eshell-toggle-window-configuration
-            (set-window-configuration eshell-toggle-window-configuration)
-            (setq eshell-toggle-window-configuration nil))
-          (when eshell-toggle-selected-window
-            (select-window eshell-toggle-selected-window)
-            (setq eshell-toggle-selected-window nil)))
-      (setq eshell-toggle-window-configuration (current-window-configuration))
-      (setq eshell-toggle-selected-window (selected-window))
-      (split-window-below -10)
-      (other-window 1)
-      (open-eshell-in-current-directory)))
+  ;; (defun SpawnEshellSplitBelow ()
+  ;;   "Open a shell in a small split below or toggle it if already open."
+  ;;   (interactive)
+  ;;   (if (eq major-mode 'eshell-mode)
+  ;;       (progn
+  ;;         (when eshell-toggle-window-configuration
+  ;;           (set-window-configuration eshell-toggle-window-configuration)
+  ;;           (setq eshell-toggle-window-configuration nil))
+  ;;         (when eshell-toggle-selected-window
+  ;;           (select-window eshell-toggle-selected-window)
+  ;;           (setq eshell-toggle-selected-window nil)))
+  ;;     (setq eshell-toggle-window-configuration (current-window-configuration))
+  ;;     (setq eshell-toggle-selected-window (selected-window))
+  ;;     (split-window-below -10)
+  ;;     (other-window 1)
+  ;;     (open-eshell-in-current-directory)))
 
-  (defun open-eshell-in-current-directory ()
-    "Open eshell in the directory of the current buffer.
-  If an eshell buffer for the directory already exists, switch to it."
-    (interactive)
-    (let* ((buffer-dir (if (buffer-file-name)
-                           (file-name-directory (buffer-file-name))
-                         default-directory))
-           (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-           (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-      (if existing-eshell-buffer
-          (switch-to-buffer existing-eshell-buffer)
-        (let ((eshell-buffer (eshell 'N)))
-          (with-current-buffer eshell-buffer
-            (rename-buffer eshell-buffer-name)
-            (eshell/cd buffer-dir))))))
+  ;; (defun open-eshell-in-current-directory ()
+  ;;   "Open eshell in the directory of the current buffer.
+  ;; If an eshell buffer for the directory already exists, switch to it."
+  ;;   (interactive)
+  ;;   (let* ((buffer-dir (if (buffer-file-name)
+  ;;                          (file-name-directory (buffer-file-name))
+  ;;                        default-directory))
+  ;;          (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+  ;;          (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+  ;;     (if existing-eshell-buffer
+  ;;         (switch-to-buffer existing-eshell-buffer)
+  ;;       (let ((eshell-buffer (eshell 'N)))
+  ;;         (with-current-buffer eshell-buffer
+  ;;           (rename-buffer eshell-buffer-name)
+  ;;           (eshell/cd buffer-dir))))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+  ;; (with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
 
-  (defun kill-all-eshell-buffers ()
-    "Kill all Eshell buffers."
-    (interactive)
-    (dolist (buffer (buffer-list))
-      (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
-        (kill-buffer buffer))))
+  ;; (defun kill-all-eshell-buffers ()
+  ;;   "Kill all Eshell buffers."
+  ;;   (interactive)
+  ;;   (dolist (buffer (buffer-list))
+  ;;     (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
+  ;;       (kill-buffer buffer))))
 
 #+end_src
 
