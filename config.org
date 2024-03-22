@@ -481,6 +481,7 @@
   ;;   ;Corrects (and improves) org-mode's native fontifcation.
   ;;   (doom-themes-org-config))
 
+
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
     )
@@ -550,7 +551,7 @@
 
     "bc" '(kill-buffer :wk "Close selecetd buffer")
 
-    ;; "mm" '(open-messages-buffer-in-split :wk "Open the *Messages buffer")
+    "mm" '(popper-message :wk "Open the *Messages buffer")
 
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
@@ -655,39 +656,48 @@
 
 #+begin_src emacs-lisp
 
-  (use-package treesit-auto
-    :config
-    (treesit-auto-add-to-auto-mode-alist
-    '(("\\.py$" . python-ts-mode)
-      ("\\.rb$" . ruby-ts-mode)
-      ("\\.go$" . go-ts-mode)
-      ("\\.bashrc\\'" . shell-mode)
-      ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
-    (global-treesit-auto-mode))
+  ;; (use-package treesit-auto
+  ;;   :config
+  ;;   (treesit-auto-add-to-auto-mode-alist
+  ;;   '(("\\.py$" . python-ts-mode)
+  ;;     ("\\.rb$" . ruby-ts-mode)
+  ;;     ("\\.go$" . go-ts-mode)
+  ;;     ("\\.bashrc\\'" . shell-mode)
+  ;;     ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
+  ;;   (global-treesit-auto-mode))
 
-  ;; (setq treesit-language-source-alist
-  ;;       '((yaml "https://github.com/tree-sitter/tree-sitter-yaml")
-  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
-  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
-  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
-  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")))
+  (setq treesit-language-source-alist
+        '((templ "https://github.com/vrischmann/tree-sitter-templ")
+          (bash "https://github.com/tree-sitter/tree-sitter-bash")
+          (cmake "https://github.com/uyha/tree-sitter-cmake")
+          (css "https://github.com/tree-sitter/tree-sitter-css")
+          (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+          (go "https://github.com/tree-sitter/tree-sitter-go")
+          (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+          (html "https://github.com/tree-sitter/tree-sitter-html")
+          (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+          (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+          (json "https://github.com/tree-sitter/tree-sitter-json")
+          (make "https://github.com/alemuller/tree-sitter-make")
+          (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+          (python "https://github.com/tree-sitter/tree-sitter-python")
+          (toml "https://github.com/tree-sitter/tree-sitter-toml")
+          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
+                      "master" "typescript/src")
+          (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+          (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
+          (typst "https://github.com/uben0/tree-sitter-typst")
+          (java "https://github.com/tree-sitter/tree-sitter-java")
+          (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
+          (rust "https://github.com/tree-sitter/tree-sitter-rust")))
 
-  ;; (dolist (lang treesit-language-source-alist)
-  ;;   (unless (treesit-language-available-p (car lang))
-  ;;     (treesit-install-language-grammar (car lang))))
-
-  ;; (defun my-treesitter-hooks ()
-  ;;   (when (equal major-mode 'fundamental-mode)
-  ;;     (let ((filename (buffer-file-name)))
-  ;;       (cl-case filename
-  ;;         (".py$" (python-ts-mode))
-  ;;         (".go$" (go-ts-mode))
-  ;;         (".bashrc$" (bash-ts-mode))
-  ;;         (".bashrc$" (bash-ts-mode))
-  ;;         ; Add more cases as needed
-  ;;         ))))
-
-  ;; (add-hook 'find-file-hook 'my-treesitter-hooks)
+  ;; (use-package extra-languages
+  ;;   ;; :ensure nil :no-require t
+  ;;   :init
+  ;;   (use-package dockerfile-ts-mode :mode "Dockerfile\\'")
+  ;;   (use-package yaml-ts-mode :mode "\\.yml\\'")
+  ;;   (use-package toml-ts-mode :mode "\\.toml\\'"))
 
 #+end_src
 
@@ -832,17 +842,6 @@
 ** Hydra
 
 #+begin_src emacs-lisp
-
-  ;; (use-package hydra
-  ;;   :config
-  ;;   (defhydra hydra-window-size (:color red)
-  ;;     "window size"
-  ;;     ("h" (lambda () (interactive) (shrink-window-horizontally 5)) "shrink horizontally")
-  ;;     ("l" (lambda () (interactive) (enlarge-window-horizontally 5)) "enlarge horizontally")
-  ;;     ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
-  ;;     ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
-  ;;     ("t" transpose-frame "transpose windows")
-  ;;     ("q" nil "quit")))
 
   (defun my-enlarge-window-horizontally ()
     "Enlarge the current window horizontally in a more intuitive way."
@@ -1511,49 +1510,33 @@
 #+begin_src emacs-lisp
 
   (use-package popper
-    ;; :bind (("C-`"   . popper-toggle)
-    ;;       ("M-`"   . popper-cycle)
-    ;;       ("C-M-`" . popper-toggle-type))
-    :init
-    (setq popper-reference-buffers
-          '(("\\*Messages\\*" . hide)
-            "Output\\*$"
+  :bind (("M-`"     . popper-toggle)
+         ("M-~"     . popper-cycle))
+         ;; ("C-x M-`" . popper-toggle-type))
+  :init
+  (setopt popper-reference-buffers
+          '("\\*Messages\\*"
+            ;; "\\*Warnings\\*"
+            ;; "\\*xref\\*"
+            ;; "\\*Backtrace\\*"
+            ;; "*Flymake diagnostics.*"
+            ;; "\\*eldoc\\*"
+            ;; "\\*compilation\\*"
+            ;; "\\*Ement Notifications\\*"
+            ;; "Output\\*$"
             "\\*Async Shell Command\\*"
+            ;; "\\*Dtache Shell Command\\*"
+            ;; "\\*mu4e-update\\*"
             help-mode
             compilation-mode))
-    (popper-mode +1)
-    (popper-echo-mode +1))                ; For echo area hints
+  (setopt popper-display-control t)
+  (popper-mode +1))
 
   (defun popper-message ()
     "Popper window specifically with the Messages buffer."
     (interactive)
     (popper-toggle)
     (switch-to-buffer "*Messages*"))
-
-  (defun popper-async-shell-command (input)
-    "Popper window specifically with the async shell command buffer."
-    (interactive "MAsync shell command: ") ; Prompt for command
-    (async-shell-command input)
-    (popper-toggle)
-    (switch-to-buffer "*Async Shell Command*"))
-
-  (funcall-interactively #'popper-async-shell-command)
-
-  ;; (use-package popper
-  ;;   :config
-  ;;   (popper-mode 1))
-
-  ;; (defun my-popper-toggle ()
-  ;;   "Toggle the Popper window and resize it to one-third of the frame height."
-  ;;   (interactive)
-  ;;   (popper-toggle))
-
-  ;; (defun popper-message ()
-  ;;   "Popper window with the message buffer"
-  ;;   (interactive)
-  ;;   (unless (get-buffer-window "*Messages*") ;; Check if buffer is displayed
-  ;;     (switch-to-buffer "*Messages*"))
-  ;;   (popper-toggle))
 
   ;; (defun fix-cycle ()
   ;;   (interactive)
@@ -1623,26 +1606,84 @@
     :init
     (add-hook 'after-init-hook #'global-flycheck-mode))
 
+  (use-package flymake-flycheck
+    :after flymake
+    ;; :init
+    ;; (setopt flycheck-disabled-checkers '(python-mypy flymake-flycheck:python-mypy))
+    :config
+    (add-hook 'flymake-mode-hook 'flymake-flycheck-auto))
+
 #+end_src
 
 ** Lsp Mode
 
 #+begin_src emacs-lisp
 
-  (use-package lsp-mode
-    :ensure t
-    :commands lsp
-    :config
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                      :major-modes '(go-mode)
-                      :server-id 'gopls))
-    (add-hook 'go-mode-hook #'lsp)
-    (setq lsp-idle-delay 0.1)
-    (setq lsp-enable-symbol-highlighting nil))
+  ;; (use-package lsp-mode
+  ;;   :commands lsp
+  ;;   :config
+  ;;   (lsp-register-client
+  ;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+  ;;                     :major-modes '(go-mode)
+  ;;                     :server-id 'gopls))
+  ;;   (add-hook 'go-mode-hook #'lsp)
+  ;;   (setq lsp-idle-delay 0.1)
+  ;;   (setq lsp-diagnostics-provider :flymake)
+  ;;   (setq lsp-enable-symbol-highlighting nil))
 
-  (setq gc-cons-threshold (* 100 1024 1024)
-        read-process-output-max (* 1024 1024))
+  ;; (setq gc-cons-threshold (* 100 1024 1024)
+  ;;       read-process-output-max (* 1024 1024))
+
+  (use-package lsp-mode
+  :bind ((:map lsp-mode-map
+               ("M-<return>" . lsp-execute-code-action))
+         (:map c++-mode-map
+               ("C-c x" . lsp-clangd-find-other-file))
+         (:map c-mode-map
+               ("C-c x" . lsp-clangd-find-other-file)))
+  :commands (lsp lsp-deferred)
+  :init
+  ;; (setenv "LSP_USE_PLISTS" "1")
+  ;; Increase the amount of data emacs reads from processes
+  (setq read-process-output-max (* 3 1024 1024))
+  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
+                                  "--clang-tidy"
+                                  "--enable-config"))
+  ;; Small speedups
+  (setopt lsp-log-max 0)
+  (setopt lsp-log-io nil)
+  ;; General lsp-mode settings
+  (setq ;; lsp-completion-provider :none
+        ;; lsp-enable-snippet t
+        ;; lsp-enable-on-type-formatting nil
+        ;; lsp-enable-indentation nil
+        lsp-diagnostics-provider :flymake
+        ;; lsp-keymap-prefix "C-x L"
+        lsp-eldoc-render-all t)
+  ;; to enable the lenses
+  (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+  (add-hook 'lsp-completion-mode-hook
+            (lambda ()
+              (setf (alist-get 'lsp-capf completion-category-defaults)
+                    '((styles . (orderless))))))
+    ;; (setenv "LSP_USE_PLISTS" "1")
+  ;; Increase the amount of data emacs reads from processes
+  (setq read-process-output-max (* 3 1024 1024))
+  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
+                                  "--clang-tidy"
+                                  "--enable-config"))
+
+  :config
+  (lsp-register-client
+  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                  :major-modes '(go-mode)
+                  :server-id 'gopls))
+
+  (use-package lsp-ui
+    :after lsp
+    :init
+    (setq lsp-ui-sideline-show-code-actions t)
+    (setq lsp-ui-sideline-show-diagnostics t)))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode

@@ -79,6 +79,11 @@
    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
     (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
     (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
+   `(org-table ((,class (:foreground ,rose-pine-fg))))
+   `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
+   `(org-document-info ((,class (:foreground ,rose-pine-gold))))
+   `(org-document-title ((,class (:foreground ,rose-pine-gold))))
+
    ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
