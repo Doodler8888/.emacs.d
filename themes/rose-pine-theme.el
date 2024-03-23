@@ -72,6 +72,7 @@
    ;; Dired mode
    `(dired-directory ((,class (:foreground ,rose-pine-gold))))
    `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
+   `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
 
    ;; Org mode
    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks

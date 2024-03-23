@@ -54,7 +54,7 @@
   - [[#general-1][General]]
   - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
-  - [[#tuning][Tuning]]
+  - [[#templates][Templates]]
   - [[#bullets][Bullets]]
   - [[#source-block-tag-expansion-cheetsheat][Source Block Tag Expansion Cheetsheat]]
   - [[#enabling-table-of-contents][Enabling Table of Contents]]
@@ -69,10 +69,18 @@
   (menu-bar-mode -1)
   (tool-bar-mode -1)
   (setq inhibit-startup-screen t)
-  (setq display-line-numbers 'visual)
-  (setq display-line-numbers-type 'relative)
   (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
   (add-hook 'conf-mode-hook 'display-line-numbers-mode)
+  (setq display-line-numbers 'visual
+        display-line-numbers-type 'relative)
+
+  (defun my/apply-line-numbers-setup ()
+    "Apply line numbers setup based on the current major mode."
+    (when (eq major-mode 'fundamental-mode)
+      (setq display-line-numbers 'visual
+            display-line-numbers-type 'relative)))
+
+  (add-hook 'buffer-list-update-hook #'my/apply-line-numbers-setup)
 
   (defun my-mode-line-major-mode ()
     "Returns a clean name of the current major mode."
@@ -142,7 +150,7 @@
 
   (defalias 'yes-or-no-p 'y-or-n-p)
 
-  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+  ;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
   (setq-default indent-tabs-mode nil)
   (savehist-mode 1)
 
@@ -523,7 +531,7 @@
     "sr" '(rename-desktop-session :wk "Rename a desktop session")
 
     ;; Org
-    "ot" '(open-my-todo-list :wk "Opens the org todo file")
+    "ot" '(todo :wk "Opens the org todo file")
 
     ;; Tab management
     "tn" '(tab-bar-new-tab :wk "Create a new tab")
@@ -632,6 +640,16 @@
 #+end_src
 
 ** Completion
+
+*** Snippets
+
+#+begin_src emacs-lisp
+
+    (use-package yasnippet
+    :config
+    (yas-global-mode 1))
+
+#+end_src
 
 *** Company
 
@@ -1689,9 +1707,6 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package yasnippet
-  ;;   :config
-  ;;   (yas-global-mode 1))
 
   ;; (use-package lsp-bridge
   ;;   :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
@@ -1856,7 +1871,7 @@
 
   (define-prefix-command 'my-prefix-map)
 
-  (defun open-my-todo-list ()
+  (defun todo ()
     "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
     (interactive)
     (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
@@ -1877,14 +1892,15 @@
 #+begin_src emacs-lisp
 #+end_src
 
-** Tuning
+** Templates
 
 #+begin_src emacs-lisp
 
-  ;; (electric-indent-mode -1)
   (require 'org-tempo)
-
   (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
+
+  (add-to-list 'org-structure-template-alist
+             '("t" . "src TODO\n\n* TODO \n\n?"))
 
 #+end_src
 

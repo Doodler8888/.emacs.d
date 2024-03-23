@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: todo
+# key: <t
+# --
+* TODO
+
+$0
