@@ -46,7 +46,7 @@
 
    ;; Miscellanious
     (set-face-attribute 'vertical-border nil :foreground rose-pine-subtext)
-    (set-face-attribute 'tab-bar nil :background "color1")
+    ;; (set-face-attribute 'tab-bar nil :background "color1")
     (set-face-attribute 'tab-bar nil :height 1.05)
     (set-face-attribute 'tab-bar nil
                     :font "NotoSansM Nerd Font Mono-12:weight=medium")

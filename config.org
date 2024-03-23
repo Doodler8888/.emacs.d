@@ -48,6 +48,7 @@
   - [[#lsp-bridge][Lsp-bridge]]
   - [[#flycheck][Flycheck]]
   - [[#lsp-mode][Lsp Mode]]
+  - [[#eglot][Eglot]]
 - [[#org-mode][ORG MODE]]
   - [[#tuning][Tuning]]
   - [[#bullets][Bullets]]
@@ -1602,16 +1603,16 @@
 
 #+begin_src emacs-lisp
 
-  (use-package flycheck
-    :init
-    (add-hook 'after-init-hook #'global-flycheck-mode))
+  ;; (use-package flycheck
+  ;;   :init
+  ;;   (add-hook 'after-init-hook #'global-flycheck-mode))
 
-  (use-package flymake-flycheck
-    :after flymake
-    ;; :init
-    ;; (setopt flycheck-disabled-checkers '(python-mypy flymake-flycheck:python-mypy))
-    :config
-    (add-hook 'flymake-mode-hook 'flymake-flycheck-auto))
+  ;; (use-package flymake-flycheck
+  ;;   :after flymake
+  ;;   ;; :init
+  ;;   ;; (setopt flycheck-disabled-checkers '(python-mypy flymake-flycheck:python-mypy))
+  ;;   :config
+  ;;   (add-hook 'flymake-mode-hook 'flymake-flycheck-auto))
 
 #+end_src
 
@@ -1619,99 +1620,121 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package lsp-mode
-  ;;   :commands lsp
-  ;;   :config
-  ;;   (lsp-register-client
-  ;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-  ;;                     :major-modes '(go-mode)
-  ;;                     :server-id 'gopls))
-  ;;   (add-hook 'go-mode-hook #'lsp)
-  ;;   (setq lsp-idle-delay 0.1)
-  ;;   (setq lsp-diagnostics-provider :flymake)
-  ;;   (setq lsp-enable-symbol-highlighting nil))
-
-  ;; (setq gc-cons-threshold (* 100 1024 1024)
-  ;;       read-process-output-max (* 1024 1024))
-
   (use-package lsp-mode
-  :bind ((:map lsp-mode-map
-               ("M-<return>" . lsp-execute-code-action))
-         (:map c++-mode-map
-               ("C-c x" . lsp-clangd-find-other-file))
-         (:map c-mode-map
-               ("C-c x" . lsp-clangd-find-other-file)))
-  :commands (lsp lsp-deferred)
-  :init
-  ;; (setenv "LSP_USE_PLISTS" "1")
-  ;; Increase the amount of data emacs reads from processes
-  (setq read-process-output-max (* 3 1024 1024))
-  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
-                                  "--clang-tidy"
-                                  "--enable-config"))
-  ;; Small speedups
-  (setopt lsp-log-max 0)
-  (setopt lsp-log-io nil)
-  ;; General lsp-mode settings
-  (setq ;; lsp-completion-provider :none
-        ;; lsp-enable-snippet t
-        ;; lsp-enable-on-type-formatting nil
-        ;; lsp-enable-indentation nil
-        lsp-diagnostics-provider :flymake
-        ;; lsp-keymap-prefix "C-x L"
-        lsp-eldoc-render-all t)
-  ;; to enable the lenses
-  (add-hook 'lsp-mode-hook #'lsp-lens-mode)
-  (add-hook 'lsp-completion-mode-hook
-            (lambda ()
-              (setf (alist-get 'lsp-capf completion-category-defaults)
-                    '((styles . (orderless))))))
-    ;; (setenv "LSP_USE_PLISTS" "1")
-  ;; Increase the amount of data emacs reads from processes
-  (setq read-process-output-max (* 3 1024 1024))
-  (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
-                                  "--clang-tidy"
-                                  "--enable-config"))
+    :commands lsp
+    :config
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                      :major-modes '(go-mode)
+                      :server-id 'gopls))
+    (add-hook 'go-mode-hook #'lsp)
+    (setq lsp-idle-delay 0.1)
+    (setq lsp-diagnostics-provider :flymake)
+    (setq gc-cons-threshold (* 100 1024 1024)
+      read-process-output-max (* 1024 1024))
+    ;; Small speedups
+    (setopt lsp-log-max 0)
+    (setopt lsp-log-io nil)
+    (setq lsp-enable-symbol-highlighting nil))
 
-  :config
-  (lsp-register-client
-  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                  :major-modes '(go-mode)
-                  :server-id 'gopls))
-
-  (use-package lsp-ui
-    :after lsp
+  (use-package lsp-treemacs
     :init
-    (setq lsp-ui-sideline-show-code-actions t)
-    (setq lsp-ui-sideline-show-diagnostics t)))
+    (lsp-treemacs-sync-mode 1))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode
-  ;;   :commands lsp-ui-mode
-  ;;   :custom
-  ;;   (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
-  ;;   (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
+  ;;   :config
+  ;;   (setq lsp-ui-sideline-enable t
+  ;;         lsp-ui-sideline-show-diagnostics t
+  ;;         lsp-ui-sideline-show-hover t
+  ;;         lsp-ui-sideline-show-code-actions t
+  ;;         lsp-ui-doc-enable t
+  ;;         lsp-ui-doc-position 'top
+  ;;         lsp-ui-doc-include-signature t
+  ;;         lsp-ui-peek-enable t
+  ;;         lsp-ui-imenu-enable t)
+  ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode))
+
+  ;; (use-package lsp-mode
+  ;; ;; :commands (lsp lsp-deferred)
+  ;; :init
+  ;; ;; (setenv "LSP_USE_PLISTS" "1")
+  ;; ;; Increase the amount of data emacs reads from processes
+  ;; ;; (setq read-process-output-max (* 3 1024 1024))
+  ;; ;; (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
+  ;; ;;                                 "--clang-tidy"
+  ;; ;;                                 "--enable-config"))
+  ;; ;; Small speedups
+  ;; ;; (setopt lsp-log-max 0)
+  ;; ;; (setopt lsp-log-io nil)
+  ;; ;; General lsp-mode settings
+  ;; ;; (setq ;; lsp-completion-provider :none
+  ;;       ;; lsp-enable-snippet t
+  ;;       ;; lsp-enable-on-type-formatting nil
+  ;;       ;; lsp-enable-indentation nil
+  ;;       ;; lsp-diagnostics-provider :flymake
+  ;;       ;; lsp-keymap-prefix "C-x L"
+  ;;       ;; lsp-eldoc-render-all t)
+  ;; ;; to enable the lenses
+  ;; ;; (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+  ;; ;; (add-hook 'lsp-completion-mode-hook
+  ;; ;;           (lambda ()
+  ;; ;;             (setf (alist-get 'lsp-capf completion-category-defaults)
+  ;; ;;                   '((styles . (orderless))))))
+
+  ;; :config
+  ;; (lsp-register-client
+  ;; (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+  ;;                 :major-modes '(go-mode)
+  ;;                 :server-id 'gopls))
+
+  ;; (use-package lsp-ui
+  ;;   :after lsp
+  ;;   :init
+  ;;   (setq lsp-ui-sideline-show-code-actions t)
+  ;;   (setq lsp-ui-sideline-show-diagnostics t))
+  ;; )
+
+  ;; (use-package lsp-ui
+  ;;   :after lsp-mode
+  ;;   :init
+  ;;   (setq lsp-ui-sideline-show-code-actions t)
+  ;;   (setq lsp-ui-sideline-show-diagnostics t))
+  ;;   ;; :custom
+  ;;   ;; (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
+  ;;   ;; (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
   ;;   :hook (lsp-mode . lsp-ui-mode))
 
-  ;; (defun my/lsp-ui-doc-hide ()
-  ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
-  ;;     (lsp-ui-doc-hide)))
+  ;; ;; (defun my/lsp-ui-doc-hide ()
+  ;; ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
+  ;; ;;     (lsp-ui-doc-hide)))
 
   ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
 
-  (use-package lsp-haskell
-    :ensure t
-    :init
-    (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-    :after lsp
-    :config
-    ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-    )
+  ;; (use-package lsp-haskell
+  ;;   :ensure t
+  ;;   :init
+  ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+  ;;   :after lsp
+  ;;   :config
+  ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
+  ;;   )
 
   ;;   (use-package corfu
   ;;       :ensure t
   ;;       :bind (("C-." . corfu-next)
   ;;              ("C-," . corfu-prev)))
+
+#+end_src
+
+** Eglot
+
+#+begin_src emacs-lisp
+
+  ;; (use-package eglot-booster
+  ;; :elpaca (eglot-booster :host github :repo "jdtsmith/eglot-booster")
+  ;; :after eglot
+  ;; :config (eglot-booster-mode))
 
 #+end_src
 
