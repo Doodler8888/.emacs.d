@@ -19,6 +19,7 @@
   - [[#async][Async]]
   - [[#search][Search]]
   - [[#consult][Consult]]
+  - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
@@ -50,6 +51,7 @@
   - [[#lsp-mode][Lsp Mode]]
   - [[#eglot][Eglot]]
 - [[#org-mode][ORG MODE]]
+  - [[#org-roam][Org-roam]]
   - [[#tuning][Tuning]]
   - [[#bullets][Bullets]]
   - [[#source-block-tag-expansion-cheetsheat][Source Block Tag Expansion Cheetsheat]]
@@ -115,30 +117,6 @@
     (let ((n (1+ i)))  ; Tab numbers start from 1
       (global-set-key (kbd (format "M-%d" n))
                       `(lambda () (interactive) (tab-bar-select-tab ,n)))))
-
-  ;; (defun my-create-or-switch-to-scratch-tab ()
-  ;;   "Create a new tab named 'scratch' with a scratch buffer, or switch to an existing 'scratch' tab."
-  ;;   (interactive)
-  ;;   (let* ((tabs (tab-bar-tabs))
-  ;;          (scratch-tab (seq-find (lambda (tab)
-  ;;                                   (string= (alist-get 'name tab) "scratch"))
-  ;;                                 tabs)))
-  ;;     (if scratch-tab
-  ;;         (progn
-  ;;           (message "Switching to existing 'scratch' tab")
-  ;;           (tab-bar-select-tab-by-name "scratch"))
-  ;;       (message "Creating a new 'scratch' tab")
-  ;;       (tab-bar-new-tab)
-  ;;       (tab-bar-rename-tab "scratch")
-  ;;       (switch-to-buffer (get-buffer-create "scratch")))))
-
-  ;; (with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-f") 'my-create-or-switch-to-scratch-tab))
-
-  ;; (defun tab-bar-tab-exists (name)
-  ;;   (member name
-  ;;           (mapcar #'(lambda (tab) (alist-get 'name tab))
-  ;;                   (tab-bar-tabs))))
 
     #+end_src
 
@@ -552,7 +530,7 @@
 
     "bc" '(kill-buffer :wk "Close selecetd buffer")
 
-    "mm" '(popper-message :wk "Open the *Messages buffer")
+    ;; "mm" '(popper-message :wk "Open the *Messages buffer")
 
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
@@ -642,6 +620,62 @@
   ;;     (consult-find "~/")))
 
 #+end_src
+
+** Completion
+
+*** Corfu
+
+#+begin_src emacs-lisp
+
+  (use-package corfu
+    :custom
+    (corfu-cycle t)
+    (corfu-auto t)
+    (corfu-auto-prefix 2)
+    (corfu-auto-delay 0.0)
+    (corfu-preview-current 'insert)
+    (corfu-preselect 'prompt)
+    (corfu-on-exact-match nil)
+    :init
+    (global-corfu-mode)
+    ;; (corfu-history-mode)
+    :config
+    (add-hook 'eshell-mode-hook
+              (lambda () (setq-local corfu-quit-at-boundary t
+                                     corfu-quit-no-match t
+                                     corfu-auto nil)
+                         (corfu-mode))
+              nil
+              t)
+    ;; Define Corfu-specific keybindings
+    (define-key corfu-map (kbd "C-g") 'corfu-quit)
+    (define-key corfu-map (kbd "M-n") 'corfu-next)
+    (define-key corfu-map (kbd "M-p") 'corfu-previous))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+  (use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (defun my/add-shell-completion ()
+    (interactive)
+    (cl-pushnew #'cape-history completion-at-point-functions)
+    (cl-pushnew #'pcomplete-completions-at-point completion-at-point-functions))
+  (add-hook 'shell-mode-hook #'my/add-shell-completion nil t)
+
+  :config
+  ;; Silence then pcomplete capf, no errors or messages!
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+
+  ;; Ensure that pcomplete does not write to the buffer
+  ;; and behaves as a pure `completion-at-point-function'.
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+
+#+end_src
+
 ** Acess to ENV variables
 
 #+begin_src emacs-lisp
@@ -804,6 +838,13 @@
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
     (let ((default-directory "/"))
+      (fzf-directory)))
+
+    (defun fzf-from-home-with-fd ()
+    "Start fzf in the directory for org notes."
+    (interactive)
+    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+    (let ((default-directory "~/.secret_dotifiles/"))
       (fzf-directory)))
 
    ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
@@ -1003,6 +1044,25 @@
 
 #+begin_src emacs-lisp
 
+
+  (let ((lisp-dir "~/.emacs.d/lisp")
+        (emacs-eat-dir "~/.emacs.d/lisp/emacs-eat")
+        (emacs-eat-repo "git@github.com:kephale/emacs-eat.git"))
+    ;; Check if the lisp directory exists, if not, create it
+    (unless (file-directory-p lisp-dir)
+      (make-directory lisp-dir t))
+
+    ;; Check if the emacs-eat directory exists
+    (unless (file-directory-p emacs-eat-dir)
+      ;; If emacs-eat directory does not exist, check if git is available
+      (if (executable-find "git")
+          (progn
+            (message "Cloning emacs-eat...")
+            (shell-command (concat "git clone " emacs-eat-repo " " emacs-eat-dir))
+            (message "emacs-eat cloned successfully."))
+        (error "Git is not installed, cannot clone emacs-eat"))))
+
+    ;; Add emacs-eat to the load-path
   (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
   (require 'eat)
 
@@ -1162,6 +1222,10 @@
           (message "Session renamed to '%s'." new-name)))))
 
   (add-hook 'kill-emacs-hook 'save-current-desktop-session)
+
+  (global-unset-key (kbd "C-s"))
+  (global-unset-key (kbd "M-TAB"))
+  (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 
 #+end_src
 
@@ -1512,8 +1576,8 @@
 
   (use-package popper
   :bind (("M-`"     . popper-toggle)
-         ("M-~"     . popper-cycle))
-         ;; ("C-x M-`" . popper-toggle-type))
+          ("M-~"     . popper-cycle))
+          ;; ("M-t" . flymake-show-buffer-diagnostics)
   :init
   (setopt popper-reference-buffers
           '("\\*Messages\\*"
@@ -1526,6 +1590,7 @@
             ;; "\\*Ement Notifications\\*"
             ;; "Output\\*$"
             "\\*Async Shell Command\\*"
+            "\\*.*Flymake diagnostics.*\\*"
             ;; "\\*Dtache Shell Command\\*"
             ;; "\\*mu4e-update\\*"
             help-mode
@@ -1536,8 +1601,16 @@
   (defun popper-message ()
     "Popper window specifically with the Messages buffer."
     (interactive)
-    (popper-toggle)
-    (switch-to-buffer "*Messages*"))
+    (if (string-equal (buffer-name) "*Messages*")
+        (popper-toggle)
+      (switch-to-buffer "*Messages*")))
+
+  (defun popper-diagnostics ()
+    "Popper window specifically for Flymake diagnostics buffer."
+    (interactive)
+    (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+        (popper-toggle)
+      (flymake-show-buffer-diagnostics)))
 
   ;; (defun fix-cycle ()
   ;;   (interactive)
@@ -1547,11 +1620,11 @@
   ;;   (interactive)
   ;;   (popper-cycle-backwards -1))
 
-  ;; (with-eval-after-load 'evil
-  ;; ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-  ;; ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-  ;; ;;   (define-key evil-normal-state-map (kbd "M-n") 'my-popper-and-resize-new)
-  ;;   (define-key evil-normal-state-map (kbd "M-m") 'popper-message))
+  (with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+    (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics)
+    (define-key evil-normal-state-map (kbd "M-m") 'popper-message))
 
 #+end_src
 
@@ -1620,26 +1693,28 @@
 
 #+begin_src emacs-lisp
 
+  (use-package flymake
+    :init
+    (flymake-mode))
+    ;; :hook (go-mode . flymake-mode))
+
   (use-package lsp-mode
     :commands lsp
     :config
     (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
                       :major-modes '(go-mode)
                       :server-id 'gopls))
     (add-hook 'go-mode-hook #'lsp)
     (setq lsp-idle-delay 0.1)
     (setq lsp-diagnostics-provider :flymake)
+    (setq lsp-headerline-breadcrumb-enable nil)
     (setq gc-cons-threshold (* 100 1024 1024)
-      read-process-output-max (* 1024 1024))
+          read-process-output-max (* 1024 1024))
     ;; Small speedups
     (setopt lsp-log-max 0)
     (setopt lsp-log-io nil)
     (setq lsp-enable-symbol-highlighting nil))
-
-  (use-package lsp-treemacs
-    :init
-    (lsp-treemacs-sync-mode 1))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode
@@ -1739,6 +1814,12 @@
 #+end_src
 
 * ORG MODE
+
+** Org-roam
+
+#+begin_src emacs-lisp
+#+end_src
+
 ** Tuning
 
 #+begin_src emacs-lisp
@@ -1839,5 +1920,27 @@
         (insert (format "%s\n" command)))
       (goto-char (point-min)))
     (display-buffer output-buffer)))
+
+  ;; Execute async shell command on a current file
+  (defun shell-command-on-file (command)
+    "Execute COMMAND asynchronously on the current file."
+    (interactive (list (read-shell-command
+                        (concat "Async shell command on " (buffer-name) ": "))))
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (async-shell-command (concat command " " filename))))
+
+  ;; Increment
+  (defun my/increment-number-at-point (&optional increment)
+    "Increment number at point like vim's C-a"
+    (interactive "p")
+    (my/change-number-at-point '+ (or increment 2)))
+
+  ;; Decrement
+  (defun my/decrement-number-at-point (&optional increment)
+    "Decrement number at point like vim's C-x"
+    (interactive "p")
+    (my/change-number-at-point '- (or increment 1)))
 
 #+end_src
