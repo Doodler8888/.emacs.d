@@ -51,6 +51,8 @@
   - [[#lsp-mode][Lsp Mode]]
   - [[#eglot][Eglot]]
 - [[#org-mode][ORG MODE]]
+  - [[#general-1][General]]
+  - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
   - [[#tuning][Tuning]]
   - [[#bullets][Bullets]]
@@ -80,7 +82,9 @@
   (setq-default mode-line-format
                 '("%e"
                   mode-line-front-space
-                  mode-line-buffer-identification  ; Buffer name
+                  (:eval (if (buffer-file-name)
+                            (abbreviate-file-name (buffer-file-name))  ; Show abbreviated file path
+                          "%b"))  ; Show buffer name if not a file buffer
                   " "
                   (:eval (my-mode-line-major-mode))  ; Custom major mode display
                   (:eval (propertize " " 'display '(space :align-to (- right 12))))
@@ -131,6 +135,8 @@
   (setq vc-follow-symlinks t)
 
   (setq desktop-load-locked-desktop t)
+
+  (flyspell-mode 1)
 
   (setq python-shell-interpreter "/usr/bin/python3")
 
@@ -508,12 +514,16 @@
     "ft" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
     "fh" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
     "fr" '(fzf-from-root-with-fd :wk "Fzf with fd and hidden files form root")
+    "fn" '(fzf-notes :wk "Start fzf in the notes directory.")
 
     ;; Session management
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
     "sd" '(delete-desktop-session :wk "Delete selected session")
     "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
     "sr" '(rename-desktop-session :wk "Rename a desktop session")
+
+    ;; Org
+    "ot" '(open-my-todo-list :wk "Opens the org todo file")
 
     ;; Tab management
     "tn" '(tab-bar-new-tab :wk "Create a new tab")
@@ -623,56 +633,81 @@
 
 ** Completion
 
+*** Company
+
+#+begin_src emacs-lisp
+
+  (use-package company
+    :init
+    (add-hook 'after-init-hook 'global-company-mode)
+    :config
+    ;; Add company-files to the list of backends
+    (add-to-list 'company-backends 'company-files)
+    ;; Disable automatic activation of company mode
+    (setq company-idle-delay nil))
+
+  (defun my/company-manual-complete ()
+    "Enable company-mode and call company-complete."
+    (interactive)
+    (unless company-mode
+      (company-mode 1))  ; Enable company-mode in the current buffer if it's not already enabled
+    (company-complete))
+
+  ;; Bind M-n to our custom company completion function globally
+  (global-set-key (kbd "M-n") #'my/company-manual-complete)
+
+#+end_src
+
 *** Corfu
 
 #+begin_src emacs-lisp
 
-  (use-package corfu
-    :custom
-    (corfu-cycle t)
-    (corfu-auto t)
-    (corfu-auto-prefix 2)
-    (corfu-auto-delay 0.0)
-    (corfu-preview-current 'insert)
-    (corfu-preselect 'prompt)
-    (corfu-on-exact-match nil)
-    :init
-    (global-corfu-mode)
-    ;; (corfu-history-mode)
-    :config
-    (add-hook 'eshell-mode-hook
-              (lambda () (setq-local corfu-quit-at-boundary t
-                                     corfu-quit-no-match t
-                                     corfu-auto nil)
-                         (corfu-mode))
-              nil
-              t)
-    ;; Define Corfu-specific keybindings
-    (define-key corfu-map (kbd "C-g") 'corfu-quit)
-    (define-key corfu-map (kbd "M-n") 'corfu-next)
-    (define-key corfu-map (kbd "M-p") 'corfu-previous))
+  ;; (use-package corfu
+  ;;   :custom
+  ;;   (corfu-cycle t)
+  ;;   (corfu-auto t)
+  ;;   (corfu-auto-prefix 2)
+  ;;   (corfu-auto-delay 0.0)
+  ;;   (corfu-preview-current 'insert)
+  ;;   (corfu-preselect 'prompt)
+  ;;   (corfu-on-exact-match nil)
+  ;;   :init
+  ;;   (global-corfu-mode)
+  ;;   ;; (corfu-history-mode)
+  ;;   :config
+  ;;   (add-hook 'eshell-mode-hook
+  ;;             (lambda () (setq-local corfu-quit-at-boundary t
+  ;;                                    corfu-quit-no-match t
+  ;;                                    corfu-auto nil)
+  ;;                        (corfu-mode))
+  ;;             nil
+  ;;             t)
+  ;;   ;; Define Corfu-specific keybindings
+  ;;   (define-key corfu-map (kbd "C-g") 'corfu-quit)
+  ;;   (define-key corfu-map (kbd "M-n") 'corfu-next)
+  ;;   (define-key corfu-map (kbd "M-p") 'corfu-previous))
 
 #+end_src
 
 #+begin_src emacs-lisp
 
-  (use-package cape
-  :init
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (defun my/add-shell-completion ()
-    (interactive)
-    (cl-pushnew #'cape-history completion-at-point-functions)
-    (cl-pushnew #'pcomplete-completions-at-point completion-at-point-functions))
-  (add-hook 'shell-mode-hook #'my/add-shell-completion nil t)
+  ;; (use-package cape
+  ;; :init
+  ;; (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  ;; (defun my/add-shell-completion ()
+  ;;   (interactive)
+  ;;   (cl-pushnew #'cape-history completion-at-point-functions)
+  ;;   (cl-pushnew #'pcomplete-completions-at-point completion-at-point-functions))
+  ;; (add-hook 'shell-mode-hook #'my/add-shell-completion nil t)
 
-  :config
-  ;; Silence then pcomplete capf, no errors or messages!
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+  ;; :config
+  ;; ;; Silence then pcomplete capf, no errors or messages!
+  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
 
-  ;; Ensure that pcomplete does not write to the buffer
-  ;; and behaves as a pure `completion-at-point-function'.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+  ;; ;; Ensure that pcomplete does not write to the buffer
+  ;; ;; and behaves as a pure `completion-at-point-function'.
+  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
 #+end_src
 
@@ -840,11 +875,11 @@
     (let ((default-directory "/"))
       (fzf-directory)))
 
-    (defun fzf-from-home-with-fd ()
-    "Start fzf in the directory for org notes."
+    (defun fzf-notes ()
+    "Start fzf in the notes directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    (let ((default-directory "~/.secret_dotifiles/"))
+    (let ((default-directory "~/.secret_dotfiles/org"))
       (fzf-directory)))
 
    ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
@@ -1815,6 +1850,28 @@
 
 * ORG MODE
 
+** General
+
+#+begin_src emacs-lisp
+
+  (define-prefix-command 'my-prefix-map)
+
+  (defun open-my-todo-list ()
+    "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
+    (interactive)
+    (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
+
+#+end_src
+
+** Agenda
+
+#+begin_src emacs-lisp
+
+  (setq org-agenda-files
+        '("~/.secret_dotfiles/org/todo_list.org"))
+
+#+end_src
+
 ** Org-roam
 
 #+begin_src emacs-lisp
@@ -1942,5 +1999,56 @@
     "Decrement number at point like vim's C-x"
     (interactive "p")
     (my/change-number-at-point '- (or increment 1)))
+
+  (defun Cp ()
+  "Copy the full path of the current buffer's file to the clipboard."
+  (interactive)
+  (if-let* ((filename (buffer-file-name)))
+      (progn
+        (kill-new filename)
+        (message "Copied buffer file name '%s' to the clipboard." filename))
+    (message "Current buffer is not associated with a file.")))
+
+  (defun my/evil-scroll-down-and-center ()
+    "Scroll down like <C-d> and center the cursor line."
+    (interactive)
+    (evil-scroll-down nil)
+    (evil-scroll-line-to-center nil))
+
+  (defun my/evil-scroll-up-and-center ()
+    "Scroll up like <C-u> and center the cursor line."
+    (interactive)
+    (evil-scroll-up nil)
+    (evil-scroll-line-to-center nil))
+
+  (defun my/evil-scroll-page-down-and-center ()
+    "Scroll page down like <C-f> and center the cursor line."
+    (interactive)
+    (evil-scroll-page-down 1)
+    (evil-scroll-line-to-center nil))
+
+  (defun my/evil-scroll-page-up-and-center ()
+    "Scroll page up like <C-b> and center the cursor line."
+    (interactive)
+    (evil-scroll-page-up 1)
+    (evil-scroll-line-to-center nil))
+
+  (with-eval-after-load 'evil
+    ;; Unbind keys in motion state map
+    (define-key evil-motion-state-map (kbd "C-u") nil)
+    (define-key evil-motion-state-map (kbd "C-d") nil)
+    (define-key evil-motion-state-map (kbd "C-f") nil)
+    (define-key evil-motion-state-map (kbd "C-b") nil)
+
+    ;; Bind custom functions in normal state map
+    (define-key evil-normal-state-map (kbd "C-d") 'my/evil-scroll-down-and-center)
+    (define-key evil-normal-state-map (kbd "C-u") 'my/evil-scroll-up-and-center)
+    (define-key evil-normal-state-map (kbd "C-f") 'my/evil-scroll-page-down-and-center)
+    (define-key evil-normal-state-map (kbd "C-b") 'my/evil-scroll-page-up-and-center))
+
+  (defun sway ()
+    "Open sway config file."
+    (interactive)
+    (find-file (expand-file-name "~/.dotfiles/sway/config")))
 
 #+end_src
