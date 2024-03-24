@@ -1034,11 +1034,14 @@
     :config
     (eshell-syntax-highlighting-global-mode +1))
 
+  (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
+  (add-hook 'eshell-mode-hook 'eshell-toggle-direct-send)
+  
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-        eshell-history-size 1000000
+        eshell-history-size 10000
         eshell-buffer-maximum-lines 5000
-        eshell-save-history-on-exit t
+        ;; eshell-save-history-on-exit t
         eshell-history-file-name "~/.emacs.d/eshell_history"
         eshell-hist-ignoredups t
         eshell-scroll-to-bottom-on-input t
@@ -2066,5 +2069,11 @@
     "Open sway config file."
     (interactive)
     (find-file (expand-file-name "~/.dotfiles/sway/config")))
+
+  (defun date ()
+    "Display the current date and time in the minibuffer using the shell's 'date' command."
+    (interactive)
+    (let ((date-output (shell-command-to-string "date")))
+      (message (string-trim date-output))))
 
 #+end_src

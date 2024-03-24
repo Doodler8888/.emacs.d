@@ -233,3 +233,8 @@ airsetn airose tnaoirsetn aoirsetn aoir
 sway -c .config/sway/config
 shell
 man sway
+man -k sway
+echo test hist dir
+ehco priv
+echo priv
+ls test eshell hist
