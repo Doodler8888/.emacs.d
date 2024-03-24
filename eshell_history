@@ -143,7 +143,6 @@ which *sudo
 which eshell
 which sudo
 ..
-push
 sudo e /usr/share/xsessions/emacs.desktop
 sudo -v
 which sudo
@@ -238,3 +237,8 @@ echo test hist dir
 ehco priv
 echo priv
 ls test eshell hist
+git rm --cached exwm/
+git rm -r --cached exwm/
+git rm --cached :master#
+git rm --cached :master*
+push

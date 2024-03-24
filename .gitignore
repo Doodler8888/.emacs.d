@@ -19,6 +19,7 @@
 /recentf
 /test
 /persp-confs/
+%backup%~
 
 # Ignore the entire eshell directory
 /eshell/
