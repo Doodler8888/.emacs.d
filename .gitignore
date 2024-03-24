@@ -17,7 +17,10 @@
 /.lsp-session-v1
 /projectile-bookmarks.eld
 /recentf
-/eshell/history
-/eshell/lastdir
 /test
 /persp-confs/
+
+# Ignore the entire eshell directory
+/eshell/
+# But do not ignore these specific files within the eshell directory
+!/eshell/aliases
