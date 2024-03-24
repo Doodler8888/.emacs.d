@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=Exwm
-Comment=Emacs window manager
-Exec=sh /home/wurfkreuz/.emacs.d/exwm/start-exwm.sh
-TryExec=exwm
-Type=Application
