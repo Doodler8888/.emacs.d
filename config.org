@@ -148,6 +148,10 @@
 
   (flyspell-mode 1)
 
+  (auto-fill-mode 1)
+  (setq-default fill-column 80)
+  (add-hook 'text-mode-hook 'auto-fill-mode)
+
   (setq python-shell-interpreter "/usr/bin/python3")
 
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -1992,6 +1996,7 @@
 #+begin_src emacs-lisp
 
   (require 'org-tempo)
+  (add-to-list 'org-structure-template-alist '("sb" . "src shell"))
   (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
 
   (add-to-list 'org-structure-template-alist
@@ -2070,6 +2075,19 @@
         (goto-char start)
         (insert formatted-text))))
 
+  (defun my/evil-org-open-below (count)
+    "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
+    (interactive "p")
+    (if (org-in-item-p)
+        (progn
+          (end-of-line)
+          (org-insert-item))
+      (evil-open-below count)))
+
+  (with-eval-after-load 'evil
+    (evil-define-key 'normal org-mode-map
+      "o" 'my/evil-org-open-below))
+  
 #+end_src
 
 * Keybindings

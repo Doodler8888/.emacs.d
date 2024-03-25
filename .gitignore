@@ -1,8 +1,8 @@
 /auto-save-list/
 /backups/
 /desktop/
-/lisp/
-!/lisp/**
+/lisp/**
+!/lisp/
 /config.el
 /eln-cache/
 /elpa/
@@ -22,8 +22,8 @@
 history
 eshell_history
 /lock-files/
+/.cache
 
 # Ignore the entire eshell directory
-/eshell/
-# But do not ignore these specific files within the eshell directory
+/eshell/*
 !/eshell/aliases
