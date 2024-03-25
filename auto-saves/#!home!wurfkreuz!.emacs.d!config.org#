@@ -725,6 +725,7 @@
       (company-mode 1))  ; Enable company-mode in the current buffer if it's not already enabled
     (company-complete))
 
+  /home/wu
   (with-eval-after-load 'evil
     (define-key evil-insert-state-map (kbd "C-n") 'my/company-manual-complete))
 

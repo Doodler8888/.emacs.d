@@ -1,7 +1,7 @@
 /auto-save-list/
 /backups/
 /desktop/
-/lisp/**
+/lisp/*
 !/lisp/
 /config.el
 /eln-cache/
