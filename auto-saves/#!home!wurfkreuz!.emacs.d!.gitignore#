@@ -1,0 +1,29 @@
+/auto-save-list/
+/backups/
+/desktop/
+/lisp/
+!/lisp/**
+/config.el
+/eln-cache/
+/elpa/
+/elpaca/
+/saveplace/
+/tramp
+/transient/
+/undo-tree-history/
+/.bak
+/.git/
+/.lsp-session-v1
+/projectile-bookmarks.eld
+/recentf
+/test
+/persp-confs/
+%backup%~
+history
+eshell-history
+/lock-files/
+
+# Ignore the entire eshell directory
+/eshell/
+# But do not ignore these specific files within the eshell directory
+!/eshell/aliases

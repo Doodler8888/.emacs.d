@@ -249,3 +249,6 @@ git push
 which hunspell
 pacman -Ql hunspell | grep "aff\|dic" 
 git show
+la
+git rm --cached history eshell_history
+push

@@ -545,10 +545,10 @@
   (w/leader-keys
 
     ;; Fuzzy finder
-    "fd" '(counsel-find-file-check-dir :wk "Find file modified")
     "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+    "fd" '(projectile-find-dir :wk "Find file modified")
     ;; "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
     "ft" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
     "fh" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
