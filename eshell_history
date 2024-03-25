@@ -242,3 +242,10 @@ git rm -r --cached exwm/
 git rm --cached :master#
 git rm --cached :master*
 push
+git rm --cached '%backup%~'
+git add .
+git commit -m 'n'
+git push
+which hunspell
+pacman -Ql hunspell | grep "aff\|dic" 
+git show

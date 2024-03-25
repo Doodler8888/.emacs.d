@@ -23,6 +23,7 @@
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
+  - [[#projectile][Projectile]]
   - [[#ivy][Ivy]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
@@ -172,7 +173,9 @@
   ;; Save sessions
   (unless (file-exists-p desktop-dirname)
     (make-directory desktop-dirname))
-  (setq backup-directory-alist `(("." . ,(concat user-emacs-directory "backups"))))
+  (setq backup-directory-alist
+        `((".*" . ,(concat user-emacs-directory "backups/"))))
+  (make-directory (concat user-emacs-directory "backups") t)
   (desktop-save-mode 1)
   (setq desktop-save 't)
   (setq desktop-path (list desktop-dirname))
@@ -329,6 +332,7 @@
 
 #+begin_src emacs-lisp
 
+  (setq elpaca-core-date '(20231228))
   (defvar elpaca-installer-version 0.7)
   (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
   (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
@@ -847,14 +851,42 @@
 
 #+end_src
 
-** Ivy
+** Projectile
 
 #+begin_src emacs-lisp
 
+  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
+    "Advice to make Projectile recognize custom project roots."
+    (or (cl-some (lambda (path)
+                  (when (string-prefix-p (expand-file-name path)
+                                          (expand-file-name default-directory))
+                    path))
+                my-org-project-paths)
+        (apply original-projectile-root args)))
+
   (use-package projectile
     :config
-  
-    (projectile-mode 1))
+    (projectile-mode 1)
+    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
+
+  (defvar my-org-project-paths
+  '("/home/wurfkreuz/.secret_dotfiles/org/"
+    "/some/other/org/path/"))
+
+  (defun my-projectile-project-root ()
+    (let ((default-directory (or (buffer-file-name) default-directory)))
+      (cl-some (lambda (path)
+                (when (string-match-p path default-directory) path))
+              my-org-project-paths)
+      (projectile-project-root)))
+
+  (add-hook 'projectile-find-file-hook #'my-projectile-project-root)
+
+#+end_src
+
+** Ivy
+
+#+begin_src emacs-lisp
 
   (use-package counsel
     :after ivy
@@ -1085,22 +1117,38 @@
 
   (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
   (add-hook 'eshell-mode-hook 'eshell-toggle-direct-send)
-  
+
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-        eshell-history-size 10000
+        eshell-history-size 100000
         eshell-buffer-maximum-lines 5000
         ;; eshell-save-history-on-exit t
         eshell-history-file-name "~/.emacs.d/eshell_history"
         eshell-hist-ignoredups t
         eshell-scroll-to-bottom-on-input t
         eshell-destroy-buffer-when-process-dies t
-        eshell-banner-message ""
-        eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
+        eshell-banner-message "")
+        ;; eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
 
   (add-hook 'eshell-mode-hook
             (lambda ()
               (setq-local scroll-margin 0)))
+
+  (with-eval-after-load 'eshell
+    ;; Set eshell-save-history-on-exit to nil
+    (setq eshell-save-history-on-exit nil)
+
+    ;; Define eshell-append-history function
+    (defun eshell-append-history ()
+      "Call `eshell-write-history' with the `append' parameter set to `t'."
+      (when eshell-history-ring
+        (let ((newest-cmd-ring (make-ring 1)))
+          (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+          (let ((eshell-history-ring newest-cmd-ring))
+            (eshell-write-history eshell-history-file-name t)))))
+
+  ;; Add eshell-append-history to eshell-pre-command-hook
+  (add-hook 'eshell-pre-command-hook #'eshell-append-history))
 
   (defun eshell-insert-last-argument ()
     "Insert the last argument of the previous command."
@@ -1148,7 +1196,6 @@
 ** Eat
 
 #+begin_src emacs-lisp
-
 
   (let ((lisp-dir "~/.emacs.d/lisp")
         (emacs-eat-dir "~/.emacs.d/lisp/emacs-eat")
@@ -1269,11 +1316,11 @@
     "Load a desktop session by name."
     (let ((desktop-dir (concat user-emacs-directory "desktop/")))
       (setq current-desktop-session-name session-name)
-      (desktop-change-dir (concat desktop-dir session-name "/"))
+      (desktop-change-dir (concat desktop-dir session-name "/"))))
       ;; Set up the autosave timer when a new session is loaded
-      (when desktop-autosave-timer
-        (cancel-timer desktop-autosave-timer))
-      (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
+      ;; (when desktop-autosave-timer
+      ;;   (cancel-timer desktop-autosave-timer))
+      ;; (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
 
   (defun load-desktop-with-name ()
     "Load a desktop session by name, chosen from available sessions."
@@ -1285,11 +1332,11 @@
            (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
            (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
       (setq current-desktop-session-name session-name)  ; Save the session name globally
-      (desktop-change-dir (concat desktop-dir session-name "/"))
+      (desktop-change-dir (concat desktop-dir session-name "/"))))
       ;; Set up the autosave timer when a new session is loaded
-      (when desktop-autosave-timer
-        (cancel-timer desktop-autosave-timer))
-      (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
+      ;; (when desktop-autosave-timer
+      ;;   (cancel-timer desktop-autosave-timer))
+      ;; (setq desktop-autosave-timer (run-with-timer 0 30 'save-current-desktop-session))))
 
   ;; Disable the default desktop save mode
   (desktop-save-mode 0)
@@ -1724,7 +1771,7 @@
   (with-eval-after-load 'evil
   ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
   ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics)
+    (define-key evil-normal-state-map (kbd "M-t d") 'popper-diagnostics)
     (define-key evil-normal-state-map (kbd "M-m") 'popper-message))
 
 #+end_src
@@ -2034,13 +2081,22 @@
   (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
   (global-set-key (kbd "C-s C-s") 'swiper-isearch)
 
+  (defun my/unset-flyspell-auto-correct-word ()
+    "Unset the keybinding for `flyspell-auto-correct-word` in `flyspell-mode`."
+    (define-key flyspell-mode-map (kbd "C-M-i") nil))
+
+  (add-hook 'flyspell-mode-hook 'my/unset-flyspell-auto-correct-word)
+
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
+
 #+end_src
 
 * Custom functions
 
 #+begin_src emacs-lisp
 
-    (defun print-commands-starting-with (input)
+  (defun print-commands-starting-with (input)
   "Print all Emacs commands starting with INPUT to a scratch buffer."
   (interactive "sInput: ")
   (let ((command-list (apropos-internal input 'commandp))
@@ -2083,43 +2139,6 @@
         (kill-new filename)
         (message "Copied buffer file name '%s' to the clipboard." filename))
     (message "Current buffer is not associated with a file.")))
-
-  (defun my/evil-scroll-down-and-center ()
-    "Scroll down like <C-d> and center the cursor line."
-    (interactive)
-    (evil-scroll-down nil)
-    (evil-scroll-line-to-center nil))
-
-  (defun my/evil-scroll-up-and-center ()
-    "Scroll up like <C-u> and center the cursor line."
-    (interactive)
-    (evil-scroll-up nil)
-    (evil-scroll-line-to-center nil))
-
-  (defun my/evil-scroll-page-down-and-center ()
-    "Scroll page down like <C-f> and center the cursor line."
-    (interactive)
-    (evil-scroll-page-down 1)
-    (evil-scroll-line-to-center nil))
-
-  (defun my/evil-scroll-page-up-and-center ()
-    "Scroll page up like <C-b> and center the cursor line."
-    (interactive)
-    (evil-scroll-page-up 1)
-    (evil-scroll-line-to-center nil))
-
-  (with-eval-after-load 'evil
-    ;; Unbind keys in motion state map
-    (define-key evil-motion-state-map (kbd "C-u") nil)
-    (define-key evil-motion-state-map (kbd "C-d") nil)
-    (define-key evil-motion-state-map (kbd "C-f") nil)
-    (define-key evil-motion-state-map (kbd "C-b") nil)
-
-    ;; Bind custom functions in normal state map
-    (define-key evil-normal-state-map (kbd "C-d") 'my/evil-scroll-down-and-center)
-    (define-key evil-normal-state-map (kbd "C-u") 'my/evil-scroll-up-and-center)
-    (define-key evil-normal-state-map (kbd "C-f") 'my/evil-scroll-page-down-and-center)
-    (define-key evil-normal-state-map (kbd "C-b") 'my/evil-scroll-page-up-and-center))
 
   (defun sway ()
     "Open sway config file."

@@ -20,6 +20,9 @@
 /test
 /persp-confs/
 %backup%~
+history
+eshell-history
+/lock-files/
 
 # Ignore the entire eshell directory
 /eshell/
