@@ -2,6 +2,7 @@
 
 (let ((class '((class color) (min-colors 89)))
       (rose-pine-fg "#e0def4")
+      (rose-pine-fg2 "#b2aec2")
       (rose-pine-blendedbg "#17191a")
       (rose-pine-bg "#1d1f21")
       (rose-pine-rose "#ebbcba")
@@ -22,6 +23,11 @@
 
    ;; Default faces
    `(default ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
+  ;; Bold face
+  `(bold ((,class (:foreground ,rose-pine-fg2 :weight bold))))
+
+  ;; Italic face
+  `(italic ((,class (:foreground ,rose-pine-fg2 :slant italic))))
 
    ;; Line highlight
    ;; `(hl-line ((,class (:background ,rose-pine-highlight))))

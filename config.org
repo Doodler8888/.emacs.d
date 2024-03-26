@@ -6,7 +6,7 @@
 
 * TABLE OF CONTENTS :toc:
 - [[#general-emacs-setting][GENERAL EMACS SETTING]]
-  - [[#visual][Visual]]
+  - [[#visuals][Visuals]]
   - [[#system][System]]
   - [[#custom-commands][Custom Commands]]
   - [[#cursor][Cursor]]
@@ -56,15 +56,15 @@
   - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
   - [[#templates][Templates]]
-  - [[#bullets][Bullets]]
-  - [[#source-block-tag-expansion-cheetsheat][Source Block Tag Expansion Cheetsheat]]
+  - [[#visuals-1][Visuals]]
+  - [[#source-block-tag-expansion-cheat-sheet][Source block tag expansion cheat sheet]]
   - [[#enabling-table-of-contents][Enabling Table of Contents]]
   - [[#custom-key-bindings][Custom key bindings]]
 - [[#keybindings][Keybindings]]
 - [[#custom-functions][Custom functions]]
 
 * GENERAL EMACS SETTING
-** Visual
+** Visuals
 
 #+begin_src emacs-lisp
 
@@ -143,13 +143,13 @@
   (setq evil-want-keybinding nil)
 
   (setq vc-follow-symlinks t)
-  
+
   (setq dired-recursive-deletes 'always)
 
   (setq desktop-load-locked-desktop t)
   (setq backup-inhibited t)
 
-  (flyspell-mode 1)
+  ;; (flyspell-mode 1)
 
   (auto-fill-mode 1)
   (setq-default fill-column 80)
@@ -519,7 +519,13 @@
 
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
-    )
+
+    ;; Set a different font for italics
+    (set-face-attribute 'italic nil
+                        :family "NotoSans Nerd Font"
+                        :slant 'italic
+                        :weight 'normal
+                        :height 130))
 
 #+end_src
 
@@ -1974,8 +1980,15 @@
 ** General
 
 #+begin_src emacs-lisp
-
-  (define-prefix-command 'my-prefix-map)
+  
+  (setq org-emphasis-alist
+        '(("*" bold)
+          ("/" italic)
+          ("_" underline)
+          ("=" org-verbatim verbatim)
+          ("~" org-code verbatim)
+          ("+" org-strike-through t)))
+    (define-prefix-command 'my-prefix-map)
 
   (defun todo ()
     "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
@@ -1989,8 +2002,8 @@
     (insert "\n\n\n* ")
     (end-of-line))
 
-  (define-key org-mode-map (kbd "M-o h") 'org-insert-top-level-heading)
-  
+  (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+
 #+end_src
 
 ** Agenda
@@ -2020,7 +2033,78 @@
 
 #+end_src
 
-** Bullets
+** Visuals
+
+#+begin_src emacs-lisp
+
+  (setq org-hide-emphasis-markers t)
+
+  ;; ;; Code for creating a custom font face for emphasis markers?
+  ;; (defface org-emphasis-marker '((t (:inherit shadow)))
+  ;;   "Face for Org emphasis markers"
+  ;;   :group 'org-faces)
+
+  ;; (defun org-do-emphasis-faces (limit)
+  ;;     "Run through the buffer and emphasize strings."
+  ;;     (require 'org-macs)
+  ;;     (require 'org-compat)
+  ;;     (let ((quick-re (format "\\([%s]\\|^\\)\\([~=*/_+]\\)"
+  ;;                             (car org-emphasis-regexp-components))))
+  ;;       (catch :exit
+  ;;         (while (re-search-forward quick-re limit t)
+  ;;           (let* ((marker (match-string 2))
+  ;;                   (verbatim? (member marker '("~" "="))))
+  ;;             (when (save-excursion
+  ;;                     (goto-char (match-beginning 0))
+  ;;                     (and
+  ;;                       ;; Do not match table hlines.
+  ;;                       (not (and (equal marker "+")
+  ;;                                 (org-match-line
+  ;;                                 "[ \t]*\\(|[-+]+|?\\|\\+[-+]+\\+\\)[ \t]*$")))
+  ;;                       ;; Do not match headline stars.  Do not consider
+  ;;                       ;; stars of a headline as closing marker for bold
+  ;;                       ;; markup either.
+  ;;                       (not (and (equal marker "*")
+  ;;                                 (save-excursion
+  ;;                                   (forward-char)
+  ;;                                   (skip-chars-backward "*")
+  ;;                                   (looking-at-p org-outline-regexp-bol))))
+  ;;                       ;; Match full emphasis markup regexp.
+  ;;                       (looking-at (if verbatim? org-verbatim-re org-emph-re))
+  ;;                       ;; Do not span over paragraph boundaries.
+  ;;                       (not (string-match-p org-element-paragraph-separate
+  ;;                                           (match-string 2)))
+  ;;                       ;; Do not span over cells in table rows.
+  ;;                       (not (and (save-match-data (org-match-line "[ \t]*|"))
+  ;;                                 (string-match-p "|" (match-string 4))))))
+  ;;               (pcase-let ((`(,_ ,face ,_) (assoc marker org-emphasis-alist)))
+  ;;                 (font-lock-prepend-text-property
+  ;;                   (match-beginning 2) (match-end 2) 'face face)
+  ;;                 (when verbatim?
+  ;;                   (org-remove-flyspell-overlays-in
+  ;;                     (match-beginning 0) (match-end 0))
+  ;;                   (remove-text-properties (match-beginning 2) (match-end 2)
+  ;;                                           '(display t invisible t intangible t)))
+  ;;                 (add-text-properties (match-beginning 2) (match-end 2)
+  ;;                                       '(font-lock-multiline t org-emphasis t)))
+
+  ;;               ;; Begin new code
+  ;;               (font-lock-prepend-text-property
+  ;;                 (match-beginning 3) (match-end 3) 'face 'org-emphasis-marker)
+  ;;               (font-lock-prepend-text-property
+  ;;                 (match-end 4) (match-beginning 5) 'face 'org-emphasis-marker)
+  ;;               ;; End new code
+
+  ;;               (when org-hide-emphasis-markers
+  ;;                 (add-text-properties (match-end 4) (match-beginning 5)
+  ;;                                       '(invisible org-link))
+  ;;                 (add-text-properties (match-beginning 3) (match-end 3)
+  ;;                                       '(invisible org-link))))
+  ;;             (throw :exit t))))))
+  
+#+end_src
+
+*** Bullets
 
 #+begin_src emacs-lisp
 
@@ -2030,7 +2114,7 @@
 
 #+end_src
 
-** Source Block Tag Expansion Cheetsheat
+** Source block tag expansion cheat sheet
 
     | Name | Description |
     |------+-------------|
