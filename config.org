@@ -51,7 +51,7 @@
   - [[#flycheck][Flycheck]]
   - [[#lsp-mode][Lsp Mode]]
   - [[#eglot][Eglot]]
-- [[#org-mode][ORG MODE]]
+- [[#org-mode][Org Mode]]
   - [[#general-1][General]]
   - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
@@ -143,8 +143,11 @@
   (setq evil-want-keybinding nil)
 
   (setq vc-follow-symlinks t)
+  
+  (setq dired-recursive-deletes 'always)
 
   (setq desktop-load-locked-desktop t)
+  (setq backup-inhibited t)
 
   (flyspell-mode 1)
 
@@ -166,20 +169,20 @@
 
   (setq undo-tree-auto-save-history t)
   (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
+  (make-directory (concat user-emacs-directory "auto-saves") t)
   (setq auto-save-file-name-transforms
         `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
-  (make-directory (concat user-emacs-directory "auto-saves") t)
+  (make-directory (concat user-emacs-directory "lock-files") t)
   (setq lock-file-name-transforms
         `((".*" ,(concat user-emacs-directory "lock-files/") t)))
-  (make-directory (concat user-emacs-directory "lock-files") t)
   (setq desktop-dirname (concat user-emacs-directory "desktop/"))
+  (make-directory (concat user-emacs-directory "backups") t)
+  (setq backup-directory-alist
+        `((".*" . ,(concat user-emacs-directory "backups/"))))
 
   ;; Save sessions
   (unless (file-exists-p desktop-dirname)
     (make-directory desktop-dirname))
-  (setq backup-directory-alist
-        `((".*" . ,(concat user-emacs-directory "backups/"))))
-  (make-directory (concat user-emacs-directory "backups") t)
   (desktop-save-mode 1)
   (setq desktop-save 't)
   (setq desktop-path (list desktop-dirname))
@@ -431,6 +434,10 @@
 
 
   (setq evil-undo-system 'undo-tree)
+
+  (use-package evil-surround
+    :config
+    (global-evil-surround-mode 1))
 
   (use-package evil-commentary
     :config
@@ -1962,7 +1969,7 @@
 
 #+end_src
 
-* ORG MODE
+* Org Mode
 
 ** General
 
@@ -1975,6 +1982,15 @@
     (interactive)
     (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
 
+  (defun org-insert-top-level-heading ()
+    "Insert a new top-level heading with two empty lines before it."
+    (interactive)
+    (end-of-line)
+    (insert "\n\n\n* ")
+    (end-of-line))
+
+  (define-key org-mode-map (kbd "M-o h") 'org-insert-top-level-heading)
+  
 #+end_src
 
 ** Agenda
@@ -2108,6 +2124,9 @@
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
 
+  (global-unset-key (kbd "C-<tab>"))
+  (global-set-key (kbd "<C-tab>") 'previous-buffer)
+  
 #+end_src
 
 * Custom functions
@@ -2178,5 +2197,10 @@
     "Reboot the system."
     (interactive)
     (call-process "reboot"))
-  
+
+  (defun notes ()
+    "Open org notes directory."
+    (interactive)
+    (find-file (expand-file-name "~/.secret_dotfiles/org")))
+
 #+end_src
