@@ -89,6 +89,7 @@
    `(org-document-title ((,class (:foreground ,rose-pine-gold))))
    `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
    `(org-date ((,class (:foreground ,rose-pine-gold))))
+   `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
 
    ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))

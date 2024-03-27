@@ -1981,7 +1981,7 @@
 
 #+begin_src emacs-lisp
 
-  ;; (setq org-startup-folded t) 
+  (setq org-startup-folded t) 
   ;; (setq org-emphasis-alist
   ;;       ;; '(("*" bold)
   ;;         '(("/" italic)))
@@ -2041,6 +2041,7 @@
   (add-to-list 'org-structure-template-alist '("sr" . "src raku"))
   (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
   (add-to-list 'org-structure-template-alist '("st" . "src text"))
+  (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
 
   (add-to-list 'org-structure-template-alist
              '("t" . "src TODO\n\n* TODO \n\n?"))
