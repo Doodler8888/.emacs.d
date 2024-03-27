@@ -21,13 +21,10 @@
   (custom-theme-set-faces
    'rose-pine
 
-   ;; Default faces
+   ;; General
    `(default ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
-  ;; Bold face
-  `(bold ((,class (:foreground ,rose-pine-fg2 :weight bold))))
-
-  ;; Italic face
-  `(italic ((,class (:foreground ,rose-pine-fg2 :slant italic))))
+   `(bold ((,class (:foreground ,rose-pine-fg2 :weight bold))))
+   `(italic ((,class (:foreground ,rose-pine-fg2 :slant italic))))
 
    ;; Line highlight
    ;; `(hl-line ((,class (:background ,rose-pine-highlight))))
@@ -90,6 +87,8 @@
    `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
    `(org-document-info ((,class (:foreground ,rose-pine-gold))))
    `(org-document-title ((,class (:foreground ,rose-pine-gold))))
+   `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
+   `(org-date ((,class (:foreground ,rose-pine-gold))))
 
    ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))

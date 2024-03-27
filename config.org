@@ -53,6 +53,7 @@
   - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
+  - [[#drill][Drill]]
   - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
   - [[#templates][Templates]]
@@ -149,8 +150,6 @@
   (setq desktop-load-locked-desktop t)
   (setq backup-inhibited t)
 
-  ;; (flyspell-mode 1)
-
   (auto-fill-mode 1)
   (setq-default fill-column 80)
   (add-hook 'text-mode-hook 'auto-fill-mode)
@@ -158,6 +157,12 @@
   (setq python-shell-interpreter "/usr/bin/python3")
 
   (defalias 'yes-or-no-p 'y-or-n-p)
+
+  ;; Autoinsertion on the search buffer
+  (setq ivy-initial-inputs-alist nil)
+  ;; (setq ivy-initial-inputs-alist ;; If you want there are situations where you would like to have it enabled, try this code.
+  ;;     '((counsel-M-x . "")
+  ;;       (t . "^")))
 
   ;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
   (setq-default indent-tabs-mode nil)
@@ -624,8 +629,7 @@
     ;; "ld" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
     ;; "lk" '(lsp-bridge-popup-documentation :wk "Open a hover window")
 
-    "ee" '(SpawnEshellSplitBelow :wk "Create a new lessend eshell window under a current one")
-    "es" '(eshell :wk "Eshell")
+    "ee" '(eshell :wk "Eshell")
 
     ;; Evaluation
     "e" '(:ignore t :wk "Evaluate/Eshell")
@@ -693,17 +697,13 @@
 
 #+begin_src emacs-lisp
 
-    (use-package yasnippet
-    :config
-    (yas-global-mode 1))
-
-#+end_src
-
-*** Built-in
-
-#+begin_src emacs-lisp
-
-  ;; (global-set-key (kbd "M-n") 'completion-at-point)
+(use-package yasnippet
+  :config
+  (yas-global-mode 1)
+  ;; Add your snippets directory to `yas-snippet-dirs`
+  (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+  ;; Load the snippets
+  (yas-reload-all))
 
 #+end_src
 
@@ -1980,15 +1980,16 @@
 ** General
 
 #+begin_src emacs-lisp
-  
-  (setq org-emphasis-alist
-        '(("*" bold)
-          ("/" italic)
-          ("_" underline)
-          ("=" org-verbatim verbatim)
-          ("~" org-code verbatim)
-          ("+" org-strike-through t)))
-    (define-prefix-command 'my-prefix-map)
+
+  ;; (setq org-startup-folded t) 
+  ;; (setq org-emphasis-alist
+  ;;       ;; '(("*" bold)
+  ;;         '(("/" italic)))
+  ;;         ;; ("_" underline)
+  ;;         ;; ("=" org-verbatim verbatim)
+  ;;         ;; ("~" org-code verbatim)
+  ;;         ;; ("+" org-strike-through t)))
+  ;;   (define-prefix-command 'my-prefix-map)
 
   (defun todo ()
     "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
@@ -2003,6 +2004,16 @@
     (end-of-line))
 
   (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+
+#+end_src
+
+** Drill
+
+#+begin_src emacs-lisp
+
+  (use-package org-drill)
+    ;; :config
+    ;; (setq org-drill-use-visible-cloze-face-p t))
 
 #+end_src
 
@@ -2027,6 +2038,9 @@
   (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("sb" . "src shell"))
   (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
+  (add-to-list 'org-structure-template-alist '("sr" . "src raku"))
+  (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
+  (add-to-list 'org-structure-template-alist '("st" . "src text"))
 
   (add-to-list 'org-structure-template-alist
              '("t" . "src TODO\n\n* TODO \n\n?"))
@@ -2039,69 +2053,14 @@
 
   (setq org-hide-emphasis-markers t)
 
-  ;; ;; Code for creating a custom font face for emphasis markers?
-  ;; (defface org-emphasis-marker '((t (:inherit shadow)))
-  ;;   "Face for Org emphasis markers"
-  ;;   :group 'org-faces)
+  (defun toggle-org-emphasis-markers ()
+  "Toggle the visibility of Org emphasis markers."
+  (interactive)
+  (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
+  (org-mode-restart))
 
-  ;; (defun org-do-emphasis-faces (limit)
-  ;;     "Run through the buffer and emphasize strings."
-  ;;     (require 'org-macs)
-  ;;     (require 'org-compat)
-  ;;     (let ((quick-re (format "\\([%s]\\|^\\)\\([~=*/_+]\\)"
-  ;;                             (car org-emphasis-regexp-components))))
-  ;;       (catch :exit
-  ;;         (while (re-search-forward quick-re limit t)
-  ;;           (let* ((marker (match-string 2))
-  ;;                   (verbatim? (member marker '("~" "="))))
-  ;;             (when (save-excursion
-  ;;                     (goto-char (match-beginning 0))
-  ;;                     (and
-  ;;                       ;; Do not match table hlines.
-  ;;                       (not (and (equal marker "+")
-  ;;                                 (org-match-line
-  ;;                                 "[ \t]*\\(|[-+]+|?\\|\\+[-+]+\\+\\)[ \t]*$")))
-  ;;                       ;; Do not match headline stars.  Do not consider
-  ;;                       ;; stars of a headline as closing marker for bold
-  ;;                       ;; markup either.
-  ;;                       (not (and (equal marker "*")
-  ;;                                 (save-excursion
-  ;;                                   (forward-char)
-  ;;                                   (skip-chars-backward "*")
-  ;;                                   (looking-at-p org-outline-regexp-bol))))
-  ;;                       ;; Match full emphasis markup regexp.
-  ;;                       (looking-at (if verbatim? org-verbatim-re org-emph-re))
-  ;;                       ;; Do not span over paragraph boundaries.
-  ;;                       (not (string-match-p org-element-paragraph-separate
-  ;;                                           (match-string 2)))
-  ;;                       ;; Do not span over cells in table rows.
-  ;;                       (not (and (save-match-data (org-match-line "[ \t]*|"))
-  ;;                                 (string-match-p "|" (match-string 4))))))
-  ;;               (pcase-let ((`(,_ ,face ,_) (assoc marker org-emphasis-alist)))
-  ;;                 (font-lock-prepend-text-property
-  ;;                   (match-beginning 2) (match-end 2) 'face face)
-  ;;                 (when verbatim?
-  ;;                   (org-remove-flyspell-overlays-in
-  ;;                     (match-beginning 0) (match-end 0))
-  ;;                   (remove-text-properties (match-beginning 2) (match-end 2)
-  ;;                                           '(display t invisible t intangible t)))
-  ;;                 (add-text-properties (match-beginning 2) (match-end 2)
-  ;;                                       '(font-lock-multiline t org-emphasis t)))
+  (define-key org-mode-map (kbd "M-o M-t") 'toggle-org-emphasis-markers)
 
-  ;;               ;; Begin new code
-  ;;               (font-lock-prepend-text-property
-  ;;                 (match-beginning 3) (match-end 3) 'face 'org-emphasis-marker)
-  ;;               (font-lock-prepend-text-property
-  ;;                 (match-end 4) (match-beginning 5) 'face 'org-emphasis-marker)
-  ;;               ;; End new code
-
-  ;;               (when org-hide-emphasis-markers
-  ;;                 (add-text-properties (match-end 4) (match-beginning 5)
-  ;;                                       '(invisible org-link))
-  ;;                 (add-text-properties (match-beginning 3) (match-end 3)
-  ;;                                       '(invisible org-link))))
-  ;;             (throw :exit t))))))
-  
 #+end_src
 
 *** Bullets
@@ -2194,23 +2153,19 @@
 
 #+begin_src emacs-lisp
 
+  (global-unset-key (kbd "M-;"))
+
   (global-unset-key (kbd "C-s"))
   (global-unset-key (kbd "M-TAB"))
   (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
   (global-set-key (kbd "C-s C-s") 'swiper-isearch)
 
-  (defun my/unset-flyspell-auto-correct-word ()
-    "Unset the keybinding for `flyspell-auto-correct-word` in `flyspell-mode`."
-    (define-key flyspell-mode-map (kbd "C-M-i") nil))
-
-  (add-hook 'flyspell-mode-hook 'my/unset-flyspell-auto-correct-word)
-
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
+  ;; (with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
 
   (global-unset-key (kbd "C-<tab>"))
   (global-set-key (kbd "<C-tab>") 'previous-buffer)
-  
+
 #+end_src
 
 * Custom functions
@@ -2286,5 +2241,5 @@
     "Open org notes directory."
     (interactive)
     (find-file (expand-file-name "~/.secret_dotfiles/org")))
-
+  
 #+end_src
