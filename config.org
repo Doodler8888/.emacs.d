@@ -1129,6 +1129,8 @@
 
 #+begin_src emacs-lisp
 
+  (setq eshell-destroy-buffer-when-process-dies t)
+
   (use-package eshell-syntax-highlighting
     :after esh-mode
     :config
@@ -1210,6 +1212,13 @@
   ;; (setq password-cache-expiry 10)
   ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
 
+  (defun eshell-clear-buffer ()
+    "Clear the current Eshell buffer."
+    (interactive)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (eshell-send-input)))
+
 #+end_src
 
 ** Eat
@@ -1272,13 +1281,39 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package emacs-edbi
-  ;;   :ensure t   ;; Ensure the package is installed
-  ;;   ;; :config     ;; Optional: Add your configuration here
-  ;;   ;;   ;; Example configuration:
-  ;;   ;;   (setq edbi-default-connection-alist
-  ;;   ;;         '(("my-db" . ("localhost" 3306 "my_database"))))
-  ;; )
+  ;; Define the connection details for PostgreSQL, including two databases
+  (setq sql-connection-alist
+        '((postgres-wurfkreuz
+          (sql-product 'postgres)
+          (sql-user "wurfkreuz")
+          (sql-server "localhost")
+          (sql-port 5432)
+          (sql-database "wurfkreuz"))
+          (postgres-shelf
+          (sql-product 'postgres)
+          (sql-user "wurfkreuz") ; Assuming the same user for simplicity
+          (sql-server "localhost")
+          (sql-port 5432)
+          (sql-database "shelf"))))
+
+  (defun my-sql-connect (connection)
+    "Connect to a SQL database (specified by CONNECTION)."
+    (let ((params (assoc connection sql-connection-alist)))
+      (if params
+          (let ((sql-product (cdr (assoc 'sql-product params)))
+                (sql-user (cdr (assoc 'sql-user params)))
+                (sql-server (cdr (assoc 'sql-server params)))
+                (sql-port (cdr (assoc 'sql-port params)))
+                (sql-database (cdr (assoc 'sql-database params))))
+            (sql-connect connection))
+        (message "Connection details not found for: %s" connection))))
+
+  (defun my-sql-select-database ()
+    "Prompt the user to select a database connection defined in `sql-connection-alist`."
+    (interactive)
+    (let* ((choices (mapcar (lambda (item) (symbol-name (car item))) sql-connection-alist))
+          (choice (completing-read "Select database: " choices nil t)))
+      (my-sql-connect (intern choice))))
 
 #+end_src
 
@@ -1800,6 +1835,7 @@
 #+begin_src emacs-lisp
 
   (use-package raku-mode)
+  (use-package go-mode)
   (use-package lua-mode)
   (use-package terraform-mode)
   (use-package dockerfile-mode)
@@ -2044,6 +2080,7 @@
   (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
   (add-to-list 'org-structure-template-alist '("st" . "src text"))
   (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
+  (add-to-list 'org-structure-template-alist '("sg" . "src go"))
 
   (add-to-list 'org-structure-template-alist
              '("t" . "src TODO\n\n* TODO \n\n?"))
