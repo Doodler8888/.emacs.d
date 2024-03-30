@@ -2049,9 +2049,9 @@
 
 #+begin_src emacs-lisp
 
-  (use-package org-drill)
-    ;; :config
-    ;; (setq org-drill-use-visible-cloze-face-p t))
+  (use-package org-drill
+    :config
+    (setq org-drill-maximum-items-per-session 20))
 
 #+end_src
 

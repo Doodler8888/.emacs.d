@@ -1,4 +1,4 @@
-# key: <dsn
+# key: <dsnn
 # name: Org-drill two-sided card
 # --
 * ${1:Title} :drill:
@@ -8,3 +8,5 @@
 $0
 
 ** ${2:Answer}
+
+** ${3:Notes}
