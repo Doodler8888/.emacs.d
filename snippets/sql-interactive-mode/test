@@ -1,0 +1,4 @@
+# name: select
+# key: sel
+# --
+SELECT $1 FROM $2 WHERE $3;

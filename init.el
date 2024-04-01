@@ -53,3 +53,4 @@
 
 
 (load "~/.emacs.d/early-init.el")
+(load "~/.secret_dotfiles/emacs/env.el")

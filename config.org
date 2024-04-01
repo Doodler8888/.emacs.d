@@ -273,6 +273,21 @@
     (interactive)
     (find-file "~/.dotfiles/bash/.bashrc"))
 
+  (defun scr ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.secret_dotfiles"))
+
+  (defun szsh ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.secret_dotfiles/zsh/.zshrc"))
+
+  (defun scripts ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.dotfiles/scripts/"))
+
   (defun so ()
     "Reload the Emacs configuration."
     (interactive)
@@ -466,7 +481,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca))
     (evil-collection-init))
 
 
@@ -699,13 +714,14 @@
 
 #+begin_src emacs-lisp
 
-(use-package yasnippet
-  :config
-  (yas-global-mode 1)
-  ;; Add your snippets directory to `yas-snippet-dirs`
-  (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
-  ;; Load the snippets
-  (yas-reload-all))
+  (use-package yasnippet
+    :config
+    (yas-global-mode 1)
+    ;; Add your snippets directory to `yas-snippet-dirs`
+    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+    ;; Load the snippets
+    (yas-reload-all))
 
 #+end_src
 
@@ -1281,6 +1297,43 @@
 
 #+begin_src emacs-lisp
 
+  ;; ;; Define sql-connection-alist before using it
+  ;; (defvar sql-connection-alist nil
+  ;; "Alist of SQL connection configurations.")
+
+  ;; ;; Define a macro to simplify the creation of new connections
+  ;; (defmacro define-sql-connection (name product user server port database)
+  ;; `(push (list ',name
+  ;;               (cons 'sql-product ',product)
+  ;;               (cons 'sql-user ',user)
+  ;;               (cons 'sql-server ',server)
+  ;;               (cons 'sql-port ',port)
+  ;;               (cons 'sql-database ',database))
+  ;;         sql-connection-alist))
+
+  ;; ;; Use the macro to define your connections
+  ;; (define-sql-connection postgres-wurfkreuz postgres "wurfkreuz" "localhost" 5432 "wurfkreuz")
+  ;; (define-sql-connection postgres-shelf postgres "wurfkreuz" "localhost" 5432 "shelf")
+
+  ;; (defun my-sql-connect (connection)
+  ;; "Connect to a SQL database (specified by CONNECTION)."
+  ;; (let ((params (assoc connection sql-connection-alist)))
+  ;;     (if params
+  ;;         (let ((sql-product (cdr (assoc 'sql-product params)))
+  ;;               (sql-user (cdr (assoc 'sql-user params)))
+  ;;               (sql-server (cdr (assoc 'sql-server params)))
+  ;;               (sql-port (cdr (assoc 'sql-port params)))
+  ;;               (sql-database (cdr (assoc 'sql-database params))))
+  ;;           (sql-connect connection))
+  ;;       (message "Connection details not found for: %s" connection))))
+
+  ;; (defun my-sql-select-database ()
+  ;; "Prompt the user to select a database connection defined in `sql-connection-alist`."
+  ;; (interactive)
+  ;; (let* ((choices (mapcar (lambda (item) (symbol-name (car item))) sql-connection-alist))
+  ;;         (choice (completing-read "Select database: " choices nil t)))
+  ;;     (my-sql-connect (intern choice))))
+
   ;; Define the connection details for PostgreSQL, including two databases
   (setq sql-connection-alist
         '((postgres-wurfkreuz
@@ -1288,12 +1341,14 @@
           (sql-user "wurfkreuz")
           (sql-server "localhost")
           (sql-port 5432)
+          ;; (sql-password (getenv "POSTGRES_WURFKREUZ_PASSWORD"))
           (sql-database "wurfkreuz"))
           (postgres-shelf
           (sql-product 'postgres)
           (sql-user "wurfkreuz") ; Assuming the same user for simplicity
           (sql-server "localhost")
           (sql-port 5432)
+          ;; (sql-password (getenv "POSTGRES_SHELF_PASSWORD"))
           (sql-database "shelf"))))
 
   (defun my-sql-connect (connection)
@@ -1602,83 +1657,86 @@
   ;; (with-eval-after-load 'evil
   ;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
 
-  (defvar spawn-toggle-window-configuration nil
-    "Variable to store the window configuration before opening eshell or shell.")
 
-  (defvar spawn-toggle-selected-window nil
-    "Variable to store the selected window before opening eshell or shell.")
 
-  (defun SpawnEshellSplitBelow ()
-    "Open a shell in a small split below or toggle it if already open.
-  If the current buffer is a shell buffer, switch to an eshell buffer instead."
-    (interactive)
-    (if (eq major-mode 'shell-mode)
-        (open-eshell-in-current-directory)
-      (if (eq major-mode 'eshell-mode)
-          (SpawnToggleOff)
-        (SpawnToggleOn)
-        (open-eshell-in-current-directory))))
 
-  (defun open-eshell-in-current-directory ()
-    "Open eshell in the directory of the current buffer.
-  If an eshell buffer for the directory already exists, switch to it."
-    (interactive)
-    (let* ((buffer-dir (if (buffer-file-name)
-                          (file-name-directory (buffer-file-name))
-                        default-directory))
-          (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-          (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-      (if existing-eshell-buffer
-          (switch-to-buffer existing-eshell-buffer)
-        (let ((eshell-buffer (eshell 'N)))
-          (with-current-buffer eshell-buffer
-            (rename-buffer eshell-buffer-name)
-            (eshell/cd buffer-dir))))))
+  ;; (defvar spawn-toggle-window-configuration nil
+  ;;   "Variable to store the window configuration before opening eshell or shell.")
 
-  (defun SpawnShellSplitBelow ()
-    "Open a shell in a small split below or toggle it if already open.
-  If the current buffer is an eshell buffer, switch to a shell buffer instead."
-    (interactive)
-    (if (eq major-mode 'eshell-mode)
-        (open-shell-in-current-directory)
-      (if (eq major-mode 'shell-mode)
-          (SpawnToggleOff)
-        (SpawnToggleOn)
-        (open-shell-in-current-directory))))
+  ;; (defvar spawn-toggle-selected-window nil
+  ;;   "Variable to store the selected window before opening eshell or shell.")
 
-  (defun open-shell-in-current-directory ()
-    "Open shell in the directory of the current buffer.
-  If a shell buffer for the directory already exists, switch to it."
-    (interactive)
-    (let* ((buffer-dir (if (buffer-file-name)
-                          (file-name-directory (buffer-file-name))
-                        default-directory))
-          (shell-buffer-name (format "*shell: %s*" buffer-dir))
-          (existing-shell-buffer (get-buffer shell-buffer-name)))
-      (if existing-shell-buffer
-          (switch-to-buffer existing-shell-buffer)
-        (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
-          (shell (generate-new-buffer-name shell-buffer-name))))))
+  ;; (defun SpawnEshellSplitBelow ()
+  ;;   "Open a shell in a small split below or toggle it if already open.
+  ;; If the current buffer is a shell buffer, switch to an eshell buffer instead."
+  ;;   (interactive)
+  ;;   (if (eq major-mode 'shell-mode)
+  ;;       (open-eshell-in-current-directory)
+  ;;     (if (eq major-mode 'eshell-mode)
+  ;;         (SpawnToggleOff)
+  ;;       (SpawnToggleOn)
+  ;;       (open-eshell-in-current-directory))))
 
-  (defun SpawnToggleOff ()
-    "Toggle off eshell or shell buffer and restore the previous window configuration."
-    (when spawn-toggle-window-configuration
-      (set-window-configuration spawn-toggle-window-configuration)
-      (setq spawn-toggle-window-configuration nil))
-    (when spawn-toggle-selected-window
-      (select-window spawn-toggle-selected-window)
-      (setq spawn-toggle-selected-window nil)))
+  ;; (defun open-eshell-in-current-directory ()
+  ;;   "Open eshell in the directory of the current buffer.
+  ;; If an eshell buffer for the directory already exists, switch to it."
+  ;;   (interactive)
+  ;;   (let* ((buffer-dir (if (buffer-file-name)
+  ;;                         (file-name-directory (buffer-file-name))
+  ;;                       default-directory))
+  ;;         (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+  ;;         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+  ;;     (if existing-eshell-buffer
+  ;;         (switch-to-buffer existing-eshell-buffer)
+  ;;       (let ((eshell-buffer (eshell 'N)))
+  ;;         (with-current-buffer eshell-buffer
+  ;;           (rename-buffer eshell-buffer-name)
+  ;;           (eshell/cd buffer-dir))))))
 
-  (defun SpawnToggleOn ()
-    "Store the current window configuration and selected window before spawning eshell or shell."
-    (setq spawn-toggle-window-configuration (current-window-configuration))
-    (setq spawn-toggle-selected-window (selected-window))
-    (split-window-below -10)
-    (other-window 1))
+  ;; (defun SpawnShellSplitBelow ()
+  ;;   "Open a shell in a small split below or toggle it if already open.
+  ;; If the current buffer is an eshell buffer, switch to a shell buffer instead."
+  ;;   (interactive)
+  ;;   (if (eq major-mode 'eshell-mode)
+  ;;       (open-shell-in-current-directory)
+  ;;     (if (eq major-mode 'shell-mode)
+  ;;         (SpawnToggleOff)
+  ;;       (SpawnToggleOn)
+  ;;       (open-shell-in-current-directory))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
-    (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
+  ;; (defun open-shell-in-current-directory ()
+  ;;   "Open shell in the directory of the current buffer.
+  ;; If a shell buffer for the directory already exists, switch to it."
+  ;;   (interactive)
+  ;;   (let* ((buffer-dir (if (buffer-file-name)
+  ;;                         (file-name-directory (buffer-file-name))
+  ;;                       default-directory))
+  ;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
+  ;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
+  ;;     (if existing-shell-buffer
+  ;;         (switch-to-buffer existing-shell-buffer)
+  ;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
+  ;;         (shell (generate-new-buffer-name shell-buffer-name))))))
+
+  ;; (defun SpawnToggleOff ()
+  ;;   "Toggle off eshell or shell buffer and restore the previous window configuration."
+  ;;   (when spawn-toggle-window-configuration
+  ;;     (set-window-configuration spawn-toggle-window-configuration)
+  ;;     (setq spawn-toggle-window-configuration nil))
+  ;;   (when spawn-toggle-selected-window
+  ;;     (select-window spawn-toggle-selected-window)
+  ;;     (setq spawn-toggle-selected-window nil)))
+
+  ;; (defun SpawnToggleOn ()
+  ;;   "Store the current window configuration and selected window before spawning eshell or shell."
+  ;;   (setq spawn-toggle-window-configuration (current-window-configuration))
+  ;;   (setq spawn-toggle-selected-window (selected-window))
+  ;;   (split-window-below -10)
+  ;;   (other-window 1))
+
+  ;; (with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
+  ;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
 
 #+end_src
 
@@ -1686,30 +1744,12 @@
 
 #+begin_src emacs-lisp
 
+  (defvar
+    eshell-toggle-window-configuration nil
+    "Variable to store the window configuration before opening eshell.")
 
-  ;; (defun SpawnEshellSplitBelow ()
-  ;;   "Open a shell in a small split below."
-  ;;   (interactive)
-  ;;   (split-window-below -10)
-  ;;   (other-window 1)
-  ;;   (open-eshell-in-current-directory))
-
-  ;; (defun open-eshell-in-current-directory ()
-  ;;   "Open eshell in the directory of the current buffer."
-  ;;   (interactive)
-  ;;   (let* ((buffer-dir (if (buffer-file-name)
-  ;;                         (file-name-directory (buffer-file-name))
-  ;;                       default-directory))
-  ;;         (eshell-buffer (eshell 'N)))
-  ;;     (with-current-buffer eshell-buffer
-  ;;       (eshell/cd buffer-dir))))
-
-  ;; (defvar
-  ;;   eshell-toggle-window-configuration nil
-  ;;   "Variable to store the window configuration before opening eshell.")
-
-  ;; (defvar eshell-toggle-selected-window nil
-  ;;   "Variable to store the selected window before opening eshell.")
+  (defvar eshell-toggle-selected-window nil
+    "Variable to store the selected window before opening eshell.")
 
   ;; (defun SpawnEshellSplitBelow ()
   ;;   "Open a shell in a small split below or toggle it if already open."
@@ -1728,31 +1768,52 @@
   ;;     (other-window 1)
   ;;     (open-eshell-in-current-directory)))
 
-  ;; (defun open-eshell-in-current-directory ()
-  ;;   "Open eshell in the directory of the current buffer.
-  ;; If an eshell buffer for the directory already exists, switch to it."
-  ;;   (interactive)
-  ;;   (let* ((buffer-dir (if (buffer-file-name)
-  ;;                          (file-name-directory (buffer-file-name))
-  ;;                        default-directory))
-  ;;          (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-  ;;          (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-  ;;     (if existing-eshell-buffer
-  ;;         (switch-to-buffer existing-eshell-buffer)
-  ;;       (let ((eshell-buffer (eshell 'N)))
-  ;;         (with-current-buffer eshell-buffer
-  ;;           (rename-buffer eshell-buffer-name)
-  ;;           (eshell/cd buffer-dir))))))
+  (defun SpawnEshellSplitBelow ()
+    "Open a shell in a small split below or toggle it if already open."
+    (interactive)
+    (if (eq major-mode 'eshell-mode)
+        (progn
+          (when eshell-toggle-window-configuration
+            (set-window-configuration eshell-toggle-window-configuration)
+            (setq eshell-toggle-window-configuration nil))
+          (when eshell-toggle-selected-window
+            (select-window eshell-toggle-selected-window)
+            (setq eshell-toggle-selected-window nil)))
+      (setq eshell-toggle-window-configuration (current-window-configuration))
+      (setq eshell-toggle-selected-window (selected-window))
+      ;; Calculate one third of the total window height
+      (let ((one-third-height (/ (window-total-height) 3)))
+        ;; Ensure the height is at least 1 to avoid errors
+        (setq one-third-height (max one-third-height 1))
+        (split-window-below (- one-third-height))
+        (other-window 1)
+        (open-eshell-in-current-directory))))
+  
+  (defun open-eshell-in-current-directory ()
+    "Open eshell in the directory of the current buffer.
+    If an eshell buffer for the directory already exists, switch to it."
+    (interactive)
+    (let* ((buffer-dir (if (buffer-file-name)
+                           (file-name-directory (buffer-file-name))
+                         default-directory))
+           (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+           (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+      (if existing-eshell-buffer
+          (switch-to-buffer existing-eshell-buffer)
+        (let ((eshell-buffer (eshell 'N)))
+          (with-current-buffer eshell-buffer
+            (rename-buffer eshell-buffer-name)
+            (eshell/cd buffer-dir))))))
 
-  ;; (with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
 
-  ;; (defun kill-all-eshell-buffers ()
-  ;;   "Kill all Eshell buffers."
-  ;;   (interactive)
-  ;;   (dolist (buffer (buffer-list))
-  ;;     (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
-  ;;       (kill-buffer buffer))))
+  (defun kill-all-eshell-buffers ()
+    "Kill all Eshell buffers."
+    (interactive)
+    (dolist (buffer (buffer-list))
+      (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
+        (kill-buffer buffer))))
 
 #+end_src
 
@@ -2199,6 +2260,7 @@
   (global-unset-key (kbd "M-TAB"))
   (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
   (global-set-key (kbd "C-s C-s") 'swiper-isearch)
+  (global-set-key (kbd "C-s C-q") 'my-sql-select-database)
 
   ;; (with-eval-after-load 'evil
   ;;   (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
