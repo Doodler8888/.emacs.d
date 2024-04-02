@@ -1,0 +1,4 @@
+# name: show_table
+# key: t
+# --
+SELECT * FROM ${1:name} LIMIT ${2:5};

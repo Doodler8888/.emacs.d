@@ -1,5 +1,0 @@
-# name: select
-# expand-env: (or (eq major-mode 'sql-mode) (eq major-mode 'sql-interactive-mode))
-# key: sel
-# --
-SELECT $1 FROM $2 WHERE $3;;

@@ -2297,33 +2297,33 @@
     (interactive "p")
     (my/change-number-at-point '- (or increment 1)))
 
-  (defun Cp ()
-  "Copy the full path of the current buffer's file to the clipboard."
-  (interactive)
-  (if-let* ((filename (buffer-file-name)))
-      (progn
-        (kill-new filename)
-        (message "Copied buffer file name '%s' to the clipboard." filename))
-    (message "Current buffer is not associated with a file.")))
+  ;; (defun Cp ()
+  ;; "Copy the full path of the current buffer's file to the clipboard."
+  ;; (interactive)
+  ;; (if-let* ((filename (buffer-file-name)))
+  ;;     (progn
+  ;;       (kill-new filename)
+  ;;       (message "Copied buffer file name '%s' to the clipboard." filename))
+  ;;   (message "Current buffer is not associated with a file.")))
 
-  ;; (defun cp ()
-  ;;   "Copy the full path of the current buffer's file to the clipboard (or appropriate path)."
-  ;;   (interactive)
-  ;;   (let ((path-to-copy nil))
-  ;;     (cond
-  ;;     ((eq major-mode 'dired-mode)    ; Dired buffer
-  ;;       (setq path-to-copy (if (dired-get-file-for-visit)
-  ;;                             (expand-file-name (dired-get-file-for-visit))
-  ;;                           (expand-file-name default-directory))))
-  ;;     ((eq major-mode 'eshell-mode)   ; Eshell buffer
-  ;;       (setq path-to-copy (eshell/pwd)))
-  ;;     (t                              ; Default: Regular File buffer
-  ;;       (setq path-to-copy (buffer-file-name))))
-  ;;     (if path-to-copy
-  ;;         (progn
-  ;;           (kill-new path-to-copy)
-  ;;           (message "Copied path '%s' to the clipboard." path-to-copy))
-  ;;       (message "Current buffer has no associated path to copy."))))
+  (defun Cp ()
+    "Copy the full path of the current buffer's file to the clipboard (or appropriate path)."
+    (interactive)
+    (let ((path-to-copy nil))
+      (cond
+      ((eq major-mode 'dired-mode)    ; Dired buffer
+        (setq path-to-copy (if (dired-get-file-for-visit)
+                              (expand-file-name (dired-get-file-for-visit))
+                            (expand-file-name default-directory))))
+      ((eq major-mode 'eshell-mode)   ; Eshell buffer
+        (setq path-to-copy (eshell/pwd)))
+      (t                              ; Default: Regular File buffer
+        (setq path-to-copy (buffer-file-name))))
+      (if path-to-copy
+          (progn
+            (kill-new path-to-copy)
+            (message "Copied path '%s' to the clipboard." path-to-copy))
+        (message "Current buffer has no associated path to copy."))))
 
   (defun sway ()
     "Open sway config file."
