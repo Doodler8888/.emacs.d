@@ -23,7 +23,8 @@
 
    ;; General
    `(default ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg))))
-   `(bold ((,class (:foreground ,rose-pine-fg2 :weight bold))))
+   ;; `(bold ((,class (:foreground ,rose-pine-fg2 :weight bold))))
+   `(bold ((,class (:foreground ,rose-pine-iris :weight bold))))
    `(italic ((,class (:foreground ,rose-pine-fg2 :slant italic))))
 
    ;; Line highlight
@@ -90,6 +91,8 @@
    `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
    `(org-date ((,class (:foreground ,rose-pine-gold))))
    `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
+   ;; `(org-verbatim ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
+   `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
 
    ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
    ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))

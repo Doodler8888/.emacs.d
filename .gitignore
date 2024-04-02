@@ -23,6 +23,7 @@ history
 eshell_history
 /lock-files/
 /.cache
+.org-id-locations
 
 # Ignore the entire eshell directory
 /eshell/*

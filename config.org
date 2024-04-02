@@ -53,6 +53,7 @@
   - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
+  - [[#org-download][Org download]]
   - [[#drill][Drill]]
   - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
@@ -562,7 +563,16 @@
                         :family "NotoSans Nerd Font"
                         :slant 'italic
                         :weight 'normal
-                        :height 130))
+                        :height 130)
+
+    (add-hook 'org-mode-hook
+              (lambda ()
+                (set-face-attribute 'org-verbatim nil
+                                    ;; :family "NotoSerifNerdFontPropo-CondensedExtraLight"
+                                    :family "NotoSerifNerdFont"
+                                    :height 130
+                                    ;; :foreground "#8bc34a"  ; Adjust the color as desired
+                                    :weight 'normal))))
 
 #+end_src
 
@@ -855,6 +865,8 @@
   ;;     ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
   ;;   (global-treesit-auto-mode))
 
+  (use-package clojure-ts-mode)
+
   (setq treesit-language-source-alist
         '((templ "https://github.com/vrischmann/tree-sitter-templ")
           (bash "https://github.com/tree-sitter/tree-sitter-bash")
@@ -875,6 +887,7 @@
           (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
                       "master" "typescript/src")
           (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+          (clojure "https://github.com/sogaiu/tree-sitter-clojure")
           (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
           (typst "https://github.com/uben0/tree-sitter-typst")
           (java "https://github.com/tree-sitter/tree-sitter-java")
@@ -2093,6 +2106,21 @@
 
 #+end_src
 
+** Org download
+
+#+begin_src emacs-lisp
+
+  (use-package org-download
+    :init
+    (setq org-download-image-dir "~/.secret_dotfiles/org/images")
+    :config
+    (add-hook 'org-mode-hook 'org-download-enable)
+    (add-hook 'org-mode-hook
+              (lambda ()
+                (org-display-inline-images))))
+  
+#+end_src
+
 ** Drill
 
 #+begin_src emacs-lisp
@@ -2297,33 +2325,33 @@
     (interactive "p")
     (my/change-number-at-point '- (or increment 1)))
 
-  (defun Cp ()
-  "Copy the full path of the current buffer's file to the clipboard."
-  (interactive)
-  (if-let* ((filename (buffer-file-name)))
-      (progn
-        (kill-new filename)
-        (message "Copied buffer file name '%s' to the clipboard." filename))
-    (message "Current buffer is not associated with a file.")))
+  ;; (defun Cp ()
+  ;; "Copy the full path of the current buffer's file to the clipboard."
+  ;; (interactive)
+  ;; (if-let* ((filename (buffer-file-name)))
+  ;;     (progn
+  ;;       (kill-new filename)
+  ;;       (message "Copied buffer file name '%s' to the clipboard." filename))
+  ;;   (message "Current buffer is not associated with a file.")))
 
-  ;; (defun cp ()
-  ;;   "Copy the full path of the current buffer's file to the clipboard (or appropriate path)."
-  ;;   (interactive)
-  ;;   (let ((path-to-copy nil))
-  ;;     (cond
-  ;;     ((eq major-mode 'dired-mode)    ; Dired buffer
-  ;;       (setq path-to-copy (if (dired-get-file-for-visit)
-  ;;                             (expand-file-name (dired-get-file-for-visit))
-  ;;                           (expand-file-name default-directory))))
-  ;;     ((eq major-mode 'eshell-mode)   ; Eshell buffer
-  ;;       (setq path-to-copy (eshell/pwd)))
-  ;;     (t                              ; Default: Regular File buffer
-  ;;       (setq path-to-copy (buffer-file-name))))
-  ;;     (if path-to-copy
-  ;;         (progn
-  ;;           (kill-new path-to-copy)
-  ;;           (message "Copied path '%s' to the clipboard." path-to-copy))
-  ;;       (message "Current buffer has no associated path to copy."))))
+  (defun Cp ()
+    "Copy the full path of the current buffer's file to the clipboard (or appropriate path)."
+    (interactive)
+    (let ((path-to-copy nil))
+      (cond
+      ((eq major-mode 'dired-mode)    ; Dired buffer
+        (setq path-to-copy (if (dired-get-file-for-visit)
+                              (expand-file-name (dired-get-file-for-visit))
+                            (expand-file-name default-directory))))
+      ((eq major-mode 'eshell-mode)   ; Eshell buffer
+        (setq path-to-copy (eshell/pwd)))
+      (t                              ; Default: Regular File buffer
+        (setq path-to-copy (buffer-file-name))))
+      (if path-to-copy
+          (progn
+            (kill-new path-to-copy)
+            (message "Copied path '%s' to the clipboard." path-to-copy))
+        (message "Current buffer has no associated path to copy."))))
 
   (defun sway ()
     "Open sway config file."
@@ -2350,5 +2378,10 @@
     "Open org notes directory."
     (interactive)
     (find-file (expand-file-name "~/.secret_dotfiles/org")))
+
+  (defun drill ()
+    "Open org notes directory."
+    (interactive)
+    (find-file (expand-file-name "~/.secret_dotfiles/org/drill")))
 
 #+end_src
