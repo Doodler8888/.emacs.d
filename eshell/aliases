@@ -5,3 +5,19 @@ alias install sudo pacman -Syu $*
 alias take mkdir $* && cd $*
 alias rf rm -rf $*
 alias d cd $* && ls -la
+alias menv python3 -m venv ./.venv
+alias senv source .venv/bin/activate
+alias denv deactivate
+alias start sudo systemctl start $*
+alias art sudo systemctl start $*
+alias stop sudo systemctl stop $*
+alias op sudo systemctl stop $*
+alias restart sudo systemctl restart $*
+alias rart sudo systemctl restart $*
+alias status sudo systemctl status $*
+alias us sudo systemctl status $*
+alias enable sudo systemctl enable $*
+alias en sudo systemctl enable $*
+alias disable sudo systemctl disable $*
+alias is sudo systemctl disable $*
+alias enart sudo systemctl enable --now $*

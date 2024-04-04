@@ -70,14 +70,14 @@
 
 #+begin_src emacs-lisp
 
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (setq inhibit-startup-screen t)
-  (setq display-line-numbers 'visual
-        display-line-numbers-type 'relative)
-  (add-hook 'conf-mode-hook 'display-line-numbers-mode)
-  (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
-  (global-display-line-numbers-mode 1)
+  ;; (menu-bar-mode -1)
+  ;; (tool-bar-mode -1)
+  ;; (setq inhibit-startup-screen t)
+  ;; (setq display-line-numbers 'visual
+  ;;       display-line-numbers-type 'relative)
+  ;; (add-hook 'conf-mode-hook 'display-line-numbers-mode)
+  ;; (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
+  ;; (global-display-line-numbers-mode 1)
 
   (defun my-mode-line-major-mode ()
     "Returns a clean name of the current major mode."
