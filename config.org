@@ -229,10 +229,6 @@
   (setq global-auto-revert-non-file-buffers t)
   (global-auto-revert-mode 1)
 
-  (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
-  (add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
-  (add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
-
   (setq-default truncate-lines t)
 
   (setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
@@ -873,7 +869,7 @@
           (bash "https://github.com/tree-sitter/tree-sitter-bash")
           (cmake "https://github.com/uyha/tree-sitter-cmake")
           (css "https://github.com/tree-sitter/tree-sitter-css")
-          (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+          ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
           (go "https://github.com/tree-sitter/tree-sitter-go")
           (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
           (html "https://github.com/tree-sitter/tree-sitter-html")
@@ -899,12 +895,10 @@
   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.el\\'" . elisp-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-ts-mode))
 
 #+end_src
 
@@ -1905,6 +1899,7 @@
   (use-package lua-mode)
   (use-package terraform-mode)
   (use-package dockerfile-mode)
+  (use-package haskell-mode)
 
   (when (require 'dockerfile-mode nil 'noerror)
     ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
@@ -1916,6 +1911,11 @@
   ;;   :init (setq markdown-command "multimarkdown")
   ;;   :bind (:map markdown-mode-map
   ;;         ("C-c C-e" . markdown-do)))
+
+
+  (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
+  (add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
+  (add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
 
 #+end_src
 
@@ -2155,13 +2155,13 @@
 #+begin_src emacs-lisp
 
   (require 'org-tempo)
-  (add-to-list 'org-structure-template-alist '("sb" . "src shell"))
+  (add-to-list 'org-structure-template-alist '("sb" . "src bash-ts"))
   (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
   (add-to-list 'org-structure-template-alist '("sr" . "src raku"))
   (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
   (add-to-list 'org-structure-template-alist '("st" . "src text"))
   (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
-  (add-to-list 'org-structure-template-alist '("sg" . "src go"))
+  (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
 
   (add-to-list 'org-structure-template-alist
              '("t" . "src TODO\n\n* TODO \n\n?"))
@@ -2389,4 +2389,14 @@
     (interactive)
     (find-file (expand-file-name "~/.secret_dotfiles/org/drill")))
 
+  (defun cards ()
+    "Open org notes directory."
+    (interactive)
+    (find-file (expand-file-name "~/.secret_dotfiles/org/drill/general.org")))
+
+  (defun nvm ()
+    "Open org notes directory."
+    (interactive)
+    (find-file (expand-file-name "~/.dotfiles/nvim/lua/user/")))
+  
 #+end_src
