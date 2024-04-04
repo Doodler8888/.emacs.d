@@ -466,9 +466,15 @@
 
   (use-package evil-surround
     :config
-    (push '(?~ . ("~" . "~")) evil-surround-pairs-alist)
-    (push '(?/ . ("/" . "/")) evil-surround-pairs-alist)
-    (global-evil-surround-mode 1))
+    (global-evil-surround-mode 1)
+    ;; Add custom surround pairs
+    (setq-default evil-surround-pairs-alist
+                  (append evil-surround-pairs-alist
+                          '((?/ . ("/" . "/"))
+                            (?~ . ("~" . "~"))
+                            (?* . ("*" . "*"))
+                            (?= . ("=" . "="))
+                            (?+ . ("+" . "+"))))))
 
   (use-package evil-commentary
     :config
@@ -515,8 +521,10 @@
     (define-key evil-insert-state-map (kbd "C-S-v") 'yank)
     (define-key evil-visual-state-map (kbd "{") 'evil-backward-paragraph)
     (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
-    (define-key evil-insert-state-map (kbd "M-f") 'evil-forward-word-begin)
+    (define-key evil-insert-state-map (kbd "M-w") 'evil-forward-word-begin)
     (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin)
+    (define-key evil-insert-state-map (kbd "M-W") 'evil-forward-WORD-begin)
+    (define-key evil-insert-state-map (kbd "M-B") 'evil-backward-WORD-begin)
 
     (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
     (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
@@ -887,12 +895,16 @@
           (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
           (rust "https://github.com/tree-sitter/tree-sitter-rust")))
 
-  ;; (use-package extra-languages
-  ;;   ;; :ensure nil :no-require t
-  ;;   :init
-  ;;   (use-package dockerfile-ts-mode :mode "Dockerfile\\'")
-  ;;   (use-package yaml-ts-mode :mode "\\.yml\\'")
-  ;;   (use-package toml-ts-mode :mode "\\.toml\\'"))
+  (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.el\\'" . elisp-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-ts-mode))
 
 #+end_src
 
