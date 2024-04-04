@@ -13,7 +13,6 @@
   - [[#find-file][Find-file]]
 - [[#packages][PACKAGES]]
   - [[#elpaca-package-manager][Elpaca Package Manager]]
-  - [[#evil-mode][Evil Mode]]
   - [[#theme-and-font][Theme and Font]]
   - [[#general][General]]
   - [[#async][Async]]
@@ -418,7 +417,7 @@
 
 #+end_src
 
-** Evil Mode
+ ** Evil Mode
 
 #+begin_src emacs-lisp
 
@@ -756,12 +755,21 @@
     :custom
     (completion-styles '(orderless basic))
     (completion-category-overrides '((file (styles basic partial-completion)))))
-  
+
 #+end_src
 
 *** Company
 
 #+begin_src emacs-lisp
+
+  ;; (use-package company
+  ;;   :init
+  ;;   (add-hook 'after-init-hook 'global-company-mode)
+  ;;   :config
+  ;;   ;; Add company-files to the list of backends
+  ;;   (add-to-list 'company-backends 'company-files)
+  ;;   ;; Disable automatic activation of company mode
+  ;;   (setq company-idle-delay nil))
 
   (use-package company
     :init
@@ -769,8 +777,8 @@
     :config
     ;; Add company-files to the list of backends
     (add-to-list 'company-backends 'company-files)
-    ;; Disable automatic activation of company mode
-    (setq company-idle-delay nil))
+    ;; Enable automatic activation of company mode with a 0.5 second delay
+    (setq company-idle-delay 0.1))
 
   (defun my/company-manual-complete ()
     "Enable company-mode and call company-complete."
@@ -1173,132 +1181,132 @@
 
 #+begin_src emacs-lisp
 
-  (setq eshell-destroy-buffer-when-process-dies t)
+    (setq eshell-destroy-buffer-when-process-dies t)
 
-  (use-package eshell-syntax-highlighting
-    :after esh-mode
-    :config
-    (eshell-syntax-highlighting-global-mode +1))
+    (use-package eshell-syntax-highlighting
+      :after esh-mode
+      :config
+      (eshell-syntax-highlighting-global-mode +1))
 
-  (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-  (add-hook 'eshell-mode-hook 'eshell-toggle-direct-send)
+    (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
+    (add-hook 'eshell-mode-hook 'eshell-toggle-direct-send)
 
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
         eshell-history-size 100000
         eshell-buffer-maximum-lines 5000
         ;; eshell-save-history-on-exit t
-        eshell-history-file-name "~/.emacs.d/eshell_history"
-        eshell-hist-ignoredups t
-        eshell-scroll-to-bottom-on-input t
-        eshell-destroy-buffer-when-process-dies t
-        eshell-banner-message "")
-        ;; eshell-visual-commands'("bash" "fish" "htop" "ssh" "top" "zsh"))
+          eshell-history-file-name "~/.emacs.d/eshell_history"
+          eshell-hist-ignoredups t
+          eshell-scroll-to-bottom-on-input t
+          eshell-destroy-buffer-when-process-dies t
+          eshell-banner-message ""
+          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg"))
 
-  (add-hook 'eshell-mode-hook
-            (lambda ()
-              (setq-local scroll-margin 0)))
+    (add-hook 'eshell-mode-hook
+              (lambda ()
+                (setq-local scroll-margin 0)))
 
-  (with-eval-after-load 'eshell
-    ;; Set eshell-save-history-on-exit to nil
-    (setq eshell-save-history-on-exit nil)
+    (with-eval-after-load 'eshell
+      ;; Set eshell-save-history-on-exit to nil
+      (setq eshell-save-history-on-exit nil)
 
-    ;; Define eshell-append-history function
-    (defun eshell-append-history ()
-      "Call `eshell-write-history' with the `append' parameter set to `t'."
-      (when eshell-history-ring
-        (let ((newest-cmd-ring (make-ring 1)))
-          (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
-          (let ((eshell-history-ring newest-cmd-ring))
-            (eshell-write-history eshell-history-file-name t)))))
+      ;; Define eshell-append-history function
+      (defun eshell-append-history ()
+        "Call `eshell-write-history' with the `append' parameter set to `t'."
+        (when eshell-history-ring
+          (let ((newest-cmd-ring (make-ring 1)))
+            (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+            (let ((eshell-history-ring newest-cmd-ring))
+              (eshell-write-history eshell-history-file-name t)))))
 
-  ;; Add eshell-append-history to eshell-pre-command-hook
-  (add-hook 'eshell-pre-command-hook #'eshell-append-history))
+    ;; Add eshell-append-history to eshell-pre-command-hook
+    (add-hook 'eshell-pre-command-hook #'eshell-append-history))
 
-  (defun eshell-insert-last-argument ()
-    "Insert the last argument of the previous command."
-    (interactive)
-    (let* ((last-command (eshell-previous-input-string 0))
-           (args (split-string-and-unquote last-command))
-           (last-arg (car (last args))))
-      (when last-arg
-        (insert last-arg))))
+    (defun eshell-insert-last-argument ()
+      "Insert the last argument of the previous command."
+      (interactive)
+      (let* ((last-command (eshell-previous-input-string 0))
+             (args (split-string-and-unquote last-command))
+             (last-arg (car (last args))))
+        (when last-arg
+          (insert last-arg))))
 
-  (defun setup-eshell-keys ()
-    (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
-  ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+    (defun setup-eshell-keys ()
+      (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+    ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
-  (add-hook 'eshell-mode-hook 'setup-eshell-keys)
+    (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
-  (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-    (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+    (with-eval-after-load 'evil
+      (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+      (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
-  (defun eshell/edit (filename)
-    "Open FILENAME in the current buffer, using the current TRAMP address."
-    (interactive "sEnter the filename to edit: ")
-    ;; Extract the current TRAMP address from the Eshell buffer's default directory
-    (let ((tramp-address (file-remote-p default-directory)))
-      (if tramp-address
-          ;; If we're in a TRAMP directory, use the extracted address
-          (find-file (concat tramp-address filename))
-        ;; If not in a TRAMP directory, fall back to a default address or prompt the user
-        (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
-        ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
-        )))
+    (defun eshell/edit (filename)
+      "Open FILENAME in the current buffer, using the current TRAMP address."
+      (interactive "sEnter the filename to edit: ")
+      ;; Extract the current TRAMP address from the Eshell buffer's default directory
+      (let ((tramp-address (file-remote-p default-directory)))
+        (if tramp-address
+            ;; If we're in a TRAMP directory, use the extracted address
+            (find-file (concat tramp-address filename))
+          ;; If not in a TRAMP directory, fall back to a default address or prompt the user
+          (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
+          ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
+          )))
 
-  (defalias 'e 'eshell/edit)
+    (defalias 'e 'eshell/edit)
 
-  (require 'em-tramp) ; to load eshell’s sudo
-  ;; (setq eshell-prefer-lisp-functions t)
-  ;; (setq eshell-prefer-lisp-variables t)
-  ;; (setq password-cache t) ; enable password caching
-  ;; (setq password-cache-expiry 10)
-  ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+    ;; (require 'em-tramp) ; to load eshell’s sudo
+    ;; (setq eshell-prefer-lisp-functions t)
+    ;; (setq eshell-prefer-lisp-variables t)
+    (setq password-cache t) ; enable password caching
+    ;; (setq password-cache-expiry 10)
+    ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
 
-  (defun eshell-clear-buffer ()
-    "Clear the current Eshell buffer."
-    (interactive)
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (eshell-send-input)))
+    (defun eshell-clear-buffer ()
+      "Clear the current Eshell buffer."
+      (interactive)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (eshell-send-input)))
 
-  (defun eshell-new ()
-    "Create a new Eshell buffer with a unique name."
-    (interactive)
-    (let ((eshell-buffer-name (generate-new-buffer-name "*eshell*")))
-      (eshell)))
-  
+    (defun eshell-new ()
+      "Create a new Eshell buffer with a unique name."
+      (interactive)
+      (let ((eshell-buffer-name (generate-new-buffer-name "*eshell*")))
+        (eshell)))
+
 #+end_src
 
 ** Eat
 
 #+begin_src emacs-lisp
 
-  (let ((lisp-dir "~/.emacs.d/lisp")
-        (emacs-eat-dir "~/.emacs.d/lisp/emacs-eat")
-        (emacs-eat-repo "git@github.com:kephale/emacs-eat.git"))
-    ;; Check if the lisp directory exists, if not, create it
-    (unless (file-directory-p lisp-dir)
-      (make-directory lisp-dir t))
+  ;; (let ((lisp-dir "~/.emacs.d/lisp")
+  ;;       (emacs-eat-dir "~/.emacs.d/lisp/emacs-eat")
+  ;;       (emacs-eat-repo "git@github.com:kephale/emacs-eat.git"))
+  ;;   ;; Check if the lisp directory exists, if not, create it
+  ;;   (unless (file-directory-p lisp-dir)
+  ;;     (make-directory lisp-dir t))
 
-    ;; Check if the emacs-eat directory exists
-    (unless (file-directory-p emacs-eat-dir)
-      ;; If emacs-eat directory does not exist, check if git is available
-      (if (executable-find "git")
-          (progn
-            (message "Cloning emacs-eat...")
-            (shell-command (concat "git clone " emacs-eat-repo " " emacs-eat-dir))
-            (message "emacs-eat cloned successfully."))
-        (error "Git is not installed, cannot clone emacs-eat"))))
+  ;;   ;; Check if the emacs-eat directory exists
+  ;;   (unless (file-directory-p emacs-eat-dir)
+  ;;     ;; If emacs-eat directory does not exist, check if git is available
+  ;;     (if (executable-find "git")
+  ;;         (progn
+  ;;           (message "Cloning emacs-eat...")
+  ;;           (shell-command (concat "git clone " emacs-eat-repo " " emacs-eat-dir))
+  ;;           (message "emacs-eat cloned successfully."))
+  ;;       (error "Git is not installed, cannot clone emacs-eat"))))
 
-    ;; Add emacs-eat to the load-path
-  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
-  (require 'eat)
+  ;;   ;; Add emacs-eat to the load-path
+  ;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
+  ;; (require 'eat)
 
-  (add-hook 'eshell-first-time-mode-hook
-            #'eat-eshell-visual-command-mode)
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
+  ;; (add-hook 'eshell-first-time-mode-hook
+  ;;           #'eat-eshell-visual-command-mode)
+  ;; (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
 
 #+end_src
 
@@ -1369,7 +1377,7 @@
         (goto-char (point-max))
         (insert query)
         (sql-send-paragraph))))
-  
+
 #+end_src
 
 * Sessions
@@ -1788,7 +1796,7 @@
         (split-window-below (- one-third-height))
         (other-window 1)
         (open-eshell-in-current-directory))))
-  
+
   (defun open-eshell-in-current-directory ()
     "Open eshell in the directory of the current buffer.
     If an eshell buffer for the directory already exists, switch to it."
@@ -2123,7 +2131,7 @@
     (add-hook 'org-mode-hook
               (lambda ()
                 (org-display-inline-images))))
-  
+
 #+end_src
 
 ** Drill
@@ -2398,5 +2406,5 @@
     "Open org notes directory."
     (interactive)
     (find-file (expand-file-name "~/.dotfiles/nvim/lua/user/")))
-  
+
 #+end_src
