@@ -18,6 +18,7 @@
   - [[#async][Async]]
   - [[#search][Search]]
   - [[#consult][Consult]]
+  - [[#jinx][Jinx]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
@@ -192,7 +193,8 @@
 
   (setq auto-save-interval 1)  ; Auto-save every 1 second
   (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
-
+  (setq auto-save-no-message t)
+  
   ;;   ;; Function to enable auto-save when entering normal state
   ;; (defun enable-auto-save-on-normal-state ()
   ;; (when (and (boundp 'evil-state) (eq evil-state 'normal))
@@ -613,7 +615,8 @@
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
     "fd" '(projectile-find-dir :wk "Find file modified")
     ;; "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
-    "ft" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
+    ;; "fr" '(fzf-from-root-with-fd-no-prompt :wk "Fzf with fd and hidden files form root")
+    ;; "fc" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
     "fh" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
     "fr" '(fzf-from-root-with-fd :wk "Fzf with fd and hidden files form root")
     "fn" '(fzf-notes :wk "Start fzf in the notes directory.")
@@ -733,6 +736,18 @@
 
 #+end_src
 
+** Jinx
+
+#+begin_src emacs-lisp
+
+  (use-package jinx
+    ;; :hook
+    ;; (dolist (hook '(text-mode-hook prog-mode-hook conf-mode-hook))
+    ;; (add-hook hook #'jinx-mode))
+    :bind (("M-$" . jinx-correct)
+           ("C-M-$" . jinx-languages)))
+
+#+end_src
 ** Completion
 
 *** Snippets
@@ -761,34 +776,26 @@
 
 #+end_src
 
-*** Cape
-
-#+begin_src emacs-lisp
-
-  (use-package cape)
-  
-#+end_src
 *** Company
 
 #+begin_src emacs-lisp
-
-  ;; (use-package company
-  ;;   :init
-  ;;   (add-hook 'after-init-hook 'global-company-mode)
-  ;;   :config
-  ;;   ;; Add company-files to the list of backends
-  ;;   (add-to-list 'company-backends 'company-files)
-  ;;   ;; Disable automatic activation of company mode
-  ;;   (setq company-idle-delay nil))
 
   (use-package company
     :init
     (add-hook 'after-init-hook 'global-company-mode)
     :config
-    ;; Add company-files to the list of backends
     (add-to-list 'company-backends 'company-files)
-    ;; Enable automatic activation of company mode with a 0.5 second delay
-    (setq company-idle-delay 0.1))
+    (setq company-require-match nil)
+    (setq company-minimum-prefix-length 1)
+    (setq company-idle-delay nil))
+
+  ;; (use-package company
+  ;;   :init
+  ;;   (add-hook 'after-init-hook 'global-company-mode)
+  ;;   :config
+  ;;   (add-to-list 'company-backends 'company-files)
+  ;;   (setq company-minimum-prefix-length 1)
+  ;;   (setq company-idle-delay 0.1))
 
   (defun my/company-manual-complete ()
     "Enable company-mode and call company-complete."
@@ -799,59 +806,6 @@
 
   (with-eval-after-load 'evil
     (define-key evil-insert-state-map (kbd "C-n") 'my/company-manual-complete))
-
-#+end_src
-
-*** Corfu
-
-#+begin_src emacs-lisp
-
-  ;; (use-package corfu
-  ;;   :custom
-  ;;   (corfu-cycle t)
-  ;;   (corfu-auto t)
-  ;;   (corfu-auto-prefix 2)
-  ;;   (corfu-auto-delay 0.0)
-  ;;   (corfu-preview-current 'insert)
-  ;;   (corfu-preselect 'prompt)
-  ;;   (corfu-on-exact-match nil)
-  ;;   :init
-  ;;   (global-corfu-mode)
-  ;;   ;; (corfu-history-mode)
-  ;;   :config
-  ;;   (add-hook 'eshell-mode-hook
-  ;;             (lambda () (setq-local corfu-quit-at-boundary t
-  ;;                                    corfu-quit-no-match t
-  ;;                                    corfu-auto nil)
-  ;;                        (corfu-mode))
-  ;;             nil
-  ;;             t)
-  ;;   ;; Define Corfu-specific keybindings
-  ;;   (define-key corfu-map (kbd "C-g") 'corfu-quit)
-  ;;   (define-key corfu-map (kbd "M-n") 'corfu-next)
-  ;;   (define-key corfu-map (kbd "M-p") 'corfu-previous))
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-  ;; (use-package cape
-  ;; :init
-  ;; (add-to-list 'completion-at-point-functions #'cape-file)
-  ;; ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  ;; (defun my/add-shell-completion ()
-  ;;   (interactive)
-  ;;   (cl-pushnew #'cape-history completion-at-point-functions)
-  ;;   (cl-pushnew #'pcomplete-completions-at-point completion-at-point-functions))
-  ;; (add-hook 'shell-mode-hook #'my/add-shell-completion nil t)
-
-  ;; :config
-  ;; ;; Silence then pcomplete capf, no errors or messages!
-  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-
-  ;; ;; Ensure that pcomplete does not write to the buffer
-  ;; ;; and behaves as a pure `completion-at-point-function'.
-  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
 #+end_src
 
@@ -1039,30 +993,30 @@
 
   (defun fzf-from-home-with-fd ()
     "Starts fzf from the user's home directory using fd to include hidden files
-      and exclude certain directories but with an ability to interactively change
-      the searching directory."
+        and exclude certain directories but with an ability to interactively change
+        the searching directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
     (let ((default-directory "~/"))
       (fzf-directory)))
 
-    (defun fzf-from-root-with-fd ()
+  (defun fzf-from-root-with-fd ()
     "Starts fzf from the user's home directory using fd to include hidden files
-      and exclude certain directories but with an ability to interactively change
-      the searching directory."
+        and exclude certain directories but with an ability to interactively change
+        the searching directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
     (let ((default-directory "/"))
       (fzf-directory)))
 
-    (defun fzf-notes ()
+  (defun fzf-notes ()
     "Start fzf in the notes directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
     (let ((default-directory "~/.secret_dotfiles/org"))
       (fzf-directory)))
 
-   ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+  ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
 
   (defun fzf-from-root-no-prompt ()
     "Starts fzf from the user's root directory using fd to include hidden files
@@ -1070,17 +1024,17 @@
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
     (fzf))
-
+  
   (defun fzf-from-home-no-prompt ()
     "Starts fzf from the user's home directory using fd to include hidden files
-    and exclude certain directories without prompting for a directory."
+      and exclude certain directories without prompting for a directory."
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
     (fzf))
 
   (defun fzf-from-current-with-fd ()
     "Starts fzf from the current directory using fd to include hidden files
-   and exclude certain directories. Works both locally and on remote servers."
+     and exclude certain directories. Works both locally and on remote servers."
     (interactive)
     ;; Set the FZF_DEFAULT_COMMAND environment variable
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
@@ -1855,6 +1809,7 @@
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+    ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
   (defun kill-all-eshell-buffers ()
     "Kill all Eshell buffers."
@@ -1920,6 +1875,7 @@
             "*Flymake diagnostics.*"
             "\\*compilation\\*"
             "\\*eshell\\*.*"
+            ;; "\\*eshell:.*"
             ;; "\\*Warnings\\*"
             ;; "\\*xref\\*"
             ;; "\\*Backtrace\\*"
@@ -2267,7 +2223,7 @@
   (add-hook 'org-mode-hook 'prettify-symbols-mode)
     (defun my-org-prettify-symbols ()
     (push '("#+begin_src" . ">") prettify-symbols-alist)
-      (push '("#+end_src" . "_") prettify-symbols-alist))
+      (push '("#+end_src" . ">") prettify-symbols-alist))
 
   (eval-after-load 'org
     '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
@@ -2373,7 +2329,11 @@
   (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
   (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
 
+  (global-unset-key (kbd "C-t"))
+  (global-set-key (kbd "C-t C-s") 'jinx-mode)
+
   (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "C-t") nil)
     ;; Define the key for normal state globally
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root))
 

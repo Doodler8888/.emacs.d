@@ -12,12 +12,13 @@ import (
 	tg "github.com/doodler8888/shelf/internal/telegram"
 	tb "gopkg.in/telebot.v3"
 )
+n
 
 func main() {
 	db.InitDB()
 	var (
 		port      = "8080"
-		publicURL = "https://1742-178-121-34-198.ngrok-free.app"
+		publicURL = "https://6fbe-178-121-0-35.ngrok-free.app"
 		token     = os.Getenv("SHELF_TOKEN")
 	)
 
@@ -122,5 +123,3 @@ func main() {
 
 	b.Start()
 }
-
-<dsn
