@@ -30,6 +30,7 @@
 - [[#tramp][Tramp]]
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
+  - [[#async-shell][Async shell]]
   - [[#eat][Eat]]
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
@@ -44,6 +45,7 @@
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
   - [[#posframe][Posframe]]
+  - [[#shackle][Shackle]]
   - [[#popper][Popper]]
 - [[#language-support][LANGUAGE SUPPORT]]
   - [[#lsp-bridge][Lsp-bridge]]
@@ -53,6 +55,7 @@
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
   - [[#org-download][Org download]]
+  - [[#org-modern][Org modern]]
   - [[#drill][Drill]]
   - [[#agenda][Agenda]]
   - [[#org-roam][Org-roam]]
@@ -758,6 +761,13 @@
 
 #+end_src
 
+*** Cape
+
+#+begin_src emacs-lisp
+
+  (use-package cape)
+  
+#+end_src
 *** Company
 
 #+begin_src emacs-lisp
@@ -1279,6 +1289,34 @@
 
 #+end_src
 
+** Async shell
+
+#+begin_src emacs-lisp
+
+  ;; (defun my-async-shell-command (command)
+  ;;   "Run async-shell-command with the specified COMMAND and set the output buffer height."
+  ;;   (interactive
+  ;;    (list (read-shell-command "Async shell command: ")))
+  ;;   (let ((buffer (generate-new-buffer-name "*Async Shell Command*"))
+  ;;         (height 35)) ; Set the desired height in number of lines
+  ;;     (async-shell-command command buffer)
+  ;;     (pop-to-buffer buffer)
+  ;;     (fit-window-to-buffer nil height)))
+
+  ;; (global-set-key (kbd "M-&") 'my-async-shell-command)
+
+  ;; Execute async shell command on a current file
+  (defun async-shell-command-on-file (command)
+    "Execute COMMAND asynchronously on the current file."
+    (interactive (list (read-shell-command
+                        (concat "Async shell command on " (buffer-name) ": "))))
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (async-shell-command (concat command " " filename))))
+
+#+end_src
+
 ** Eat
 
 #+begin_src emacs-lisp
@@ -1303,6 +1341,8 @@
   ;;   ;; Add emacs-eat to the load-path
   ;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
   ;; (require 'eat)
+  ;; (eat-eshell-mode 1)
+  ;; ;; (setq eshell-visual-commands nil)
 
   ;; (add-hook 'eshell-first-time-mode-hook
   ;;           #'eat-eshell-visual-command-mode)
@@ -1841,39 +1881,64 @@
 
 #+end_src
 
+** Shackle
+
+#+begin_src emacs-lisp
+
+
+;;  (use-package shackle)
+  ;;   :config
+  ;;   (setq shackle-rules
+  ;;       '(("*Async Shell Command*" :size 0.3 :align below :select nil :popup t)))
+  ;; (shackle-mode 1))
+
+#+end_src
+
 ** Popper
 
 #+begin_src emacs-lisp
 
+  (defun my/show-popper-echo-line ()
+    "Briefly toggle popper to show the echo line."
+    (interactive)
+    ;; Ensure popper-mode and popper-echo-mode are active
+    (when (and popper-mode popper-echo-mode)
+      ;; Toggle a popper window and immediately toggle it back
+      (popper-toggle-latest)
+      (popper-toggle-latest)))
+
   (use-package popper
-  :bind (("M-`"     . popper-toggle)
-          ("M-~"     . popper-cycle))
-  :init
-  (setopt popper-reference-buffers
+    :bind (("M-f"   . popper-toggle)
+           ("M-`" . my/show-popper-echo-line))
+           ;; ("M-~"   . popper-cycle))
+    :init
+    (setq popper-window-height 0.33)
+    (setq popper-reference-buffers
           '("\\*Messages\\*"
+            "Output\\*$"
+            "\\*Async Shell Command\\*"
+            "*Flymake diagnostics.*"
+            "\\*compilation\\*"
+            "\\*eshell\\*.*"
             ;; "\\*Warnings\\*"
             ;; "\\*xref\\*"
             ;; "\\*Backtrace\\*"
-            ;; "*Flymake diagnostics.*"
             ;; "\\*eldoc\\*"
-            ;; "\\*compilation\\*"
             ;; "\\*Ement Notifications\\*"
             ;; "Output\\*$"
-            "\\*Async Shell Command\\*"
-            "\\*.*Flymake diagnostics.*\\*"
             ;; "\\*Dtache Shell Command\\*"
             ;; "\\*mu4e-update\\*"
             help-mode
             compilation-mode))
-  (setopt popper-display-control t)
-  (popper-mode +1))
-
-  (defun popper-message ()
-    "Popper window specifically with the Messages buffer."
-    (interactive)
-    (if (string-equal (buffer-name) "*Messages*")
-        (popper-toggle)
-      (switch-to-buffer "*Messages*")))
+    (popper-mode +1)
+    (popper-echo-mode +1))
+  ;;   (setq display-buffer-alist
+  ;;         `(("\\*Async Shell Command\\*.*"
+  ;;            (display-buffer-reuse-window display-buffer-at-bottom)
+  ;;            (window-height . 0.33))
+  ;;           ("\\*Messages\\*"
+  ;;            (display-buffer-reuse-window display-buffer-at-bottom)
+  ;;            (window-height . 0.33)))))
 
   (defun popper-diagnostics ()
     "Popper window specifically for Flymake diagnostics buffer."
@@ -1891,10 +1956,9 @@
   ;;   (popper-cycle-backwards -1))
 
   (with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics)
-    (define-key evil-normal-state-map (kbd "M-m") 'popper-message))
+    ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+    ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+    (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics))
 
 #+end_src
 
@@ -2134,6 +2198,16 @@
 
 #+end_src
 
+** Org modern
+
+#+begin_src emacs-lisp
+
+  ;; (use-package org-modern
+  ;;   :config
+  ;;   (with-eval-after-load 'org (global-org-modern-mode)))
+  
+#+end_src
+
 ** Drill
 
 #+begin_src emacs-lisp
@@ -2183,12 +2257,20 @@
   (setq org-hide-emphasis-markers t)
 
   (defun toggle-org-emphasis-markers ()
-  "Toggle the visibility of Org emphasis markers."
-  (interactive)
-  (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
-  (org-mode-restart))
+    "Toggle the visibility of Org emphasis markers."
+    (interactive)
+    (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
+    (org-mode-restart))
 
   (define-key org-mode-map (kbd "M-o M-t") 'toggle-org-emphasis-markers)
+
+  (add-hook 'org-mode-hook 'prettify-symbols-mode)
+    (defun my-org-prettify-symbols ()
+    (push '("#+begin_src" . ">") prettify-symbols-alist)
+      (push '("#+end_src" . "_") prettify-symbols-alist))
+
+  (eval-after-load 'org
+    '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
 
 #+end_src
 
@@ -2291,7 +2373,13 @@
   (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
   (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
 
-  ;; (with-eval-after-load 'evil
+  (with-eval-after-load 'evil
+    ;; Define the key for normal state globally
+    (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root))
+
+  (with-eval-after-load 'org
+    ;; Override the keybinding in org-mode specifically
+    (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root))
   ;;   (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
 
   (global-unset-key (kbd "C-<tab>"))
@@ -2315,16 +2403,6 @@
         (insert (format "%s\n" command)))
       (goto-char (point-min)))
     (display-buffer output-buffer)))
-
-  ;; Execute async shell command on a current file
-  (defun shell-command-on-file (command)
-    "Execute COMMAND asynchronously on the current file."
-    (interactive (list (read-shell-command
-                        (concat "Async shell command on " (buffer-name) ": "))))
-    (let ((filename (if (equal major-mode 'dired-mode)
-                        default-directory
-                      (buffer-file-name))))
-      (async-shell-command (concat command " " filename))))
 
   ;; Increment
   (defun my/increment-number-at-point (&optional increment)
