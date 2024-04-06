@@ -66,12 +66,9 @@
    `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
    `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
 
-   ;; Haskell mode specific faces
-   ;; `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
-   ;; `(haskell-constructor-face ((,class (:foreground ,rose-pine-foam))))  ; For type constructors like 'IO'
-   ;; `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For operators
-   ;; `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
-   ;; `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
+
+   ;; Clojure ts mode
+   `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
 
    ;; Dired mode
    `(dired-directory ((,class (:foreground ,rose-pine-gold))))
