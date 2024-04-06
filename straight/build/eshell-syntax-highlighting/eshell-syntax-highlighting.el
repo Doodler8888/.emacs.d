@@ -1,1 +1,0 @@
-/home/wurfkreuz/.emacs.d/straight/repos/eshell-syntax-highlighting/eshell-syntax-highlighting.el

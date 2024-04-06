@@ -1,1 +1,0 @@
-/home/wurfkreuz/.emacs.d/straight/repos/haskell-mode/haskell-svg.el
