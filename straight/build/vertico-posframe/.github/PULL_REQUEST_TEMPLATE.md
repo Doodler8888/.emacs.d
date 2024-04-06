@@ -1,0 +1,1 @@
+/home/wurfkreuz/.emacs.d/straight/repos/vertico-posframe/.github/PULL_REQUEST_TEMPLATE.md

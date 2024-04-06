@@ -1,0 +1,1 @@
+/home/wurfkreuz/.emacs.d/straight/repos/clojure-ts-mode/clojure-ts-mode.el

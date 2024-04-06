@@ -1,0 +1,1 @@
+/home/wurfkreuz/.emacs.d/straight/repos/general.el/general.el

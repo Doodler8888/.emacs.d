@@ -1,0 +1,1 @@
+/home/wurfkreuz/.emacs.d/straight/repos/evil-collection/modes/ement/evil-collection-ement.el

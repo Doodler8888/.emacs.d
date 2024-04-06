@@ -1,0 +1,1 @@
+/home/wurfkreuz/.emacs.d/straight/repos/evil-collection/modes/company/evil-collection-company.el
