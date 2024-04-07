@@ -1,23 +1,23 @@
 alias u eshell/sudo $*
 alias md mkdir $*
 alias la ls -la $*
-alias install sudo pacman -Syu $*
+alias install eshell/sudo pacman -Syu $*
 alias take mkdir $* && cd $*
 alias rf rm -rf $*
 alias d cd $* && ls -la
 alias menv python3 -m venv ./.venv
 alias senv source .venv/bin/activate
 alias denv deactivate
-alias start sudo systemctl start $*
-alias art sudo systemctl start $*
-alias stop sudo systemctl stop $*
-alias op sudo systemctl stop $*
-alias restart sudo systemctl restart $*
-alias rart sudo systemctl restart $*
-alias status sudo systemctl status $*
-alias us sudo systemctl status $*
-alias enable sudo systemctl enable $*
-alias en sudo systemctl enable $*
-alias disable sudo systemctl disable $*
-alias is sudo systemctl disable $*
-alias enart sudo systemctl enable --now $*
+alias start eshell/sudo systemctl start $*
+alias art eshell/sudo systemctl start $*
+alias stop eshell/sudo systemctl stop $*
+alias op eshell/sudo systemctl stop $*
+alias restart eshell/sudo systemctl restart $*
+alias rart eshell/sudo systemctl restart $*
+alias status eshell/sudo systemctl status $*
+alias us eshell/sudo systemctl status $*
+alias enable eshell/sudo systemctl enable $*
+alias en eshell/sudo systemctl enable $*
+alias disable eshell/sudo systemctl disable $*
+alias is eshell/sudo systemctl disable $*
+alias enart eshell/sudo systemctl enable --now $*

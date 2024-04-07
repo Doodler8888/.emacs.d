@@ -119,6 +119,9 @@
 			      :box (:line-width 1 :color ,rose-pine-bg)
 			      :weight normal))))  ; Set the weight to normal
 
+   ;; Eshell
+   `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
+
    ;; More faces
    `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
    `(show-paren-match ((t (:background ,rose-pine-subtext :foreground ,rose-pine-fg :weight bold))))  ; Customize matching bracket appearance
