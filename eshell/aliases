@@ -21,3 +21,4 @@ alias en eshell/sudo systemctl enable $*
 alias disable eshell/sudo systemctl disable $*
 alias is eshell/sudo systemctl disable $*
 alias enart eshell/sudo systemctl enable --now $*
+alias tree exa -T

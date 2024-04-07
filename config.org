@@ -513,6 +513,7 @@
     "bc" '(kill-buffer :wk "Close selecetd buffer")
     "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
+    ;; Popper
     "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
 
     ;; "mm" '(popper-message :wk "Open the *Messages buffer")
@@ -520,10 +521,6 @@
     "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
     ;; "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
-
-    ;; Popper
-    ;; "pm" '(popper-messages :wk "Open a pop window with the messages buffer")
-    ;; "pa" '(popper-async-shell-command :wk "Perform async shell command in a pop window")
 
     "cc" '(RunCmdShellCommand :wk "Run CMD command")
     "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
