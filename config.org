@@ -23,7 +23,7 @@
   - [[#cider][Cider]]
   - [[#projectile][Projectile]]
   - [[#wgrep][Wgrep]]
-  - [[#ivy][Ivy]]
+  - [[#ivycounsel][Ivy/Counsel]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
   - [[#dired-keybindings][Dired keybindings]]
@@ -313,15 +313,16 @@
     (setq evil-want-C-u-scroll t
           evil-want-C-i-jump nil
           evil-want-integration t
+          ;; evil-want-minibuffer t
           evil-undo-system 'undo-tree)
     :config
     (evil-mode 1)
     (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-    (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+    ;; (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+    ;; (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
 
-    (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-    (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+    ;; (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+    ;; (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
     (setq evil-shift-width 2))
 
   (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
@@ -364,7 +365,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca minibuffer))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca))
     (evil-collection-init))
 
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
@@ -481,12 +482,8 @@
     "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
     "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
     "fd" '(projectile-find-dir :wk "Find file modified")
-    ;; "fh" '(fzf-from-home-no-prompt :wk "Fzf with fd and hidden files from a home directory")
-    ;; "fr" '(fzf-from-root-with-fd-no-prompt :wk "Fzf with fd and hidden files form root")
-    ;; "fc" '(fzf-from-current-with-fd :wk "Fzf with fd and hidden files with a prompt from a current directory")
-    "fh" '(fzf-from-home-with-fd :wk "Fzf with fd and hidden files with an ability to change the searching point")
-    "fr" '(fzf-from-root-with-fd :wk "Fzf with fd and hidden files form root")
-    "fn" '(fzf-notes :wk "Start fzf in the notes directory.")
+    "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
+    "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
 
     ;; Session management
     "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -582,9 +579,9 @@
 
 #+begin_src emacs-lisp
 
-      ;; (use-package rg
-      ;; :config
-      ;; (rg-enable-default-bindings))
+  (use-package rg
+    :config
+    (rg-enable-default-bindings))
 
 #+end_src
 
@@ -714,6 +711,7 @@
   (use-package exec-path-from-shell
     :config
     (exec-path-from-shell-initialize)
+    (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
     (exec-path-from-shell-copy-env "SSH_AUTH_SOCK"))
 
 #+end_src
@@ -834,7 +832,7 @@
   
 #+end_src
 
-** Ivy
+** Ivy/Counsel
 
 #+begin_src emacs-lisp
 
@@ -898,6 +896,58 @@
 
   (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
+  ;; (defun counsel-fzf-home ()
+  ;;   "Run `counsel-fzf` from the user's home directory."
+  ;;   (interactive)
+  ;;   (let ((default-directory "~/"))
+  ;;     (counsel-fzf)))
+
+  ;; (defun counsel-fzf-root ()
+  ;;   "Run `counsel-fzf` from the root directory."
+  ;;   (interactive)
+  ;;   (let ((default-directory "/"))
+  ;;     (counsel-fzf)))
+
+  (defun counsel-fzf-home ()
+    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+    (interactive)
+    (let ((default-directory "~/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (find-file (expand-file-name f default-directory)))
+                :caller 'my-counsel-fzf-with-fd)))
+
+  (defun counsel-fzf-root ()
+    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+    (interactive)
+    (let ((default-directory "/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (find-file (expand-file-name f default-directory)))
+                :caller 'my-counsel-fzf-with-fd)))
+
+  (defun insert-path-from-counsel-fzf-home ()
+    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+    (interactive)
+    (let ((default-directory "~/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (insert (expand-file-name f default-directory)))
+                :caller 'insert-path-from-counsel-fzf-home)))
+
+  (defun insert-path-from-counsel-fzf-root ()
+    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+    (interactive)
+    (let ((default-directory "/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (insert (expand-file-name f default-directory)))
+                :caller 'insert-path-from-counsel-fzf-home)))
+  
 #+end_src
 
 *** Fzf
@@ -1801,8 +1851,8 @@
       (popper-toggle-latest)))
 
   (use-package popper
-    :bind (("M-f"   . popper-toggle)
-           ("M-`" . my/show-popper-echo-line))
+    :bind (("M-`" . my/show-popper-echo-line))
+           ;; ("M-f"   . popper-toggle))
            ;; ("M-~"   . popper-cycle))
     :init
     (setq popper-window-height 0.33)
@@ -1827,6 +1877,15 @@
             compilation-mode))
     (popper-mode +1)
     (popper-echo-mode +1))
+
+  (defun m-f-toggle-or-forward-word ()
+    "Toggle popper or move forward a word depending on context."
+    (interactive)
+    (if (window-minibuffer-p)
+        (forward-word)
+      (popper-toggle)))
+
+  (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
 
   (defun popper-diagnostics ()
     "Popper window specifically for Flymake diagnostics buffer."
@@ -2256,11 +2315,13 @@
   (global-set-key (kbd "C-t C-s") 'jinx-mode)
 
   (global-set-key (kbd "C-c C-j") 'cider-jack-in)
-  
+
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "C-t") nil)
     (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
-    (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root))
+    (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
+    (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
+    (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
 
   (with-eval-after-load 'org
     ;; Override the keybinding in org-mode specifically
@@ -2439,9 +2500,15 @@
     (interactive)
     (find-file "~/"))
 
+  (defun root ()
+    "Open a specific file."
+    (interactive)
+    (find-file "/"))
+
   (defun theme ()
     "Open a specific file."
     (interactive)
     (find-file "~/.emacs.d/themes/rose-pine-theme.el"))
-  
+
 #+end_src
+
