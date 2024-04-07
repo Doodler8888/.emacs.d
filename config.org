@@ -16,7 +16,6 @@
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
   - [[#jinx][Jinx]]
-  - [[#consult][Consult]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
@@ -644,10 +643,6 @@
            ("C-M-$" . jinx-languages)))
 
 #+end_src
-
-** Consult
-
-# <se
 
 ** Completion
 
@@ -1910,7 +1905,7 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package flycheck
+  ;; (use-package flycheck)
   ;;   :init
   ;;   (add-hook 'after-init-hook #'global-flycheck-mode))
 
@@ -2446,4 +2441,10 @@
     "Open a specific file."
     (interactive)
     (find-file "~/"))
+
+  (defun theme ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.emacs.d/themes/rose-pine-theme.el"))
+  
 #+end_src

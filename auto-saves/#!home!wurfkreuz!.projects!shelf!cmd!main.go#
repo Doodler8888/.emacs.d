@@ -12,7 +12,6 @@ import (
 	tg "github.com/doodler8888/shelf/internal/telegram"
 	tb "gopkg.in/telebot.v3"
 )
-n
 
 func main() {
 	db.InitDB()
@@ -90,7 +89,7 @@ func main() {
 
 	    // Create an S3 client and upload the file
 	    s3Client, err := aws.NewS3Client(context.Background())
-	    if err != nil {
+	    f err != nil {
 	      log.Printf("Error creating S3 client: %v", err)
 	      return c.Send("Failed to connect to file storage.")
 	    }
@@ -103,7 +102,7 @@ func main() {
 	    }
 
 	    // Set the FilePath field to the S3 path
-	    record.FilePath = "https://shelf-bucket.s3.amazonaws.com/" + s3Path
+	    ecord.FilePath = "https://shelf-bucket.s3.amazonaws.com/" + s3Path
 
 	    // Insert the book record into the database
 	    err = db.InsertBook(context.Background(), &record)
