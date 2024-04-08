@@ -68,10 +68,10 @@
 
 
    ;; Clojure ts mode
-   `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
+   `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))
 
    ;; Raku mode
-   `(raku-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For type annotations
+   `(raku-operator ((,class (:foreground ,rose-pine-subtext))))
 
    ;; Dired mode
    `(dired-directory ((,class (:foreground ,rose-pine-gold))))

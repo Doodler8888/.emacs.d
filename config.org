@@ -20,6 +20,7 @@
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
+  - [[#zoxide][Zoxide]]
   - [[#cider][Cider]]
   - [[#projectile][Projectile]]
   - [[#wgrep][Wgrep]]
@@ -811,6 +812,15 @@
          "sf" '(sudo-edit-find-file :wk "Sudo find file")
          "se" '(sudo-edit :wk "Sudo edit file")))
 
+#+end_src
+
+** Zoxide
+
+#+begin_src emacs-lisp
+  
+  (straight-use-package
+   '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
+    
 #+end_src
 
 ** Cider
@@ -2017,7 +2027,7 @@
 
   (use-package lsp-mode
     :commands lsp
-    :hook ((go-mode . lsp))
+    ;; :hook ((go-mode . lsp))
            ;; (clojure-mode . lsp)) ; Automatically start lsp-mode in go-mode and clojure-mode buffers
     :init
     (setq lsp-lens-enable nil)
@@ -2357,12 +2367,11 @@
   (global-unset-key (kbd "C-t"))
   (global-set-key (kbd "C-t C-s") 'jinx-mode)
 
-  (global-set-key (kbd "C-c C-j") 'cider-jack-in)
-
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "C-t") nil)
     (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
+    (define-key evil-normal-state-map (kbd "gz") 'zoxide-cd)
     (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
     (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
 
