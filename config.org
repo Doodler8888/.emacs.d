@@ -158,7 +158,7 @@
   (setq backup-inhibited t)
 
   (add-hook 'prog-mode-hook (show-paren-mode t))
-
+  
   ;; Auto pairing
   (add-hook 'prog-mode-hook (electric-pair-mode t))
   ;; Don't pair '<'
@@ -380,7 +380,7 @@
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-(define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
+;; (define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
 
 (defun my-evil-insert-state-minibuffer-setup ()
   (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
@@ -739,11 +739,18 @@
 
 #+begin_src emacs-lisp
 
-  (use-package exec-path-from-shell
-    :config
-    (exec-path-from-shell-initialize)
-    (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
-    (exec-path-from-shell-copy-env "SSH_AUTH_SOCK"))
+    (use-package exec-path-from-shell
+      :config
+      (exec-path-from-shell-initialize)
+      (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
+      (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+      (exec-path-from-shell-copy-env "NOTIFY_TOKEN")
+      (exec-path-from-shell-copy-env "SHELF_TOKEN")
+      (exec-path-from-shell-copy-env "SHELF_DB_USER")
+      (exec-path-from-shell-copy-env "SHELF_DB_NAME")
+      (exec-path-from-shell-copy-env "SHELF_DB_PASS")
+      (exec-path-from-shell-copy-env "SHELF_DB_PORT")
+      )
 
 #+end_src
 
@@ -837,12 +844,14 @@
 
   (defun my/projectile-project-root-advice (original-projectile-root &rest args)
     "Advice to make Projectile recognize custom project roots."
-    (or (cl-some (lambda (path)
-                  (when (string-prefix-p (expand-file-name path)
-                                          (expand-file-name default-directory))
-                    path))
-                my-org-project-paths)
-        (apply original-projectile-root args)))
+    (let ((current-dir (expand-file-name default-directory))
+          (project-root nil))
+      (while (and (not project-root) (not (string= current-dir "/")))
+        (when (file-exists-p (concat current-dir "bb.edn"))
+          (setq project-root current-dir))
+        (setq current-dir (file-name-directory (directory-file-name current-dir))))
+      (or project-root
+          (apply original-projectile-root args))))
 
   (use-package projectile
     :config
@@ -850,14 +859,14 @@
     (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
 
   (defvar my-org-project-paths
-  '("/home/wurfkreuz/.secret_dotfiles/org/"
-    "/some/other/org/path/"))
+    '("/home/wurfkreuz/.secret_dotfiles/org/"
+      "/some/other/org/path/"))
 
   (defun my-projectile-project-root ()
     (let ((default-directory (or (buffer-file-name) default-directory)))
       (cl-some (lambda (path)
-                (when (string-match-p path default-directory) path))
-              my-org-project-paths)
+                 (when (string-match-p path default-directory) path))
+               my-org-project-paths)
       (projectile-project-root)))
 
   (add-hook 'projectile-find-file-hook #'my-projectile-project-root)
@@ -1904,6 +1913,7 @@
             "\\*compilation\\*"
             "\\*eshell\\*.*"
             "\\*cider-repl.*"
+            "\\*cider-doc.*"
             ;; "\\*eshell:.*"
             ;; "\\*Warnings\\*"
             ;; "\\*xref\\*"
@@ -2020,15 +2030,15 @@
 
 #+begin_src emacs-lisp
 
-  ;;(use-package flymake
+  ;; (use-package flymake
   ;; :init
   ;; (flymake-mode))
-  ;; ;; :hook (go-mode . flymake-mode))
+  ;; :hook (go-mode . flymake-mode))
 
   (use-package lsp-mode
     :commands lsp
-    ;; :hook ((go-mode . lsp))
-           ;; (clojure-mode . lsp)) ; Automatically start lsp-mode in go-mode and clojure-mode buffers
+    :hook ((go-mode . lsp)
+           (clojure-mode . lsp)) ; Automatically start lsp-mode in go-mode and clojure-mode buffers
     :init
     (setq lsp-lens-enable nil)
     :config
@@ -2039,10 +2049,10 @@
                       :server-id 'gopls)) ; Correct server-id for Go
 
     ;; Register Clojure LSP client
-    ;; (lsp-register-client
-    ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
-    ;;                   :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
-    ;;                   :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
+                      :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
+                      :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
 
     ;; General LSP settings
     (setq lsp-idle-delay 0.1
@@ -2363,7 +2373,8 @@
   (global-set-key (kbd "C-s C-s") 'swiper-isearch)
   (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
   (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
-
+  (global-set-key (kbd "C-h M-f") 'describe-face)
+  
   (global-unset-key (kbd "C-t"))
   (global-set-key (kbd "C-t C-s") 'jinx-mode)
 
@@ -2371,7 +2382,7 @@
     (define-key evil-normal-state-map (kbd "C-t") nil)
     (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-    (define-key evil-normal-state-map (kbd "gz") 'zoxide-cd)
+    (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
     (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
     (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
 

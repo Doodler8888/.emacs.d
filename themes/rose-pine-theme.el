@@ -124,6 +124,7 @@
 
    ;; Eshell
    `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
+   `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
 
    ;; More faces
    `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
