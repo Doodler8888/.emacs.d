@@ -1981,7 +1981,6 @@
   ;;   :bind (:map markdown-mode-map
   ;;         ("C-c C-e" . markdown-do)))
 
-
   (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
   (add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
   (add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
@@ -2041,6 +2040,10 @@
            (clojure-mode . lsp)) ; Automatically start lsp-mode in go-mode and clojure-mode buffers
     :init
     (setq lsp-lens-enable nil)
+          ;; lsp-ui-sideline-enable nil ; Ensure lsp-ui-sideline is disabled (if lsp-ui is used)
+          ;; lsp-ui-doc-enable nil ; Ensure lsp-ui-doc is disabled (if lsp-ui is used)
+          ;; lsp-modeline-diagnostics-enable nil ; Disable diagnostics in the modeline
+          ;; lsp-modeline-code-actions-enable nil) ; Disable code actions in the modeline
     :config
     ;; Register Go LSP client
     (lsp-register-client
@@ -2055,6 +2058,7 @@
                       :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
 
     ;; General LSP settings
+    (lsp-signature-mode nil)
     (setq lsp-idle-delay 0.1
           lsp-diagnostics-provider :flymake
           lsp-headerline-breadcrumb-enable nil
@@ -2062,7 +2066,20 @@
           read-process-output-max (* 1024 1024)
           lsp-log-max 0 ; Corrected function call
           lsp-log-io nil
-          lsp-enable-symbol-highlighting nil))
+          lsp-enable-symbol-highlighting nil
+          lsp-signature-render-documentation nil
+          lsp--last-signature nil
+          lsp--last-signature-index nil
+          lsp--last-signature-buffer nil
+          lsp-signature-auto-activate nil
+          lsp-signature-cycle nil
+          lsp-signature-doc-lines nil
+          lsp-signature-face nil
+          lsp-signature-function nil
+          lsp-signature-posframe nil
+          lsp-eldoc-enable-hover nil
+          lsp-eldoc-render-all nil
+          lsp-signature-render-documentation nil))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode
@@ -2176,7 +2193,7 @@
   ;;         ;; ("~" org-code verbatim)
   ;;         ;; ("+" org-strike-through t)))
   ;;   (define-prefix-command 'my-prefix-map)
-  
+
   (defun todo ()
     "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
     (interactive)
@@ -2191,6 +2208,15 @@
 
   (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
 
+  (setq org-src-fontify-natively t)
+
+  (defun my/org-show-all-and-refresh ()
+    "Expand all blocks and refresh fontification."
+    (org-show-all '(blocks))
+    (redisplay t))
+
+  (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
+  
 #+end_src
 
 ** Org download

@@ -1,5 +1,5 @@
 # key: <dsn
-# name: Org-drill two-sided card
+# name: Org-drill simple
 # --
 * ${1:Title} :drill:
 :PROPERTIES:

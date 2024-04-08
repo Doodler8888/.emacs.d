@@ -143,7 +143,8 @@
 
 (defun my/set-flymake-faces ()
   (with-eval-after-load 'flymake
-    (set-face-attribute 'flymake-error nil :underline '(:style line))
+    (set-face-attribute 'flymake-error nil
+                        :underline `(:style line :color "#e0def4")) ; rose-pine-gold
     (set-face-attribute 'flymake-warning nil
                         :underline `(:style line :color "#f6c177")) ; rose-pine-gold
     (set-face-attribute 'flymake-note nil
