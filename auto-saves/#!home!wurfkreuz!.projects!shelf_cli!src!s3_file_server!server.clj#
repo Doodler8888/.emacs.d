@@ -5,7 +5,7 @@
 
 ;; The handler takes a request map as input (which contains information about the
 ;; incoming request) and returns a simple response map.
-defn handler [request]
+(dfn handler [request]
   {:status 200
    :headers {"Content-Type" "text/plain"}
    :body "Hello, World!"})

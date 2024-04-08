@@ -313,16 +313,16 @@
     (setq evil-want-C-u-scroll t
           evil-want-C-i-jump nil
           evil-want-integration t
-          ;; evil-want-minibuffer t
+          evil-want-minibuffer t
           evil-undo-system 'undo-tree)
     :config
     (evil-mode 1)
     (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    ;; (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-    ;; (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+    (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+    (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
 
-    ;; (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-    ;; (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+    (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+    (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
     (setq evil-shift-width 2))
 
   (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
@@ -365,7 +365,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca minibuffer))
     (evil-collection-init))
 
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
@@ -378,6 +378,15 @@
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
+
+(define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
+
+(defun my-evil-insert-state-minibuffer-setup ()
+  (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+  (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+
+(add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+
 
 #+end_src
 
@@ -397,6 +406,23 @@
     (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
     (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
 
+  (defun my-move-beginning-of-line ()
+    "Move point to the first non-whitespace character of the line and enter insert mode."
+    (interactive)
+    (evil-first-non-blank)
+    (evil-insert-state))
+
+  (defun my-move-end-of-line ()
+    "Move point to the very end of the line and enter insert mode."
+    (interactive)
+    (evil-end-of-line)
+    (evil-insert-state)
+    (unless (eolp)
+      (evil-append-line 1)))
+
+  (with-eval-after-load 'evil
+    (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
+    (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
 
 #+end_src
 
@@ -692,15 +718,19 @@
   ;;   (setq company-minimum-prefix-length 1)
   ;;   (setq company-idle-delay 0.1))
 
-  (defun my/company-manual-complete ()
-    "Enable company-mode and call company-complete."
-    (interactive)
-    (unless company-mode
-      (company-mode 1))  ; Enable company-mode in the current buffer if it's not already enabled
-    (company-complete))
+(defun my/company-manual-complete ()
+  "Enable company-mode and call company-complete."
+  (interactive)
+  (unless company-mode
+    (company-mode 1))
+  (company-complete))
 
-  (with-eval-after-load 'evil
-    (define-key evil-insert-state-map (kbd "TAB") 'my/company-manual-complete))
+(with-eval-after-load 'evil
+  (defun my-evil-insert-state-setup ()
+    (unless (minibufferp)
+      (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
+
+  (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
 
 #+end_src
 
@@ -1961,9 +1991,11 @@
 
 #+begin_src emacs-lisp
 
-  ;; (use-package flycheck)
+  ;; (use-package flycheck
   ;;   :init
   ;;   (add-hook 'after-init-hook #'global-flycheck-mode))
+
+  ;; (use-package flycheck-raku)
 
   ;; (use-package flymake-flycheck
   ;;   :after flymake
@@ -1979,27 +2011,38 @@
 #+begin_src emacs-lisp
 
   ;;(use-package flymake
-    ;; :init
-   ;; (flymake-mode))
-   ;; ;; :hook (go-mode . flymake-mode))
+  ;; :init
+  ;; (flymake-mode))
+  ;; ;; :hook (go-mode . flymake-mode))
 
   (use-package lsp-mode
     :commands lsp
+    :hook ((go-mode . lsp))
+           ;; (clojure-mode . lsp)) ; Automatically start lsp-mode in go-mode and clojure-mode buffers
+    :init
+    (setq lsp-lens-enable nil)
     :config
+    ;; Register Go LSP client
     (lsp-register-client
-    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                      :major-modes '(go-mode)
-                      :server-id 'gopls))
-    (add-hook 'go-mode-hook #'lsp)
-    (setq lsp-idle-delay 0.1)
-    (setq lsp-diagnostics-provider :flymake)
-    (setq lsp-headerline-breadcrumb-enable nil)
-    (setq gc-cons-threshold (* 100 1024 1024)
-          read-process-output-max (* 1024 1024))
-    ;; Small speedups
-    (setopt lsp-log-max 0)
-    (setopt lsp-log-io nil)
-    (setq lsp-enable-symbol-highlighting nil))
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                      :major-modes '(go-ts-mode) ; Corrected to go-mode
+                      :server-id 'gopls)) ; Correct server-id for Go
+
+    ;; Register Clojure LSP client
+    ;; (lsp-register-client
+    ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
+    ;;                   :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
+    ;;                   :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
+
+    ;; General LSP settings
+    (setq lsp-idle-delay 0.1
+          lsp-diagnostics-provider :flymake
+          lsp-headerline-breadcrumb-enable nil
+          gc-cons-threshold (* 100 1024 1024)
+          read-process-output-max (* 1024 1024)
+          lsp-log-max 0 ; Corrected function call
+          lsp-log-io nil
+          lsp-enable-symbol-highlighting nil))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode

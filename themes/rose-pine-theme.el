@@ -59,7 +59,7 @@
 			:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
 
-   ;; Haskell mode specific faces
+   ;; Haskell mode
    `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
    `(haskell-constructor-face ((,class (:foreground ,rose-pine-foam))))  ; For type constructors like 'IO'
    `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For operators
@@ -69,6 +69,9 @@
 
    ;; Clojure ts mode
    `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
+
+   ;; Raku mode
+   `(raku-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For type annotations
 
    ;; Dired mode
    `(dired-directory ((,class (:foreground ,rose-pine-gold))))
