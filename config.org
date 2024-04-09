@@ -24,7 +24,10 @@
   - [[#cider][Cider]]
   - [[#projectile][Projectile]]
   - [[#wgrep][Wgrep]]
+  - [[#embark][Embark]]
   - [[#ivycounsel][Ivy/Counsel]]
+  - [[#prescient][Prescient]]
+  - [[#fzf][Fzf]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
   - [[#dired-keybindings][Dired keybindings]]
@@ -158,14 +161,14 @@
   (setq desktop-load-locked-desktop t)
   (setq backup-inhibited t)
 
-  (add-hook 'prog-mode-hook (show-paren-mode t))
+  ;; (add-hook 'prog-mode-hook (show-paren-mode t))
 
-  ;; Auto pairing
-  (add-hook 'prog-mode-hook (electric-pair-mode t))
-  ;; Don't pair '<'
-  (setq electric-pair-inhibit-predicate
-        `(lambda (c)
-          (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
+  ;; ;; Auto pairing
+  ;; (add-hook 'prog-mode-hook (electric-pair-mode t))
+  ;; ;; Don't pair '<'
+  ;; (setq electric-pair-inhibit-predicate
+  ;;       `(lambda (c)
+  ;;         (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
 
   ;; Break lines after a certain length
   (auto-fill-mode 1)
@@ -364,14 +367,23 @@
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-;; (define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
+  ;; (define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
 
-(defun my-evil-insert-state-minibuffer-setup ()
-  (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-  (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+  (defun my-evil-insert-state-minibuffer-setup ()
+    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
 
-(add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
+  (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
+  (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
+
+  (use-package paredit)
+  
+  ;; (use-package symex
+  ;;   :config
+  ;;   (symex-initialize)
+  ;;   (global-set-key (kbd "C-;") 'symex-mode-interface))  ; or whatever keybinding you like
 
 #+end_src
 
@@ -818,7 +830,10 @@
 
 #+begin_src emacs-lisp
 
-  (use-package cider)
+  (use-package cider
+    :config
+    (setq cider-eldoc-display-for-symbol-at-point nil)
+    (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
 
 #+end_src
 
@@ -865,6 +880,14 @@
   
 #+end_src
 
+** Embark
+
+#+begin_src emacs-lisp
+
+  (use-package embark)
+
+#+end_src
+
 ** Ivy/Counsel
 
 #+begin_src emacs-lisp
@@ -875,7 +898,7 @@
     (counsel-mode))
   (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
-    ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
+  ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
 
   (use-package ivy
     :bind
@@ -894,8 +917,8 @@
     :after ivy
     :config
     (ivy-posframe-mode 1))
-    (setq ivy-posframe-width 50)
-    (setq ivy-posframe-display-functions-alist
+  (setq ivy-posframe-width 50)
+  (setq ivy-posframe-display-functions-alist
         '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
   ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
@@ -917,7 +940,7 @@
     (interactive)
     (let* ((current-dir (if (eq major-mode 'dired-mode)
                             "."
-                            (buffer-file-name))))
+                          (buffer-file-name))))
       (ivy-read "Find file: " #'read-file-name-internal
                 :matcher #'counsel--find-file-matcher
                 :action #'find-file-check-dir
@@ -928,18 +951,6 @@
                 :caller 'counsel-find-file)))
 
   (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
-
-  ;; (defun counsel-fzf-home ()
-  ;;   "Run `counsel-fzf` from the user's home directory."
-  ;;   (interactive)
-  ;;   (let ((default-directory "~/"))
-  ;;     (counsel-fzf)))
-
-  ;; (defun counsel-fzf-root ()
-  ;;   "Run `counsel-fzf` from the root directory."
-  ;;   (interactive)
-  ;;   (let ((default-directory "/"))
-  ;;     (counsel-fzf)))
 
   (defun counsel-fzf-home ()
     "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
@@ -980,10 +991,23 @@
                 :action (lambda (f)
                           (insert (expand-file-name f default-directory)))
                 :caller 'insert-path-from-counsel-fzf-home)))
-  
+
+  (define-key ivy-minibuffer-map (kbd "C-c C-w") 'embark-export)
+  (define-key counsel-mode-map (kbd "C-c C-w") 'embark-export)
+
 #+end_src
 
-*** Fzf
+** Prescient
+
+#+begin_src emacs-lisp
+
+  (use-package ivy-prescient
+    :after counsel
+    :config
+    (ivy-prescient-mode 1))
+    
+#+end_src
+** Fzf
 
 #+begin_src emacs-lisp
 
