@@ -78,6 +78,10 @@
    `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
    `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
 
+   ;; Anisble mode
+   `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
+   `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
+
    ;; Org mode
    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line

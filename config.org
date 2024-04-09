@@ -49,7 +49,8 @@
   - [[#shackle][Shackle]]
   - [[#popper][Popper]]
 - [[#language-support][LANGUAGE SUPPORT]]
-  - [[#lsp-bridge][Lsp-bridge]]
+  - [[#flymake][Flymake]]
+  - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
   - [[#lsp-mode][Lsp Mode]]
   - [[#eglot][Eglot]]
@@ -158,7 +159,7 @@
   (setq backup-inhibited t)
 
   (add-hook 'prog-mode-hook (show-paren-mode t))
-  
+
   ;; Auto pairing
   (add-hook 'prog-mode-hook (electric-pair-mode t))
   ;; Don't pair '<'
@@ -222,26 +223,7 @@
   (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
   (setq auto-save-no-message t)
 
-  ;;   ;; Function to enable auto-save when entering normal state
-  ;; (defun enable-auto-save-on-normal-state ()
-  ;; (when (and (boundp 'evil-state) (eq evil-state 'normal))
   (auto-save-mode 1)
-
-  ;; ;; Function to disable auto-save when entering insert state
-  ;; (defun disable-auto-save-on-insert-state ()
-  ;; (when (and (boundp 'evil-state) (eq evil-state 'insert))
-  ;; (auto-save-mode -1)))
-
-  ;; ;; Enable auto-save when entering normal state
-  ;; (add-hook 'evil-normal-state-entry-hook 'enable-auto-save-on-normal-state)
-  ;; ;; Disable auto-save when entering insert state
-  ;; (add-hook 'evil-insert-state-entry-hook 'disable-auto-save-on-insert-state)
-
-  ;; (defun my-save-buffers-on-exit ()
-  ;; "Save all file-visiting buffers before exiting Emacs or killing a buffer."
-  ;; (save-some-buffers t))
-  ;; (add-hook 'kill-emacs-hook 'my-save-buffers-on-exit)
-  ;; (add-hook 'kill-buffer-hook 'my-save-buffers-on-exit)
 
   (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -271,6 +253,8 @@
   (setq scroll-conservatively 101)
   (setq scroll-margin 5)
   (setq scroll-step 1)
+
+  (global-eldoc-mode -1)
 
 #+end_src
 
@@ -1399,13 +1383,17 @@
   (defvar desktop-autosave-timer nil
     "Timer object for desktop autosave, to avoid multiple timers running.")
 
+  (defun buffer-displayed-in-window-p (buffer)
+    "Check if BUFFER is displayed in any window."
+    (get-buffer-window buffer 'visible))
+
   (defun save-eshell-buffer (desktop-dirname)
     ;; Save the current working directory.
     default-directory)
 
   (defun restore-eshell-buffer (_file-name buffer-name misc)
     "MISC is the value returned by `save-eshell-buffer'.
-            _FILE-NAME is nil."
+                _FILE-NAME is nil."
     (let ((default-directory misc))
       ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
       (eshell buffer-name)))
@@ -1420,89 +1408,92 @@
 
   (defun save-current-desktop-session (&optional show-message)
     "Save the current desktop session using the current session name.
-      If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls whether a save message is displayed."
+  If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls whether a save message is displayed."
     (interactive "p") ; "p" passes a prefix argument, which is non-nil when called interactively
-    (if current-desktop-session-name
+    (if (and current-desktop-session-name (not (string-empty-p current-desktop-session-name)))
         (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
           (unless (file-exists-p desktop-dir)
-            (make-directory desktop-dir))
+            (make-directory desktop-dir t))
           (desktop-save desktop-dir)
           (when (and show-message (or (called-interactively-p 'any) (eq show-message 1)))
             (message "Session '%s' saved." current-desktop-session-name)))
-      ;; No session is loaded, prompt to create a new one (only when called interactively)
-      (when (and (called-interactively-p 'any) (not show-message))
+      ;; No session is loaded or the session name is empty, prompt to create a new one (only when called interactively)
+      (when (called-interactively-p 'any)
         (let ((new-session-name (read-string "Enter new session name: ")))
-          (unless (string-empty-p new-session-name)
-            (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
-              (make-directory new-desktop-dir t)
+          (if (string-empty-p new-session-name)
+              (message "Session name cannot be empty.")
+            (progn
               (setq current-desktop-session-name new-session-name)
-              (desktop-save new-desktop-dir)))))))
+              (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
+                (make-directory new-desktop-dir t)
+                (desktop-save new-desktop-dir)
+                (message "Session '%s' created and saved." new-session-name))))))))
 
-  (defun setup-desktop-autosave-timer ()
-    "Set up or reset the desktop autosave timer."
-    (when desktop-autosave-timer
-      (cancel-timer desktop-autosave-timer))
-    ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
-    (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
+    (defun setup-desktop-autosave-timer ()
+      "Set up or reset the desktop autosave timer."
+      (when desktop-autosave-timer
+        (cancel-timer desktop-autosave-timer))
+      ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
+      (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
 
-  (defun load-desktop-session (session-name)
-    "Load a desktop session by name."
-    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-      (setq current-desktop-session-name session-name)
-      (desktop-change-dir (concat desktop-dir session-name "/"))
-      (setup-desktop-autosave-timer)))
+    (defun load-desktop-session (session-name)
+      "Load a desktop session by name."
+      (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+        (setq current-desktop-session-name session-name)
+        (desktop-change-dir (concat desktop-dir session-name "/"))
+        (setup-desktop-autosave-timer)))
 
-  (defun load-desktop-with-name ()
-    "Load a desktop session by name, chosen from available sessions."
-    (interactive)
-    (when current-desktop-session-name
-      ;; Save the current session before loading a new one, but only if a session is already loaded.
-      (save-current-desktop-session))
-    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-           (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
-      (setq current-desktop-session-name session-name)  ; Save the session name globally
-      (desktop-change-dir (concat desktop-dir session-name "/"))
-      (setup-desktop-autosave-timer)))
+    (defun load-desktop-with-name ()
+      "Load a desktop session by name, chosen from available sessions."
+      (interactive)
+      (when current-desktop-session-name
+        ;; Save the current session before loading a new one, but only if a session is already loaded.
+        (save-current-desktop-session))
+      (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+             (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+             (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+        (setq current-desktop-session-name session-name)  ; Save the session name globally
+        (desktop-change-dir (concat desktop-dir session-name "/"))
+        (setup-desktop-autosave-timer)))
 
-  ;; Disable the default desktop save mode
-  (desktop-save-mode 0)
+    ;; Disable the default desktop save mode
+    (desktop-save-mode 0)
 
-  (defun delete-desktop-session ()
-    "Delete a desktop session by name, chosen from available sessions."
-    (interactive)
-    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-           (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
-      (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
-        (let ((session-path (concat desktop-dir session-name)))
-          (if (file-directory-p session-path)
-              (progn
-                (delete-directory session-path t)  ; 't' for recursive delete
-                (message "Deleted desktop session '%s'." session-name))
-            (message "No such desktop session '%s'." session-name))))))
+    (defun delete-desktop-session ()
+      "Delete a desktop session by name, chosen from available sessions."
+      (interactive)
+      (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+             (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+             (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
+        (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
+          (let ((session-path (concat desktop-dir session-name)))
+            (if (file-directory-p session-path)
+                (progn
+                  (delete-directory session-path t)  ; 't' for recursive delete
+                  (message "Deleted desktop session '%s'." session-name))
+              (message "No such desktop session '%s'." session-name))))))
 
-  (defun rename-desktop-session ()
-    "Renames the currently loaded desktop session."
-    (interactive)
-    ;; Check if there's a session loaded.
-    (if (not current-desktop-session-name)
-        (message "No desktop session is currently loaded.")
-      (let* ((new-name (read-string "New session name: "))
-             (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
-             (new-dir (concat user-emacs-directory "desktop/" new-name)))
-        ;; Check if the new session name is empty or the session already exists.
-        (if (or (string-empty-p new-name)
-                (file-exists-p new-dir))
-            (message "Invalid new session name or session already exists.")
-          ;; Rename the directory and update the session name.
-          (rename-file old-dir new-dir)
-          (setq current-desktop-session-name new-name)
-          (message "Session renamed to '%s'." new-name)))))
+    (defun rename-desktop-session ()
+      "Renames the currently loaded desktop session."
+      (interactive)
+      ;; Check if there's a session loaded.
+      (if (not current-desktop-session-name)
+          (message "No desktop session is currently loaded.")
+        (let* ((new-name (read-string "New session name: "))
+               (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
+               (new-dir (concat user-emacs-directory "desktop/" new-name)))
+          ;; Check if the new session name is empty or the session already exists.
+          (if (or (string-empty-p new-name)
+                  (file-exists-p new-dir))
+              (message "Invalid new session name or session already exists.")
+            ;; Rename the directory and update the session name.
+            (rename-file old-dir new-dir)
+            (setq current-desktop-session-name new-name)
+            (message "Session renamed to '%s'." new-name)))))
 
-  (add-hook 'kill-emacs-hook 'save-current-desktop-session)
+    (add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
-#+end_src
+  #+end_src
 
 * Buffers
 ** Windmove
@@ -1513,70 +1504,70 @@
 
    ;;;###autoload
   (defun buf-move-up ()
-   "Swap the current buffer and the buffer above the split.
+    "Swap the current buffer and the buffer above the split.
    If there is no split, ie now window above the current one, an
    error is signaled."
-     ;;  "Switches between the current buffer, and the buffer above the
-     ;;  split, if possible."
-     (interactive)
-     (let* ((other-win (windmove-find-other-window 'up))
- 	   (buf-this-buf (window-buffer (selected-window))))
-       (if (null other-win)
- 	  (error "No window above this one")
- 	;; swap top with this one
- 	(set-window-buffer (selected-window) (window-buffer other-win))
- 	;; move this one to top
- 	(set-window-buffer other-win buf-this-buf)
- 	(select-window other-win))))
+    ;;  "Switches between the current buffer, and the buffer above the
+    ;;  split, if possible."
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'up))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (null other-win)
+          (error "No window above this one")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
 
    ;;;###autoload
   (defun buf-move-down ()
-   "Swap the current buffer and the buffer under the split.
+    "Swap the current buffer and the buffer under the split.
    If there is no split, ie now window under the current one, an
    error is signaled."
-     (interactive)
-     (let* ((other-win (windmove-find-other-window 'down))
- 	   (buf-this-buf (window-buffer (selected-window))))
-       (if (or (null other-win)
- 	      (string-match "^ \\*Minibuf" (buffer-name (window-buffer other-win))))
- 	  (error "No window under this one")
- 	;; swap top with this one
- 	(set-window-buffer (selected-window) (window-buffer other-win))
- 	;; move this one to top
- 	(set-window-buffer other-win buf-this-buf)
- 	(select-window other-win))))
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'down))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (or (null other-win)
+              (string-match "^ \\*Minibuf" (buffer-name (window-buffer other-win))))
+          (error "No window under this one")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
 
    ;;;###autoload
   (defun buf-move-left ()
-   "Swap the current buffer and the buffer on the left of the split.
+    "Swap the current buffer and the buffer on the left of the split.
    If there is no split, ie now window on the left of the current
    one, an error is signaled."
-     (interactive)
-     (let* ((other-win (windmove-find-other-window 'left))
- 	   (buf-this-buf (window-buffer (selected-window))))
-       (if (null other-win)
- 	  (error "No left split")
- 	;; swap top with this one
- 	(set-window-buffer (selected-window) (window-buffer other-win))
- 	;; move this one to top
- 	(set-window-buffer other-win buf-this-buf)
- 	(select-window other-win))))
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'left))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (null other-win)
+          (error "No left split")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
 
    ;;;###autoload
   (defun buf-move-right ()
-   "Swap the current buffer and the buffer on the right of the split.
+    "Swap the current buffer and the buffer on the right of the split.
    If there is no split, ie now window on the right of the current
    one, an error is signaled."
-     (interactive)
-     (let* ((other-win (windmove-find-other-window 'right))
- 	   (buf-this-buf (window-buffer (selected-window))))
-       (if (null other-win)
- 	  (error "No right split")
- 	;; swap top with this one
- 	(set-window-buffer (selected-window) (window-buffer other-win))
- 	;; move this one to top
- 	(set-window-buffer other-win buf-this-buf)
- 	(select-window other-win))))
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'right))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (null other-win)
+          (error "No right split")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
 
 #+end_src
 
@@ -1595,18 +1586,18 @@
 #+begin_src emacs-lisp
 
   (defun OpenDiredBufferInSplit ()
-     "Open a Dired buffer in a vertical split on the right, showing the directory of the current buffer."
-     (interactive)
-     (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
-       (split-window-right)
-       (windmove-right)
-       (dired current-dir)))
+    "Open a Dired buffer in a vertical split on the right, showing the directory of the current buffer."
+    (interactive)
+    (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
+      (split-window-right)
+      (windmove-right)
+      (dired current-dir)))
 
   (defun OpenDiredBufferInCurrentWindow ()
-     "Open a Dired buffer in the current window, showing the directory of the current buffer."
-     (interactive)
-     (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
-       (dired current-dir)))
+    "Open a Dired buffer in the current window, showing the directory of the current buffer."
+    (interactive)
+    (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
+      (dired current-dir)))
 
 #+end_src
 
@@ -1762,55 +1753,55 @@
 
 #+begin_src emacs-lisp
 
-    (defvar
-      eshell-toggle-window-configuration nil
-      "Variable to store the window configuration before opening eshell.")
+  (defvar
+    eshell-toggle-window-configuration nil
+    "Variable to store the window configuration before opening eshell.")
 
-    (defvar eshell-toggle-selected-window nil
-      "Variable to store the selected window before opening eshell.")
+  (defvar eshell-toggle-selected-window nil
+    "Variable to store the selected window before opening eshell.")
 
-    (defun SpawnEshellSplitBelow ()
-      "Open a shell in a small split below or toggle it if already open."
-      (interactive)
-      (if (eq major-mode 'eshell-mode)
-          (progn
-            (when eshell-toggle-window-configuration
-              (set-window-configuration eshell-toggle-window-configuration)
-              (setq eshell-toggle-window-configuration nil))
-            (when eshell-toggle-selected-window
-              (select-window eshell-toggle-selected-window)
-              (setq eshell-toggle-selected-window nil)))
-        (setq eshell-toggle-window-configuration (current-window-configuration))
-        (setq eshell-toggle-selected-window (selected-window))
-        ;; Calculate one third of the total window height
-        (let ((one-third-height (/ (window-total-height) 3)))
-          ;; Ensure the height is at least 1 to avoid errors
-          (setq one-third-height (max one-third-height 1))
-          (split-window-below (- one-third-height))
-          (other-window 1)
-          (open-eshell-in-current-directory))))
+  (defun SpawnEshellSplitBelow ()
+    "Open a shell in a small split below or toggle it if already open."
+    (interactive)
+    (if (eq major-mode 'eshell-mode)
+        (progn
+          (when eshell-toggle-window-configuration
+            (set-window-configuration eshell-toggle-window-configuration)
+            (setq eshell-toggle-window-configuration nil))
+          (when eshell-toggle-selected-window
+            (select-window eshell-toggle-selected-window)
+            (setq eshell-toggle-selected-window nil)))
+      (setq eshell-toggle-window-configuration (current-window-configuration))
+      (setq eshell-toggle-selected-window (selected-window))
+      ;; Calculate one third of the total window height
+      (let ((one-third-height (/ (window-total-height) 3)))
+        ;; Ensure the height is at least 1 to avoid errors
+        (setq one-third-height (max one-third-height 1))
+        (split-window-below (- one-third-height))
+        (other-window 1)
+        (open-eshell-in-current-directory))))
 
-    (defun open-eshell-in-current-directory ()
-      "Open eshell in the directory of the current buffer.
+  (defun open-eshell-in-current-directory ()
+    "Open eshell in the directory of the current buffer.
       If an eshell buffer for the directory already exists, switch to it."
-      (interactive)
-      (let* ((buffer-dir (if (buffer-file-name)
-                             (file-name-directory (buffer-file-name))
-                           default-directory))
-             (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-             (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-        (if existing-eshell-buffer
-            (switch-to-buffer existing-eshell-buffer)
-          (let ((eshell-buffer (eshell 'N)))
-            (with-current-buffer eshell-buffer
-              (rename-buffer eshell-buffer-name)
-              (eshell/cd buffer-dir))))))
+    (interactive)
+    (let* ((buffer-dir (if (buffer-file-name)
+                           (file-name-directory (buffer-file-name))
+                         default-directory))
+           (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+           (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+      (if existing-eshell-buffer
+          (switch-to-buffer existing-eshell-buffer)
+        (let ((eshell-buffer (eshell 'N)))
+          (with-current-buffer eshell-buffer
+            (rename-buffer eshell-buffer-name)
+            (eshell/cd buffer-dir))))))
 
-    (with-eval-after-load 'evil
-      (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
-      ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+  ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
-    (defun SpawnEshellInProjectRoot ()
+  (defun SpawnEshellInProjectRoot ()
     "Open eshell in the project's root directory or toggle it if already open."
     (interactive)
     (if (eq major-mode 'eshell-mode)
@@ -1847,13 +1838,13 @@
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
-  
-    (defun kill-all-eshell-buffers ()
-      "Kill all Eshell buffers."
-      (interactive)
-      (dolist (buffer (buffer-list))
-        (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
-          (kill-buffer buffer))))
+
+  (defun kill-all-eshell-buffers ()
+    "Kill all Eshell buffers."
+    (interactive)
+    (dolist (buffer (buffer-list))
+      (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
+        (kill-buffer buffer))))
 
 #+end_src
 
@@ -1910,6 +1901,7 @@
             "Output\\*$"
             "\\*Async Shell Command\\*"
             "*Flymake diagnostics.*"
+            "*Flycheck errors.*"
             "\\*compilation\\*"
             "\\*eshell\\*.*"
             "\\*cider-repl.*"
@@ -1918,7 +1910,7 @@
             ;; "\\*Warnings\\*"
             ;; "\\*xref\\*"
             ;; "\\*Backtrace\\*"
-            ;; "\\*eldoc\\*"
+            "\\*eldoc\\*"
             ;; "\\*Ement Notifications\\*"
             ;; "Output\\*$"
             ;; "\\*Dtache Shell Command\\*"
@@ -1961,6 +1953,32 @@
 
 * LANGUAGE SUPPORT
 
+** Flymake
+
+#+begin_src emacs-lisp
+
+  ;; (defun my/flymake-yamllint-init ()
+  ;;   (let* ((temp-file (flymake-proc-create-temp-inplace (buffer-file-name) "yamllint"))
+  ;;          (local-file (file-relative-name temp-file (file-name-directory buffer-file-name))))
+  ;;     (list "yamllint" (list "-f" "parsable" local-file))))
+
+  ;; (defun my/flymake-yamllint-setup ()
+  ;;   (add-hook 'yaml-ts-mode-hook
+  ;;             (lambda ()
+  ;;               (add-to-list 'flymake-proc-allowed-file-name-masks
+  ;;                            '("\\.ya?ml\\'" my/flymake-yamllint-init))
+  ;;               (flymake-mode 1))))
+
+  ;; (my/flymake-yamllint-setup)
+
+  ;; (use-package flymake-yamllint
+  ;;   :config
+  ;;   (add-hook 'yaml-ts-mode-hook 'flymake-yamllint-setup))
+
+#+end_src
+
+** Modes
+
 #+begin_src emacs-lisp
 
   (use-package raku-mode)
@@ -1973,6 +1991,25 @@
   (when (require 'dockerfile-mode nil 'noerror)
     ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
     (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
+
+  (use-package ansible
+    :config
+    (add-hook 'yaml-ts-mode-hook '(lambda () (ansible 1))))
+
+  (require 'compile)
+  (add-to-list 'compilation-error-regexp-alist
+               'yaml)
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
+               )
+
+                                          ; Replace make -k with ansible-lint, with an UTF-8 locale to avoid crashes
+  (defun ansible-lint-errors ()
+    (make-local-variable 'compile-command)
+    (let ((ansiblelint_command "ansible-lint ") (loc "LANG=C.UTF-8 "))
+      (setq compile-command (concat loc ansiblelint_command buffer-file-name)))
+    )
+  (add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
 
   ;; (use-package markdown-mode
   ;;   :ensure t
@@ -1987,32 +2024,35 @@
 
 #+end_src
 
-** Lsp-bridge
-
-#+begin_src emacs-lisp
-
-
-  ;; (use-package lsp-bridge
-  ;;   :elpaca '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-  ;;             :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-  ;;             :build (:not compile))
-  ;;   :init
-  ;;   (global-lsp-bridge-mode)
-  ;;   :config
-  ;;   (setq lsp-bridge-complete-manually t)
-  ;;   (setq lsp-bridge-enable-log t)
-  ;;   (setq lsp-bridge-enable-auto-format-code t)
-  ;;   (global-set-key (kbd "C-x C-o") 'lsp-bridge-popup-complete-menu))
-
-#+end_src
-
 ** Flycheck
 
 #+begin_src emacs-lisp
 
-  ;; (use-package flycheck
-  ;;   :init
-  ;;   (add-hook 'after-init-hook #'global-flycheck-mode))
+  (defun my/set-flycheck-faces ()
+    (with-eval-after-load 'flycheck
+      ;; Customize Flycheck error face
+      (set-face-attribute 'flycheck-error nil
+                          :underline `(:style line :color "#e0def4")) ; rose-pine-gold
+      ;; Customize Flycheck warning face
+      (set-face-attribute 'flycheck-warning nil
+                          :underline `(:style line :color "#f6c177")) ; rose-pine-gold
+      ;; Customize Flycheck info (note) face
+      (set-face-attribute 'flycheck-info nil
+                          :underline `(:style line :color "#c4a7e7")))) ; rose-pine-iris
+
+  (add-hook 'after-init-hook 'my/set-flycheck-faces)
+
+  (use-package flycheck
+    :init
+    (add-hook 'after-init-hook #'global-flycheck-mode)
+    :config
+    (my/set-flycheck-faces))
+
+  (defun my/disable-flycheck-in-emacs-lisp-mode ()
+    "Disable flycheck in emacs-lisp-mode."
+    (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
+
+  (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
 
   ;; (use-package flycheck-raku)
 
@@ -2036,14 +2076,10 @@
 
   (use-package lsp-mode
     :commands lsp
-    :hook ((go-mode . lsp)
-           (clojure-mode . lsp)) ; Automatically start lsp-mode in go-mode and clojure-mode buffers
+    :hook ((go-ts-mode . lsp)
+           (clojure-ts-mode . lsp))
     :init
     (setq lsp-lens-enable nil)
-          ;; lsp-ui-sideline-enable nil ; Ensure lsp-ui-sideline is disabled (if lsp-ui is used)
-          ;; lsp-ui-doc-enable nil ; Ensure lsp-ui-doc is disabled (if lsp-ui is used)
-          ;; lsp-modeline-diagnostics-enable nil ; Disable diagnostics in the modeline
-          ;; lsp-modeline-code-actions-enable nil) ; Disable code actions in the modeline
     :config
     ;; Register Go LSP client
     (lsp-register-client
@@ -2056,7 +2092,7 @@
      (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
                       :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
                       :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
-
+    
     ;; General LSP settings
     (lsp-signature-mode nil)
     (setq lsp-idle-delay 0.1
@@ -2208,15 +2244,15 @@
 
   (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
 
-  (setq org-src-fontify-natively t)
+  ;; (setq org-src-fontify-natively t)
 
-  (defun my/org-show-all-and-refresh ()
-    "Expand all blocks and refresh fontification."
-    (org-show-all '(blocks))
-    (redisplay t))
+  ;; (defun my/org-show-all-and-refresh ()
+  ;;   "Expand all blocks and refresh fontification."
+  ;;   (org-show-all '(blocks))
+  ;;   (redisplay t))
 
-  (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
-  
+  ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
+
 #+end_src
 
 ** Org download
