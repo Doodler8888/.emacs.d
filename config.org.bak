@@ -42,11 +42,15 @@
 - [[#database][Database]]
 - [[#sessions][Sessions]]
 - [[#buffers][Buffers]]
+  - [[#windmove][Windmove]]
+  - [[#messages-buffer][Messages buffer]]
   - [[#dired-buffer][Dired buffer]]
+  - [[#cmd-shell-buffer][Cmd shell buffer]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
   - [[#posframe][Posframe]]
+  - [[#shackle][Shackle]]
   - [[#popper][Popper]]
 - [[#language-support][LANGUAGE SUPPORT]]
   - [[#flymake][Flymake]]
@@ -149,7 +153,7 @@
 
   ;; (server-start)
   (global-set-key (kbd "C-x u") 'windmove-up)
-  (setq evil-want-keybinding nil)
+  ;;(setq evil-want-keybinding nil)
 
   (setq vc-follow-symlinks t)
 
@@ -254,6 +258,8 @@
   (setq scroll-margin 5)
   (setq scroll-step 1)
 
+  (global-eldoc-mode -1)
+
 #+end_src
 
 ** Cursor
@@ -287,849 +293,866 @@
 
 #+begin_src emacs-lisp
 
-  (use-package undo-tree
-    :config
-    (global-undo-tree-mode))
-
-  (use-package evil
-    :init
-    (setq evil-want-C-u-scroll t
-          evil-want-C-i-jump nil
-          evil-want-integration t
-          evil-want-minibuffer t
-          evil-undo-system 'undo-tree)
-    :config
-    (evil-mode 1)
-    (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-    (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-
-    (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-    (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-    (setq evil-shift-width 2))
-
-  (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
-
-
-  (setq evil-undo-system 'undo-tree)
-
-  (use-package evil-surround
-    :config
-    (global-evil-surround-mode 1)
-    ;; Add custom surround pairs
-    (setq-default evil-surround-pairs-alist
-                  (append evil-surround-pairs-alist
-                          '((?/ . ("/" . "/"))
-                            (?~ . ("~" . "~"))
-                            (?* . ("*" . "*"))
-                            (?= . ("=" . "="))
-                            (?+ . ("+" . "+"))))))
-
-  (use-package evil-commentary
-    :config
-    (evil-commentary-mode))
-
-  (use-package evil-org
-    :after org
-    :config
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys)
-    (add-hook 'org-mode-hook 'evil-org-mode)
-    (add-hook 'evil-org-mode-hook
-              (lambda ()
-                (evil-org-set-key-theme)))
-    )
-  ;; :ensure nil)
-
-  (use-package evil-collection
-    :after evil
-    :init ;;    (setq evil-want-keybinding nil)
-    :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca minibuffer))
-    (evil-collection-init))
-
-  (add-hook 'text-mode-hook 'display-line-numbers-mode)
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-
-  (defun my-evil-yank-to-end-of-line ()
-    "Yank text from the current point to the end of the line."
-    (interactive)
-    (evil-yank (point) (line-end-position)))
-
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
-
-  ;; (define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
-
-  (defun my-evil-insert-state-minibuffer-setup ()
-    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
-
-  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
-
-  (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
-  (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
-
-  (use-package paredit)
-  
-  ;; (use-package symex
-  ;;   :config
-  ;;   (symex-initialize)
-  ;;   (global-set-key (kbd "C-;") 'symex-mode-interface))  ; or whatever keybinding you like
-
-#+end_src
-
-*** Custom keybindings
-
-#+begin_src emacs-lisp
-
-  (with-eval-after-load 'evil
-    (define-key evil-insert-state-map (kbd "C-S-v") 'yank)
-    (define-key evil-visual-state-map (kbd "{") 'evil-backward-paragraph)
-    (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
-    (define-key evil-insert-state-map (kbd "M-w") 'evil-forward-word-begin)
-    (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin)
-    (define-key evil-insert-state-map (kbd "M-W") 'evil-forward-WORD-begin)
-    (define-key evil-insert-state-map (kbd "M-B") 'evil-backward-WORD-begin)
-
-    (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
-    (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
-
-  (defun my-move-beginning-of-line ()
-    "Move point to the first non-whitespace character of the line and enter insert mode."
-    (interactive)
-    (evil-first-non-blank)
-    (evil-insert-state))
-
-  (defun my-move-end-of-line ()
-    "Move point to the very end of the line and enter insert mode."
-    (interactive)
-    (evil-end-of-line)
-    (evil-insert-state)
-    (unless (eolp)
-      (evil-append-line 1)))
-
-  (with-eval-after-load 'evil
-    (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
-    (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
-
-#+end_src
-
-** Theme and Font
-
-#+begin_src emacs-lisp
-
-  ;; (require 'color)
-  ;;  (hl-line-mode 1)
-
-  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
-  (load-theme 'rose-pine t)
-
-  ;; (use-package gruvbox-theme
-  ;;   :config
-  ;;   (load-theme 'gruvbox-dark-hard t))
-
-  ;; (use-package doom-themes
-  ;;   :ensure t
-  ;;   :config
-  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-  ;;   (load-theme 'doom-one t)
-  ;;   ;Corrects (and improves) org-mode's native fontifcation.
-  ;;   (doom-themes-org-config))
-
-
-  (when (member "NotoSansM Nerd Font Mono" (font-family-list))
-    (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
-
-    ;; Set a different font for italics
-    (set-face-attribute 'italic nil
-                        :family "NotoSans Nerd Font"
-                        :slant 'italic
-                        :weight 'normal
-                        :height 130)
-
-    (add-hook 'org-mode-hook
-              (lambda ()
-                (set-face-attribute 'org-verbatim nil
-                                    ;; :family "NotoSerifNerdFontPropo-CondensedExtraLight"
-                                    :family "NotoSerifNerdFont"
-                                    :height 130
-                                    ;; :foreground "#8bc34a"  ; Adjust the color as desired
-                                    :weight 'normal))))
-
-#+end_src
-
-*** Icons
-
-#+begin_src emacs-lisp
-
-  (use-package all-the-icons
-    :ensure t
-    :if (display-graphic-p))
-
-  (use-package all-the-icons-dired
-    :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
-
-#+end_src
-
-** General
-
-#+begin_src emacs-lisp
-
-  (use-package general
-    :config
-    (general-evil-setup)
-    (general-create-definer w/leader-keys
-      :states '(normal insert visual emacs)
-      :keymaps 'override
-      :prefix "SPC" ;; set leader
-      :global-prefix "M-SPC") ;; access leader in insert mode
-
-    (w/leader-keys
-
-      ;; Fuzzy finder
-      "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
-      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
-      "fd" '(projectile-find-dir :wk "Find file modified")
-      "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
-      "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
-
-      ;; Session management
-      "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
-      "sd" '(delete-desktop-session :wk "Delete selected session")
-      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
-      "sr" '(rename-desktop-session :wk "Rename a desktop session")
-
-      ;; Org
-      "ot" '(todo :wk "Opens the org todo file")
-
-      ;; Tab management
-      "tn" '(tab-bar-new-tab :wk "Create a new tab")
-      "tx" '(tab-bar-close-tab :wk "Close a tab")
-      "tr" '(tab-bar-rename-tab :wk "Rename a tab")
-
-      ;; Windows
-      "w"  'hydra-window-size/body
-      "bc" '(kill-buffer :wk "Close selecetd buffer")
-      "bx" '(kill-current-buffer :wk "Close selecetd buffer")
-
-      ;; Popper
-      "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
-
-      "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
-
-      "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
-
-      "zz" '(z :wk "Call zoxide prompt")
-
-      "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-      "dt" '(dired-create-empty-file :wk "Create an empty file")
-
-      "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
-      "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
-
-      "ee" '(eshell :wk "Eshell")
-      "en" '(eshell-new :wk "Spawn a new eshell buffer")
-
-      ;; Evaluation
-      "e" '(:ignore t :wk "Evaluate/Eshell")
-      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-      "ex" '(eval-expression :wk "Evaluate and elisp expression")
-      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-      "er" '(eval-region :wk "Evaluate elisp in region")
-
-      ;; Eshell
-      "es" '(counsel-esh-history :wk "Eshell history")
-
-      )
-    
-      (w/leader-keys
-        :keymaps 'help-mode-map
-        "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
-      
-    (dotimes (i 9)
-      (let ((n (1+ i))) ; Tab numbers start from 1
-        (general-def
-          :states '(normal emacs)
-          :keymaps 'override
-          :prefix "SPC"
-          (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
-    )
-
-#+end_src
-
-** Async
-
-#+begin_src emacs-lisp
-
-  (use-package async
-    :config
-    (autoload 'dired-async-mode "dired-async.el" nil t)
-    (dired-async-mode 1))
-
-#+end_src
-
-** Transient
-
-#+begin_src emacs-lisp
-
-(use-package transient
-  :config
-  ;; Define a simple transient for the cp command
-  (transient-define-prefix my-eshell-cp-transient ()
-    "Transient for the cp command."
-    ["cp options"
-     ("r" "Recursive" "-r")
-     ("v" "Verbose" "-v")
-     ("e" "Execute" my-eshell-execute-cp :transient nil)]))
-
-(defun my-eshell-execute-cp ()
-  "Function to construct cp command with selected options and insert it into eshell."
-  (interactive)
-  (let ((args (transient-args 'my-eshell-cp-transient)))
-    ;; Construct the cp command with selected options
-    (let ((command (concat "cp " (string-join args " "))))
-      ;; Insert the command into the eshell buffer
-      (insert command)
-      ;; Optionally, you can also execute the command immediately
-      ;; (eshell-send-input)
-      )))
-
-#+end_src
-
-** Search
-
-#+begin_src emacs-lisp
-
-  (use-package rg
-    :config
-    (rg-enable-default-bindings))
-
-#+end_src
-
-** Xterm-color
-
-#+begin_src emacs-lisp
-
-  (use-package xterm-color)
-
-  (setq comint-output-filter-functions
-        (remove 'ansi-color-process-output comint-output-filter-functions))
-
-  ;; Comint
-  (add-hook 'shell-mode-hook
-            (lambda ()
-              ;; Disable font-locking in this buffer to improve performance
-              (font-lock-mode -1)
-              ;; Prevent font-locking from being re-enabled in this buffer
-              (make-local-variable 'font-lock-function)
-              (setq font-lock-function (lambda (_) nil))
-              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
-
-  ;; Eshell
-  (require 'eshell) ; or use with-eval-after-load
-
-  (add-hook 'eshell-before-prompt-hook
-            (lambda ()
-              (setq xterm-color-preserve-properties t)))
-
-  (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
-  (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
-  (setenv "TERM" "xterm-256color")
-
-  ;; Compilation buffers
-  (setq compilation-environment '("TERM=xterm-256color"))
-
-  (defun my/advice-compilation-filter (f proc string)
-    (funcall f proc (xterm-color-filter string)))
-
-  (advice-add 'compilation-filter :around #'my/advice-compilation-filter)
-  
-#+end_src
-
-** Jinx
-
-#+begin_src emacs-lisp
-
-  ;; (use-package jinx
-  ;;   ;; :hook
-  ;;   ;; (dolist (hook '(text-mode-hook prog-mode-hook conf-mode-hook))
-  ;;   ;; (add-hook hook #'jinx-mode))
-  ;;   :bind (("M-$" . jinx-correct)
-  ;;          ("C-M-$" . jinx-languages)))
-
-#+end_src
-
-** Completion
-
-*** Snippets
-
-#+begin_src emacs-lisp
-
-  (use-package yasnippet
-    :config
-    (yas-global-mode 1)
-    ;; Add your snippets directory to `yas-snippet-dirs`
-    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
-    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
-    ;; Load the snippets
-    (yas-reload-all))
-
-#+end_src
-
-*** Orderless
-
-#+begin_src emacs-lisp
-
-  (use-package orderless
-    :init
-    ;; ;; Configure a custom style dispatcher (see the Consult wiki)
-    ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
-    ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-    (setq completion-styles '(orderless basic)
-          completion-category-defaults nil
-          completion-category-overrides '((file (styles partial-completion)))))
-
-#+end_src
-
-*** Company
-
-#+begin_src emacs-lisp
-
-  (use-package company
-    :init
-    (add-hook 'after-init-hook 'global-company-mode)
-    :config
-    (add-to-list 'company-backends 'company-files)
-    (setq company-require-match nil)
-    (setq company-minimum-prefix-length 1)
-    (setq company-idle-delay nil))
-
-  ;; (use-package company
-  ;;   :init
-  ;;   (add-hook 'after-init-hook 'global-company-mode)
-  ;;   :config
-  ;;   ;; Add company-files to the list of backends
-  ;;   (add-to-list 'company-backends 'company-files)
-  ;;   (setq company-minimum-prefix-length 1)
-  ;;   (setq company-idle-delay 0.1))
-
-(defun my/company-manual-complete ()
-  "Enable company-mode and call company-complete."
-  (interactive)
-  (unless company-mode
-    (company-mode 1))
-  (company-complete))
-
-(with-eval-after-load 'evil
-  (defun my-evil-insert-state-setup ()
-    (unless (minibufferp)
-      (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
-
-  (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
-
-#+end_src
-
-** Acess to ENV variables
-
-#+begin_src emacs-lisp
-
-    (use-package exec-path-from-shell
-      :config
-      (exec-path-from-shell-initialize)
-      (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
-      (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
-      (exec-path-from-shell-copy-env "NOTIFY_TOKEN")
-      (exec-path-from-shell-copy-env "SHELF_TOKEN")
-      (exec-path-from-shell-copy-env "SHELF_DB_USER")
-      (exec-path-from-shell-copy-env "SHELF_DB_NAME")
-      (exec-path-from-shell-copy-env "SHELF_DB_PASS")
-      (exec-path-from-shell-copy-env "SHELF_DB_PORT")
-      )
-
-#+end_src
-
-** Treesitter
-
-#+begin_src emacs-lisp
-
-  (use-package treesit-auto
-    :config
-    ;; (treesit-auto-add-to-auto-mode-alist
-    ;; '(("\\.py$" . python-ts-mode)
-    ;;   ("\\.rb$" . ruby-ts-mode)
-    ;;   ("\\.go$" . go-ts-mode)
-    ;;   ("\\.bashrc\\'" . shell-mode)
-    ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
-    (global-treesit-auto-mode))
-
-  (use-package clojure-ts-mode)
-
-  ;; (setq treesit-language-source-alist
-  ;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
-  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
-  ;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
-  ;;         (css "https://github.com/tree-sitter/tree-sitter-css")
-  ;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
-  ;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
-  ;;         (html "https://github.com/tree-sitter/tree-sitter-html")
-  ;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-  ;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-  ;;         (json "https://github.com/tree-sitter/tree-sitter-json")
-  ;;         (make "https://github.com/alemuller/tree-sitter-make")
-  ;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
-  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
-  ;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-  ;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
-  ;;                     "master" "typescript/src")
-  ;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-  ;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
-  ;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
-  ;;         (typst "https://github.com/uben0/tree-sitter-typst")
-  ;;         (java "https://github.com/tree-sitter/tree-sitter-java")
-  ;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
-  ;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
-
-  ;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-  ;; ;; (with-eval-after-load 'yaml-ts-mode
-  ;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
-
-#+end_src
-
-** Sudo Edit
-
-#+begin_src emacs-lisp
-
-  (use-package sudo-edit
-    :config
-      (w/leader-keys
-        "sf" '(sudo-edit-find-file :wk "Sudo find file")
-        "se" '(sudo-edit :wk "Sudo edit file")))
-
-#+end_src
-
-** Zoxide
-
-#+begin_src emacs-lisp
-  
-  (straight-use-package
-   '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
-    
-#+end_src
-
-** Cider
-
-#+begin_src emacs-lisp
-
-  (use-package cider
-    :config
-    (setq cider-eldoc-display-for-symbol-at-point nil)
-    (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
-
-  (setq eldoc-documentation-function (lambda () nil))
-
-#+end_src
-
-** Projectile
-
-#+begin_src emacs-lisp
-
-  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
-    "Advice to make Projectile recognize custom project roots."
-    (let ((current-dir (expand-file-name default-directory))
-          (project-root nil))
-      (while (and (not project-root) (not (string= current-dir "/")))
-        (when (file-exists-p (concat current-dir "bb.edn"))
-          (setq project-root current-dir))
-        (setq current-dir (file-name-directory (directory-file-name current-dir))))
-      (or project-root
-          (apply original-projectile-root args))))
-
-  (use-package projectile
-    :config
-    (projectile-mode 1)
-    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
-
-  (defvar my-org-project-paths
-    '("/home/wurfkreuz/.secret_dotfiles/org/"
-      "/some/other/org/path/"))
-
-  (defun my-projectile-project-root ()
-    (let ((default-directory (or (buffer-file-name) default-directory)))
-      (cl-some (lambda (path)
-                 (when (string-match-p path default-directory) path))
-               my-org-project-paths)
-      (projectile-project-root)))
-
-  (add-hook 'projectile-find-file-hook #'my-projectile-project-root)
-
-#+end_src
-
-** Wgrep
-
-#+begin_src emacs-lisp
-
-  (use-package wgrep)
-  
-#+end_src
-
-** Embark
-
-#+begin_src emacs-lisp
-
-  (use-package embark
-    :bind
-    ("C-;" . embark-act))
-
-#+end_src
-
-** Ivy/Counsel
-
-#+begin_src emacs-lisp
-
-  (use-package counsel
-    :after ivy
-    :config
-    (counsel-mode))
-  (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
-
-  ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
-
-  (use-package ivy
-    :bind
-    ;; ivy-resume resumes the last Ivy-based completion.
-    (("C-c C-r" . ivy-resume)
-     ("C-x B" . ivy-switch-buffer-other-window))
-    :custom
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-count-format "(%d/%d) ")
-    (setq enable-recursive-minibuffers t)
-    :config
-    (ivy-mode))
-
-  (use-package ivy-posframe
-    :ensure t
-    :after ivy
-    :config
-    (ivy-posframe-mode 1))
-  (setq ivy-posframe-width 50)
-  (setq ivy-posframe-display-functions-alist
-        '((counsel-esh-history . ivy-posframe-display-at-window-center)))
-
-  ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
-  (use-package all-the-icons-ivy-rich
-    :init
-    (all-the-icons-ivy-rich-mode 1))
-
-  (use-package ivy-rich
-    :after ivy
-    :ensure t
-    :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-    :custom
-    (ivy-virtual-abbreviate 'full
-                            ivy-rich-switch-buffer-align-virtual-buffer t
-                            ivy-rich-path-style 'abbrev))
-
-  (defun counsel-find-file-check-dir ()
-    "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
-    (interactive)
-    (let* ((current-dir (if (eq major-mode 'dired-mode)
-                            "."
-                          (buffer-file-name))))
-      (ivy-read "Find file: " #'read-file-name-internal
-                :matcher #'counsel--find-file-matcher
-                :action #'find-file-check-dir
-                :preselect current-dir
-                :require-match 'confirm-after-completion
-                :history 'file-name-history
-                :keymap counsel-find-file-map
-                :caller 'counsel-find-file)))
-
-  (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
-
-  (defun counsel-fzf-home ()
-    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
-    (interactive)
-    (let ((default-directory "~/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory)))
-                :caller 'my-counsel-fzf-with-fd)))
-
-  (defun counsel-fzf-root ()
-    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
-    (interactive)
-    (let ((default-directory "/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory)))
-                :caller 'my-counsel-fzf-with-fd)))
-
-  (defun insert-path-from-counsel-fzf-home ()
-    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
-    (interactive)
-    (let ((default-directory "~/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory)))
-                :caller 'insert-path-from-counsel-fzf-home)))
-
-  (defun insert-path-from-counsel-fzf-root ()
-    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
-    (interactive)
-    (let ((default-directory "/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory)))
-                :caller 'insert-path-from-counsel-fzf-home)))
-
-  (define-key ivy-minibuffer-map (kbd "C-c C-w") 'embark-export)
-  (define-key counsel-mode-map (kbd "C-c C-w") 'embark-export)
-
-#+end_src
-
-** Prescient
-
-#+begin_src emacs-lisp
-
-  ;; (use-package ivy-prescient
-  ;;   :after counsel
-  ;;   :config
-  ;;   (ivy-prescient-mode 1))
-    
-#+end_src
+ ;; (use-package undo-tree
+ ;;   :config
+ ;;   (global-undo-tree-mode))
+
+ ;; (use-package evil
+ ;;   :init
+ ;;   (setq evil-want-C-u-scroll t
+ ;;         evil-want-C-i-jump nil
+ ;;         evil-want-integration t
+ ;;         evil-want-minibuffer t
+ ;;         evil-undo-system 'undo-tree)
+ ;;   :config
+ ;;   (evil-mode 1)
+ ;;   (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+ ;;   (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+ ;;   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+
+ ;;   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+ ;;   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+ ;;   (setq evil-shift-width 2))
+
+ ;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
+ ;; (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
+ ;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
+ ;; (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
+
+
+;;  (setq evil-undo-system 'undo-tree)
+;;
+;;  (use-package evil-surround
+;;    :config
+;;    (global-evil-surround-mode 1)
+;;    ;; Add custom surround pairs
+;;    (setq-default evil-surround-pairs-alist
+;;                  (append evil-surround-pairs-alist
+;;                          '((?/ . ("/" . "/"))
+;;                            (?~ . ("~" . "~"))
+;;                            (?* . ("*" . "*"))
+;;                            (?= . ("=" . "="))
+;;                            (?+ . ("+" . "+"))))))
+;;
+ ;; (use-package evil-commentary
+ ;;   :config
+ ;;   (evil-commentary-mode))
+
+ ;; (use-package evil-org
+ ;;   :after org
+ ;;   :config
+ ;;   (require 'evil-org-agenda)
+ ;;   (evil-org-agenda-set-keys)
+ ;;   (add-hook 'org-mode-hook 'evil-org-mode)
+ ;;   (add-hook 'evil-org-mode-hook
+ ;;             (lambda ()
+ ;;               (evil-org-set-key-theme)))
+ ;;   )
+ ;; ;; :ensure nil)
+
+ ;; (use-package evil-collection
+ ;;   :after evil
+ ;;   :init ;;    (setq evil-want-keybinding nil)
+ ;;   :config
+ ;;   (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca minibuffer))
+ ;;   (evil-collection-init))
+
+;;  (add-hook 'text-mode-hook 'display-line-numbers-mode)
+;;  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;;
+;;  (defun my-evil-yank-to-end-of-line ()
+;;    "Yank text from the current point to the end of the line."
+;;    (interactive)
+;;    (evil-yank (point) (line-end-position)))
+
+;;  (with-eval-after-load 'evil
+;;    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
+;;
+;;  ;; (define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
+;;
+;;  (defun my-evil-insert-state-minibuffer-setup ()
+;;    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+;;    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+;;
+;;  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+;;
+;;  (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
+;;  (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
+;;
+;;  (use-package paredit)
+;;  
+;;  ;; (use-package symex
+;;  ;;   :config
+;;  ;;   (symex-initialize)
+;;  ;;   (global-set-key (kbd "C-;") 'symex-mode-interface))  ; or whatever keybinding you like
+;;
+;;#+end_src
+;;
+;;*** Custom keybindings
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (with-eval-after-load 'evil
+;;    (define-key evil-insert-state-map (kbd "C-S-v") 'yank)
+;;    (define-key evil-visual-state-map (kbd "{") 'evil-backward-paragraph)
+;;    (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
+;;    (define-key evil-insert-state-map (kbd "M-w") 'evil-forward-word-begin)
+;;    (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin)
+;;    (define-key evil-insert-state-map (kbd "M-W") 'evil-forward-WORD-begin)
+;;    (define-key evil-insert-state-map (kbd "M-B") 'evil-backward-WORD-begin)
+;;
+;;    (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
+;;    (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
+;;
+;;  (defun my-move-beginning-of-line ()
+;;    "Move point to the first non-whitespace character of the line and enter insert mode."
+;;    (interactive)
+;;    (evil-first-non-blank)
+;;    (evil-insert-state))
+;;
+;;  (defun my-move-end-of-line ()
+;;    "Move point to the very end of the line and enter insert mode."
+;;    (interactive)
+;;    (evil-end-of-line)
+;;    (evil-insert-state)
+;;    (unless (eolp)
+;;      (evil-append-line 1)))
+;;
+;;  (with-eval-after-load 'evil
+;;    (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
+;;    (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
+
+;;#+end_src
+;;
+;;** Theme and Font
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  ;; (require 'color)
+;;  ;;  (hl-line-mode 1)
+;;
+;;  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
+;;  (load-theme 'rose-pine t)
+;;
+;;  ;; (use-package gruvbox-theme
+;;  ;;   :config
+;;  ;;   (load-theme 'gruvbox-dark-hard t))
+;;
+;;  ;; (use-package doom-themes
+;;  ;;   :ensure t
+;;  ;;   :config
+;;  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+;;  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
+;;  ;;   (load-theme 'doom-one t)
+;;  ;;   ;Corrects (and improves) org-mode's native fontifcation.
+;;  ;;   (doom-themes-org-config))
+;;
+;;
+;;  (when (member "NotoSansM Nerd Font Mono" (font-family-list))
+;;    (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
+;;
+;;    ;; Set a different font for italics
+;;    (set-face-attribute 'italic nil
+;;                        :family "NotoSans Nerd Font"
+;;                        :slant 'italic
+;;                        :weight 'normal
+;;                        :height 130)
+;;
+;;    (add-hook 'org-mode-hook
+;;              (lambda ()
+;;                (set-face-attribute 'org-verbatim nil
+;;                                    ;; :family "NotoSerifNerdFontPropo-CondensedExtraLight"
+;;                                    :family "NotoSerifNerdFont"
+;;                                    :height 130
+;;                                    ;; :foreground "#8bc34a"  ; Adjust the color as desired
+;;                                    :weight 'normal))))
+;;
+;;#+end_src
+;;
+;;*** Icons
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package all-the-icons
+;;    :ensure t
+;;    :if (display-graphic-p))
+;;
+;;  (use-package all-the-icons-dired
+;;    :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+;;
+;;#+end_src
+;;
+;;** General
+
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package general
+;;    :config
+;;    (general-evil-setup)
+;;    (general-create-definer w/leader-keys
+;;      :states '(normal insert visual emacs)
+;;      :keymaps 'override
+;;      :prefix "SPC" ;; set leader
+;;      :global-prefix "M-SPC") ;; access leader in insert mode
+;;
+;;    (w/leader-keys
+;;
+;;      ;; Fuzzy finder
+;;      "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
+;;      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
+;;      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+;;      "fd" '(projectile-find-dir :wk "Find file modified")
+;;      "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
+;;      "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
+;;
+;;      ;; Session management
+;;      "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
+;;      "sd" '(delete-desktop-session :wk "Delete selected session")
+;;      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+;;      "sr" '(rename-desktop-session :wk "Rename a desktop session")
+;;
+;;      ;; Org
+;;      "ot" '(todo :wk "Opens the org todo file")
+;;
+;;      ;; Tab management
+;;      "tn" '(tab-bar-new-tab :wk "Create a new tab")
+;;      "tx" '(tab-bar-close-tab :wk "Close a tab")
+;;      "tr" '(tab-bar-rename-tab :wk "Rename a tab")
+;;
+;;      "w"  'hydra-window-size/body
+;;
+;;      ;; Window swapping
+;;      "bk" '(buf-move-up :wk "Swap with buffer above")
+;;      "bj" '(buf-move-down :wk "Swap with buffer below")
+;;      "bh" '(buf-move-left :wk "Swap with buffer left")
+;;      "bl" '(buf-move-right :wk "Swap with buffer right")
+;;
+;;      "bc" '(kill-buffer :wk "Close selecetd buffer")
+;;      "bx" '(kill-current-buffer :wk "Close selecetd buffer")
+;;
+;;      ;; Popper
+;;      "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
+;;
+;;      ;; "mm" '(popper-message :wk "Open the *Messages buffer")
+;;
+;;      "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
+;;
+;;      ;; "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
+;;
+;;      "cc" '(RunCmdShellCommand :wk "Run CMD command")
+;;      "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
+;;
+;;      ;; "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
+;;
+;;      "zz" '(z :wk "Call zoxide prompt")
+;;
+;;      "vv" '(OpenVtermBelow :wk "Toggle vterm")
+;;
+;;      "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
+;;      "de" '(wdired-change-to-wdired-mode :wk "Switch to wdired mode")
+;;
+;;      "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
+;;      ;; "lk" '(lsp-describe-thing-at-point :wk "Open a hover window")
+;;      "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
+;;      ;; "ld" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
+;;      ;; "lk" '(lsp-bridge-popup-documentation :wk "Open a hover window")
+;;
+;;      "ee" '(eshell :wk "Eshell")
+;;      "en" '(eshell-new :wk "Spawn a new eshell buffer")
+;;
+;;      ;; Evaluation
+;;      "e" '(:ignore t :wk "Evaluate/Eshell")
+;;      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+;;      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+;;      "ex" '(eval-expression :wk "Evaluate and elisp expression")
+;;      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+;;      "er" '(eval-region :wk "Evaluate elisp in region")
+;;
+;;      ;; Eshell
+;;      "es" '(counsel-esh-history :wk "Eshell history")
+;;      ;; "ef" '(vertico-buffers/eshell :wk "test")
+;;
+;;      )
+;;    
+;;      (w/leader-keys
+;;        :keymaps 'help-mode-map
+;;        "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
+;;      
+;;    (dotimes (i 9)
+;;      (let ((n (1+ i))) ; Tab numbers start from 1
+;;        (general-def
+;;          :states '(normal emacs)
+;;          :keymaps 'override
+;;          :prefix "SPC"
+;;          (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
+;;    )
+;;
+;;#+end_src
+
+;;** Async
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package async
+;;    :config
+;;    (autoload 'dired-async-mode "dired-async.el" nil t)
+;;    (dired-async-mode 1))
+;;
+;;#+end_src
+;;
+;;** Transient
+;;
+;;#+begin_src emacs-lisp
+;;
+;;(use-package transient
+;;  :config
+;;  ;; Define a simple transient for the cp command
+;;  (transient-define-prefix my-eshell-cp-transient ()
+;;    "Transient for the cp command."
+;;    ["cp options"
+;;     ("r" "Recursive" "-r")
+;;     ("v" "Verbose" "-v")
+;;     ("e" "Execute" my-eshell-execute-cp :transient nil)]))
+;;
+;;(defun my-eshell-execute-cp ()
+;;  "Function to construct cp command with selected options and insert it into eshell."
+;;  (interactive)
+;;  (let ((args (transient-args 'my-eshell-cp-transient)))
+;;    ;; Construct the cp command with selected options
+;;    (let ((command (concat "cp " (string-join args " "))))
+;;      ;; Insert the command into the eshell buffer
+;;      (insert command)
+;;      ;; Optionally, you can also execute the command immediately
+;;      ;; (eshell-send-input)
+;;      )))
+;;
+;;#+end_src
+;;
+;;** Search
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package rg
+;;    :config
+;;    (rg-enable-default-bindings))
+;;
+;;#+end_src
+;;
+;;** Xterm-color
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package xterm-color)
+;;
+;;  (setq comint-output-filter-functions
+;;        (remove 'ansi-color-process-output comint-output-filter-functions))
+;;
+;;  ;; Comint
+;;  (add-hook 'shell-mode-hook
+;;            (lambda ()
+;;              ;; Disable font-locking in this buffer to improve performance
+;;              (font-lock-mode -1)
+;;              ;; Prevent font-locking from being re-enabled in this buffer
+;;              (make-local-variable 'font-lock-function)
+;;              (setq font-lock-function (lambda (_) nil))
+;;              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+;;
+;;  ;; Eshell
+;;  (require 'eshell) ; or use with-eval-after-load
+;;
+;;  (add-hook 'eshell-before-prompt-hook
+;;            (lambda ()
+;;              (setq xterm-color-preserve-properties t)))
+;;
+;;  (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
+;;  (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
+;;  (setenv "TERM" "xterm-256color")
+;;
+;;  ;; Compilation buffers
+;;  (setq compilation-environment '("TERM=xterm-256color"))
+;;
+;;  (defun my/advice-compilation-filter (f proc string)
+;;    (funcall f proc (xterm-color-filter string)))
+;;
+;;  (advice-add 'compilation-filter :around #'my/advice-compilation-filter)
+;;  
+;;#+end_src
+;;
+;;** Jinx
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package jinx
+;;    ;; :hook
+;;    ;; (dolist (hook '(text-mode-hook prog-mode-hook conf-mode-hook))
+;;    ;; (add-hook hook #'jinx-mode))
+;;    :bind (("M-$" . jinx-correct)
+;;           ("C-M-$" . jinx-languages)))
+;;
+;;#+end_src
+;;
+;;** Completion
+;;
+;;*** Snippets
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package yasnippet
+;;    :config
+;;    (yas-global-mode 1)
+;;    ;; Add your snippets directory to `yas-snippet-dirs`
+;;    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+;;    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+;;    ;; Load the snippets
+;;    (yas-reload-all))
+;;
+;;#+end_src
+;;
+;;*** Orderless
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package orderless
+;;    :init
+;;    ;; ;; Configure a custom style dispatcher (see the Consult wiki)
+;;    ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
+;;    ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+;;    (setq completion-styles '(orderless basic)
+;;          completion-category-defaults nil
+;;          completion-category-overrides '((file (styles partial-completion)))))
+;;
+;;#+end_src
+;;
+;;*** Company
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package company
+;;    :init
+;;    (add-hook 'after-init-hook 'global-company-mode)
+;;    :config
+;;    (add-to-list 'company-backends 'company-files)
+;;    (setq company-require-match nil)
+;;    (setq company-minimum-prefix-length 1)
+;;    (setq company-idle-delay nil))
+;;
+;;  ;; (use-package company
+;;  ;;   :init
+;;  ;;   (add-hook 'after-init-hook 'global-company-mode)
+;;  ;;   :config
+;;  ;;   ;; Add company-files to the list of backends
+;;  ;;   (add-to-list 'company-backends 'company-files)
+;;  ;;   (setq company-minimum-prefix-length 1)
+;;  ;;   (setq company-idle-delay 0.1))
+;;
+;;(defun my/company-manual-complete ()
+;;  "Enable company-mode and call company-complete."
+;;  (interactive)
+;;  (unless company-mode
+;;    (company-mode 1))
+;;  (company-complete))
+;;
+;;;;(with-eval-after-load 'evil
+;;;;  (defun my-evil-insert-state-setup ()
+;;;;    (unless (minibufferp)
+;;;;      (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
+;;;;
+;;;;  (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
+;;
+;;#+end_src
+;;
+;;** Acess to ENV variables
+;;
+;;#+begin_src emacs-lisp
+;;
+;;    (use-package exec-path-from-shell
+;;      :config
+;;      (exec-path-from-shell-initialize)
+;;      (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
+;;      (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+;;      (exec-path-from-shell-copy-env "NOTIFY_TOKEN")
+;;      (exec-path-from-shell-copy-env "SHELF_TOKEN")
+;;      (exec-path-from-shell-copy-env "SHELF_DB_USER")
+;;      (exec-path-from-shell-copy-env "SHELF_DB_NAME")
+;;      (exec-path-from-shell-copy-env "SHELF_DB_PASS")
+;;      (exec-path-from-shell-copy-env "SHELF_DB_PORT")
+;;      )
+;;
+;;#+end_src
+;;
+;;** Treesitter
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package treesit-auto
+;;    :config
+;;    ;; (treesit-auto-add-to-auto-mode-alist
+;;    ;; '(("\\.py$" . python-ts-mode)
+;;    ;;   ("\\.rb$" . ruby-ts-mode)
+;;    ;;   ("\\.go$" . go-ts-mode)
+;;    ;;   ("\\.bashrc\\'" . shell-mode)
+;;    ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
+;;    (global-treesit-auto-mode))
+;;
+;;  (use-package clojure-ts-mode)
+;;
+;;  ;; (setq treesit-language-source-alist
+;;  ;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
+;;  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
+;;  ;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
+;;  ;;         (css "https://github.com/tree-sitter/tree-sitter-css")
+;;  ;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+;;  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
+;;  ;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+;;  ;;         (html "https://github.com/tree-sitter/tree-sitter-html")
+;;  ;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+;;  ;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+;;  ;;         (json "https://github.com/tree-sitter/tree-sitter-json")
+;;  ;;         (make "https://github.com/alemuller/tree-sitter-make")
+;;  ;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+;;  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
+;;  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
+;;  ;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+;;  ;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
+;;  ;;                     "master" "typescript/src")
+;;  ;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+;;  ;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
+;;  ;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
+;;  ;;         (typst "https://github.com/uben0/tree-sitter-typst")
+;;  ;;         (java "https://github.com/tree-sitter/tree-sitter-java")
+;;  ;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
+;;  ;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
+;;
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
+;;  ;; ;; (with-eval-after-load 'yaml-ts-mode
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+;;  ;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+;;
+;;#+end_src
+;;
+;;** Sudo Edit
+;;
+;;;;#+begin_src emacs-lisp
+;;;;
+;;;;  (use-package sudo-edit
+;;;;    :config
+;;;;      (w/leader-keys
+;;;;        "sf" '(sudo-edit-find-file :wk "Sudo find file")
+;;;;        "se" '(sudo-edit :wk "Sudo edit file")))
+;;;;
+;;;;#+end_src
+;;
+;;** Zoxide
+;;
+;;#+begin_src emacs-lisp
+;;  
+;;  (straight-use-package
+;;   '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
+;;    
+;;#+end_src
+;;
+;;** Cider
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package cider
+;;    :config
+;;    (setq cider-eldoc-display-for-symbol-at-point nil)
+;;    (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
+;;
+;;#+end_src
+;;
+;;** Projectile
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
+;;    "Advice to make Projectile recognize custom project roots."
+;;    (let ((current-dir (expand-file-name default-directory))
+;;          (project-root nil))
+;;      (while (and (not project-root) (not (string= current-dir "/")))
+;;        (when (file-exists-p (concat current-dir "bb.edn"))
+;;          (setq project-root current-dir))
+;;        (setq current-dir (file-name-directory (directory-file-name current-dir))))
+;;      (or project-root
+;;          (apply original-projectile-root args))))
+;;
+;;  (use-package projectile
+;;    :config
+;;    (projectile-mode 1)
+;;    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
+;;
+;;  (defvar my-org-project-paths
+;;    '("/home/wurfkreuz/.secret_dotfiles/org/"
+;;      "/some/other/org/path/"))
+;;
+;;  (defun my-projectile-project-root ()
+;;    (let ((default-directory (or (buffer-file-name) default-directory)))
+;;      (cl-some (lambda (path)
+;;                 (when (string-match-p path default-directory) path))
+;;               my-org-project-paths)
+;;      (projectile-project-root)))
+;;
+;;  (add-hook 'projectile-find-file-hook #'my-projectile-project-root)
+;;
+;;#+end_src
+;;
+;;** Wgrep
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package wgrep)
+;;  
+;;#+end_src
+;;
+;;** Embark
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package embark
+;;    :bind
+;;    ("C-;" . embark-act))
+;;
+;;#+end_src
+;;
+;;** Ivy/Counsel
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package counsel
+;;    :after ivy
+;;    :config
+;;    (counsel-mode))
+;;  (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
+;;
+;;  ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
+;;
+;;  (use-package ivy
+;;    :bind
+;;    ;; ivy-resume resumes the last Ivy-based completion.
+;;    (("C-c C-r" . ivy-resume)
+;;     ("C-x B" . ivy-switch-buffer-other-window))
+;;    :custom
+;;    (setq ivy-use-virtual-buffers t)
+;;    (setq ivy-count-format "(%d/%d) ")
+;;    (setq enable-recursive-minibuffers t)
+;;    :config
+;;    (ivy-mode))
+;;
+;;  (use-package ivy-posframe
+;;    :ensure t
+;;    :after ivy
+;;    :config
+;;    (ivy-posframe-mode 1))
+;;  (setq ivy-posframe-width 50)
+;;  (setq ivy-posframe-display-functions-alist
+;;        '((counsel-esh-history . ivy-posframe-display-at-window-center)))
+;;
+;;  ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
+;;  (use-package all-the-icons-ivy-rich
+;;    :init
+;;    (all-the-icons-ivy-rich-mode 1))
+;;
+;;  (use-package ivy-rich
+;;    :after ivy
+;;    :ensure t
+;;    :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
+;;    :custom
+;;    (ivy-virtual-abbreviate 'full
+;;                            ivy-rich-switch-buffer-align-virtual-buffer t
+;;                            ivy-rich-path-style 'abbrev))
+;;
+;;  (defun counsel-find-file-check-dir ()
+;;    "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
+;;    (interactive)
+;;    (let* ((current-dir (if (eq major-mode 'dired-mode)
+;;                            "."
+;;                          (buffer-file-name))))
+;;      (ivy-read "Find file: " #'read-file-name-internal
+;;                :matcher #'counsel--find-file-matcher
+;;                :action #'find-file-check-dir
+;;                :preselect current-dir
+;;                :require-match 'confirm-after-completion
+;;                :history 'file-name-history
+;;                :keymap counsel-find-file-map
+;;                :caller 'counsel-find-file)))
+;;
+;;  (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
+;;
+;;  (defun counsel-fzf-home ()
+;;    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+;;    (interactive)
+;;    (let ((default-directory "~/")
+;;          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+;;      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+;;                :action (lambda (f)
+;;                          (find-file (expand-file-name f default-directory)))
+;;                :caller 'my-counsel-fzf-with-fd)))
+;;
+;;  (defun counsel-fzf-root ()
+;;    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+;;    (interactive)
+;;    (let ((default-directory "/")
+;;          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+;;      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+;;                :action (lambda (f)
+;;                          (find-file (expand-file-name f default-directory)))
+;;                :caller 'my-counsel-fzf-with-fd)))
+;;
+;;  (defun insert-path-from-counsel-fzf-home ()
+;;    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+;;    (interactive)
+;;    (let ((default-directory "~/")
+;;          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+;;      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+;;                :action (lambda (f)
+;;                          (insert (expand-file-name f default-directory)))
+;;                :caller 'insert-path-from-counsel-fzf-home)))
+;;
+;;  (defun insert-path-from-counsel-fzf-root ()
+;;    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+;;    (interactive)
+;;    (let ((default-directory "/")
+;;          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+;;      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+;;                :action (lambda (f)
+;;                          (insert (expand-file-name f default-directory)))
+;;                :caller 'insert-path-from-counsel-fzf-home)))
+;;
+;;  (define-key ivy-minibuffer-map (kbd "C-c C-w") 'embark-export)
+;;  (define-key counsel-mode-map (kbd "C-c C-w") 'embark-export)
+;;
+;;#+end_src
+;;
+;;** Prescient
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  ;; (use-package ivy-prescient
+;;  ;;   :after counsel
+;;  ;;   :config
+;;  ;;   (ivy-prescient-mode 1))
+;;    
+;;#+end_src
 ** Fzf
 
-#+begin_src emacs-lisp
-
-  (use-package fzf)
-
-  (defun fzf-from-home-with-fd ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-        and exclude certain directories but with an ability to interactively change
-        the searching directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    (let ((default-directory "~/"))
-      (fzf-directory)))
-
-  (defun fzf-from-root-with-fd ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-        and exclude certain directories but with an ability to interactively change
-        the searching directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (let ((default-directory "/"))
-      (fzf-directory)))
-
-  (defun fzf-notes ()
-    "Start fzf in the notes directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    (let ((default-directory "~/.secret_dotfiles/org"))
-      (fzf-directory)))
-
-  ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-
-  (defun fzf-from-root-no-prompt ()
-    "Starts fzf from the user's root directory using fd to include hidden files
-    and exclude certain directories without prompting for a directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (fzf))
-  
-  (defun fzf-from-home-no-prompt ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-      and exclude certain directories without prompting for a directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
-    (fzf))
-
-  (defun fzf-from-current-with-fd ()
-    "Starts fzf from the current directory using fd to include hidden files
-     and exclude certain directories. Works both locally and on remote servers."
-    (interactive)
-    ;; Set the FZF_DEFAULT_COMMAND environment variable
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    ;; Check if the current directory is a TRAMP directory
-    (let ((tramp-address (file-remote-p default-directory)))
-      (if tramp-address
-          ;; If we're in a TRAMP directory, use the extracted address
-          (fzf-directory tramp-address)
-        ;; If not in a TRAMP directory, use the local home directory
-        (fzf-directory "~/"))))
-
-  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
-
-#+end_src
-
-** Hydra
-
-#+begin_src emacs-lisp
-
-  (defun my-enlarge-window-horizontally ()
-    "Enlarge the current window horizontally in a more intuitive way."
-    (interactive)
-    (if (window-at-side-p (selected-window) 'right)
-        (shrink-window-horizontally 5)
-      (enlarge-window-horizontally 5)))
-
-  (defun my-shrink-window-horizontally ()
-    "Shrink the current window horizontally in a more intuitive way."
-    (interactive)
-    (if (window-at-side-p (selected-window) 'right)
-        (enlarge-window-horizontally 5)
-      (shrink-window-horizontally 5)))
-
-  (use-package hydra
-    :config
-    (defhydra hydra-window-size (:color red)
-      "window size"
-      ("h" my-shrink-window-horizontally "shrink horizontally")
-      ("l" my-enlarge-window-horizontally "enlarge horizontally")
-      ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
-      ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
-      ("t" transpose-frame "transpose windows")
-      ("q" nil "quit")))
-
-#+end_src
-
-* Dired
-
-#+begin_src emacs-lisp
-
-  ;; (add-hook 'dired-mode-hook
-  ;;         (lambda ()
-  ;;           (wdired-change-to-wdired-mode)))
-
-  (setq delete-by-moving-to-trash t
-        trash-directory "~/.local/share/trash")
-
-  (setq wdired-allow-to-create-files t)
-  (setq wdired-allow-to-change-permissions t)
-
-  (setq evil-move-cursor-back nil)
-  (add-hook 'wdired-mode-hook #'evil-normal-state)
-
-#+end_src
+;;#+begin_src emacs-lisp
+;;
+;;  (use-package fzf)
+;;
+;;  (defun fzf-from-home-with-fd ()
+;;    "Starts fzf from the user's home directory using fd to include hidden files
+;;        and exclude certain directories but with an ability to interactively change
+;;        the searching directory."
+;;    (interactive)
+;;    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+;;    (let ((default-directory "~/"))
+;;      (fzf-directory)))
+;;
+;;  (defun fzf-from-root-with-fd ()
+;;    "Starts fzf from the user's home directory using fd to include hidden files
+;;        and exclude certain directories but with an ability to interactively change
+;;        the searching directory."
+;;    (interactive)
+;;    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+;;    (let ((default-directory "/"))
+;;      (fzf-directory)))
+;;
+;;  (defun fzf-notes ()
+;;    "Start fzf in the notes directory."
+;;    (interactive)
+;;    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+;;    (let ((default-directory "~/.secret_dotfiles/org"))
+;;      (fzf-directory)))
+;;
+;;  ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+;;
+;;  (defun fzf-from-root-no-prompt ()
+;;    "Starts fzf from the user's root directory using fd to include hidden files
+;;    and exclude certain directories without prompting for a directory."
+;;    (interactive)
+;;    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+;;    (fzf))
+;;  
+;;  (defun fzf-from-home-no-prompt ()
+;;    "Starts fzf from the user's home directory using fd to include hidden files
+;;      and exclude certain directories without prompting for a directory."
+;;    (interactive)
+;;    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
+;;    (fzf))
+;;
+;;  (defun fzf-from-current-with-fd ()
+;;    "Starts fzf from the current directory using fd to include hidden files
+;;     and exclude certain directories. Works both locally and on remote servers."
+;;    (interactive)
+;;    ;; Set the FZF_DEFAULT_COMMAND environment variable
+;;    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+;;    ;; Check if the current directory is a TRAMP directory
+;;    (let ((tramp-address (file-remote-p default-directory)))
+;;      (if tramp-address
+;;          ;; If we're in a TRAMP directory, use the extracted address
+;;          (fzf-directory tramp-address)
+;;        ;; If not in a TRAMP directory, use the local home directory
+;;        (fzf-directory "~/"))))
+;;
+;;  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
+;;
+;;#+end_src
+;;
+;;** Hydra
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (defun my-enlarge-window-horizontally ()
+;;    "Enlarge the current window horizontally in a more intuitive way."
+;;    (interactive)
+;;    (if (window-at-side-p (selected-window) 'right)
+;;        (shrink-window-horizontally 5)
+;;      (enlarge-window-horizontally 5)))
+;;
+;;  (defun my-shrink-window-horizontally ()
+;;    "Shrink the current window horizontally in a more intuitive way."
+;;    (interactive)
+;;    (if (window-at-side-p (selected-window) 'right)
+;;        (enlarge-window-horizontally 5)
+;;      (shrink-window-horizontally 5)))
+;;
+;;  (use-package hydra
+;;    :config
+;;    (defhydra hydra-window-size (:color red)
+;;      "window size"
+;;      ("h" my-shrink-window-horizontally "shrink horizontally")
+;;      ("l" my-enlarge-window-horizontally "enlarge horizontally")
+;;      ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
+;;      ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
+;;      ("t" transpose-frame "transpose windows")
+;;      ("q" nil "quit")))
+;;
+;;#+end_src
+;;
+;;* Dired
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  ;; (add-hook 'dired-mode-hook
+;;  ;;         (lambda ()
+;;  ;;           (wdired-change-to-wdired-mode)))
+;;
+;;  (setq delete-by-moving-to-trash t
+;;        trash-directory "~/.local/share/trash")
+;;
+;;  (setq wdired-allow-to-create-files t)
+;;  (setq wdired-allow-to-change-permissions t)
+;;
+;;  ;;(setq evil-move-cursor-back nil)
+;;  ;;(add-hook 'wdired-mode-hook #'evil-normal-state)
+;;
+;;#+end_src
 
 
 ** Dired keybindings
@@ -1140,37 +1163,37 @@
   ;;   (kbd "+") 'dired-create-directory))
 
 #+end_src
-
-* Tramp
-
-#+begin_src emacs-lisp
-
-  (require 'tramp)
-
-  (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
-  (add-to-list 'tramp-connection-properties
-               (list (regexp-quote "/ssh:")
-                     "direct-async-process" t))
-
-  ;; cache file-name forever
-  (setq remote-file-name-inhibit-cache nil)
-
-  ;; make sure vc stuff is not making tramp slower
-  (setq vc-ignore-dir-regexp
-        (format "%s\\|%s"
-                vc-ignore-dir-regexp
-                tramp-file-name-regexp))
-
-  ;; not sure why we have this? just cargo-culting from an answer I saw
-  ;; online.
-  (setq tramp-verbose 1)
-
-  ;; projectile has the fun side-effect of wanting to calculate the
-  ;; project name, which makes tramp oh-so-much-slower.
-  (setq projectile-mode-line "Projectile")
-
-#+end_src
-
+;;
+;;* Tramp
+;;
+;;#+begin_src emacs-lisp
+;;
+;;  (require 'tramp)
+;;
+;;  (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
+;;  (add-to-list 'tramp-connection-properties
+;;               (list (regexp-quote "/ssh:")
+;;                     "direct-async-process" t))
+;;
+;;  ;; cache file-name forever
+;;  (setq remote-file-name-inhibit-cache nil)
+;;
+;;  ;; make sure vc stuff is not making tramp slower
+;;  (setq vc-ignore-dir-regexp
+;;        (format "%s\\|%s"
+;;                vc-ignore-dir-regexp
+;;                tramp-file-name-regexp))
+;;
+;;  ;; not sure why we have this? just cargo-culting from an answer I saw
+;;  ;; online.
+;;  (setq tramp-verbose 1)
+;;
+;;  ;; projectile has the fun side-effect of wanting to calculate the
+;;  ;; project name, which makes tramp oh-so-much-slower.
+;;  (setq projectile-mode-line "Projectile")
+;;
+;;#+end_src
+;;
 * Shells and Terminals
 ** Eshell
 
@@ -1184,7 +1207,7 @@
       (eshell-syntax-highlighting-global-mode +1))
 
     (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-    ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
+    (add-hook 'eshell-mode-hook 'eshell-toggle-direct-send)
 
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
@@ -1196,7 +1219,7 @@
           eshell-scroll-to-bottom-on-input t
           eshell-destroy-buffer-when-process-dies t
           eshell-banner-message ""
-          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru"))
+          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg"))
 
     (add-hook 'eshell-mode-hook
               (lambda ()
@@ -1233,9 +1256,9 @@
 
     (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
-    (with-eval-after-load 'evil
-      (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-      (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+   ;; (with-eval-after-load 'evil
+   ;;   (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+   ;;   (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
     (defun eshell/edit (filename)
       "Open FILENAME in the current buffer, using the current TRAMP address."
@@ -1351,13 +1374,13 @@
 
 #+begin_src emacs-lisp
 
-  (use-package evil-terminal-cursor-changer
-    :config
-    (unless (display-graphic-p)
-      (require 'evil-terminal-cursor-changer)
-      (evil-terminal-cursor-changer-activate) ; or (etcc-on)
-      )
-    )
+ ;; (use-package evil-terminal-cursor-changer
+ ;;   :config
+ ;;   (unless (display-graphic-p)
+ ;;     (require 'evil-terminal-cursor-changer)
+ ;;     (evil-terminal-cursor-changer-activate) ; or (etcc-on)
+ ;;     )
+ ;;   )
 
 #+end_src
 
@@ -1529,6 +1552,90 @@
   #+end_src
 
 * Buffers
+** Windmove
+
+#+begin_src emacs-lisp
+
+  (require 'windmove)
+
+   ;;;###autoload
+  (defun buf-move-up ()
+    "Swap the current buffer and the buffer above the split.
+   If there is no split, ie now window above the current one, an
+   error is signaled."
+    ;;  "Switches between the current buffer, and the buffer above the
+    ;;  split, if possible."
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'up))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (null other-win)
+          (error "No window above this one")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
+
+   ;;;###autoload
+  (defun buf-move-down ()
+    "Swap the current buffer and the buffer under the split.
+   If there is no split, ie now window under the current one, an
+   error is signaled."
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'down))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (or (null other-win)
+              (string-match "^ \\*Minibuf" (buffer-name (window-buffer other-win))))
+          (error "No window under this one")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
+
+   ;;;###autoload
+  (defun buf-move-left ()
+    "Swap the current buffer and the buffer on the left of the split.
+   If there is no split, ie now window on the left of the current
+   one, an error is signaled."
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'left))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (null other-win)
+          (error "No left split")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
+
+   ;;;###autoload
+  (defun buf-move-right ()
+    "Swap the current buffer and the buffer on the right of the split.
+   If there is no split, ie now window on the right of the current
+   one, an error is signaled."
+    (interactive)
+    (let* ((other-win (windmove-find-other-window 'right))
+           (buf-this-buf (window-buffer (selected-window))))
+      (if (null other-win)
+          (error "No right split")
+        ;; swap top with this one
+        (set-window-buffer (selected-window) (window-buffer other-win))
+        ;; move this one to top
+        (set-window-buffer other-win buf-this-buf)
+        (select-window other-win))))
+
+#+end_src
+
+** Messages buffer
+
+#+begin_src emacs-lisp
+
+  (defun open-messages-buffer-in-split ()
+    (interactive)
+    (switch-to-buffer "*Messages*"))
+
+#+end_src
 
 ** Dired buffer
 
@@ -1547,6 +1654,18 @@
     (interactive)
     (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
       (dired current-dir)))
+
+#+end_src
+
+** Cmd shell buffer
+
+#+begin_src emacs-lisp
+
+  (defun RunCmdShellCommand ()
+    "Prompt for and run a CMD shell command."
+    (interactive)
+    (let ((cmd (read-shell-command "Run CMD command: ")))
+      (shell-command cmd)))
 
 #+end_src
 
@@ -1734,9 +1853,9 @@
             (rename-buffer eshell-buffer-name)
             (eshell/cd buffer-dir))))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
-  ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
+;;  (with-eval-after-load 'evil
+;;    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+;;  ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
   (defun SpawnEshellInProjectRoot ()
     "Open eshell in the project's root directory or toggle it if already open."
@@ -1773,8 +1892,8 @@
             (rename-buffer eshell-buffer-name)
             (eshell/cd dir))))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
+ ;; (with-eval-after-load 'evil
+ ;;   (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
 
   (defun kill-all-eshell-buffers ()
     "Kill all Eshell buffers."
@@ -1801,85 +1920,90 @@
 
 #+end_src
 
+** Shackle
+
+#+begin_src emacs-lisp
+
+
+;;  (use-package shackle)
+  ;;   :config
+  ;;   (setq shackle-rules
+  ;;       '(("*Async Shell Command*" :size 0.3 :align below :select nil :popup t)))
+  ;; (shackle-mode 1))
+
+#+end_src
+
 ** Popper
 
 #+begin_src emacs-lisp
 
-  (defun my/show-popper-echo-line ()
-    "Briefly toggle popper to show the echo line."
-    (interactive)
-    ;; Ensure popper-mode and popper-echo-mode are active
-    (when (and popper-mode popper-echo-mode)
-      ;; Toggle a popper window and immediately toggle it back
-      (popper-toggle-latest)
-      (popper-toggle-latest)))
+(defun my/show-popper-echo-line ()
+  "Briefly toggle popper to show the echo line."
+  (interactive)
+  ;; Ensure popper-mode and popper-echo-mode are active
+  (when (and popper-mode popper-echo-mode)
+    ;; Toggle a popper window and immediately toggle it back
+    (popper-toggle-latest)
+    (popper-toggle-latest)))
 
-  (use-package popper
-    :bind (("M-`" . my/show-popper-echo-line))
-           ;; ("M-f"   . popper-toggle))
-           ;; ("M-~"   . popper-cycle))
-    :init
-    (setq popper-window-height 0.33)
-    (setq popper-reference-buffers
-          '("\\*Messages\\*"
-            "Output\\*$"
-            "\\*Async Shell Command\\*"
-            "*Flymake diagnostics.*"
-            "*Flycheck errors.*"
-            "\\*compilation\\*"
-            "\\*eshell\\*.*"
-            "\\*cider-repl.*"
-            "\\*cider-doc.*"
-            ;; "\\*eshell:.*"
-            ;; "\\*Warnings\\*"
-            ;; "\\*xref\\*"
-            ;; "\\*Backtrace\\*"
-            "\\*eldoc\\*"
-            ;; "\\*Ement Notifications\\*"
-            ;; "Output\\*$"
-            ;; "\\*Dtache Shell Command\\*"
-            ;; "\\*mu4e-update\\*"
-            help-mode
-            compilation-mode))
-    (popper-mode +1)
-    (popper-echo-mode +1))
+(use-package popper
+  :bind (("M-`" . my/show-popper-echo-line))
+         ;; ("M-f"   . popper-toggle))
+         ;; ("M-~"   . popper-cycle))
+  :init
+  (setq popper-window-height 0.33)
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          "*Flymake diagnostics.*"
+          "*Flycheck errors.*"
+          "\\*compilation\\*"
+          "\\*eshell\\*.*"
+          "\\*cider-repl.*"
+          "\\*cider-doc.*"
+          ;; "\\*eshell:.*"
+          ;; "\\*Warnings\\*"
+          ;; "\\*xref\\*"
+          ;; "\\*Backtrace\\*"
+          "\\*eldoc\\*"
+          ;; "\\*Ement Notifications\\*"
+          ;; "Output\\*$"
+          ;; "\\*Dtache Shell Command\\*"
+          ;; "\\*mu4e-update\\*"
+          help-mode
+          compilation-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))
 
-  (defun m-f-toggle-or-forward-word ()
-    "Toggle popper or move forward a word depending on context."
-    (interactive)
-    (if (window-minibuffer-p)
-        (forward-word)
-      (popper-toggle)))
+(defun m-f-toggle-or-forward-word ()
+  "Toggle popper or move forward a word depending on context."
+  (interactive)
+  (if (window-minibuffer-p)
+      (forward-word)
+    (popper-toggle)))
 
-  (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+(global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
 
-  (defun popper-flymake-diagnostics ()
-    "Popper window specifically for Flymake diagnostics buffer."
-    (interactive)
-    (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-        (popper-toggle)
-      (flymake-show-buffer-diagnostics)))
+(defun popper-diagnostics ()
+  "Popper window specifically for Flymake diagnostics buffer."
+  (interactive)
+  (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+      (popper-toggle)
+    (flymake-show-buffer-diagnostics)))
 
-  (defun popper-flycheck-errors ()
-    "Popper window specifically for Flycheck errors buffer."
-    (interactive)
-    (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-        (popper-toggle-type 'toggle)
-      (flycheck-list-errors)))
+;; (defun fix-cycle ()
+;;   (interactive)
+;;   (popper-cycle 1))
 
-  ;; (defun fix-cycle ()
-  ;;   (interactive)
-  ;;   (popper-cycle 1))
+;; (defun fix-cycle-backwards ()
+;;   (interactive)
+;;   (popper-cycle-backwards -1))
 
-  ;; (defun fix-cycle-backwards ()
-  ;;   (interactive)
-  ;;   (popper-cycle-backwards -1))
-
-  (with-eval-after-load 'evil
-    ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-    ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-diagnostics)
-    (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-diagnostics))
+;;(with-eval-after-load 'evil
+;;  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+;;  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+;;  (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics))
 
 #+end_src
 
@@ -1888,6 +2012,24 @@
 ** Flymake
 
 #+begin_src emacs-lisp
+
+  ;; (defun my/flymake-yamllint-init ()
+  ;;   (let* ((temp-file (flymake-proc-create-temp-inplace (buffer-file-name) "yamllint"))
+  ;;          (local-file (file-relative-name temp-file (file-name-directory buffer-file-name))))
+  ;;     (list "yamllint" (list "-f" "parsable" local-file))))
+
+  ;; (defun my/flymake-yamllint-setup ()
+  ;;   (add-hook 'yaml-ts-mode-hook
+  ;;             (lambda ()
+  ;;               (add-to-list 'flymake-proc-allowed-file-name-masks
+  ;;                            '("\\.ya?ml\\'" my/flymake-yamllint-init))
+  ;;               (flymake-mode 1))))
+
+  ;; (my/flymake-yamllint-setup)
+
+  ;; (use-package flymake-yamllint
+  ;;   :config
+  ;;   (add-hook 'yaml-ts-mode-hook 'flymake-yamllint-setup))
 
 #+end_src
 
@@ -1968,14 +2110,6 @@
 
   (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
 
-  (use-package flycheck-clj-kondo)
-
-  (with-eval-after-load 'flycheck
-    (flycheck-add-mode 'clj-kondo-clj 'clojure-ts-mode)
-    (flycheck-add-mode 'clj-kondo-cljs 'clojure-ts-mode)
-    (flycheck-add-mode 'clj-kondo-cljc 'clojure-ts-mode)
-    (flycheck-add-mode 'clj-kondo-edn 'clojure-ts-mode))
-  
   ;; (use-package flycheck-raku)
 
   ;; (use-package flymake-flycheck
@@ -1991,12 +2125,16 @@
 
 #+begin_src emacs-lisp
 
+  ;; (use-package flymake
+  ;; :init
+  ;; (flymake-mode))
+  ;; :hook (go-mode . flymake-mode)
+
   (use-package lsp-mode
     :commands lsp
     :hook ((go-ts-mode . lsp)
            (clojure-ts-mode . lsp))
     :init
-    (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
     (setq lsp-lens-enable nil)
     :config
     ;; Register Go LSP client
@@ -2326,18 +2464,18 @@
         (goto-char start)
         (insert formatted-text))))
 
-  (defun my/evil-org-open-below (count)
-    "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
-    (interactive "p")
-    (if (org-in-item-p)
-        (progn
-          (end-of-line)
-          (org-insert-item))
-      (evil-open-below count)))
+ ;; (defun my/evil-org-open-below (count)
+ ;;   "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
+ ;;   (interactive "p")
+ ;;   (if (org-in-item-p)
+ ;;       (progn
+ ;;         (end-of-line)
+ ;;         (org-insert-item))
+ ;;     (evil-open-below count)))
 
-  (with-eval-after-load 'evil
-    (evil-define-key 'normal org-mode-map
-      "o" 'my/evil-org-open-below))
+ ;; (with-eval-after-load 'evil
+ ;;   (evil-define-key 'normal org-mode-map
+ ;;     "o" 'my/evil-org-open-below))
 
 #+end_src
 
@@ -2345,13 +2483,7 @@
 
 #+begin_src emacs-lisp
 
-  ;; (global-unset-key (kbd "M-;"))
-
-  (defun my-noop ()
-  "A no-op function that does nothing."
-  (interactive))
-
-  (global-set-key (kbd "M-;") 'my-noop)
+  (global-unset-key (kbd "M-;"))
 
   (global-unset-key (kbd "C-s"))
   (global-unset-key (kbd "M-TAB"))
@@ -2362,14 +2494,15 @@
   (global-set-key (kbd "C-h M-f") 'describe-face)
 
   (global-unset-key (kbd "C-t"))
+  (global-set-key (kbd "C-t C-s") 'jinx-mode)
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "C-t") nil)
-    ;; (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
-    (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-    (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-    (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
-    (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
+ ;; (with-eval-after-load 'evil
+ ;;   (define-key evil-normal-state-map (kbd "C-t") nil)
+ ;;   ;; (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
+ ;;   (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
+ ;;   (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
+ ;;   (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
+ ;;   (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
 
   (defun my-org-cycle-or-yasnippet-expand ()
     "Expand Yasnippet or perform org-cycle based on the context."
@@ -2380,13 +2513,13 @@
       ;; This is a more liberal fallback, allowing org-cycle to handle its various contexts.
       (org-cycle)))
 
-  (with-eval-after-load 'evil
-    (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
+ ;; (with-eval-after-load 'evil
+ ;;   (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
 
-  (with-eval-after-load 'org
-    ;; Override the keybinding in org-mode specifically
-    (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-    (define-key evil-normal-state-map (kbd "C-t C-s") 'flyspell-mode))
+ ;; (with-eval-after-load 'org
+ ;;   ;; Override the keybinding in org-mode specifically
+ ;;   (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root))
+ ;; ;;   (define-key evil-normal-state-map (kbd "M-t s") 'flyspell-mode))
 
   (global-unset-key (kbd "C-<tab>"))
   (global-set-key (kbd "<C-tab>") 'previous-buffer)
@@ -2523,8 +2656,8 @@
     (load-file "~/.emacs.d/init.el")
     (load-file "~/.emacs.d/init.el"))
 
-  (with-eval-after-load 'evil
-    (evil-ex-define-cmd "so" 'so))
+ ;; (with-eval-after-load 'evil
+ ;;   (evil-ex-define-cmd "so" 'so))
 
   (defun z (q)
     "Query zoxide and launch dired or change directory in Eshell."

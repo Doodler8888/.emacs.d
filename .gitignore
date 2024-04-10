@@ -27,6 +27,9 @@ eshell_history
 /.cache
 .org-id-locations
 /auto-saves
+/lsp-servers
+/.lsp-session-v1
+/.lsp
 
 # Ignore the entire eshell directory
 /eshell/*

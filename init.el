@@ -74,3 +74,6 @@
 
 (load "~/.emacs.d/early-init.el")
 (load "~/.secret_dotfiles/emacs/env.el")
+
+
+(global-eldoc-mode -1)
