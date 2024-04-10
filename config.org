@@ -13,6 +13,7 @@
   - [[#theme-and-font][Theme and Font]]
   - [[#general][General]]
   - [[#async][Async]]
+  - [[#transient][Transient]]
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
   - [[#jinx][Jinx]]
@@ -161,14 +162,14 @@
   (setq desktop-load-locked-desktop t)
   (setq backup-inhibited t)
 
-  ;; (add-hook 'prog-mode-hook (show-paren-mode t))
+  (add-hook 'prog-mode-hook (show-paren-mode t))
 
-  ;; ;; Auto pairing
-  ;; (add-hook 'prog-mode-hook (electric-pair-mode t))
-  ;; ;; Don't pair '<'
-  ;; (setq electric-pair-inhibit-predicate
-  ;;       `(lambda (c)
-  ;;         (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
+  ;; Auto pairing
+  (add-hook 'prog-mode-hook (electric-pair-mode t))
+  ;; Don't pair '<'
+  (setq electric-pair-inhibit-predicate
+        `(lambda (c)
+          (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
 
   ;; Break lines after a certain length
   (auto-fill-mode 1)
@@ -488,102 +489,103 @@
   (use-package general
     :config
     (general-evil-setup)
+    (general-create-definer w/leader-keys
+      :states '(normal insert visual emacs)
+      :keymaps 'override
+      :prefix "SPC" ;; set leader
+      :global-prefix "M-SPC") ;; access leader in insert mode
 
-  ;; "C-M-j" 'counsel-switch-buffer
+    (w/leader-keys
 
-  ;; set up 'SPC' as the global leader key
-  (general-create-definer w/leader-keys
-    :states '(normal insert visual emacs)
-    :keymaps 'override
-    :prefix "SPC" ;; set leader
-    :global-prefix "M-SPC") ;; access leader in insert mode
+      ;; Fuzzy finder
+      "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
+      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
+      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
+      "fd" '(projectile-find-dir :wk "Find file modified")
+      "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
+      "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
 
-  (w/leader-keys
+      ;; Session management
+      "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
+      "sd" '(delete-desktop-session :wk "Delete selected session")
+      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+      "sr" '(rename-desktop-session :wk "Rename a desktop session")
 
-    ;; Fuzzy finder
-    "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
-    "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-    "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
-    "fd" '(projectile-find-dir :wk "Find file modified")
-    "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
-    "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
+      ;; Org
+      "ot" '(todo :wk "Opens the org todo file")
 
-    ;; Session management
-    "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
-    "sd" '(delete-desktop-session :wk "Delete selected session")
-    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
-    "sr" '(rename-desktop-session :wk "Rename a desktop session")
+      ;; Tab management
+      "tn" '(tab-bar-new-tab :wk "Create a new tab")
+      "tx" '(tab-bar-close-tab :wk "Close a tab")
+      "tr" '(tab-bar-rename-tab :wk "Rename a tab")
 
-    ;; Org
-    "ot" '(todo :wk "Opens the org todo file")
+      "w"  'hydra-window-size/body
 
-    ;; Tab management
-    "tn" '(tab-bar-new-tab :wk "Create a new tab")
-    "tx" '(tab-bar-close-tab :wk "Close a tab")
-    "tr" '(tab-bar-rename-tab :wk "Rename a tab")
+      ;; Window swapping
+      "bk" '(buf-move-up :wk "Swap with buffer above")
+      "bj" '(buf-move-down :wk "Swap with buffer below")
+      "bh" '(buf-move-left :wk "Swap with buffer left")
+      "bl" '(buf-move-right :wk "Swap with buffer right")
 
-    "w"  'hydra-window-size/body
+      "bc" '(kill-buffer :wk "Close selecetd buffer")
+      "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
-    ;; Window swapping
-    "bk" '(buf-move-up :wk "Swap with buffer above")
-    "bj" '(buf-move-down :wk "Swap with buffer below")
-    "bh" '(buf-move-left :wk "Swap with buffer left")
-    "bl" '(buf-move-right :wk "Swap with buffer right")
+      ;; Popper
+      "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
 
-    "bc" '(kill-buffer :wk "Close selecetd buffer")
-    "bx" '(kill-current-buffer :wk "Close selecetd buffer")
+      ;; "mm" '(popper-message :wk "Open the *Messages buffer")
 
-    ;; Popper
-    "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
+      "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
-    ;; "mm" '(popper-message :wk "Open the *Messages buffer")
+      ;; "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
 
-    "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
+      "cc" '(RunCmdShellCommand :wk "Run CMD command")
+      "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
 
-    ;; "pp" '(git-push :wk "Activate an elisp copy of the git push alias")
+      ;; "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
 
-    "cc" '(RunCmdShellCommand :wk "Run CMD command")
-    "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
+      "zz" '(z :wk "Call zoxide prompt")
 
-    ;; "ts" '(SpawnShellSplitBelow :wk "Spawn shell below")
+      "vv" '(OpenVtermBelow :wk "Toggle vterm")
 
-    "zz" '(z :wk "Call zoxide prompt")
+      "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
+      "de" '(wdired-change-to-wdired-mode :wk "Switch to wdired mode")
 
-    "vv" '(OpenVtermBelow :wk "Toggle vterm")
+      "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
+      ;; "lk" '(lsp-describe-thing-at-point :wk "Open a hover window")
+      "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
+      ;; "ld" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
+      ;; "lk" '(lsp-bridge-popup-documentation :wk "Open a hover window")
 
-    "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-    "de" '(wdired-change-to-wdired-mode :wk "Switch to wdired mode")
+      "ee" '(eshell :wk "Eshell")
+      "en" '(eshell-new :wk "Spawn a new eshell buffer")
 
-    "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
-    ;; "lk" '(lsp-describe-thing-at-point :wk "Open a hover window")
-    "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
-    ;; "ld" '(lsp-bridge-diagnostic-list :wk "Open diagnostic list in a separate split")
-    ;; "lk" '(lsp-bridge-popup-documentation :wk "Open a hover window")
+      ;; Evaluation
+      "e" '(:ignore t :wk "Evaluate/Eshell")
+      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+      "ex" '(eval-expression :wk "Evaluate and elisp expression")
+      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+      "er" '(eval-region :wk "Evaluate elisp in region")
 
-    "ee" '(eshell :wk "Eshell")
-    "en" '(eshell-new :wk "Spawn a new eshell buffer")
+      ;; Eshell
+      "es" '(counsel-esh-history :wk "Eshell history")
+      ;; "ef" '(vertico-buffers/eshell :wk "test")
 
-    ;; Evaluation
-    "e" '(:ignore t :wk "Evaluate/Eshell")
-    "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-    "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-    "ex" '(eval-expression :wk "Evaluate and elisp expression")
-    "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-    "er" '(eval-region :wk "Evaluate elisp in region")
-
-    ;; Eshell
-    "es" '(counsel-esh-history :wk "Eshell history")
-    ;; "ef" '(vertico-buffers/eshell :wk "test")
-
-        )
+      )
+    
+      (w/leader-keys
+        :keymaps 'help-mode-map
+        "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
+      
     (dotimes (i 9)
-        (let ((n (1+ i))) ; Tab numbers start from 1
-          (general-def
-            :states '(normal emacs)
-            :keymaps 'override
-            :prefix "SPC"
-            (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
-  )
+      (let ((n (1+ i))) ; Tab numbers start from 1
+        (general-def
+          :states '(normal emacs)
+          :keymaps 'override
+          :prefix "SPC"
+          (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
+    )
 
 #+end_src
 
@@ -595,6 +597,34 @@
     :config
     (autoload 'dired-async-mode "dired-async.el" nil t)
     (dired-async-mode 1))
+
+#+end_src
+
+** Transient
+
+#+begin_src emacs-lisp
+
+(use-package transient
+  :config
+  ;; Define a simple transient for the cp command
+  (transient-define-prefix my-eshell-cp-transient ()
+    "Transient for the cp command."
+    ["cp options"
+     ("r" "Recursive" "-r")
+     ("v" "Verbose" "-v")
+     ("e" "Execute" my-eshell-execute-cp :transient nil)]))
+
+(defun my-eshell-execute-cp ()
+  "Function to construct cp command with selected options and insert it into eshell."
+  (interactive)
+  (let ((args (transient-args 'my-eshell-cp-transient)))
+    ;; Construct the cp command with selected options
+    (let ((command (concat "cp " (string-join args " "))))
+      ;; Insert the command into the eshell buffer
+      (insert command)
+      ;; Optionally, you can also execute the command immediately
+      ;; (eshell-send-input)
+      )))
 
 #+end_src
 
@@ -812,8 +842,8 @@
   (use-package sudo-edit
     :config
       (w/leader-keys
-         "sf" '(sudo-edit-find-file :wk "Sudo find file")
-         "se" '(sudo-edit :wk "Sudo edit file")))
+        "sf" '(sudo-edit-find-file :wk "Sudo find file")
+        "se" '(sudo-edit :wk "Sudo edit file")))
 
 #+end_src
 
@@ -884,7 +914,9 @@
 
 #+begin_src emacs-lisp
 
-  (use-package embark)
+  (use-package embark
+    :bind
+    ("C-;" . embark-act))
 
 #+end_src
 
@@ -1001,10 +1033,10 @@
 
 #+begin_src emacs-lisp
 
-  (use-package ivy-prescient
-    :after counsel
-    :config
-    (ivy-prescient-mode 1))
+  ;; (use-package ivy-prescient
+  ;;   :after counsel
+  ;;   :config
+  ;;   (ivy-prescient-mode 1))
     
 #+end_src
 ** Fzf
@@ -1905,73 +1937,73 @@
 
 #+begin_src emacs-lisp
 
-  (defun my/show-popper-echo-line ()
-    "Briefly toggle popper to show the echo line."
-    (interactive)
-    ;; Ensure popper-mode and popper-echo-mode are active
-    (when (and popper-mode popper-echo-mode)
-      ;; Toggle a popper window and immediately toggle it back
-      (popper-toggle-latest)
-      (popper-toggle-latest)))
+(defun my/show-popper-echo-line ()
+  "Briefly toggle popper to show the echo line."
+  (interactive)
+  ;; Ensure popper-mode and popper-echo-mode are active
+  (when (and popper-mode popper-echo-mode)
+    ;; Toggle a popper window and immediately toggle it back
+    (popper-toggle-latest)
+    (popper-toggle-latest)))
 
-  (use-package popper
-    :bind (("M-`" . my/show-popper-echo-line))
-           ;; ("M-f"   . popper-toggle))
-           ;; ("M-~"   . popper-cycle))
-    :init
-    (setq popper-window-height 0.33)
-    (setq popper-reference-buffers
-          '("\\*Messages\\*"
-            "Output\\*$"
-            "\\*Async Shell Command\\*"
-            "*Flymake diagnostics.*"
-            "*Flycheck errors.*"
-            "\\*compilation\\*"
-            "\\*eshell\\*.*"
-            "\\*cider-repl.*"
-            "\\*cider-doc.*"
-            ;; "\\*eshell:.*"
-            ;; "\\*Warnings\\*"
-            ;; "\\*xref\\*"
-            ;; "\\*Backtrace\\*"
-            "\\*eldoc\\*"
-            ;; "\\*Ement Notifications\\*"
-            ;; "Output\\*$"
-            ;; "\\*Dtache Shell Command\\*"
-            ;; "\\*mu4e-update\\*"
-            help-mode
-            compilation-mode))
-    (popper-mode +1)
-    (popper-echo-mode +1))
+(use-package popper
+  :bind (("M-`" . my/show-popper-echo-line))
+         ;; ("M-f"   . popper-toggle))
+         ;; ("M-~"   . popper-cycle))
+  :init
+  (setq popper-window-height 0.33)
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          "*Flymake diagnostics.*"
+          "*Flycheck errors.*"
+          "\\*compilation\\*"
+          "\\*eshell\\*.*"
+          "\\*cider-repl.*"
+          "\\*cider-doc.*"
+          ;; "\\*eshell:.*"
+          ;; "\\*Warnings\\*"
+          ;; "\\*xref\\*"
+          ;; "\\*Backtrace\\*"
+          "\\*eldoc\\*"
+          ;; "\\*Ement Notifications\\*"
+          ;; "Output\\*$"
+          ;; "\\*Dtache Shell Command\\*"
+          ;; "\\*mu4e-update\\*"
+          help-mode
+          compilation-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))
 
-  (defun m-f-toggle-or-forward-word ()
-    "Toggle popper or move forward a word depending on context."
-    (interactive)
-    (if (window-minibuffer-p)
-        (forward-word)
-      (popper-toggle)))
+(defun m-f-toggle-or-forward-word ()
+  "Toggle popper or move forward a word depending on context."
+  (interactive)
+  (if (window-minibuffer-p)
+      (forward-word)
+    (popper-toggle)))
 
-  (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+(global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
 
-  (defun popper-diagnostics ()
-    "Popper window specifically for Flymake diagnostics buffer."
-    (interactive)
-    (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-        (popper-toggle)
-      (flymake-show-buffer-diagnostics)))
+(defun popper-diagnostics ()
+  "Popper window specifically for Flymake diagnostics buffer."
+  (interactive)
+  (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+      (popper-toggle)
+    (flymake-show-buffer-diagnostics)))
 
-  ;; (defun fix-cycle ()
-  ;;   (interactive)
-  ;;   (popper-cycle 1))
+;; (defun fix-cycle ()
+;;   (interactive)
+;;   (popper-cycle 1))
 
-  ;; (defun fix-cycle-backwards ()
-  ;;   (interactive)
-  ;;   (popper-cycle-backwards -1))
+;; (defun fix-cycle-backwards ()
+;;   (interactive)
+;;   (popper-cycle-backwards -1))
 
-  (with-eval-after-load 'evil
-    ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-    ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics))
+(with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+  (define-key evil-normal-state-map (kbd "M-t") 'popper-diagnostics))
 
 #+end_src
 
@@ -2096,7 +2128,7 @@
   ;; (use-package flymake
   ;; :init
   ;; (flymake-mode))
-  ;; :hook (go-mode . flymake-mode))
+  ;; :hook (go-mode . flymake-mode)
 
   (use-package lsp-mode
     :commands lsp
@@ -2153,7 +2185,7 @@
   ;;         lsp-ui-doc-include-signature t
   ;;         lsp-ui-peek-enable t
   ;;         lsp-ui-imenu-enable t)
-  ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode))
+  ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode)))
 
   ;; (use-package lsp-mode
   ;; ;; :commands (lsp lsp-deferred)
@@ -2460,17 +2492,29 @@
   (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
   (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
   (global-set-key (kbd "C-h M-f") 'describe-face)
-  
+
   (global-unset-key (kbd "C-t"))
   (global-set-key (kbd "C-t C-s") 'jinx-mode)
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "C-t") nil)
-    (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
+    ;; (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
     (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
     (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
     (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
+
+  (defun my-org-cycle-or-yasnippet-expand ()
+    "Expand Yasnippet or perform org-cycle based on the context."
+    (interactive)
+    ;; First, try to expand a Yasnippet if possible.
+    (unless (yas-expand)
+      ;; If no snippet was expanded, call org-cycle.
+      ;; This is a more liberal fallback, allowing org-cycle to handle its various contexts.
+      (org-cycle)))
+
+  (with-eval-after-load 'evil
+    (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
 
   (with-eval-after-load 'org
     ;; Override the keybinding in org-mode specifically
