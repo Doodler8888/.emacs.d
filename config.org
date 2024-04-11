@@ -1410,15 +1410,13 @@
 
 #+begin_src emacs-lisp
 
+  ;; (setq desktop-restore-eager 10)
+
   (defvar current-desktop-session-name nil
     "The name of the currently loaded desktop session.")
 
   (defvar desktop-autosave-timer nil
     "Timer object for desktop autosave, to avoid multiple timers running.")
-
-  (defun buffer-displayed-in-window-p (buffer)
-    "Check if BUFFER is displayed in any window."
-    (get-buffer-window buffer 'visible))
 
   (defun save-eshell-buffer (desktop-dirname)
     ;; Save the current working directory.
@@ -1426,7 +1424,7 @@
 
   (defun restore-eshell-buffer (_file-name buffer-name misc)
     "MISC is the value returned by `save-eshell-buffer'.
-                _FILE-NAME is nil."
+                  _FILE-NAME is nil."
     (let ((default-directory misc))
       ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
       (eshell buffer-name)))
@@ -1462,69 +1460,70 @@
                 (desktop-save new-desktop-dir)
                 (message "Session '%s' created and saved." new-session-name))))))))
 
-    (defun setup-desktop-autosave-timer ()
-      "Set up or reset the desktop autosave timer."
-      (when desktop-autosave-timer
-        (cancel-timer desktop-autosave-timer))
-      ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
-      (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
+  (defun setup-desktop-autosave-timer ()
+    "Set up or reset the desktop autosave timer."
+    (when desktop-autosave-timer
+      (cancel-timer desktop-autosave-timer))
+    ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
+    (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
 
-    (defun load-desktop-session (session-name)
-      "Load a desktop session by name."
-      (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-        (setq current-desktop-session-name session-name)
-        (desktop-change-dir (concat desktop-dir session-name "/"))
-        (setup-desktop-autosave-timer)))
+  (defun load-desktop-session (session-name)
+    "Load a desktop session by name."
+    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+      (setq current-desktop-session-name session-name)
+      (desktop-change-dir (concat desktop-dir session-name "/"))
+      (setup-desktop-autosave-timer)))
 
-    (defun load-desktop-with-name ()
-      "Load a desktop session by name, chosen from available sessions."
-      (interactive)
-      (when current-desktop-session-name
-        ;; Save the current session before loading a new one, but only if a session is already loaded.
-        (save-current-desktop-session))
-      (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-             (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-             (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
-        (setq current-desktop-session-name session-name)  ; Save the session name globally
-        (desktop-change-dir (concat desktop-dir session-name "/"))
-        (setup-desktop-autosave-timer)))
+  (defun load-desktop-with-name ()
+    "Load a desktop session by name, chosen from available sessions."
+    (interactive)
+    (when current-desktop-session-name
+      ;; Save the current session before loading a new one, but only if a session is already loaded.
+      (save-current-desktop-session))
+    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+           (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+      (setq current-desktop-session-name session-name)  ; Save the session name globally
+      (desktop-change-dir (concat desktop-dir session-name "/"))
+      (setup-desktop-autosave-timer)))
 
-    ;; Disable the default desktop save mode
-    (desktop-save-mode 0)
+  ;; Disable the default desktop save mode
+  (desktop-save-mode 0)
 
-    (defun delete-desktop-session ()
-      "Delete a desktop session by name, chosen from available sessions."
-      (interactive)
-      (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-             (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-             (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
-        (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
-          (let ((session-path (concat desktop-dir session-name)))
-            (if (file-directory-p session-path)
-                (progn
-                  (delete-directory session-path t)  ; 't' for recursive delete
-                  (message "Deleted desktop session '%s'." session-name))
-              (message "No such desktop session '%s'." session-name))))))
+  (defun delete-desktop-session ()
+    "Delete a desktop session by name, chosen from available sessions."
+    (interactive)
+    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+           (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
+      (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
+        (let ((session-path (concat desktop-dir session-name)))
+          (if (file-directory-p session-path)
+              (progn
+                (delete-directory session-path t)  ; 't' for recursive delete
+                (message "Deleted desktop session '%s'." session-name))
+            (message "No such desktop session '%s'." session-name))))))
 
-    (defun rename-desktop-session ()
-      "Renames the currently loaded desktop session."
-      (interactive)
-      ;; Check if there's a session loaded.
-      (if (not current-desktop-session-name)
-          (message "No desktop session is currently loaded.")
-        (let* ((new-name (read-string "New session name: "))
-               (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
-               (new-dir (concat user-emacs-directory "desktop/" new-name)))
-          ;; Check if the new session name is empty or the session already exists.
-          (if (or (string-empty-p new-name)
-                  (file-exists-p new-dir))
-              (message "Invalid new session name or session already exists.")
-            ;; Rename the directory and update the session name.
-            (rename-file old-dir new-dir)
-            (setq current-desktop-session-name new-name)
-            (message "Session renamed to '%s'." new-name)))))
+  (defun rename-desktop-session ()
+    "Renames the currently loaded desktop session."
+    (interactive)
+    ;; Check if there's a session loaded.
+    (if (not current-desktop-session-name)
+        (message "No desktop session is currently loaded.")
+      (let* ((new-name (read-string "New session name: "))
+             (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
+             (new-dir (concat user-emacs-directory "desktop/" new-name)))
+        ;; Check if the new session name is empty or the session already exists.
+        (if (or (string-empty-p new-name)
+                (file-exists-p new-dir))
+            (message "Invalid new session name or session already exists.")
+          ;; Rename the directory and update the session name.
+          (rename-file old-dir new-dir)
+          (setq current-desktop-session-name new-name)
+          (message "Session renamed to '%s'." new-name)))))
 
-    (add-hook 'kill-emacs-hook 'save-current-desktop-session)
+  (add-hook 'kill-emacs-hook 'clean-buffer-list)
+  (add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
   #+end_src
 
@@ -1860,11 +1859,11 @@
         (popper-toggle)
       (flymake-show-buffer-diagnostics)))
 
-  (defun popper-flycheck-errors ()
+  (defun popper-flycheck-diagnostics ()
     "Popper window specifically for Flycheck errors buffer."
     (interactive)
     (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-        (popper-toggle-type 'toggle)
+        (popper-toggle)
       (flycheck-list-errors)))
 
   ;; (defun fix-cycle ()
@@ -1878,8 +1877,8 @@
   (with-eval-after-load 'evil
     ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
     ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-diagnostics)
-    (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-diagnostics))
+    (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+    (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 #+end_src
 
@@ -2138,6 +2137,8 @@
 
 #+begin_src emacs-lisp
 
+  ;; (org-link-minor-mode 1)
+  
   ;; (setq org-startup-folded t) 
   ;; (setq org-emphasis-alist
   ;;       ;; '(("*" bold)
