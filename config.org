@@ -21,9 +21,12 @@
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
+  - [[#paredit][Paredit]]
+  - [[#hyperbole][Hyperbole]]
   - [[#zoxide][Zoxide]]
   - [[#cider][Cider]]
   - [[#projectile][Projectile]]
+  - [[#mentor][Mentor]]
   - [[#wgrep][Wgrep]]
   - [[#embark][Embark]]
   - [[#ivycounsel][Ivy/Counsel]]
@@ -254,6 +257,9 @@
   (setq scroll-margin 5)
   (setq scroll-step 1)
 
+  (require 'midnight)
+  (midnight-delay-set 'midnight-delay "22:00")
+
 #+end_src
 
 ** Cursor
@@ -373,8 +379,6 @@
   (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
   (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
 
-  (use-package paredit)
-  
   ;; (use-package symex
   ;;   :config
   ;;   (symex-initialize)
@@ -822,6 +826,24 @@
 
 #+end_src
 
+** Paredit
+
+#+begin_src emacs-lisp
+
+  (use-package paredit)
+
+#+end_src
+
+** Hyperbole
+
+#+begin_src emacs-lisp
+
+  (use-package hyperbole
+    :config
+    (hyperbole-mode 1))
+
+#+end_src
+
 ** Zoxide
 
 #+begin_src emacs-lisp
@@ -877,6 +899,14 @@
 
   (add-hook 'projectile-find-file-hook #'my-projectile-project-root)
 
+#+end_src
+
+** Mentor
+
+#+begin_src emacs-lisp
+
+  (use-package mentor)
+  
 #+end_src
 
 ** Wgrep
@@ -1179,7 +1209,7 @@
     (setq eshell-destroy-buffer-when-process-dies t)
 
     (use-package eshell-syntax-highlighting
-      :after esh-mode
+      :after eshell-mode
       :config
       (eshell-syntax-highlighting-global-mode +1))
 
@@ -1990,49 +2020,57 @@
 
 #+begin_src emacs-lisp
 
-  (use-package lsp-mode
-    :commands lsp
-    :hook ((go-ts-mode . lsp)
-           (clojure-ts-mode . lsp))
-    :init
-    (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
-    (setq lsp-lens-enable nil)
-    :config
-    ;; Register Go LSP client
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                      :major-modes '(go-ts-mode) ; Corrected to go-mode
-                      :server-id 'gopls)) ; Correct server-id for Go
+(use-package lsp-mode
+  :commands lsp
+  :hook ((go-ts-mode . lsp)
+         (clojure-ts-mode . lsp)
+         (raku-mode . lsp)) ;; Assuming raku-mode is the major mode for Raku files
+  :init
+  (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
+  (setq lsp-lens-enable nil)
+  :config
+  ;; Register Go LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                    :major-modes '(go-ts-mode) ; Corrected to go-mode
+                    :server-id 'gopls)) ; Correct server-id for Go
 
-    ;; Register Clojure LSP client
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
-                      :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
-                      :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
-    
-    ;; General LSP settings
-    (lsp-signature-mode nil)
-    (setq lsp-idle-delay 0.1
-          lsp-diagnostics-provider :flymake
-          lsp-headerline-breadcrumb-enable nil
-          gc-cons-threshold (* 100 1024 1024)
-          read-process-output-max (* 1024 1024)
-          lsp-log-max 0 ; Corrected function call
-          lsp-log-io nil
-          lsp-enable-symbol-highlighting nil
-          lsp-signature-render-documentation nil
-          lsp--last-signature nil
-          lsp--last-signature-index nil
-          lsp--last-signature-buffer nil
-          lsp-signature-auto-activate nil
-          lsp-signature-cycle nil
-          lsp-signature-doc-lines nil
-          lsp-signature-face nil
-          lsp-signature-function nil
-          lsp-signature-posframe nil
-          lsp-eldoc-enable-hover nil
-          lsp-eldoc-render-all nil
-          lsp-signature-render-documentation nil))
+  ;; Register Clojure LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
+                    :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
+                    :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
+
+  ;; Register Raku Navigator LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection
+                                     (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
+                    :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
+                    :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
+
+  ;; General LSP settings
+  (lsp-signature-mode nil)
+  (setq lsp-idle-delay 0.1
+        lsp-diagnostics-provider :flymake
+        lsp-headerline-breadcrumb-enable nil
+        gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 1024 1024)
+        lsp-log-max 0
+        lsp-log-io nil
+        lsp-enable-symbol-highlighting nil
+        lsp-signature-render-documentation nil
+        lsp--last-signature nil
+        lsp--last-signature-index nil
+        lsp--last-signature-buffer nil
+        lsp-signature-auto-activate nil
+        lsp-signature-cycle nil
+        lsp-signature-doc-lines nil
+        lsp-signature-face nil
+        lsp-signature-function nil
+        lsp-signature-posframe nil
+        lsp-eldoc-enable-hover nil
+        lsp-eldoc-render-all nil
+        lsp-signature-render-documentation nil))
 
   ;; (use-package lsp-ui
   ;;   :after lsp-mode
@@ -2571,4 +2609,10 @@
     (interactive)
     (find-file "~/.emacs.d/themes/rose-pine-theme.el"))
 
+
+  (defun trash ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.local/share/trash"))
+  
 #+end_src
