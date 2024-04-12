@@ -2710,13 +2710,10 @@
       (unless target (error "No Match"))))
 
   (defun push ()
-    "Execute git add, commit, and push in sequence."
+    "Execute git add, commit, and push in sequence asynchronously."
     (interactive)
-    (let ((output-buffer (get-buffer-create "*Git Push Output*")))
-      (with-current-buffer output-buffer
-        (erase-buffer))
-      (call-process-shell-command "push" nil output-buffer)
-      (display-buffer output-buffer)))
+    ;; Execute 'push' asynchronously and display output in a separate buffer.
+    (async-shell-command "push"))
 
   (defun s ()
     "Reload the ~/.zshrc file in the current shell."
