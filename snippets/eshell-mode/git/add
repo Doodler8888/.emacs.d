@@ -1,0 +1,4 @@
+# key: ga
+# name: git add
+# --
+git add $0

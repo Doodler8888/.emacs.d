@@ -1,0 +1,4 @@
+# key: gra
+# name: git remote add
+# --
+git remote add $0

@@ -16,3 +16,10 @@ alias sss eshell/sudo systemctl status $*
 alias see eshell/sudo systemctl enable $*
 alias seen eshell/sudo systemctl enable --now $*
 alias sde eshell/sudo systemctl disable $*
+alias ga git add $*
+alias gc git commit $*
+alias gp git push $*
+alias gpu git push -u $*
+alias gra git remote add $*
+alias grc git rm --cached add $*
+alias grrc git rm -r --cached add $*

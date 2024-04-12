@@ -1,0 +1,4 @@
+# key: gp
+# name: git push
+# --
+git push $0

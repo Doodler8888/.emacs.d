@@ -1,0 +1,4 @@
+# key: grc
+# name: git rm --cached
+# --
+git rm --cached $0

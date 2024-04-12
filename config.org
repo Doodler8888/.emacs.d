@@ -308,8 +308,9 @@
     :config
     (evil-mode 1)
     (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2)
-    (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2)
+    (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+    (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+    (define-key evil-motion-state-map (kbd "/") 'avy-goto-char-2-all-windows)
     (define-key evil-normal-state-map (kbd "C-n") 'next-line)
     (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
     (define-key evil-insert-state-map (kbd "C-n") 'next-line)
@@ -503,6 +504,7 @@
       "fd" '(projectile-find-dir :wk "Find file modified")
       "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
       "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
+      "fc" '(counsel-fzf-current :wk "counsel-fzf from root")
 
       ;; Session management
       "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -513,6 +515,9 @@
       ;; Org
       "ot" '(todo :wk "Opens the org todo file")
 
+      ;; Paredit
+      "pfs" '(paredit-forward-slurp-sexp)
+      
       ;; Hyperbole
       "he" '(hkey-either :wk "Opens the org todo file")
       
@@ -577,7 +582,13 @@
 #+begin_src emacs-lisp
 
   (use-package avy)
-  
+
+  (defun avy-goto-char-2-all-windows ()
+    "Invoke `avy-goto-char-2` across all windows in the current frame."
+    (interactive)
+    (let ((avy-all-windows t))
+      (call-interactively 'evil-avy-goto-char-2)))
+
 #+end_src
 
 ** Async
@@ -904,28 +915,28 @@
 
 #+begin_src emacs-lisp
 
-(defun my/projectile-project-root-advice (original-projectile-root &rest args)
-  "Advice to make Projectile recognize custom project roots."
-  (or
-   ;; First, check if the specific directory should be treated as a project root.
-   (when (string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name default-directory))
-     "/home/wurfkreuz/.secret_dotfiles/org/")
-   ;; Next, look for 'bb.edn' up the directory tree to identify a project root.
-   (let ((current-dir (expand-file-name default-directory))
-         (project-root nil))
-     (while (and (not project-root) (not (string= current-dir "/")))
-       (when (file-exists-p (concat current-dir "bb.edn"))
-         (setq project-root current-dir))
-       (setq current-dir (file-name-directory (directory-file-name current-dir))))
-     project-root)
-   ;; Fallback to the original projectile root detection if none of the above conditions are met.
-   (apply original-projectile-root args)))
+  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
+    "Advice to make Projectile recognize custom project roots."
+    (or
+     ;; First, check if the specific directory should be treated as a project root.
+     (when (string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name default-directory))
+       "/home/wurfkreuz/.secret_dotfiles/org/")
+     ;; Next, look for 'bb.edn' up the directory tree to identify a project root.
+     (let ((current-dir (expand-file-name default-directory))
+           (project-root nil))
+       (while (and (not project-root) (not (string= current-dir "/")))
+         (when (file-exists-p (concat current-dir "bb.edn"))
+           (setq project-root current-dir))
+         (setq current-dir (file-name-directory (directory-file-name current-dir))))
+       project-root)
+     ;; Fallback to the original projectile root detection if none of the above conditions are met.
+     (apply original-projectile-root args)))
 
-(use-package projectile
-  :config
-  (projectile-mode 1)
-  (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
-
+  (use-package projectile
+    :config
+    (projectile-mode 1)
+    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
+  
 #+end_src
 
 ** Mentor
@@ -958,124 +969,134 @@
 
 #+begin_src emacs-lisp
 
-(defun my-find-file-sudo-advice (orig-fun &rest args)
-  "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
-  (let ((file (car args)))
-    (if (or (file-directory-p file) ; Check if it's a directory
-            (file-writable-p file) ; or if it's writable
-            (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
-        (apply orig-fun args) ; then just open it normally
-      ;; Else, try opening with sudo
-      (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
+  (defun my-find-file-sudo-advice (orig-fun &rest args)
+    "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
+    (let ((file (car args)))
+      (if (or (file-directory-p file) ; Check if it's a directory
+              (file-writable-p file) ; or if it's writable
+              (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
+          (apply orig-fun args) ; then just open it normally
+        ;; Else, try opening with sudo
+        (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
 
-(defun my-check-parent-directory-writable (dir)
-  "Recursively check if any parent directory of DIR is writable."
-  (when dir
-    (or (file-writable-p dir)
-        (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
-          (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
+  (defun my-check-parent-directory-writable (dir)
+    "Recursively check if any parent directory of DIR is writable."
+    (when dir
+      (or (file-writable-p dir)
+          (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
+            (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
 
-(advice-add 'find-file :around #'my-find-file-sudo-advice)
+  (advice-add 'find-file :around #'my-find-file-sudo-advice)
 
-  (use-package counsel
-    :after ivy
-    :config
-    (counsel-mode))
-  (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
+    (use-package counsel
+      :after ivy
+      :config
+      (counsel-mode))
+    (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
-  ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
+    ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
 
-  (use-package ivy
-    :bind
-    ;; ivy-resume resumes the last Ivy-based completion.
-    (("C-c C-r" . ivy-resume)
-     ("C-x B" . ivy-switch-buffer-other-window))
-    :custom
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-count-format "(%d/%d) ")
-    (setq enable-recursive-minibuffers t)
-    :config
-    (ivy-mode))
+    (use-package ivy
+      :bind
+      ;; ivy-resume resumes the last Ivy-based completion.
+      (("C-c C-r" . ivy-resume)
+       ("C-x B" . ivy-switch-buffer-other-window))
+      :custom
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-count-format "(%d/%d) ")
+      (setq enable-recursive-minibuffers t)
+      :config
+      (ivy-mode))
 
-  (use-package ivy-posframe
-    :ensure t
-    :after ivy
-    :config
-    (ivy-posframe-mode 1))
-  (setq ivy-posframe-width 50)
-  (setq ivy-posframe-display-functions-alist
-        '((counsel-esh-history . ivy-posframe-display-at-window-center)))
+    (use-package ivy-posframe
+      :ensure t
+      :after ivy
+      :config
+      (ivy-posframe-mode 1))
+    (setq ivy-posframe-width 50)
+    (setq ivy-posframe-display-functions-alist
+          '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
-  ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
-  (use-package all-the-icons-ivy-rich
-    :init
-    (all-the-icons-ivy-rich-mode 1))
+    ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
+    (use-package all-the-icons-ivy-rich
+      :init
+      (all-the-icons-ivy-rich-mode 1))
 
-  (use-package ivy-rich
-    :after ivy
-    :ensure t
-    :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-    :custom
-    (ivy-virtual-abbreviate 'full
-                            ivy-rich-switch-buffer-align-virtual-buffer t
-                            ivy-rich-path-style 'abbrev))
+    (use-package ivy-rich
+      :after ivy
+      :ensure t
+      :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
+      :custom
+      (ivy-virtual-abbreviate 'full
+                              ivy-rich-switch-buffer-align-virtual-buffer t
+                              ivy-rich-path-style 'abbrev))
 
-  (defun counsel-find-file-check-dir ()
-    "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
-    (interactive)
-    (let* ((current-dir (if (eq major-mode 'dired-mode)
-                            "."
-                          (buffer-file-name))))
-      (ivy-read "Find file: " #'read-file-name-internal
-                :matcher #'counsel--find-file-matcher
-                :action #'find-file-check-dir
-                :preselect current-dir
-                :require-match 'confirm-after-completion
-                :history 'file-name-history
-                :keymap counsel-find-file-map
-                :caller 'counsel-find-file)))
+    (defun counsel-find-file-check-dir ()
+      "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
+      (interactive)
+      (let* ((current-dir (if (eq major-mode 'dired-mode)
+                              "."
+                            (buffer-file-name))))
+        (ivy-read "Find file: " #'read-file-name-internal
+                  :matcher #'counsel--find-file-matcher
+                  :action #'find-file-check-dir
+                  :preselect current-dir
+                  :require-match 'confirm-after-completion
+                  :history 'file-name-history
+                  :keymap counsel-find-file-map
+                  :caller 'counsel-find-file)))
 
-  (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
+    (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
-  (defun counsel-fzf-home ()
-    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
-    (interactive)
-    (let ((default-directory "~/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory)))
-                :caller 'my-counsel-fzf-with-fd)))
+    (defun counsel-fzf-current ()
+      "Run a customized `counsel-fzf`-like file selection using `fd` from the current project directory."
+      (interactive)
+      (let ((default-directory (projectile-project-root))
+            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+        (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                            (find-file (expand-file-name f default-directory)))
+                  :caller 'counsel-fzf-current)))
 
-  (defun counsel-fzf-root ()
-    "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
-    (interactive)
-    (let ((default-directory "/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory)))
-                :caller 'my-counsel-fzf-with-fd)))
+    (defun counsel-fzf-home ()
+      "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+      (interactive)
+      (let ((default-directory "~/")
+            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                            (find-file (expand-file-name f default-directory)))
+                  :caller 'my-counsel-fzf-with-fd)))
 
-  (defun insert-path-from-counsel-fzf-home ()
-    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
-    (interactive)
-    (let ((default-directory "~/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory)))
-                :caller 'insert-path-from-counsel-fzf-home)))
+    (defun counsel-fzf-root ()
+      "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+      (interactive)
+      (let ((default-directory "/")
+            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                            (find-file (expand-file-name f default-directory)))
+                  :caller 'my-counsel-fzf-with-fd)))
 
-  (defun insert-path-from-counsel-fzf-root ()
-    "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
-    (interactive)
-    (let ((default-directory "/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory)))
-                :caller 'insert-path-from-counsel-fzf-home)))
+    (defun insert-path-from-counsel-fzf-home ()
+      "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+      (interactive)
+      (let ((default-directory "~/")
+            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                            (insert (expand-file-name f default-directory)))
+                  :caller 'insert-path-from-counsel-fzf-home)))
+
+    (defun insert-path-from-counsel-fzf-root ()
+      "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+      (interactive)
+      (let ((default-directory "/")
+            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                            (insert (expand-file-name f default-directory)))
+                  :caller 'insert-path-from-counsel-fzf-home)))
 
 #+end_src
 

@@ -1,0 +1,4 @@
+# key: gpu
+# name: git push -u
+# --
+git push -u $0
