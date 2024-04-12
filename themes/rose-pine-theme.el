@@ -5,6 +5,7 @@
       (rose-pine-fg2 "#b2aec2")
       (rose-pine-blendedbg "#17191a")
       (rose-pine-bg "#1d1f21")
+      (rose-pine-bg2 "#2e2c3d")
       (rose-pine-rose "#ebbcba")
       (rose-pine-love "#eb6f92")
       (rose-pine-blendedlove "#2e202f")
@@ -58,91 +59,95 @@
     (set-face-attribute 'tab-bar-tab nil
 			:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
+    ;; Avy
+    `(avy-lead-face ((,class (:background ,rose-pine-bg2))))
+    `(avy-lead-face-0 ((,class (:background ,rose-pine-bg2))))
+    `(avy-lead-face-1 ((,class (:background ,rose-pine-bg2))))
+    `(avy-lead-face-2 ((,class (:background ,rose-pine-bg2))))
 
-   ;; Haskell mode
-   `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
-   `(haskell-constructor-face ((,class (:foreground ,rose-pine-foam))))  ; For type constructors like 'IO'
-   `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For operators
-   `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
-   `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
-
-
-   ;; Clojure ts mode
-   `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))
-
-   ;; Raku mode
-   `(raku-operator ((,class (:foreground ,rose-pine-subtext))))
-
-   ;; Dired mode
-   `(dired-directory ((,class (:foreground ,rose-pine-gold))))
-   `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
-   `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
-   `(dired-marked ((,class (:foreground ,rose-pine-iris))))
-
-   ;; Anisble mode
-   `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
-   `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
-
-   ;; Org mode
-   `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
-   `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
-   `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
-    (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
-    (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
-   `(org-table ((,class (:foreground ,rose-pine-fg))))
-   `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
-   `(org-document-info ((,class (:foreground ,rose-pine-gold))))
-   `(org-document-title ((,class (:foreground ,rose-pine-gold))))
-   `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
-   `(org-date ((,class (:foreground ,rose-pine-gold))))
-   `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
-   `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
-
-   ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
-   ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
-   ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
-
-   ;; Ivy
-   `(ivy-current-match ((,class (:background ,rose-pine-subtext))))
-   ;; `(ivy-minibuffer-match-face-1 ((,class (:foreground ,rose-pine-fg))))
-   ;; `(ivy-minibuffer-match-face-2 ((,class (:foreground ,rose-pine-fg))))
-   ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
-   ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
-
-   ;; Line numbers
-   `(linum ((,class (:foreground ,rose-pine-subtext))))
-   `(line-number ((,class (:foreground ,rose-pine-subtext))))
-
-   ;; Region
-   `(region ((,class (:background ,rose-pine-highlight))))
-
-   ;; Mode line
-   `(mode-line-buffer-id ((,class (:weight normal))))
-   `(mode-line ((,class (:foreground ,rose-pine-love
-			      :background ,rose-pine-blendedlove
-			      :box (:line-width 1 :color ,rose-pine-bg)
-			      :weight normal))))  ; Set the weight to normal
-   `(mode-line-inactive ((,class (:foreground ,rose-pine-love
-			      :background ,rose-pine-blendedlove
-			      :box (:line-width 1 :color ,rose-pine-bg)
-			      :weight normal))))  ; Set the weight to normal
-
-   ;; Eshell
-   `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
-   `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
-
-   ;; More faces
-   `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
-   `(show-paren-match ((t (:background ,rose-pine-subtext :foreground ,rose-pine-fg :weight bold))))
-   `(match ((,class (:background ,rose-pine-love :foreground ,rose-pine-bg))))
-   `(minibuffer-prompt ((,class (:foreground ,rose-pine-iris))))
-   `(trailing-whitespace ((,class (:background ,rose-pine-love))))
-   `(link ((,class (:foreground ,rose-pine-foam :underline t))))
-   `(link-visited ((,class (:foreground ,rose-pine-iris :underline t))))
-   `(highlight ((,class (:background ,rose-pine-subtext))))
-   `(success ((,class (:foreground ,rose-pine-foam))))
-   `(warning ((,class (:foreground ,rose-pine-gold))))
-   `(error ((,class (:foreground ,rose-pine-love))))
+    ;; Haskell mode
+    `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
+    `(haskell-constructor-face ((,class (:foreground ,rose-pine-foam))))  ; For type constructors like 'IO'
+    `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For operators
+    `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
+    `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
+ 
+    ;; Clojure ts mode
+    `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))
+ 
+    ;; Raku mode
+    `(raku-operator ((,class (:foreground ,rose-pine-subtext))))
+ 
+    ;; Dired mode
+    `(dired-directory ((,class (:foreground ,rose-pine-gold))))
+    `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
+    `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
+    `(dired-marked ((,class (:foreground ,rose-pine-iris))))
+ 
+    ;; Anisble mode
+    `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
+    `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
+ 
+    ;; Org mode
+    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
+    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
+    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
+     (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
+     (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
+    `(org-table ((,class (:foreground ,rose-pine-fg))))
+    `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
+    `(org-document-info ((,class (:foreground ,rose-pine-gold))))
+    `(org-document-title ((,class (:foreground ,rose-pine-gold))))
+    `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
+    `(org-date ((,class (:foreground ,rose-pine-gold))))
+    `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
+    `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
+ 
+    ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
+    ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
+    ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
+ 
+    ;; Ivy
+    `(ivy-current-match ((,class (:background ,rose-pine-subtext))))
+    ;; `(ivy-minibuffer-match-face-1 ((,class (:foreground ,rose-pine-fg))))
+    ;; `(ivy-minibuffer-match-face-2 ((,class (:foreground ,rose-pine-fg))))
+    ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
+    ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
+ 
+    ;; Line numbers
+    `(linum ((,class (:foreground ,rose-pine-subtext))))
+    `(line-number ((,class (:foreground ,rose-pine-subtext))))
+ 
+    ;; Region
+    `(region ((,class (:background ,rose-pine-highlight))))
+ 
+    ;; Mode line
+    `(mode-line-buffer-id ((,class (:weight normal))))
+    `(mode-line ((,class (:foreground ,rose-pine-love
+ 			      :background ,rose-pine-blendedlove
+ 			      :box (:line-width 1 :color ,rose-pine-bg)
+ 			      :weight normal))))  ; Set the weight to normal
+    `(mode-line-inactive ((,class (:foreground ,rose-pine-love
+ 			      :background ,rose-pine-blendedlove
+ 			      :box (:line-width 1 :color ,rose-pine-bg)
+ 			      :weight normal))))  ; Set the weight to normal
+ 
+    ;; Eshell
+    `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
+    `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
+ 
+    ;; More faces
+    `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
+    `(show-paren-match ((t (:background ,rose-pine-subtext :foreground ,rose-pine-fg :weight bold))))
+    `(match ((,class (:background ,rose-pine-love :foreground ,rose-pine-bg))))
+    `(minibuffer-prompt ((,class (:foreground ,rose-pine-iris))))
+    `(trailing-whitespace ((,class (:background ,rose-pine-love))))
+    `(link ((,class (:foreground ,rose-pine-foam :underline t))))
+    `(link-visited ((,class (:foreground ,rose-pine-iris :underline t))))
+    `(highlight ((,class (:background ,rose-pine-subtext))))
+    `(success ((,class (:foreground ,rose-pine-foam))))
+    `(warning ((,class (:foreground ,rose-pine-gold))))
+    `(error ((,class (:foreground ,rose-pine-love))))
 
 ))
 
