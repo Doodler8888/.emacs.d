@@ -512,6 +512,9 @@
       ;; Org
       "ot" '(todo :wk "Opens the org todo file")
 
+      ;; Hyperbole
+      "he" '(hkey-either :wk "Opens the org todo file")
+      
       ;; Tab management
       "tn" '(tab-bar-new-tab :wk "Create a new tab")
       "tx" '(tab-bar-close-tab :wk "Close a tab")
@@ -848,13 +851,22 @@
 
 #+begin_src emacs-lisp
 
-  (use-package hyperbole
-    :config
-    (hyperbole-mode 1))
+  (defun my/hyperbole-disable-key-bindings-after-init-hook ()
+    ;; Undefine conflicting keys in the hyperbole mode map.
+    (define-key hyperbole-mode-map (kbd "M-RET") nil)
+    ;; Add more key unbindings as needed.
+  )
 
-  (with-eval-after-load 'hyperbole
-  (define-key hyperbole-mode-map (kbd "M-o") nil))
-  
+  (use-package hyperbole
+    :ensure t
+    :config
+    ;; Add a custom after-init-hook to adjust Hyperbole's keybindings
+    ;; after its own initialization process has completed.
+    (add-hook 'after-init-hook #'my/hyperbole-disable-key-bindings-after-init-hook t))
+
+    (with-eval-after-load 'hyperbole
+      (define-key hyperbole-mode-map (kbd "M-o") nil))
+
 #+end_src
 
 ** Zoxide
@@ -1047,9 +1059,6 @@
                 :action (lambda (f)
                           (insert (expand-file-name f default-directory)))
                 :caller 'insert-path-from-counsel-fzf-home)))
-
-  (define-key ivy-minibuffer-map (kbd "C-c C-w") 'embark-export)
-  (define-key counsel-mode-map (kbd "C-c C-w") 'embark-export)
 
 #+end_src
 
@@ -1348,7 +1357,7 @@
           eshell-scroll-to-bottom-on-input t
           eshell-destroy-buffer-when-process-dies t
           eshell-banner-message ""
-          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
+          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok" "bat"))
 
     (add-hook 'eshell-mode-hook
               (lambda ()
@@ -2533,6 +2542,7 @@
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
     (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
     (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
+    ;; (define-key evil-insert-state-map (kbd "S-RET") 'org-meta-return)
     (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
 
   (defun my-org-cycle-or-yasnippet-expand ()

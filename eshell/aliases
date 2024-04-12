@@ -22,3 +22,10 @@ alias disable eshell/sudo systemctl disable $*
 alias is eshell/sudo systemctl disable $*
 alias enart eshell/sudo systemctl enable --now $*
 alias tree exa -T
+alias sst eshell/sudo systemctl start $*
+alias ssp eshell/sudo systemctl stop $*
+alias srt eshell/sudo systemctl restart $*
+alias sss eshell/sudo systemctl status $*
+alias see eshell/sudo systemctl enable $*
+alias seen eshell/sudo systemctl enable --now $*
+alias sde eshell/sudo systemctl disable $*
