@@ -852,6 +852,9 @@
     :config
     (hyperbole-mode 1))
 
+  (with-eval-after-load 'hyperbole
+  (define-key hyperbole-mode-map (kbd "M-o") nil))
+  
 #+end_src
 
 ** Zoxide
@@ -880,34 +883,27 @@
 
 #+begin_src emacs-lisp
 
-  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
-    "Advice to make Projectile recognize custom project roots."
-    (let ((current-dir (expand-file-name default-directory))
-          (project-root nil))
-      (while (and (not project-root) (not (string= current-dir "/")))
-        (when (file-exists-p (concat current-dir "bb.edn"))
-          (setq project-root current-dir))
-        (setq current-dir (file-name-directory (directory-file-name current-dir))))
-      (or project-root
-          (apply original-projectile-root args))))
+(defun my/projectile-project-root-advice (original-projectile-root &rest args)
+  "Advice to make Projectile recognize custom project roots."
+  (or
+   ;; First, check if the specific directory should be treated as a project root.
+   (when (string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name default-directory))
+     "/home/wurfkreuz/.secret_dotfiles/org/")
+   ;; Next, look for 'bb.edn' up the directory tree to identify a project root.
+   (let ((current-dir (expand-file-name default-directory))
+         (project-root nil))
+     (while (and (not project-root) (not (string= current-dir "/")))
+       (when (file-exists-p (concat current-dir "bb.edn"))
+         (setq project-root current-dir))
+       (setq current-dir (file-name-directory (directory-file-name current-dir))))
+     project-root)
+   ;; Fallback to the original projectile root detection if none of the above conditions are met.
+   (apply original-projectile-root args)))
 
-  (use-package projectile
-    :config
-    (projectile-mode 1)
-    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
-
-  (defvar my-org-project-paths
-    '("/home/wurfkreuz/.secret_dotfiles/org/"
-      "/some/other/org/path/"))
-
-  (defun my-projectile-project-root ()
-    (let ((default-directory (or (buffer-file-name) default-directory)))
-      (cl-some (lambda (path)
-                 (when (string-match-p path default-directory) path))
-               my-org-project-paths)
-      (projectile-project-root)))
-
-  (add-hook 'projectile-find-file-hook #'my-projectile-project-root)
+(use-package projectile
+  :config
+  (projectile-mode 1)
+  (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
 
 #+end_src
 

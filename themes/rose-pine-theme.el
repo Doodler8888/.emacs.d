@@ -77,6 +77,7 @@
    `(dired-directory ((,class (:foreground ,rose-pine-gold))))
    `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
    `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
+   `(dired-marked ((,class (:foreground ,rose-pine-iris))))
 
    ;; Anisble mode
    `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
