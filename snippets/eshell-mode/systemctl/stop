@@ -1,0 +1,4 @@
+# key: ssp
+# name: systemctl stop
+# --
+systemctl stop $0

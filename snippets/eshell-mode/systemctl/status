@@ -1,0 +1,4 @@
+# key: sss
+# name: systemctl status
+# --
+systemctl status $0

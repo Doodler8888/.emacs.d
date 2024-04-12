@@ -1,0 +1,4 @@
+# key: seen
+# name: systemctl enable now
+# --
+systemctl enable --now $0

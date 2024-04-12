@@ -1,0 +1,4 @@
+# key: sde
+# name: systemctl disable
+# --
+systemctl disable $0

@@ -1,0 +1,4 @@
+# key: see
+# name: systemctl enable
+# --
+systemctl enable $0

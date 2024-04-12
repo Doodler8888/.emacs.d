@@ -1,0 +1,4 @@
+# key: sst
+# name: systemctl start
+# --
+systemctl start $0

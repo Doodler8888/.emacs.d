@@ -12,6 +12,7 @@
   - [[#find-file][Find-file]]
   - [[#theme-and-font][Theme and Font]]
   - [[#general][General]]
+  - [[#avy][Avy]]
   - [[#async][Async]]
   - [[#transient][Transient]]
   - [[#search][Search]]
@@ -307,9 +308,10 @@
     :config
     (evil-mode 1)
     (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+    (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2)
+    (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2)
     (define-key evil-normal-state-map (kbd "C-n") 'next-line)
     (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-
     (define-key evil-insert-state-map (kbd "C-n") 'next-line)
     (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
     (setq evil-shift-width 2))
@@ -348,7 +350,6 @@
               (lambda ()
                 (evil-org-set-key-theme)))
     )
-  ;; :ensure nil)
 
   (use-package evil-collection
     :after evil
@@ -569,6 +570,14 @@
           (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
     )
 
+#+end_src
+
+** Avy
+
+#+begin_src emacs-lisp
+
+  (use-package avy)
+  
 #+end_src
 
 ** Async
@@ -949,16 +958,24 @@
 
 #+begin_src emacs-lisp
 
-  (defun my-find-file-sudo-advice (orig-fun &rest args)
-    "Open file as root if necessary, but skip for directories."
-    (let ((file (car args)))
-      (if (or (file-directory-p file) ; Check if it's a directory
-              (file-writable-p file)) ; or if it's writable
-          (apply orig-fun args) ; then just open it normally
-        ;; Else, try opening with sudo
-        (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
+(defun my-find-file-sudo-advice (orig-fun &rest args)
+  "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
+  (let ((file (car args)))
+    (if (or (file-directory-p file) ; Check if it's a directory
+            (file-writable-p file) ; or if it's writable
+            (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
+        (apply orig-fun args) ; then just open it normally
+      ;; Else, try opening with sudo
+      (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
 
-  (advice-add 'find-file :around #'my-find-file-sudo-advice)
+(defun my-check-parent-directory-writable (dir)
+  "Recursively check if any parent directory of DIR is writable."
+  (when dir
+    (or (file-writable-p dir)
+        (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
+          (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
+
+(advice-add 'find-file :around #'my-find-file-sudo-advice)
 
   (use-package counsel
     :after ivy
@@ -2131,14 +2148,14 @@
 
   (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
 
-  (use-package flycheck-clj-kondo)
+  ;; (use-package flycheck-clj-kondo)
 
-  (with-eval-after-load 'flycheck
-    (flycheck-add-mode 'clj-kondo-clj 'clojure-ts-mode)
-    (flycheck-add-mode 'clj-kondo-cljs 'clojure-ts-mode)
-    (flycheck-add-mode 'clj-kondo-cljc 'clojure-ts-mode)
-    (flycheck-add-mode 'clj-kondo-edn 'clojure-ts-mode))
-  
+  ;; (with-eval-after-load 'flycheck
+  ;;   (flycheck-add-mode 'clj-kondo-clj 'clojure-ts-mode)
+  ;;   (flycheck-add-mode 'clj-kondo-cljs 'clojure-ts-mode)
+  ;;   (flycheck-add-mode 'clj-kondo-cljc 'clojure-ts-mode)
+  ;;   (flycheck-add-mode 'clj-kondo-edn 'clojure-ts-mode))
+
   ;; (use-package flycheck-raku)
 
   ;; (use-package flymake-flycheck
@@ -2538,12 +2555,10 @@
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "C-t") nil)
-    ;; (evil-define-key 'insert 'global (kbd "C-a") 'org-cycle)
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
     (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-    (define-key evil-insert-state-map (kbd "C-c i h") 'insert-path-from-counsel-fzf-home)
-    ;; (define-key evil-insert-state-map (kbd "S-RET") 'org-meta-return)
-    (define-key evil-insert-state-map (kbd "C-c i r") 'insert-path-from-counsel-fzf-root))
+    (define-key evil-insert-state-map (kbd "C-i h") 'insert-path-from-counsel-fzf-home)
+    (define-key evil-insert-state-map (kbd "C-i r") 'insert-path-from-counsel-fzf-root))
 
   (defun my-org-cycle-or-yasnippet-expand ()
     "Expand Yasnippet or perform org-cycle based on the context."
