@@ -706,37 +706,47 @@
 
 #+begin_src emacs-lisp
 
+    ;; (use-package company
+    ;;   :init
+    ;;   (add-hook 'after-init-hook 'global-company-mode)
+    ;;   :config
+    ;;   (add-to-list 'company-backends 'company-files)
+    ;;   (setq company-require-match nil)
+    ;;   (setq company-minimum-prefix-length 1)
+    ;;   (setq company-idle-delay nil))
+
   (use-package company
     :init
     (add-hook 'after-init-hook 'global-company-mode)
     :config
-    (add-to-list 'company-backends 'company-files)
     (setq company-require-match nil)
-    (setq company-minimum-prefix-length 1)
-    (setq company-idle-delay nil))
+    ;; Set default company-mode settings
+    (setq company-minimum-prefix-length 1
+          company-idle-delay nil) ;; Disable automatic suggestions globally
 
-  ;; (use-package company
-  ;;   :init
-  ;;   (add-hook 'after-init-hook 'global-company-mode)
-  ;;   :config
-  ;;   ;; Add company-files to the list of backends
-  ;;   (add-to-list 'company-backends 'company-files)
-  ;;   (setq company-minimum-prefix-length 1)
-  ;;   (setq company-idle-delay 0.1))
+    ;; Add company-files to the list of backends
+    (add-to-list 'company-backends 'company-files)
 
-(defun my/company-manual-complete ()
-  "Enable company-mode and call company-complete."
-  (interactive)
-  (unless company-mode
-    (company-mode 1))
-  (company-complete))
+    ;; Function to enable automatic suggestions in eshell
+    (defun my-company-mode-setup-eshell ()
+      (setq-local company-idle-delay 0.1)) ;; Enable automatic suggestions in eshell
 
-(with-eval-after-load 'evil
-  (defun my-evil-insert-state-setup ()
-    (unless (minibufferp)
-      (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
+    ;; Add the setup function to eshell-mode-hook
+    (add-hook 'eshell-mode-hook 'my-company-mode-setup-eshell))
 
-  (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
+  (defun my/company-manual-complete ()
+    "Enable company-mode and call company-complete."
+    (interactive)
+    (unless company-mode
+      (company-mode 1))
+    (company-complete))
+
+  (with-eval-after-load 'evil
+    (defun my-evil-insert-state-setup ()
+      (unless (minibufferp)
+        (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
+
+    (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
 
 #+end_src
 
@@ -930,6 +940,17 @@
 ** Ivy/Counsel
 
 #+begin_src emacs-lisp
+
+  (defun my-find-file-sudo-advice (orig-fun &rest args)
+    "Open file as root if necessary, but skip for directories."
+    (let ((file (car args)))
+      (if (or (file-directory-p file) ; Check if it's a directory
+              (file-writable-p file)) ; or if it's writable
+          (apply orig-fun args) ; then just open it normally
+        ;; Else, try opening with sudo
+        (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
+
+  (advice-add 'find-file :around #'my-find-file-sudo-advice)
 
   (use-package counsel
     :after ivy
@@ -1146,18 +1167,123 @@
 
 #+begin_src emacs-lisp
 
-  ;; (add-hook 'dired-mode-hook
-  ;;         (lambda ()
-  ;;           (wdired-change-to-wdired-mode)))
+        ;; (add-hook 'dired-mode-hook
+        ;;         (lambda ()
+        ;;           (wdired-change-to-wdired-mode)))
 
-  (setq delete-by-moving-to-trash t
-        trash-directory "~/.local/share/trash")
+        (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/etc/")
 
-  (setq wdired-allow-to-create-files t)
-  (setq wdired-allow-to-change-permissions t)
+        (setq delete-by-moving-to-trash t
+              trash-directory "~/.local/share/trash/")
 
-  (setq evil-move-cursor-back nil)
-  (add-hook 'wdired-mode-hook #'evil-normal-state)
+        (setq wdired-allow-to-create-files t)
+        (setq wdired-allow-to-change-permissions t)
+
+        (setq evil-move-cursor-back nil)
+        (add-hook 'wdired-mode-hook #'evil-normal-state)
+
+        (defun my-dired-do-symlink-with-sudo ()
+          "Create a symlink, using sudo if necessary."
+          (interactive)
+          (let* ((files (dired-get-marked-files))
+                (default-directory (if (file-remote-p default-directory)
+                                        (tramp-file-name-localname (tramp-dissect-file-name default-directory))
+                                      default-directory))
+                (target (read-file-name "Symlink to: " default-directory))
+                (sudo-target (if (file-writable-p (file-name-directory target))
+                                  target
+                                (concat "/sudo::" target))))
+            (dolist (file files)
+              (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
+                (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
+
+        (defun my-dired-setup ()
+          (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
+
+        (add-hook 'dired-mode-hook 'my-dired-setup)
+
+        ;; (defun my-dired-do-delete-with-sudo ()
+        ;;   "Attempt to move the marked files to trash, using sudo if necessary."
+        ;;   (interactive)
+        ;;   (let ((files (dired-get-marked-files)))
+        ;;     (dolist (file files)
+        ;;       (if (yes-or-no-p (format "Move %s to trash? " (file-name-nondirectory file)))
+        ;;           (if (file-writable-p (file-name-directory file))
+        ;;               (dired-delete-file file 'trash)
+        ;;             (let ((sudo-file (concat "/sudo::" file)))
+        ;;               (when (yes-or-no-p (format "Insufficient permissions to move %s to trash. Retry with sudo? " (file-name-nondirectory file)))
+        ;;                 (with-temp-buffer
+        ;;                   (cd (file-name-directory sudo-file))
+        ;;                   (dired-delete-file sudo-file 'trash))))))))
+        ;;   (revert-buffer))
+
+        ;; (evil-define-key 'normal dired-mode-map (kbd "D") 'my-dired-do-delete-with-sudo)
+
+  ;; (defun dired-run-bak-on-marked-files (beg end)
+  ;; "Run the 'bak' script on marked files or visually selected files in Dired."
+  ;; (interactive
+  ;;  (if (use-region-p)
+  ;;      (list (region-beginning) (region-end)) ; If there's an active region, use it
+  ;;    (list nil nil))) ; Otherwise, process marked files
+  ;; (if (and beg end)
+  ;;     ;; If beg and end are provided, process files in the region
+  ;;     (save-excursion
+  ;;       (goto-char beg)
+  ;;       (let ((end-marker (copy-marker end)))
+  ;;         (while (< (point) end-marker)
+  ;;           (when (dired-move-to-filename)
+  ;;             (let ((file (dired-get-filename nil t)))
+  ;;               (start-process "bak-process" nil "bak" file)))
+  ;;           (dired-next-line 1))))
+  ;;   ;; If no region is active, process marked files
+  ;;   (let ((files (dired-get-marked-files)))
+  ;;     (dolist (file files)
+  ;;       (start-process "bak-process" nil "bak" file))))
+  ;; ;; Exit visual mode if in Evil mode
+  ;; (when (bound-and-true-p evil-local-mode)
+  ;;   (evil-normal-state)))
+
+  (defun dired-run-bak-on-marked-files (beg end)
+    "Run the 'bak' script on marked files or visually selected files in Dired, with an option to copy."
+    (interactive
+    (if (use-region-p)
+        (list (region-beginning) (region-end)) ; If there's an active region, use it
+      (list nil nil))) ; Otherwise, process marked files
+    ;; Prompt the user to ask if they want to copy the files.
+    (let ((copy-flag (if (yes-or-no-p "Copy files? ") "-c" nil)))
+      (if (and beg end)
+          ;; If beg and end are provided, process files in the region
+          (save-excursion
+            (goto-char beg)
+            (let ((end-marker (copy-marker end)))
+              (while (< (point) end-marker)
+                (when (dired-move-to-filename)
+                  (let ((file (dired-get-filename nil t)))
+                    ;; Conditionally include the -c flag based on user input
+                    (if copy-flag
+                        (start-process "bak-process" nil "bak" copy-flag file)
+                      (start-process "bak-process" nil "bak" file))))
+                (dired-next-line 1))))
+        ;; If no region is active, process marked files
+        (let ((files (dired-get-marked-files)))
+          (dolist (file files)
+            ;; Conditionally include the -c flag based on user input
+            (if copy-flag
+                (start-process "bak-process" nil "bak" copy-flag file)
+              (start-process "bak-process" nil "bak" file))))))
+    ;; Exit visual mode if in Evil mode
+    (when (bound-and-true-p evil-local-mode)
+      (evil-normal-state)))
+
+      (defun my-dired-setup ()
+        (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files)
+        (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files))
+
+      (add-hook 'dired-mode-hook 'my-dired-setup)
+
+        ;; (defun my-dired-setup ()
+        ;;   (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-toggle-bak-extension)
+        ;;   (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-toggle-bak-extension))
 
 #+end_src
 
@@ -1209,7 +1335,7 @@
     (setq eshell-destroy-buffer-when-process-dies t)
 
     (use-package eshell-syntax-highlighting
-      :after eshell-mode
+      :after esh-mode  ;; don't change to 'eshell-mode'
       :config
       (eshell-syntax-highlighting-global-mode +1))
 
@@ -1226,7 +1352,7 @@
           eshell-scroll-to-bottom-on-input t
           eshell-destroy-buffer-when-process-dies t
           eshell-banner-message ""
-          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru"))
+          eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
     (add-hook 'eshell-mode-hook
               (lambda ()
@@ -1520,6 +1646,9 @@
   ;; Disable the default desktop save mode
   (desktop-save-mode 0)
 
+  (setq desktop-files-not-to-save
+      (concat "\\(^/[^/:]*:\\|(ftp)$\\)\\|" desktop-files-not-to-save))
+  
   (defun delete-desktop-session ()
     "Delete a desktop session by name, chosen from available sessions."
     (interactive)
@@ -2580,13 +2709,13 @@
       (unless zoxide (error "Install zoxide"))
       (unless target (error "No Match"))))
 
-  (defun git-push ()
+  (defun push ()
     "Execute git add, commit, and push in sequence."
     (interactive)
     (let ((output-buffer (get-buffer-create "*Git Push Output*")))
       (with-current-buffer output-buffer
         (erase-buffer))
-      (call-process-shell-command "git add . && git commit -m 'n' && git push" nil output-buffer)
+      (call-process-shell-command "push" nil output-buffer)
       (display-buffer output-buffer)))
 
   (defun s ()
@@ -2614,5 +2743,20 @@
     "Open a specific file."
     (interactive)
     (find-file "~/.local/share/trash"))
-  
+
+  (defun ngrok ()
+    "Open a terminal and execute 'ngrok http http://localhost:8080'."
+    (interactive)
+    (let ((term-buffer-name "*ngrok-http-8080*"))
+      ;; Check if the buffer already exists
+      (if (get-buffer term-buffer-name)
+          ;; If it does, switch to it
+          (switch-to-buffer term-buffer-name)
+        ;; Otherwise, create a new terminal and execute the command
+        (progn
+          (ansi-term "/bin/bash" "ngrok-http-8080")
+          (rename-buffer term-buffer-name)
+          (comint-send-string nil "ngrok http http://localhost:8080\n")
+          (popper-toggle-type)))))
+
 #+end_src
