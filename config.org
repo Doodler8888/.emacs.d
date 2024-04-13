@@ -119,24 +119,28 @@
 
 #+begin_src emacs-lisp
 
-  (setq tab-bar-close-button-show nil
-        tab-bar-new-button-show nil)
+  (setq tab-bar-tab-name-format-function #'my-tab-bar-vim-name-format-function)
+  (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator))
+  (setq tab-bar-separator "\u200B")  ;; Zero width space to fix color bleeding
+  (setq tab-bar-tab-hints nil)  ;; Tab numbers of the left of the label
+  (setq tab-bar-new-button-show nil)
+  (setq tab-bar-close-button-show nil)
+  (setq tab-bar-auto-width nil)
 
   (defun my-tab-name-format-function (tab i)
     (defface my-active-tab-face
-      '((t :background "#2e2c3d" :foreground "#e0def4"))  ;; #373c42 - previous background color
-      ;; '((t :background "#3c3836" :foreground "#fbf1c7"))  ;; gruvbox-dark hard
-      ;; '((t :background "#282c34" :foreground "#bbc2cf"))
+      '((t :background "#2e2c3d" :foreground "#e0def4"))
       "Face for the active tab.")
     (defface my-inactive-tab-face
-        '((t :background "#1d1f21" :foreground "#6e6a86")) ;; #21242b - previous background color
-      ;; '((t :background "#1d2021" :foreground "#a89984"))
-      ;; '((t :background "#21242b" :foreground "#83898d"))
+      '((t :background "#1d1f21" :foreground "#6e6a86"))
       "Face for the inactive tab.")
-    (let ((current-p (eq (car tab) 'current-tab)))
+    (let ((current-p (eq (car tab) 'current-tab))
+          (tab-name (format "%d %s" i (alist-get 'name (cdr tab)))))
+      ;; Add padding around the tab name
+      (setq tab-name (format " %s " tab-name))  ;; Add a space before and after the tab name
       (if current-p
-          (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-active-tab-face)
-        (propertize (format "%d %s" i (alist-get 'name (cdr tab))) 'face 'my-inactive-tab-face))))
+          (propertize tab-name 'face 'my-active-tab-face)
+        (propertize tab-name 'face 'my-inactive-tab-face))))
 
   (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
 
@@ -166,6 +170,7 @@
 
   ;; Auto pairing
   (add-hook 'prog-mode-hook (electric-pair-mode t))
+  
   ;; Don't pair '<'
   (setq electric-pair-inhibit-predicate
         `(lambda (c)
@@ -370,8 +375,6 @@
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-  ;; (define-key evil-insert-state-map (kbd "<backspace>") 'evil-delete-backward-char)
-
   (defun my-evil-insert-state-minibuffer-setup ()
     (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
     (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
@@ -380,11 +383,6 @@
 
   (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
   (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
-
-  ;; (use-package symex
-  ;;   :config
-  ;;   (symex-initialize)
-  ;;   (global-set-key (kbd "C-;") 'symex-mode-interface))  ; or whatever keybinding you like
 
 #+end_src
 
@@ -502,9 +500,9 @@
       "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
       "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
       "fd" '(projectile-find-dir :wk "Find file modified")
-      "fh" '(counsel-fzf-home :wk "counsel-fzf from home")
-      "fr" '(counsel-fzf-root :wk "counsel-fzf from root")
-      "fc" '(counsel-fzf-current :wk "counsel-fzf from root")
+      "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
+      "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
+      "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
 
       ;; Session management
       "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -565,14 +563,6 @@
       (w/leader-keys
         :keymaps 'help-mode-map
         "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
-      
-    (dotimes (i 9)
-      (let ((n (1+ i))) ; Tab numbers start from 1
-        (general-def
-          :states '(normal emacs)
-          :keymaps 'override
-          :prefix "SPC"
-          (format "%d" n) `(lambda () (interactive) (tab-bar-select-tab ,n)))))
     )
 
 #+end_src
@@ -725,6 +715,37 @@
 
 #+end_src
 
+*** Corfu/Cape
+
+#+begin_src emacs-lisp
+
+  ;;   ;; Corfu setup
+  ;; (use-package corfu
+  ;;   :ensure t
+  ;;   :init
+  ;;   (global-corfu-mode)
+  ;;   :custom
+  ;;   (corfu-cycle t) ;; Allows cycling through candidates with TAB (and shift-TAB)
+  ;;   (corfu-auto t) ;; Enable auto completion
+  ;;   :bind
+  ;;   (:map corfu-map
+  ;;         ("TAB" . corfu-next)
+  ;;         ("S-TAB" . corfu-previous)))
+
+  ;; ;; Cape setup
+  ;; (use-package cape
+  ;;   :ensure t
+  ;;   :after corfu
+  ;;   :init
+  ;;   ;; Add various completion sources to the default completion-at-point-functions
+  ;;   (add-to-list 'completion-at-point-functions #'cape-file)
+  ;;   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;;   (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+  ;;   ;; More cape-* functions can be added here
+  ;;   )
+
+#+end_src
+
 *** Company
 
 #+begin_src emacs-lisp
@@ -744,7 +765,7 @@
     :config
     (setq company-require-match nil)
     ;; Set default company-mode settings
-    (setq company-minimum-prefix-length 1
+    (setq company-minimum-prefix-length 3
           company-idle-delay nil) ;; Disable automatic suggestions globally
 
     ;; Add company-files to the list of backends
@@ -887,6 +908,9 @@
     (with-eval-after-load 'hyperbole
       (define-key hyperbole-mode-map (kbd "M-o") nil))
 
+  (defal notes "/home/wurfkreuz/.secret_dotfiles/org/%s")
+  (defal clj_scr_Comments "/home/wurfkreuz/.secret_dotfiles/org/clojure/scripts/%s")
+  
 #+end_src
 
 ** Zoxide
@@ -905,9 +929,20 @@
   (use-package cider
     :config
     (setq cider-eldoc-display-for-symbol-at-point nil)
+    (setq cider-show-error-buffer nil)
     (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
 
   (setq eldoc-documentation-function (lambda () nil))
+
+  (with-eval-after-load 'evil
+    (with-eval-after-load 'cider
+      ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
+      (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+      (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+
+      ;; Define C-M-x for visual state to evaluate the selected region
+      (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
+      (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region)))
 
 #+end_src
 
@@ -1048,56 +1083,60 @@
 
     (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
-    (defun counsel-fzf-current ()
-      "Run a customized `counsel-fzf`-like file selection using `fd` from the current project directory."
+    (defun ivy-fzf-current ()
+      "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
       (interactive)
       (let ((default-directory (projectile-project-root))
             (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
         (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
-                            (find-file (expand-file-name f default-directory)))
-                  :caller 'counsel-fzf-current)))
+                            (find-file (expand-file-name f default-directory))))))
 
-    (defun counsel-fzf-home ()
-      "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+    (defun ivy-fzf-home ()
+      "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
       (interactive)
       (let ((default-directory "~/")
             (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
-                            (find-file (expand-file-name f default-directory)))
-                  :caller 'my-counsel-fzf-with-fd)))
+                            (find-file (expand-file-name f default-directory))))))
 
-    (defun counsel-fzf-root ()
-      "Run a customized `counsel-fzf`-like file selection using `fd` from START-DIRECTORY."
+    (defun ivy-fzf-root ()
+      "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
       (interactive)
       (let ((default-directory "/")
             (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
-                            (find-file (expand-file-name f default-directory)))
-                  :caller 'my-counsel-fzf-with-fd)))
+                            (find-file (expand-file-name f default-directory))))))
 
-    (defun insert-path-from-counsel-fzf-home ()
-      "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+    (defun insert-path-from-ivy-fzf-home ()
+      "Insert the path of a file selected by `ivy-fzf` from the home directory into the current buffer."
       (interactive)
       (let ((default-directory "~/")
             (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
-                            (insert (expand-file-name f default-directory)))
-                  :caller 'insert-path-from-counsel-fzf-home)))
+                            (insert (expand-file-name f default-directory))))))
 
-    (defun insert-path-from-counsel-fzf-root ()
-      "Insert the path of a file selected by `counsel-fzf` from the home directory into the current buffer."
+    (defun insert-path-from-ivy-fzf-project ()
+      "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
+      (interactive)
+      (let ((default-directory (projectile-project-root))
+            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                            (insert (expand-file-name f default-directory))))))
+
+    (defun insert-path-from-ivy-fzf-root ()
+      "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
       (interactive)
       (let ((default-directory "/")
             (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
-                            (insert (expand-file-name f default-directory)))
-                  :caller 'insert-path-from-counsel-fzf-home)))
-
+                            (insert (expand-file-name f default-directory))))))
+  
 #+end_src
 
 ** Prescient
@@ -2004,6 +2043,7 @@
 
 ** Popper
 
+
 #+begin_src emacs-lisp
 
   (defun my/show-popper-echo-line ()
@@ -2031,6 +2071,7 @@
             "\\*eshell\\*.*"
             "\\*cider-repl.*"
             "\\*cider-doc.*"
+            "\\*cider-error.*"
             ;; "\\*eshell:.*"
             ;; "\\*Warnings\\*"
             ;; "\\*xref\\*"
@@ -2192,141 +2233,141 @@
 
 #+begin_src emacs-lisp
 
-(use-package lsp-mode
-  :commands lsp
-  :hook ((go-ts-mode . lsp)
-         (clojure-ts-mode . lsp)
-         (raku-mode . lsp)) ;; Assuming raku-mode is the major mode for Raku files
-  :init
-  (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
-  (setq lsp-lens-enable nil)
-  :config
-  ;; Register Go LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                    :major-modes '(go-ts-mode) ; Corrected to go-mode
-                    :server-id 'gopls)) ; Correct server-id for Go
+  (use-package lsp-mode
+    :commands lsp
+    :hook ((go-ts-mode . lsp)
+           (clojure-ts-mode . lsp))
+           ;; (raku-mode . lsp))
+    :init
+    (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
+    (setq lsp-lens-enable nil)
+    :config
+    ;; Register Go LSP client
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                      :major-modes '(go-ts-mode) ; Corrected to go-mode
+                      :server-id 'gopls)) ; Correct server-id for Go
 
-  ;; Register Clojure LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
-                    :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
-                    :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
+    ;; Register Clojure LSP client
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
+                      :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
+                      :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
 
-  ;; Register Raku Navigator LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection
-                                     (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
-                    :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
-                    :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
+    ;; ;; Register Raku Navigator LSP client
+    ;; (lsp-register-client
+    ;;  (make-lsp-client :new-connection (lsp-stdio-connection
+    ;;                                    (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
+    ;;                   :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
+    ;;                   :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
 
-  ;; General LSP settings
-  (lsp-signature-mode nil)
-  (setq lsp-idle-delay 0.1
-        lsp-diagnostics-provider :flymake
-        lsp-headerline-breadcrumb-enable nil
-        gc-cons-threshold (* 100 1024 1024)
-        read-process-output-max (* 1024 1024)
-        lsp-log-max 0
-        lsp-log-io nil
-        lsp-enable-symbol-highlighting nil
-        lsp-signature-render-documentation nil
-        lsp--last-signature nil
-        lsp--last-signature-index nil
-        lsp--last-signature-buffer nil
-        lsp-signature-auto-activate nil
-        lsp-signature-cycle nil
-        lsp-signature-doc-lines nil
-        lsp-signature-face nil
-        lsp-signature-function nil
-        lsp-signature-posframe nil
-        lsp-eldoc-enable-hover nil
-        lsp-eldoc-render-all nil
-        lsp-signature-render-documentation nil))
+    ;; General LSP settings
+    (lsp-signature-mode nil)
+    (setq lsp-idle-delay 0.1
+          lsp-diagnostics-provider :flymake
+          lsp-headerline-breadcrumb-enable nil
+          gc-cons-threshold (* 100 1024 1024)
+          read-process-output-max (* 1024 1024)
+          lsp-log-max 0
+          lsp-log-io nil
+          lsp-enable-symbol-highlighting nil
+          lsp-signature-render-documentation nil
+          lsp--last-signature nil
+          lsp--last-signature-index nil
+          lsp--last-signature-buffer nil
+          lsp-signature-auto-activate nil
+          lsp-signature-cycle nil
+          lsp-signature-doc-lines nil
+          lsp-signature-face nil
+          lsp-signature-function nil
+          lsp-signature-posframe nil
+          lsp-eldoc-enable-hover nil
+          lsp-eldoc-render-all nil
+          lsp-signature-render-documentation nil))
 
-  ;; (use-package lsp-ui
-  ;;   :after lsp-mode
-  ;;   :config
-  ;;   (setq lsp-ui-sideline-enable t
-  ;;         lsp-ui-sideline-show-diagnostics t
-  ;;         lsp-ui-sideline-show-hover t
-  ;;         lsp-ui-sideline-show-code-actions t
-  ;;         lsp-ui-doc-enable t
-  ;;         lsp-ui-doc-position 'top
-  ;;         lsp-ui-doc-include-signature t
-  ;;         lsp-ui-peek-enable t
-  ;;         lsp-ui-imenu-enable t)
-  ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode)))
+    ;; (use-package lsp-ui
+    ;;   :after lsp-mode
+    ;;   :config
+    ;;   (setq lsp-ui-sideline-enable t
+    ;;         lsp-ui-sideline-show-diagnostics t
+    ;;         lsp-ui-sideline-show-hover t
+    ;;         lsp-ui-sideline-show-code-actions t
+    ;;         lsp-ui-doc-enable t
+    ;;         lsp-ui-doc-position 'top
+    ;;         lsp-ui-doc-include-signature t
+    ;;         lsp-ui-peek-enable t
+    ;;         lsp-ui-imenu-enable t)
+    ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode)))
 
-  ;; (use-package lsp-mode
-  ;; ;; :commands (lsp lsp-deferred)
-  ;; :init
-  ;; ;; (setenv "LSP_USE_PLISTS" "1")
-  ;; ;; Increase the amount of data emacs reads from processes
-  ;; ;; (setq read-process-output-max (* 3 1024 1024))
-  ;; ;; (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
-  ;; ;;                                 "--clang-tidy"
-  ;; ;;                                 "--enable-config"))
-  ;; ;; Small speedups
-  ;; ;; (setopt lsp-log-max 0)
-  ;; ;; (setopt lsp-log-io nil)
-  ;; ;; General lsp-mode settings
-  ;; ;; (setq ;; lsp-completion-provider :none
-  ;;       ;; lsp-enable-snippet t
-  ;;       ;; lsp-enable-on-type-formatting nil
-  ;;       ;; lsp-enable-indentation nil
-  ;;       ;; lsp-diagnostics-provider :flymake
-  ;;       ;; lsp-keymap-prefix "C-x L"
-  ;;       ;; lsp-eldoc-render-all t)
-  ;; ;; to enable the lenses
-  ;; ;; (add-hook 'lsp-mode-hook #'lsp-lens-mode)
-  ;; ;; (add-hook 'lsp-completion-mode-hook
-  ;; ;;           (lambda ()
-  ;; ;;             (setf (alist-get 'lsp-capf completion-category-defaults)
-  ;; ;;                   '((styles . (orderless))))))
+    ;; (use-package lsp-mode
+    ;; ;; :commands (lsp lsp-deferred)
+    ;; :init
+    ;; ;; (setenv "LSP_USE_PLISTS" "1")
+    ;; ;; Increase the amount of data emacs reads from processes
+    ;; ;; (setq read-process-output-max (* 3 1024 1024))
+    ;; ;; (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
+    ;; ;;                                 "--clang-tidy"
+    ;; ;;                                 "--enable-config"))
+    ;; ;; Small speedups
+    ;; ;; (setopt lsp-log-max 0)
+    ;; ;; (setopt lsp-log-io nil)
+    ;; ;; General lsp-mode settings
+    ;; ;; (setq ;; lsp-completion-provider :none
+    ;;       ;; lsp-enable-snippet t
+    ;;       ;; lsp-enable-on-type-formatting nil
+    ;;       ;; lsp-enable-indentation nil
+    ;;       ;; lsp-diagnostics-provider :flymake
+    ;;       ;; lsp-keymap-prefix "C-x L"
+    ;;       ;; lsp-eldoc-render-all t)
+    ;; ;; to enable the lenses
+    ;; ;; (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+    ;; ;; (add-hook 'lsp-completion-mode-hook
+    ;; ;;           (lambda ()
+    ;; ;;             (setf (alist-get 'lsp-capf completion-category-defaults)
+    ;; ;;                   '((styles . (orderless))))))
 
-  ;; :config
-  ;; (lsp-register-client
-  ;; (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-  ;;                 :major-modes '(go-mode)
-  ;;                 :server-id 'gopls))
+    ;; :config
+    ;; (lsp-register-client
+    ;; (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+    ;;                 :major-modes '(go-mode)
+    ;;                 :server-id 'gopls))
 
-  ;; (use-package lsp-ui
-  ;;   :after lsp
-  ;;   :init
-  ;;   (setq lsp-ui-sideline-show-code-actions t)
-  ;;   (setq lsp-ui-sideline-show-diagnostics t))
-  ;; )
+    ;; (use-package lsp-ui
+    ;;   :after lsp
+    ;;   :init
+    ;;   (setq lsp-ui-sideline-show-code-actions t)
+    ;;   (setq lsp-ui-sideline-show-diagnostics t))
+    ;; )
 
-  ;; (use-package lsp-ui
-  ;;   :after lsp-mode
-  ;;   :init
-  ;;   (setq lsp-ui-sideline-show-code-actions t)
-  ;;   (setq lsp-ui-sideline-show-diagnostics t))
-  ;;   ;; :custom
-  ;;   ;; (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
-  ;;   ;; (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
-  ;;   :hook (lsp-mode . lsp-ui-mode))
+    ;; (use-package lsp-ui
+    ;;   :after lsp-mode
+    ;;   :init
+    ;;   (setq lsp-ui-sideline-show-code-actions t)
+    ;;   (setq lsp-ui-sideline-show-diagnostics t))
+    ;;   ;; :custom
+    ;;   ;; (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
+    ;;   ;; (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
+    ;;   :hook (lsp-mode . lsp-ui-mode))
 
-  ;; ;; (defun my/lsp-ui-doc-hide ()
-  ;; ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
-  ;; ;;     (lsp-ui-doc-hide)))
+    ;; ;; (defun my/lsp-ui-doc-hide ()
+    ;; ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
+    ;; ;;     (lsp-ui-doc-hide)))
 
-  ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
+    ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
 
-  ;; (use-package lsp-haskell
-  ;;   :ensure t
-  ;;   :init
-  ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-  ;;   :after lsp
-  ;;   :config
-  ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-  ;;   )
+    ;; (use-package lsp-haskell
+    ;;   :ensure t
+    ;;   :init
+    ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+    ;;   :after lsp
+    ;;   :config
+    ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
+    ;;   )
 
-  ;;   (use-package corfu
-  ;;       :ensure t
-  ;;       :bind (("C-." . corfu-next)
-  ;;              ("C-," . corfu-prev)))
+    ;;   (use-package corfu
+    ;;       :ensure t
+    ;;       :bind (("C-." . corfu-next)
+    ;;              ("C-," . corfu-prev)))
 
 #+end_src
 
@@ -2573,22 +2614,26 @@
   (global-set-key (kbd "C-h M-f") 'describe-face)
 
   (global-unset-key (kbd "C-t"))
+  (global-unset-key (kbd "C-y"))
 
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "C-t") nil)
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
     (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-    (define-key evil-insert-state-map (kbd "C-i h") 'insert-path-from-counsel-fzf-home)
-    (define-key evil-insert-state-map (kbd "C-i r") 'insert-path-from-counsel-fzf-root))
+    (define-key evil-insert-state-map (kbd "M-o h") 'insert-path-from-ivy-fzf-home)
+    (define-key evil-insert-state-map (kbd "M-o c") 'insert-path-from-ivy-fzf-project)
+    (define-key evil-insert-state-map (kbd "M-o r") 'insert-path-from-ivy-fzf-root))
 
   (defun my-org-cycle-or-yasnippet-expand ()
     "Expand Yasnippet or perform org-cycle based on the context."
     (interactive)
     ;; First, try to expand a Yasnippet if possible.
-    (unless (yas-expand)
-      ;; If no snippet was expanded, call org-cycle.
-      ;; This is a more liberal fallback, allowing org-cycle to handle its various contexts.
-      (org-cycle)))
+    (unless (and (bound-and-true-p yas-minor-mode) ; Check if YASnippet mode is active
+                (fboundp 'yas-expand)            ; Check if yas-expand is callable
+                (yas-expand))                     ; Try to expand a snippet
+      ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
+      (when (eq major-mode 'org-mode)
+        (org-cycle))))
 
   (with-eval-after-load 'evil
     (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))

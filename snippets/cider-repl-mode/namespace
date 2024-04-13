@@ -1,0 +1,4 @@
+# key: ns
+# name: namespace template
+# --
+(in-ns '$0)

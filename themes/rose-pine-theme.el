@@ -51,13 +51,14 @@
 
    ;; Miscellanious
     (set-face-attribute 'vertical-border nil :foreground rose-pine-subtext)
-    (set-face-attribute 'tab-bar nil :background "color1")
+    ;; (set-face-attribute 'tab-bar nil :background "color1")
+    (set-face-attribute 'tab-bar nil :background "#1d1f21")
     (set-face-attribute 'tab-bar nil :height 1.05)
     (set-face-attribute 'tab-bar nil
                     :font "NotoSansM Nerd Font Mono-12:weight=medium")
 
     (set-face-attribute 'tab-bar-tab nil
-			:font "NotoSansM Nerd Font Mono-12:weight=medium")
+        		:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
     ;; Avy
     `(avy-lead-face ((,class (:background ,rose-pine-bg2))))
