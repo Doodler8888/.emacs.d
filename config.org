@@ -33,6 +33,7 @@
   - [[#ivycounsel][Ivy/Counsel]]
   - [[#prescient][Prescient]]
   - [[#fzf][Fzf]]
+  - [[#helpful][Helpful]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
   - [[#dired-keybindings][Dired keybindings]]
@@ -719,30 +720,43 @@
 
 #+begin_src emacs-lisp
 
-  ;;   ;; Corfu setup
-  ;; (use-package corfu
-  ;;   :ensure t
-  ;;   :init
-  ;;   (global-corfu-mode)
-  ;;   :custom
-  ;;   (corfu-cycle t) ;; Allows cycling through candidates with TAB (and shift-TAB)
-  ;;   (corfu-auto t) ;; Enable auto completion
-  ;;   :bind
-  ;;   (:map corfu-map
-  ;;         ("TAB" . corfu-next)
-  ;;         ("S-TAB" . corfu-previous)))
+  ;; Corfu setup
+  (use-package corfu
+    :ensure t
+    :init
+    (global-corfu-mode)
+    :custom
+    ;; (corfu-cycle t) ;; Allows cycling through candidates with TAB (and shift-TAB)
+    (corfu-auto t) ;; Enable auto completion
+    (corfu-min-length 2)
+    ;; (tooltip-delay 0.01)
+    ;; (use-system-tooltips nil)
+    ;; (tooltip-hide-delay 60)
+    ;; (corfu-quit-no-match t)
+    ;; (corfu-preview-current nil)
+    ;; (corfu-on-exact-match 'insert)
+    :config
+    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+    (corfu-echo-mode)
+    (corfu-history-mode)
+    ;; :bind
+    ;; (:map corfu-map
+    ;;       ("TAB" . corfu-next)
+    ;;       ("S-TAB" . corfu-previous)))
+    )
 
-  ;; ;; Cape setup
-  ;; (use-package cape
-  ;;   :ensure t
-  ;;   :after corfu
-  ;;   :init
-  ;;   ;; Add various completion sources to the default completion-at-point-functions
-  ;;   (add-to-list 'completion-at-point-functions #'cape-file)
-  ;;   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  ;;   (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-  ;;   ;; More cape-* functions can be added here
-  ;;   )
+  ;; Cape setup
+  (use-package cape
+    :ensure t
+    :after corfu
+    :init
+    ;; Add various completion sources to the default completion-at-point-functions
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+    ;; More cape-* functions can be added here
+    )
 
 #+end_src
 
@@ -759,38 +773,38 @@
     ;;   (setq company-minimum-prefix-length 1)
     ;;   (setq company-idle-delay nil))
 
-  (use-package company
-    :init
-    (add-hook 'after-init-hook 'global-company-mode)
-    :config
-    (setq company-require-match nil)
-    ;; Set default company-mode settings
-    (setq company-minimum-prefix-length 3
-          company-idle-delay nil) ;; Disable automatic suggestions globally
+  ;; (use-package company
+  ;;   :init
+  ;;   (add-hook 'after-init-hook 'global-company-mode)
+  ;;   :config
+  ;;   (setq company-require-match nil)
+  ;;   ;; Set default company-mode settings
+  ;;   (setq company-minimum-prefix-length 3
+  ;;         company-idle-delay nil) ;; Disable automatic suggestions globally
 
-    ;; Add company-files to the list of backends
-    (add-to-list 'company-backends 'company-files)
+  ;;   ;; Add company-files to the list of backends
+  ;;   (add-to-list 'company-backends 'company-files)
 
-    ;; Function to enable automatic suggestions in eshell
-    (defun my-company-mode-setup-eshell ()
-      (setq-local company-idle-delay 0.1)) ;; Enable automatic suggestions in eshell
+  ;;   ;; Function to enable automatic suggestions in eshell
+  ;;   (defun my-company-mode-setup-eshell ()
+  ;;     (setq-local company-idle-delay 0.1)) ;; Enable automatic suggestions in eshell
 
-    ;; Add the setup function to eshell-mode-hook
-    (add-hook 'eshell-mode-hook 'my-company-mode-setup-eshell))
+  ;;   ;; Add the setup function to eshell-mode-hook
+  ;;   (add-hook 'eshell-mode-hook 'my-company-mode-setup-eshell))
 
-  (defun my/company-manual-complete ()
-    "Enable company-mode and call company-complete."
-    (interactive)
-    (unless company-mode
-      (company-mode 1))
-    (company-complete))
+  ;; (defun my/company-manual-complete ()
+  ;;   "Enable company-mode and call company-complete."
+  ;;   (interactive)
+  ;;   (unless company-mode
+  ;;     (company-mode 1))
+  ;;   (company-complete))
 
-  (with-eval-after-load 'evil
-    (defun my-evil-insert-state-setup ()
-      (unless (minibufferp)
-        (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
+  ;; (with-eval-after-load 'evil
+  ;;   (defun my-evil-insert-state-setup ()
+  ;;     (unless (minibufferp)
+  ;;       (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
 
-    (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
+  ;;   (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
 
 #+end_src
 
@@ -1014,6 +1028,7 @@
         ;; Else, try opening with sudo
         (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
 
+  
   (defun my-check-parent-directory-writable (dir)
     "Recursively check if any parent directory of DIR is writable."
     (when dir
@@ -1136,7 +1151,7 @@
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
                             (insert (expand-file-name f default-directory))))))
-  
+
 #+end_src
 
 ** Prescient
@@ -1212,6 +1227,21 @@
 
   (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
 
+#+end_src
+
+** Helpful
+
+#+begin_src emacs-lisp
+
+  (use-package helpful
+    :config
+    (global-set-key (kbd "C-h f") #'helpful-callable)
+    (global-set-key (kbd "C-h v") #'helpful-variable)
+    (global-set-key (kbd "C-h k") #'helpful-key)
+    (global-set-key (kbd "C-h x") #'helpful-command)
+    (setq counsel-describe-function-function #'helpful-callable)
+    (setq counsel-describe-variable-function #'helpful-variable))
+  
 #+end_src
 
 ** Hydra
@@ -1544,6 +1574,15 @@
 ** Eat
 
 #+begin_src emacs-lisp
+
+  ;; (use-package eat
+  ;;   :straight (emacs-eat :type git :host github :repo "kephale/emacs-eat")
+  ;;   :custom
+  ;;   (eat-kill-buffer-on-exit t)
+  ;;   :hook
+  ;;   ((eshell-mode . eat-eshell-visual-command-mode)
+  ;;   (eshell-mode . eat-eshell-mode)
+  ;;   (eat-mode . evil-insert-state)))
 
   ;; (let ((lisp-dir "~/.emacs.d/lisp")
   ;;       (emacs-eat-dir "~/.emacs.d/lisp/emacs-eat")
