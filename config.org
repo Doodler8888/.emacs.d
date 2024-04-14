@@ -2111,6 +2111,7 @@
             "\\*cider-repl.*"
             "\\*cider-doc.*"
             "\\*cider-error.*"
+            "\\*helpful.*"
             ;; "\\*eshell:.*"
             ;; "\\*Warnings\\*"
             ;; "\\*xref\\*"

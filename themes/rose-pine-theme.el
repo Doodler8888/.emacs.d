@@ -60,6 +60,12 @@
     (set-face-attribute 'tab-bar-tab nil
         		:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
+    ;; Ivy
+    `(ivy-current-match ((,class (:background ,rose-pine-bg2))))
+    `(ivy-modified-buffer ((,class (:foreground ,rose-pine-fg))))
+    `(ivy-modified-outside-buffer ((,class (:foreground ,rose-pine-fg))))
+    `(ivy-virtual ((,class (:foreground ,rose-pine-fg))))
+
     ;; Avy
     `(avy-lead-face ((,class (:background ,rose-pine-bg2))))
     `(avy-lead-face-0 ((,class (:background ,rose-pine-bg2))))
