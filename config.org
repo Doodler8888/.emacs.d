@@ -17,6 +17,7 @@
   - [[#transient][Transient]]
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
+  - [[#ispell][Ispell]]
   - [[#jinx][Jinx]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
@@ -671,6 +672,21 @@
   
 #+end_src
 
+** Ispell
+
+#+begin_src emacs-lisp
+
+  ;; (setq ispell-program-name "hunspell")
+  ;; (setq ispell-really-huspell t)
+
+  ;; ;; For hunspell, you might need to specify the dictionary file
+  ;; (setq ispell-local-dictionary "en_US")
+  ;; (setq ispell-local-dictionary-alist
+  ;;       '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)))
+
+  (setq ispell-alternate-dictionary "/usr/share/hunspell/en_US.dic")
+  
+#+end_src
 ** Jinx
 
 #+begin_src emacs-lisp
@@ -720,43 +736,42 @@
 
 #+begin_src emacs-lisp
 
-  ;; Corfu setup
   (use-package corfu
     :ensure t
     :init
     (global-corfu-mode)
     :custom
-    ;; (corfu-cycle t) ;; Allows cycling through candidates with TAB (and shift-TAB)
-    (corfu-auto t) ;; Enable auto completion
+    (corfu-auto nil)
     (corfu-min-length 2)
-    ;; (tooltip-delay 0.01)
-    ;; (use-system-tooltips nil)
-    ;; (tooltip-hide-delay 60)
-    ;; (corfu-quit-no-match t)
-    ;; (corfu-preview-current nil)
-    ;; (corfu-on-exact-match 'insert)
     :config
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
     (corfu-echo-mode)
     (corfu-history-mode)
-    ;; :bind
-    ;; (:map corfu-map
-    ;;       ("TAB" . corfu-next)
-    ;;       ("S-TAB" . corfu-previous)))
     )
+
+  (defun my-enable-corfu-in-eshell ()
+    "Enable Corfu auto-completion in Eshell."
+    (setq-local corfu-auto t))
+
+  (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
+
+  (with-eval-after-load 'evil
+    (evil-define-key 'insert global-map (kbd "M-n") #'completion-at-point))
+
+  (with-eval-after-load 'corfu
+  (define-key corfu-map (kbd "RET") nil))
 
   ;; Cape setup
   (use-package cape
     :ensure t
     :after corfu
     :init
-    ;; Add various completion sources to the default completion-at-point-functions
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-    ;; More cape-* functions can be added here
-    )
+    (setq completion-at-point-functions
+          (list #'cape-file
+                #'cape-dabbrev
+                #'cape-elisp-block)
+    ))
 
 #+end_src
 
@@ -948,17 +963,41 @@
 
   (setq eldoc-documentation-function (lambda () nil))
 
-  (with-eval-after-load 'evil
-    (with-eval-after-load 'cider
-      ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
-      (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-      (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+  ;; (with-eval-after-load 'evil
+  ;;   (with-eval-after-load 'cider
+  ;;     ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
+  ;;     (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+  ;;     (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
 
-      ;; Define C-M-x for visual state to evaluate the selected region
-      (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
-      (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region)))
+  ;;     ;; Define C-M-x for visual state to evaluate the selected region
+  ;;     (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
+  ;;     (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region)))
+
+  (with-eval-after-load 'evil
+  ;; CIDER
+  (with-eval-after-load 'cider
+    ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
+    (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+    (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+    ;; Define C-M-x for visual state to evaluate the selected region
+    (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
+    (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region))
+
+  ;; Emacs Lisp
+  (with-eval-after-load 'elisp-mode
+    (evil-define-key 'normal emacs-lisp-mode-map (kbd "C-M-x") 'eval-defun)
+    (evil-define-key 'visual emacs-lisp-mode-map (kbd "C-M-x") 'eval-region))
+
+  ;; Org Mode
+  (with-eval-after-load 'org
+    (evil-define-key 'normal org-mode-map (kbd "C-M-x") 'org-babel-execute-src-block)
+    ;; For visual state in org-mode, you might want to keep the default behavior
+    ;; or define a custom function to evaluate a region if needed.
+    ))
 
 #+end_src
+
+#+RESULTS:
 
 ** Projectile
 
@@ -2535,7 +2574,8 @@
     (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
     (org-mode-restart))
 
-  (define-key org-mode-map (kbd "M-o M-t") 'toggle-org-emphasis-markers)
+  (define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
+  (define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
 
   (add-hook 'org-mode-hook 'prettify-symbols-mode)
     (defun my-org-prettify-symbols ()

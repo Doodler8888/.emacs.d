@@ -1,0 +1,4 @@
+# key: graom
+# name: git remote add origin master
+# --
+git remote add origin master $0
