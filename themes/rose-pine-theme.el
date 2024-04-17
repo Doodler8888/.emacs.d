@@ -87,7 +87,7 @@
  
     ;; Dired mode
     `(dired-directory ((,class (:foreground ,rose-pine-gold))))
-    `(dired-symlink ((,class (:foreground ,rose-pine-foam))))
+    `(dired-symlink ((,class (:foreground ,rose-pine-subtext))))
     `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
     `(dired-marked ((,class (:foreground ,rose-pine-iris))))
  
@@ -116,6 +116,10 @@
  
     ;; Ivy
     `(ivy-current-match ((,class (:background ,rose-pine-subtext))))
+    `(ivy-minibuffer-match-face-1 ((,class (:background ,rose-pine-subtext))))
+    `(ivy-minibuffer-match-face-2 ((,class (:background ,rose-pine-subtext))))
+    `(ivy-minibuffer-match-face-3 ((,class (:background ,rose-pine-subtext))))
+    `(ivy-minibuffer-match-face-4 ((,class (:background ,rose-pine-subtext))))
     ;; `(ivy-minibuffer-match-face-1 ((,class (:foreground ,rose-pine-fg))))
     ;; `(ivy-minibuffer-match-face-2 ((,class (:foreground ,rose-pine-fg))))
     ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
@@ -142,6 +146,7 @@
     ;; Eshell
     `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
     `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
+    `(eshell-ls-readonly ((,class (:foreground ,rose-pine-subtext))))
  
     ;; More faces
     `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))

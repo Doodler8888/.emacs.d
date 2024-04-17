@@ -17,6 +17,7 @@
   - [[#transient][Transient]]
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
+  - [[#circe][Circe]]
   - [[#ispell][Ispell]]
   - [[#jinx][Jinx]]
   - [[#completion][Completion]]
@@ -363,7 +364,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org emacs-eat term ansi lsp-ui-imenu elpaca minibuffer))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer))
     (evil-collection-init))
 
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
@@ -548,6 +549,7 @@
 
       "ee" '(eshell :wk "Eshell")
       "en" '(eshell-new :wk "Spawn a new eshell buffer")
+      "ep" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
 
       ;; Evaluation
       "e" '(:ignore t :wk "Evaluate/Eshell")
@@ -651,16 +653,16 @@
               (setq font-lock-function (lambda (_) nil))
               (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
 
-  ;; Eshell
-  (require 'eshell) ; or use with-eval-after-load
+  ;; ;; Eshell
+  ;; (require 'eshell) ; or use with-eval-after-load
 
-  (add-hook 'eshell-before-prompt-hook
-            (lambda ()
-              (setq xterm-color-preserve-properties t)))
+  ;; (add-hook 'eshell-before-prompt-hook
+  ;;           (lambda ()
+  ;;             (setq xterm-color-preserve-properties t)))
 
-  (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
-  (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
-  (setenv "TERM" "xterm-256color")
+  ;; (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
+  ;; (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
+  ;; (setenv "TERM" "xterm-256color")
 
   ;; Compilation buffers
   (setq compilation-environment '("TERM=xterm-256color"))
@@ -669,6 +671,14 @@
     (funcall f proc (xterm-color-filter string)))
 
   (advice-add 'compilation-filter :around #'my/advice-compilation-filter)
+
+#+end_src
+
+** Circe
+
+#+begin_src emacs-lisp
+
+  (use-package circe)
   
 #+end_src
 
@@ -687,6 +697,7 @@
   (setq ispell-alternate-dictionary "/usr/share/hunspell/en_US.dic")
   
 #+end_src
+
 ** Jinx
 
 #+begin_src emacs-lisp
@@ -751,13 +762,18 @@
     )
 
   (defun my-enable-corfu-in-eshell ()
-    "Enable Corfu auto-completion in Eshell."
-    (setq-local corfu-auto t))
+    "Enable Corfu auto-completion in Eshell and set up completion functions."
+    (setq-local corfu-auto t)
+    (setq-local completion-at-point-functions
+                (list #'cape-file
+                      #'cape-dabbrev  ;; Dynamic abbreviations from buffer
+                      #'cape-keyword  ;; Keyword completion, if relevant
+                      #'pcomplete-completions-at-point)))
 
   (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
   (with-eval-after-load 'evil
-    (evil-define-key 'insert global-map (kbd "M-n") #'completion-at-point))
+    (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
 
   (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
@@ -1323,9 +1339,12 @@
         ;;           (wdired-change-to-wdired-mode)))
 
         (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/etc/")
+        (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
 
-        (setq delete-by-moving-to-trash t
-              trash-directory "~/.local/share/trash/")
+        ;; For some reason enbling trashing not only breaks deletion, but also
+        ;; copying and probably moving both in eshell and dired.
+       ;; (setq delete-by-moving-to-trash t
+       ;;       trash-directory "~/.local/share/trash/")
 
         (setq wdired-allow-to-create-files t)
         (setq wdired-allow-to-change-permissions t)
@@ -1454,27 +1473,27 @@
 
   (require 'tramp)
 
-  (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
-  (add-to-list 'tramp-connection-properties
-               (list (regexp-quote "/ssh:")
-                     "direct-async-process" t))
+  ;; (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
+  ;; (add-to-list 'tramp-connection-properties
+  ;;              (list (regexp-quote "/ssh:")
+  ;;                    "direct-async-process" t))
 
-  ;; cache file-name forever
-  (setq remote-file-name-inhibit-cache nil)
+  ;; ;; cache file-name forever
+  ;; (setq remote-file-name-inhibit-cache nil)
 
-  ;; make sure vc stuff is not making tramp slower
-  (setq vc-ignore-dir-regexp
-        (format "%s\\|%s"
-                vc-ignore-dir-regexp
-                tramp-file-name-regexp))
+  ;; ;; make sure vc stuff is not making tramp slower
+  ;; (setq vc-ignore-dir-regexp
+  ;;       (format "%s\\|%s"
+  ;;               vc-ignore-dir-regexp
+  ;;               tramp-file-name-regexp))
 
-  ;; not sure why we have this? just cargo-culting from an answer I saw
-  ;; online.
-  (setq tramp-verbose 1)
+  ;; ;; not sure why we have this? just cargo-culting from an answer I saw
+  ;; ;; online.
+  ;; (setq tramp-verbose 1)
 
-  ;; projectile has the fun side-effect of wanting to calculate the
-  ;; project name, which makes tramp oh-so-much-slower.
-  (setq projectile-mode-line "Projectile")
+  ;; ;; projectile has the fun side-effect of wanting to calculate the
+  ;; ;; project name, which makes tramp oh-so-much-slower.
+  ;; (setq projectile-mode-line "Projectile")
 
 #+end_src
 
@@ -1483,15 +1502,15 @@
 
 #+begin_src emacs-lisp
 
-    (setq eshell-destroy-buffer-when-process-dies t)
+  (setq eshell-destroy-buffer-when-process-dies t)
 
-    (use-package eshell-syntax-highlighting
-      :after esh-mode  ;; don't change to 'eshell-mode'
-      :config
-      (eshell-syntax-highlighting-global-mode +1))
+  (use-package eshell-syntax-highlighting
+    :after esh-mode  ;; don't change to 'eshell-mode'
+    :config
+    (eshell-syntax-highlighting-global-mode +1))
 
-    (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-    ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
+  (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
+  ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
 
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
@@ -1573,11 +1592,23 @@
         (erase-buffer)
         (eshell-send-input)))
 
-    (defun eshell-new ()
-      "Create a new Eshell buffer with a unique name."
-      (interactive)
-      (let ((eshell-buffer-name (generate-new-buffer-name "*eshell*")))
-        (eshell)))
+  (defun eshell-new ()
+    "Create a new Eshell buffer with a unique name and open it in the current window."
+    (interactive)
+    (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+      (eshell)
+      (switch-to-buffer eshell-buffer-name)))
+
+
+  (defun eshell-new-pop ()
+    "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
+    (interactive)
+    (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+      (eshell)
+      (switch-to-buffer eshell-buffer-name)
+      ;; Check if popper-mode is enabled and popper-toggle-type is available
+      (when (and (featurep 'popper) (bound-and-true-p popper-mode))
+        (popper-toggle-type eshell-buffer-name))))
 
 #+end_src
 
@@ -2124,83 +2155,85 @@
 
 #+begin_src emacs-lisp
 
-  (defun my/show-popper-echo-line ()
-    "Briefly toggle popper to show the echo line."
-    (interactive)
-    ;; Ensure popper-mode and popper-echo-mode are active
-    (when (and popper-mode popper-echo-mode)
-      ;; Toggle a popper window and immediately toggle it back
-      (popper-toggle-latest)
-      (popper-toggle-latest)))
+    (defun my/show-popper-echo-line ()
+      "Briefly toggle popper to show the echo line."
+      (interactive)
+      ;; Ensure popper-mode and popper-echo-mode are active
+      (when (and popper-mode popper-echo-mode)
+        ;; Toggle a popper window and immediately toggle it back
+        (popper-toggle-latest)
+        (popper-toggle-latest)))
 
-  (use-package popper
-    :bind (("M-`" . my/show-popper-echo-line))
-           ;; ("M-f"   . popper-toggle))
-           ;; ("M-~"   . popper-cycle))
-    :init
-    (setq popper-window-height 0.33)
-    (setq popper-reference-buffers
-          '("\\*Messages\\*"
-            "Output\\*$"
-            "\\*Async Shell Command\\*"
-            "*Flymake diagnostics.*"
-            "*Flycheck errors.*"
-            "\\*compilation\\*"
-            "\\*eshell\\*.*"
-            "\\*cider-repl.*"
-            "\\*cider-doc.*"
-            "\\*cider-error.*"
-            "\\*helpful.*"
-            ;; "\\*eshell:.*"
-            ;; "\\*Warnings\\*"
-            ;; "\\*xref\\*"
-            ;; "\\*Backtrace\\*"
-            "\\*eldoc\\*"
-            ;; "\\*Ement Notifications\\*"
-            ;; "Output\\*$"
-            ;; "\\*Dtache Shell Command\\*"
-            ;; "\\*mu4e-update\\*"
-            help-mode
-            compilation-mode))
-    (popper-mode +1)
-    (popper-echo-mode +1))
+    (use-package popper
+      :bind (("M-`" . my/show-popper-echo-line))
+             ;; ("M-f"   . popper-toggle))
+             ;; ("M-~"   . popper-cycle))
+      :init
+      (setq popper-window-height 0.33)
+      (setq popper-reference-buffers
+            '("\\*Messages\\*"
+              "Output\\*$"
+              "\\*Async Shell Command\\*"
+              "*Flymake diagnostics.*"
+              "*Flycheck errors.*"
+              "\\*compilation\\*"
+              "\\*eshell\\*.*"
+              "\\*persistent-shell\\*.*"
+              "\\*cider-repl.*"
+              "\\*cider-doc.*"
+              "\\*cider-error.*"
+              "\\*helpful.*"
+              "\\*man.*"
+              ;; "\\*eshell:.*"
+              ;; "\\*Warnings\\*"
+              ;; "\\*xref\\*"
+              ;; "\\*Backtrace\\*"
+              "\\*eldoc\\*"
+              ;; "\\*Ement Notifications\\*"
+              ;; "Output\\*$"
+              ;; "\\*Dtache Shell Command\\*"
+              ;; "\\*mu4e-update\\*"
+              help-mode
+              compilation-mode))
+      (popper-mode +1)
+      (popper-echo-mode +1))
 
-  (defun m-f-toggle-or-forward-word ()
-    "Toggle popper or move forward a word depending on context."
-    (interactive)
-    (if (window-minibuffer-p)
-        (forward-word)
-      (popper-toggle)))
+    (defun m-f-toggle-or-forward-word ()
+      "Toggle popper or move forward a word depending on context."
+      (interactive)
+      (if (window-minibuffer-p)
+          (forward-word)
+        (popper-toggle)))
 
-  (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+    (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
 
-  (defun popper-flymake-diagnostics ()
-    "Popper window specifically for Flymake diagnostics buffer."
-    (interactive)
-    (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-        (popper-toggle)
-      (flymake-show-buffer-diagnostics)))
+    (defun popper-flymake-diagnostics ()
+      "Popper window specifically for Flymake diagnostics buffer."
+      (interactive)
+      (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+          (popper-toggle)
+        (flymake-show-buffer-diagnostics)))
 
-  (defun popper-flycheck-diagnostics ()
-    "Popper window specifically for Flycheck errors buffer."
-    (interactive)
-    (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-        (popper-toggle)
-      (flycheck-list-errors)))
+    (defun popper-flycheck-diagnostics ()
+      "Popper window specifically for Flycheck errors buffer."
+      (interactive)
+      (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
+          (popper-toggle)
+        (flycheck-list-errors)))
 
-  ;; (defun fix-cycle ()
-  ;;   (interactive)
-  ;;   (popper-cycle 1))
+    ;; (defun fix-cycle ()
+    ;;   (interactive)
+    ;;   (popper-cycle 1))
 
-  ;; (defun fix-cycle-backwards ()
-  ;;   (interactive)
-  ;;   (popper-cycle-backwards -1))
+    ;; (defun fix-cycle-backwards ()
+    ;;   (interactive)
+    ;;   (popper-cycle-backwards -1))
 
-  (with-eval-after-load 'evil
-    ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-    ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
-    (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+    (with-eval-after-load 'evil
+      ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+      ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+      (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+      (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 #+end_src
 
@@ -2468,7 +2501,7 @@
 #+begin_src emacs-lisp
 
   ;; (org-link-minor-mode 1)
-  
+
   ;; (setq org-startup-folded t) 
   ;; (setq org-emphasis-alist
   ;;       ;; '(("*" bold)
@@ -2492,6 +2525,21 @@
     (end-of-line))
 
   (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+
+(defun create-list-in-region ()
+  "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+  (interactive)
+  (if (use-region-p)
+      (let* ((beg (region-beginning))
+             (end (region-end))
+             (region-text (buffer-substring beg end))
+             (lines (split-string region-text "\n")))
+        (delete-region beg end)
+        (when lines
+          (insert (concat "- " (car lines)))
+          (dolist (line (cdr lines))
+            (insert (concat "\n  " line)))    
+    (message "No region active")))))
 
   ;; (setq org-src-fontify-natively t)
 
@@ -2892,6 +2940,11 @@
     (interactive)
     (find-file "~/"))
 
+  (defun alias ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.emacs.d/eshell/aliases"))
+  
   (defun root ()
     "Open a specific file."
     (interactive)
@@ -2901,7 +2954,6 @@
     "Open a specific file."
     (interactive)
     (find-file "~/.emacs.d/themes/rose-pine-theme.el"))
-
 
   (defun trash ()
     "Open a specific file."

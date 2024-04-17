@@ -1,0 +1,4 @@
+# key: grv
+# name: git remote -v
+# --
+git remote -v $0

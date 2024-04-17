@@ -5,6 +5,7 @@ alias install eshell/sudo pacman -Syu $*
 alias take mkdir $* && cd $*
 alias rf rm -rf $*
 alias d cd $* && ls -la
+alias dot cd ~/.dotfiles
 alias menv python3 -m venv ./.venv
 alias senv source .venv/bin/activate
 alias denv deactivate
@@ -21,5 +22,6 @@ alias gc git commit $*
 alias gp git push $*
 alias gpu git push -u $*
 alias gra git remote add $*
-alias grc git rm --cached add $*
-alias grrc git rm -r --cached add $*
+alias grc git rm --cached $*
+alias grrc git rm -r --cached $*
+alias clear eshell-clear-buffer
