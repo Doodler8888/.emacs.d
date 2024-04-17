@@ -763,12 +763,7 @@
 
   (defun my-enable-corfu-in-eshell ()
     "Enable Corfu auto-completion in Eshell and set up completion functions."
-    (setq-local corfu-auto t)
-    (setq-local completion-at-point-functions
-                (list #'cape-file
-                      #'cape-dabbrev  ;; Dynamic abbreviations from buffer
-                      #'cape-keyword  ;; Keyword completion, if relevant
-                      #'pcomplete-completions-at-point)))
+    (setq-local corfu-auto t))
 
   (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
@@ -1585,12 +1580,20 @@
     ;; (setq password-cache-expiry 10)
     ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
 
-    (defun eshell-clear-buffer ()
-      "Clear the current Eshell buffer."
-      (interactive)
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (eshell-send-input)))
+(defun eshell-clear-buffer ()
+  "Clear the current Eshell buffer."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    ;; Move to the beginning of the buffer
+    (goto-char (point-min))
+    ;; Reinsert the prompt at the correct position
+    (eshell-reset)))
+
+(with-eval-after-load 'eshell
+  (with-eval-after-load 'evil
+    (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
   (defun eshell-new ()
     "Create a new Eshell buffer with a unique name and open it in the current window."
@@ -1609,6 +1612,17 @@
       ;; Check if popper-mode is enabled and popper-toggle-type is available
       (when (and (featurep 'popper) (bound-and-true-p popper-mode))
         (popper-toggle-type eshell-buffer-name))))
+
+  (defun eshell-expand-filename-at-point ()
+    "Expand the filename at point to its absolute path in eshell."
+    (interactive)
+    (let* ((filename (thing-at-point 'filename t))
+          (expanded (and filename (expand-file-name filename))))
+      (if expanded
+          (let ((bounds (bounds-of-thing-at-point 'filename)))
+            (delete-region (car bounds) (cdr bounds))
+            (insert expanded))
+        (message "No valid filename at point!"))))
 
 #+end_src
 
@@ -2748,9 +2762,10 @@
     (define-key evil-normal-state-map (kbd "C-t") nil)
     (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
     (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-    (define-key evil-insert-state-map (kbd "M-o h") 'insert-path-from-ivy-fzf-home)
-    (define-key evil-insert-state-map (kbd "M-o c") 'insert-path-from-ivy-fzf-project)
-    (define-key evil-insert-state-map (kbd "M-o r") 'insert-path-from-ivy-fzf-root))
+    (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point)
+    (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
+    (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
+    (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
   (defun my-org-cycle-or-yasnippet-expand ()
     "Expand Yasnippet or perform org-cycle based on the context."
