@@ -18,12 +18,14 @@
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
   - [[#circe][Circe]]
+  - [[#folds][Folds]]
   - [[#ispell][Ispell]]
   - [[#jinx][Jinx]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
+  - [[#symex][Symex]]
   - [[#paredit][Paredit]]
   - [[#hyperbole][Hyperbole]]
   - [[#zoxide][Zoxide]]
@@ -682,6 +684,22 @@
   
 #+end_src
 
+** Folds
+
+#+begin_src emacs-lisp
+
+  (use-package vimish-fold
+    :config
+    (vimish-fold-global-mode 1))
+
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "zf") 'vimish-fold)
+    (define-key evil-visual-state-map (kbd "zf") 'vimish-fold)
+    (define-key evil-normal-state-map (kbd "zt") 'vimish-fold-toggle)
+    (define-key evil-normal-state-map (kbd "zd") 'vimish-fold-delete))
+
+#+end_src
+
 ** Ispell
 
 #+begin_src emacs-lisp
@@ -920,6 +938,18 @@
 
 #+end_src
 
+** Symex
+
+#+begin_src emacs-lisp
+
+  ;; Initializing symex causing troubles with pressing parenthesis in the insert mode
+  ;; (use-package symex
+  ;;   :config
+  ;;   (symex-initialize)
+  ;;   (global-set-key (kbd "C-;") 'symex-mode-interface))  ; or whatever keybinding you like
+
+#+end_src
+
 ** Paredit
 
 #+begin_src emacs-lisp
@@ -932,25 +962,25 @@
 
 #+begin_src emacs-lisp
 
-  (defun my/hyperbole-disable-key-bindings-after-init-hook ()
-    ;; Undefine conflicting keys in the hyperbole mode map.
-    (define-key hyperbole-mode-map (kbd "M-RET") nil)
-    ;; Add more key unbindings as needed.
-  )
+  ;; (defun my/hyperbole-disable-key-bindings-after-init-hook ()
+  ;;   ;; Undefine conflicting keys in the hyperbole mode map.
+  ;;   (define-key hyperbole-mode-map (kbd "M-RET") nil)
+  ;;   ;; Add more key unbindings as needed.
+  ;; )
 
-  (use-package hyperbole
-    :ensure t
-    :config
-    ;; Add a custom after-init-hook to adjust Hyperbole's keybindings
-    ;; after its own initialization process has completed.
-    (add-hook 'after-init-hook #'my/hyperbole-disable-key-bindings-after-init-hook t))
+  ;; (use-package hyperbole
+  ;;   :ensure t
+  ;;   :config
+  ;;   ;; Add a custom after-init-hook to adjust Hyperbole's keybindings
+  ;;   ;; after its own initialization process has completed.
+  ;;   (add-hook 'after-init-hook #'my/hyperbole-disable-key-bindings-after-init-hook t))
 
-    (with-eval-after-load 'hyperbole
-      (define-key hyperbole-mode-map (kbd "M-o") nil))
+  ;;   (with-eval-after-load 'hyperbole
+  ;;     (define-key hyperbole-mode-map (kbd "M-o") nil))
 
-  (defal notes "/home/wurfkreuz/.secret_dotfiles/org/%s")
-  (defal clj_scr_Comments "/home/wurfkreuz/.secret_dotfiles/org/clojure/scripts/%s")
-  
+  ;; (defal notes "/home/wurfkreuz/.secret_dotfiles/org/%s")
+  ;; (defal clj_scr_Comments "/home/wurfkreuz/.secret_dotfiles/org/clojure/scripts/%s")
+
 #+end_src
 
 ** Zoxide
@@ -1060,7 +1090,7 @@
 
   (use-package embark
     :bind
-    ("C-;" . embark-act))
+    ("C-M-;" . embark-act))
 
 #+end_src
 
@@ -1580,20 +1610,20 @@
     ;; (setq password-cache-expiry 10)
     ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
 
-(defun eshell-clear-buffer ()
-  "Clear the current Eshell buffer."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (erase-buffer)
-    ;; Move to the beginning of the buffer
-    (goto-char (point-min))
-    ;; Reinsert the prompt at the correct position
-    (eshell-reset)))
+  (defun eshell-clear-buffer ()
+    "Clear the current Eshell buffer."
+    (interactive)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      ;; Move to the beginning of the buffer
+      (goto-char (point-min))
+      ;; Reinsert the prompt at the correct position
+      (eshell-reset)))
 
-(with-eval-after-load 'eshell
-  (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
-    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
+  (with-eval-after-load 'eshell
+    (with-eval-after-load 'evil
+      (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+      (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
   (defun eshell-new ()
     "Create a new Eshell buffer with a unique name and open it in the current window."
@@ -1623,6 +1653,15 @@
             (delete-region (car bounds) (cdr bounds))
             (insert expanded))
         (message "No valid filename at point!"))))
+
+  (defun my-eshell-prompt-function ()
+    "Generate the prompt string for Eshell. Prepend a newline if needed."
+    (let ((prompt (concat (if (and (not (bobp)) (/= (char-before) ?\n))
+                            "\n" "")
+                          "eshell $ ")))  ; Customize this prompt as needed
+    prompt))
+
+  (setq eshell-prompt-function 'my-eshell-prompt-function)
 
 #+end_src
 
@@ -2169,85 +2208,85 @@
 
 #+begin_src emacs-lisp
 
-    (defun my/show-popper-echo-line ()
-      "Briefly toggle popper to show the echo line."
-      (interactive)
-      ;; Ensure popper-mode and popper-echo-mode are active
-      (when (and popper-mode popper-echo-mode)
-        ;; Toggle a popper window and immediately toggle it back
-        (popper-toggle-latest)
-        (popper-toggle-latest)))
+  (defun my/show-popper-echo-line ()
+    "Briefly toggle popper to show the echo line."
+    (interactive)
+    ;; Ensure popper-mode and popper-echo-mode are active
+    (when (and popper-mode popper-echo-mode)
+      ;; Toggle a popper window and immediately toggle it back
+      (popper-toggle-latest)
+      (popper-toggle-latest)))
 
-    (use-package popper
-      :bind (("M-`" . my/show-popper-echo-line))
-             ;; ("M-f"   . popper-toggle))
-             ;; ("M-~"   . popper-cycle))
-      :init
-      (setq popper-window-height 0.33)
-      (setq popper-reference-buffers
-            '("\\*Messages\\*"
-              "Output\\*$"
-              "\\*Async Shell Command\\*"
-              "*Flymake diagnostics.*"
-              "*Flycheck errors.*"
-              "\\*compilation\\*"
-              "\\*eshell\\*.*"
-              "\\*persistent-shell\\*.*"
-              "\\*cider-repl.*"
-              "\\*cider-doc.*"
-              "\\*cider-error.*"
-              "\\*helpful.*"
-              "\\*man.*"
-              ;; "\\*eshell:.*"
-              ;; "\\*Warnings\\*"
-              ;; "\\*xref\\*"
-              ;; "\\*Backtrace\\*"
-              "\\*eldoc\\*"
-              ;; "\\*Ement Notifications\\*"
-              ;; "Output\\*$"
-              ;; "\\*Dtache Shell Command\\*"
-              ;; "\\*mu4e-update\\*"
-              help-mode
-              compilation-mode))
-      (popper-mode +1)
-      (popper-echo-mode +1))
+  (use-package popper
+    :bind (("M-`" . my/show-popper-echo-line))
+           ;; ("M-f"   . popper-toggle))
+           ;; ("M-~"   . popper-cycle))
+    :init
+    (setq popper-window-height 0.33)
+    (setq popper-reference-buffers
+          '("\\*Messages\\*"
+            "Output\\*$"
+            "\\*Async Shell Command\\*"
+            "*Flymake diagnostics.*"
+            "*Flycheck errors.*"
+            "\\*compilation\\*"
+            "\\*eshell\\*.*"
+            "\\*persistent-shell\\*.*"
+            "\\*cider-repl.*"
+            "\\*cider-doc.*"
+            "\\*cider-error.*"
+            "\\*helpful.*"
+            "\\*man.*"
+            ;; "\\*eshell:.*"
+            "\\*Warnings\\*"
+            ;; "\\*xref\\*"
+            ;; "\\*Backtrace\\*"
+            "\\*eldoc\\*"
+            ;; "\\*Ement Notifications\\*"
+            ;; "Output\\*$"
+            ;; "\\*Dtache Shell Command\\*"
+            ;; "\\*mu4e-update\\*"
+            help-mode
+            compilation-mode))
+    (popper-mode +1)
+    (popper-echo-mode +1))
 
-    (defun m-f-toggle-or-forward-word ()
-      "Toggle popper or move forward a word depending on context."
-      (interactive)
-      (if (window-minibuffer-p)
-          (forward-word)
-        (popper-toggle)))
+  (defun m-f-toggle-or-forward-word ()
+    "Toggle popper or move forward a word depending on context."
+    (interactive)
+    (if (window-minibuffer-p)
+        (forward-word)
+      (popper-toggle)))
 
-    (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+  (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
 
-    (defun popper-flymake-diagnostics ()
-      "Popper window specifically for Flymake diagnostics buffer."
-      (interactive)
-      (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-          (popper-toggle)
-        (flymake-show-buffer-diagnostics)))
+  (defun popper-flymake-diagnostics ()
+    "Popper window specifically for Flymake diagnostics buffer."
+    (interactive)
+    (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+        (popper-toggle)
+      (flymake-show-buffer-diagnostics)))
 
-    (defun popper-flycheck-diagnostics ()
-      "Popper window specifically for Flycheck errors buffer."
-      (interactive)
-      (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-          (popper-toggle)
-        (flycheck-list-errors)))
+  (defun popper-flycheck-diagnostics ()
+    "Popper window specifically for Flycheck errors buffer."
+    (interactive)
+    (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
+        (popper-toggle)
+      (flycheck-list-errors)))
 
-    ;; (defun fix-cycle ()
-    ;;   (interactive)
-    ;;   (popper-cycle 1))
+  ;; (defun fix-cycle ()
+  ;;   (interactive)
+  ;;   (popper-cycle 1))
 
-    ;; (defun fix-cycle-backwards ()
-    ;;   (interactive)
-    ;;   (popper-cycle-backwards -1))
+  ;; (defun fix-cycle-backwards ()
+  ;;   (interactive)
+  ;;   (popper-cycle-backwards -1))
 
-    (with-eval-after-load 'evil
-      ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-      ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-      (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
-      (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+  (with-eval-after-load 'evil
+    ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+    ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+    (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+    (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 #+end_src
 
@@ -2335,6 +2374,7 @@
     (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
 
   (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
+  (add-hook 'go-ts-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
 
   ;; (use-package flycheck-clj-kondo)
 

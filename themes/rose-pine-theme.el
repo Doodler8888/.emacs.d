@@ -110,6 +110,9 @@
     `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
     `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
  
+    ;; Vimish mode
+    `(vimish-fold-overlay ((,class (:background ,rose-pine-bg2))))
+
     ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
     ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
     ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
