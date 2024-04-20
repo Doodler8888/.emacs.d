@@ -7,7 +7,6 @@ alias rf rm -rf $*
 alias d cd $* && ls -la
 alias dot cd ~/.dotfiles
 alias menv python3 -m venv ./.venv
-alias senv source .venv/bin/activate
 alias denv deactivate
 alias tree exa -T
 alias sst eshell/sudo systemctl start $*

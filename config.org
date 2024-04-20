@@ -57,7 +57,8 @@
   - [[#transpose-frame][Transpose frame]]
   - [[#posframe][Posframe]]
   - [[#popper][Popper]]
-- [[#language-support][LANGUAGE SUPPORT]]
+- [[#language-support][Language Support]]
+  - [[#pyenv][Pyenv]]
   - [[#flymake][Flymake]]
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
@@ -269,7 +270,7 @@
   (setq scroll-step 1)
 
   (require 'midnight)
-  (midnight-delay-set 'midnight-delay "22:00")
+  (midnight-delay-set 'midnight-delay "10:00pm")
 
 #+end_src
 
@@ -645,26 +646,15 @@
   (setq comint-output-filter-functions
         (remove 'ansi-color-process-output comint-output-filter-functions))
 
-  ;; Comint
-  (add-hook 'shell-mode-hook
-            (lambda ()
-              ;; Disable font-locking in this buffer to improve performance
-              (font-lock-mode -1)
-              ;; Prevent font-locking from being re-enabled in this buffer
-              (make-local-variable 'font-lock-function)
-              (setq font-lock-function (lambda (_) nil))
-              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
-
-  ;; ;; Eshell
-  ;; (require 'eshell) ; or use with-eval-after-load
-
-  ;; (add-hook 'eshell-before-prompt-hook
+  ;; ;; Comint
+  ;; (add-hook 'shell-mode-hook
   ;;           (lambda ()
-  ;;             (setq xterm-color-preserve-properties t)))
-
-  ;; (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
-  ;; (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
-  ;; (setenv "TERM" "xterm-256color")
+  ;;             ;; Disable font-locking in this buffer to improve performance
+  ;;             (font-lock-mode -1)
+  ;;             ;; Prevent font-locking from being re-enabled in this buffer
+  ;;             (make-local-variable 'font-lock-function)
+  ;;             (setq font-lock-function (lambda (_) nil))
+  ;;             (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
 
   ;; Compilation buffers
   (setq compilation-environment '("TERM=xterm-256color"))
@@ -1654,14 +1644,27 @@
             (insert expanded))
         (message "No valid filename at point!"))))
 
-  (defun my-eshell-prompt-function ()
-    "Generate the prompt string for Eshell. Prepend a newline if needed."
-    (let ((prompt (concat (if (and (not (bobp)) (/= (char-before) ?\n))
-                            "\n" "")
-                          "eshell $ ")))  ; Customize this prompt as needed
-    prompt))
+  (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
 
-  (setq eshell-prompt-function 'my-eshell-prompt-function)
+  (defun senv ()
+    "Activate Python virtual environment located in ./.venv."
+    (interactive)
+    (let ((venv-path (expand-file-name "./.venv")))
+      (setenv "VIRTUAL_ENV" venv-path)
+      (setq exec-path (cons (concat venv-path "/bin") exec-path))
+      (setenv "PATH" (concat venv-path "/bin:" (getenv "PATH")))
+      (message "Activated virtual environment in %s" venv-path)))
+
+  (defun my-eshell-prompt ()
+    "Custom Eshell prompt that shows the current Python virtual environment if activated."
+    (concat
+    (if pyvenv-virtual-env-name
+        (format "[env] " pyvenv-virtual-env-name)  ; Display the active virtual environment name
+      "")
+    (eshell/pwd)  ; Display the current directory
+    (if (= (user-uid) 0) " # " " $ ")))  ; Display prompt character based on user privileges
+
+    (setq eshell-prompt-function 'my-eshell-prompt)
 
 #+end_src
 
@@ -2290,7 +2293,18 @@
 
 #+end_src
 
-* LANGUAGE SUPPORT
+* Language Support
+
+** Pyenv
+
+#+begin_src emacs-lisp
+
+  (use-package pyvenv
+    :config
+    (pyvenv-mode 1)  ; Enable pyvenv mode to manage Python virtual environments
+  )
+  
+#+end_src
 
 ** Flymake
 
@@ -2375,6 +2389,7 @@
 
   (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
   (add-hook 'go-ts-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
+  (add-hook 'python-ts-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
 
   ;; (use-package flycheck-clj-kondo)
 
@@ -2414,6 +2429,11 @@
                       :major-modes '(go-ts-mode) ; Corrected to go-mode
                       :server-id 'gopls)) ; Correct server-id for Go
 
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pyright")
+                      :major-modes '(python-ts-mode) 
+                      :server-id 'pyright))
+    
     ;; Register Clojure LSP client
     (lsp-register-client
      (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
