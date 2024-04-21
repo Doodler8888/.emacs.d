@@ -504,11 +504,11 @@
       ;; Fuzzy finder
       "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
       "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-      "ff" '(projectile-find-file :wk "Find file fuzzy finder with a git directory as an anchor")
-      "fd" '(projectile-find-dir :wk "Find file modified")
+      "ff" '(ivy-fzf-current :wk "Find file fuzzy finder with a git directory as an anchor")
+      ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
       "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
       "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
-      "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
+      ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
 
       ;; Session management
       "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
@@ -1098,7 +1098,7 @@
         ;; Else, try opening with sudo
         (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
 
-  
+
   (defun my-check-parent-directory-writable (dir)
     "Recursively check if any parent directory of DIR is writable."
     (when dir
@@ -1221,6 +1221,14 @@
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
                             (insert (expand-file-name f default-directory))))))
+
+  ;; (defun counsel-projectile-find-file-or-dir ()
+  ;;   "Use `counsel-find-file` to find a file or directory in the current projectile project."
+  ;;   (interactive)
+  ;;   (let ((project-root (projectile-project-root)))
+  ;;     (if project-root
+  ;;         (counsel-find-file project-root)
+  ;;       (message "Not in a projectile project!"))))
 
 #+end_src
 
@@ -1654,17 +1662,6 @@
       (setq exec-path (cons (concat venv-path "/bin") exec-path))
       (setenv "PATH" (concat venv-path "/bin:" (getenv "PATH")))
       (message "Activated virtual environment in %s" venv-path)))
-
-  (defun my-eshell-prompt ()
-    "Custom Eshell prompt that shows the current Python virtual environment if activated."
-    (concat
-    (if pyvenv-virtual-env-name
-        (format "[env] " pyvenv-virtual-env-name)  ; Display the active virtual environment name
-      "")
-    (eshell/pwd)  ; Display the current directory
-    (if (= (user-uid) 0) " # " " $ ")))  ; Display prompt character based on user privileges
-
-    (setq eshell-prompt-function 'my-eshell-prompt)
 
 #+end_src
 
@@ -2377,19 +2374,27 @@
 
   (add-hook 'after-init-hook 'my/set-flycheck-faces)
 
-  (use-package flycheck
-    :init
-    (add-hook 'after-init-hook #'global-flycheck-mode)
-    :config
-    (my/set-flycheck-faces))
+  ;; (use-package flycheck
+  ;;   :init
+  ;;   (add-hook 'after-init-hook #'global-flycheck-mode)
+  ;;   :config
+  ;;   (my/set-flycheck-faces))
 
-  (defun my/disable-flycheck-in-emacs-lisp-mode ()
-    "Disable flycheck in emacs-lisp-mode."
-    (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
+  ;; (defun my/disable-flycheck-in-emacs-lisp-mode ()
+  ;;   "Disable flycheck in emacs-lisp-mode."
+  ;;   (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
 
-  (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
-  (add-hook 'go-ts-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
-  (add-hook 'python-ts-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
+  ;; (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
+
+  ;; (defun my/disable-flycheck-for-specific-languages ()
+  ;;   "Disable specific Flycheck checkers based on the major mode."
+  ;;   (cond
+  ;;   ((derived-mode-p 'emacs-lisp-mode)
+  ;;     (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
+  ;;   ((derived-mode-p 'python-mode)
+  ;;     (setq-local flycheck-disabled-checkers '(python-pylint python-pycompile)))
+  ;;   ((derived-mode-p 'go-mode)
+  ;;     (setq-local flycheck-disabled-checkers '(go-gofmt go-golint go-vet go-build go-test go-errcheck)))))
 
   ;; (use-package flycheck-clj-kondo)
 
@@ -2417,8 +2422,9 @@
   (use-package lsp-mode
     :commands lsp
     :hook ((go-ts-mode . lsp)
-           (clojure-ts-mode . lsp))
-           ;; (raku-mode . lsp))
+           (clojure-ts-mode . lsp)
+           (python-ts-mode . lsp))
+    ;; (raku-mode . lsp))
     :init
     (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
     (setq lsp-lens-enable nil)
@@ -2428,11 +2434,13 @@
      (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
                       :major-modes '(go-ts-mode) ; Corrected to go-mode
                       :server-id 'gopls)) ; Correct server-id for Go
-
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pyright")
-                      :major-modes '(python-ts-mode) 
-                      :server-id 'pyright))
+    
+    ;; Register Python LSP client
+    ;; (setq lsp-pylsp-plugins-flake8-enabled t)
+    ;; (lsp-register-client
+    ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
+    ;;                   :major-modes '(python-ts-mode)
+    ;;                   :server-id 'pylsp))
     
     ;; Register Clojure LSP client
     (lsp-register-client
@@ -2471,89 +2479,105 @@
           lsp-eldoc-render-all nil
           lsp-signature-render-documentation nil))
 
-    ;; (use-package lsp-ui
-    ;;   :after lsp-mode
-    ;;   :config
-    ;;   (setq lsp-ui-sideline-enable t
-    ;;         lsp-ui-sideline-show-diagnostics t
-    ;;         lsp-ui-sideline-show-hover t
-    ;;         lsp-ui-sideline-show-code-actions t
-    ;;         lsp-ui-doc-enable t
-    ;;         lsp-ui-doc-position 'top
-    ;;         lsp-ui-doc-include-signature t
-    ;;         lsp-ui-peek-enable t
-    ;;         lsp-ui-imenu-enable t)
-    ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode)))
+  (use-package lsp-pyright
+    :ensure t
+    :hook (python-ts-mode . (lambda ()
+                              (require 'lsp-pyright)
+                              (lsp-deferred)))  ; Use lsp-deferred to start the server after the buffer is loaded
+    :init
+    ;; Modify the command to start the server
+    (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
 
-    ;; (use-package lsp-mode
-    ;; ;; :commands (lsp lsp-deferred)
-    ;; :init
-    ;; ;; (setenv "LSP_USE_PLISTS" "1")
-    ;; ;; Increase the amount of data emacs reads from processes
-    ;; ;; (setq read-process-output-max (* 3 1024 1024))
-    ;; ;; (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
-    ;; ;;                                 "--clang-tidy"
-    ;; ;;                                 "--enable-config"))
-    ;; ;; Small speedups
-    ;; ;; (setopt lsp-log-max 0)
-    ;; ;; (setopt lsp-log-io nil)
-    ;; ;; General lsp-mode settings
-    ;; ;; (setq ;; lsp-completion-provider :none
-    ;;       ;; lsp-enable-snippet t
-    ;;       ;; lsp-enable-on-type-formatting nil
-    ;;       ;; lsp-enable-indentation nil
-    ;;       ;; lsp-diagnostics-provider :flymake
-    ;;       ;; lsp-keymap-prefix "C-x L"
-    ;;       ;; lsp-eldoc-render-all t)
-    ;; ;; to enable the lenses
-    ;; ;; (add-hook 'lsp-mode-hook #'lsp-lens-mode)
-    ;; ;; (add-hook 'lsp-completion-mode-hook
-    ;; ;;           (lambda ()
-    ;; ;;             (setf (alist-get 'lsp-capf completion-category-defaults)
-    ;; ;;                   '((styles . (orderless))))))
+  (defun my/disable-python-flymake ()
+  "Disable default Python Flymake checker."
+  (setq-local flymake-diagnostic-functions
+              (remove 'python-flymake flymake-diagnostic-functions)))
 
-    ;; :config
-    ;; (lsp-register-client
-    ;; (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-    ;;                 :major-modes '(go-mode)
-    ;;                 :server-id 'gopls))
+  (add-hook 'python-ts-mode-hook #'my/disable-python-flymake)
 
-    ;; (use-package lsp-ui
-    ;;   :after lsp
-    ;;   :init
-    ;;   (setq lsp-ui-sideline-show-code-actions t)
-    ;;   (setq lsp-ui-sideline-show-diagnostics t))
-    ;; )
+  ;; (use-package lsp-ui
+  ;;   :after lsp-mode
+  ;;   :config
+  ;;   (setq lsp-ui-sideline-enable t
+  ;;         lsp-ui-sideline-show-diagnostics t
+  ;;         lsp-ui-sideline-show-hover t
+  ;;         lsp-ui-sideline-show-code-actions t
+  ;;         lsp-ui-doc-enable t
+  ;;         lsp-ui-doc-position 'top
+  ;;         lsp-ui-doc-include-signature t
+  ;;         lsp-ui-peek-enable t
+  ;;         lsp-ui-imenu-enable t)
+  ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode)))
 
-    ;; (use-package lsp-ui
-    ;;   :after lsp-mode
-    ;;   :init
-    ;;   (setq lsp-ui-sideline-show-code-actions t)
-    ;;   (setq lsp-ui-sideline-show-diagnostics t))
-    ;;   ;; :custom
-    ;;   ;; (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
-    ;;   ;; (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
-    ;;   :hook (lsp-mode . lsp-ui-mode))
+  ;; (use-package lsp-mode
+  ;; ;; :commands (lsp lsp-deferred)
+  ;; :init
+  ;; ;; (setenv "LSP_USE_PLISTS" "1")
+  ;; ;; Increase the amount of data emacs reads from processes
+  ;; ;; (setq read-process-output-max (* 3 1024 1024))
+  ;; ;; (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
+  ;; ;;                                 "--clang-tidy"
+  ;; ;;                                 "--enable-config"))
+  ;; ;; Small speedups
+  ;; ;; (setopt lsp-log-max 0)
+  ;; ;; (setopt lsp-log-io nil)
+  ;; ;; General lsp-mode settings
+  ;; ;; (setq ;; lsp-completion-provider :none
+  ;;       ;; lsp-enable-snippet t
+  ;;       ;; lsp-enable-on-type-formatting nil
+  ;;       ;; lsp-enable-indentation nil
+  ;;       ;; lsp-diagnostics-provider :flymake
+  ;;       ;; lsp-keymap-prefix "C-x L"
+  ;;       ;; lsp-eldoc-render-all t)
+  ;; ;; to enable the lenses
+  ;; ;; (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+  ;; ;; (add-hook 'lsp-completion-mode-hook
+  ;; ;;           (lambda ()
+  ;; ;;             (setf (alist-get 'lsp-capf completion-category-defaults)
+  ;; ;;                   '((styles . (orderless))))))
 
-    ;; ;; (defun my/lsp-ui-doc-hide ()
-    ;; ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
-    ;; ;;     (lsp-ui-doc-hide)))
+  ;; :config
+  ;; (lsp-register-client
+  ;; (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+  ;;                 :major-modes '(go-mode)
+  ;;                 :server-id 'gopls))
 
-    ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
+  ;; (use-package lsp-ui
+  ;;   :after lsp
+  ;;   :init
+  ;;   (setq lsp-ui-sideline-show-code-actions t)
+  ;;   (setq lsp-ui-sideline-show-diagnostics t))
+  ;; )
 
-    ;; (use-package lsp-haskell
-    ;;   :ensure t
-    ;;   :init
-    ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-    ;;   :after lsp
-    ;;   :config
-    ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-    ;;   )
+  ;; (use-package lsp-ui
+  ;;   :after lsp-mode
+  ;;   :init
+  ;;   (setq lsp-ui-sideline-show-code-actions t)
+  ;;   (setq lsp-ui-sideline-show-diagnostics t))
+  ;;   ;; :custom
+  ;;   ;; (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
+  ;;   ;; (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
+  ;;   :hook (lsp-mode . lsp-ui-mode))
 
-    ;;   (use-package corfu
-    ;;       :ensure t
-    ;;       :bind (("C-." . corfu-next)
-    ;;              ("C-," . corfu-prev)))
+  ;; ;; (defun my/lsp-ui-doc-hide ()
+  ;; ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
+  ;; ;;     (lsp-ui-doc-hide)))
+
+  ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
+
+  ;; (use-package lsp-haskell
+  ;;   :ensure t
+  ;;   :init
+  ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+  ;;   :after lsp
+  ;;   :config
+  ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
+  ;;   )
+
+  ;;   (use-package corfu
+  ;;       :ensure t
+  ;;       :bind (("C-." . corfu-next)
+  ;;              ("C-," . corfu-prev)))
 
 #+end_src
 

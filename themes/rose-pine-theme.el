@@ -109,6 +109,9 @@
     `(org-date ((,class (:foreground ,rose-pine-gold))))
     `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
     `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
+
+    ;; Python ts mode
+    `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))
  
     ;; Vimish mode
     `(vimish-fold-overlay ((,class (:background ,rose-pine-bg2))))
