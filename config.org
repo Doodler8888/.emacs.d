@@ -3100,5 +3100,10 @@
     "Open a specific file."
     (interactive)
     (find-file "/usr/local/bin"))
+
+  (defun books ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/Downloads/books"))
   
 #+end_src
