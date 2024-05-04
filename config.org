@@ -502,7 +502,7 @@
     (w/leader-keys
 
       ;; Fuzzy finder
-      "fb" '(counsel-switch-buffer :wk "Choose and switch to an active buffer")
+      "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
       "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
       "ff" '(ivy-fzf-current :wk "Find file fuzzy finder with a git directory as an anchor")
       ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
@@ -532,7 +532,9 @@
 
       ;; Windows
       "w"  'hydra-window-size/body
-      "bc" '(kill-buffer :wk "Close selecetd buffer")
+
+      ;; Buffers
+      "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
       "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
       ;; Popper
@@ -1088,25 +1090,24 @@
 
 #+begin_src emacs-lisp
 
-  (defun my-find-file-sudo-advice (orig-fun &rest args)
-    "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
-    (let ((file (car args)))
-      (if (or (file-directory-p file) ; Check if it's a directory
-              (file-writable-p file) ; or if it's writable
-              (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
-          (apply orig-fun args) ; then just open it normally
-        ;; Else, try opening with sudo
-        (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
+  ;; (defun my-find-file-sudo-advice (orig-fun &rest args)
+  ;;   "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
+  ;;   (let ((file (car args)))
+  ;;     (if (or (file-directory-p file) ; Check if it's a directory
+  ;;             (file-writable-p file) ; or if it's writable
+  ;;             (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
+  ;;         (apply orig-fun args) ; then just open it normally
+  ;;       ;; Else, try opening with sudo
+  ;;       (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
 
+  ;; (advice-add 'find-file :around #'my-find-file-sudo-advice)
 
-  (defun my-check-parent-directory-writable (dir)
-    "Recursively check if any parent directory of DIR is writable."
-    (when dir
-      (or (file-writable-p dir)
-          (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
-            (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
-
-  (advice-add 'find-file :around #'my-find-file-sudo-advice)
+  ;; (defun my-check-parent-directory-writable (dir)
+  ;;   "Recursively check if any parent directory of DIR is writable."
+  ;;   (when dir
+  ;;     (or (file-writable-p dir)
+  ;;         (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
+  ;;           (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
 
     (use-package counsel
       :after ivy
@@ -2620,55 +2621,55 @@
 
 #+begin_src emacs-lisp
 
-  ;; (org-link-minor-mode 1)
+    ;; (org-link-minor-mode 1)
 
-  ;; (setq org-startup-folded t) 
-  ;; (setq org-emphasis-alist
-  ;;       ;; '(("*" bold)
-  ;;         '(("/" italic)))
-  ;;         ;; ("_" underline)
-  ;;         ;; ("=" org-verbatim verbatim)
-  ;;         ;; ("~" org-code verbatim)
-  ;;         ;; ("+" org-strike-through t)))
-  ;;   (define-prefix-command 'my-prefix-map)
+    ;; (setq org-startup-folded t) 
+    ;; (setq org-emphasis-alist
+    ;;       ;; '(("*" bold)
+    ;;         '(("/" italic)))
+    ;;         ;; ("_" underline)
+    ;;         ;; ("=" org-verbatim verbatim)
+    ;;         ;; ("~" org-code verbatim)
+    ;;         ;; ("+" org-strike-through t)))
+    ;;   (define-prefix-command 'my-prefix-map)
 
-  (defun todo ()
-    "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
+    ;; (defun todo ()
+    ;;   "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
+    ;;   (interactive)
+    ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
+
+    (defun org-insert-top-level-heading ()
+      "Insert a new top-level heading with two empty lines before it."
+      (interactive)
+      (end-of-line)
+      (insert "\n\n\n* ")
+      (end-of-line))
+
+    (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+
+  (defun create-list-in-region ()
+    "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
     (interactive)
-    (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
+    (if (use-region-p)
+        (let* ((beg (region-beginning))
+               (end (region-end))
+               (region-text (buffer-substring beg end))
+               (lines (split-string region-text "\n")))
+          (delete-region beg end)
+          (when lines
+            (insert (concat "- " (car lines)))
+            (dolist (line (cdr lines))
+              (insert (concat "\n  " line)))    
+      (message "No region active")))))
 
-  (defun org-insert-top-level-heading ()
-    "Insert a new top-level heading with two empty lines before it."
-    (interactive)
-    (end-of-line)
-    (insert "\n\n\n* ")
-    (end-of-line))
+    ;; (setq org-src-fontify-natively t)
 
-  (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+    ;; (defun my/org-show-all-and-refresh ()
+    ;;   "Expand all blocks and refresh fontification."
+    ;;   (org-show-all '(blocks))
+    ;;   (redisplay t))
 
-(defun create-list-in-region ()
-  "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
-  (interactive)
-  (if (use-region-p)
-      (let* ((beg (region-beginning))
-             (end (region-end))
-             (region-text (buffer-substring beg end))
-             (lines (split-string region-text "\n")))
-        (delete-region beg end)
-        (when lines
-          (insert (concat "- " (car lines)))
-          (dolist (line (cdr lines))
-            (insert (concat "\n  " line)))    
-    (message "No region active")))))
-
-  ;; (setq org-src-fontify-natively t)
-
-  ;; (defun my/org-show-all-and-refresh ()
-  ;;   "Expand all blocks and refresh fontification."
-  ;;   (org-show-all '(blocks))
-  ;;   (redisplay t))
-
-  ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
+    ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
 
 #+end_src
 
@@ -2693,7 +2694,7 @@
 
   (use-package org-drill
     :config
-    (setq org-drill-maximum-items-per-session 20))
+    (setq org-drill-maximum-items-per-session 100))
 
 #+end_src
 

@@ -33,7 +33,7 @@
 
    ;; Font lock
    `(font-lock-builtin-face ((,class (:foreground ,rose-pine-love))))
-   `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
+   ;; `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
    `(font-lock-function-name-face ((,class (:foreground ,rose-pine-rose))))
    `(font-lock-keyword-face ((,class (:foreground ,rose-pine-pine))))
    `(font-lock-string-face ((,class (:foreground ,rose-pine-gold))))
@@ -91,7 +91,7 @@
     `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
     `(dired-marked ((,class (:foreground ,rose-pine-iris))))
  
-    ;; Anisble mode
+    ;; Ansible mode
     `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
     `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
  
@@ -112,6 +112,7 @@
 
     ;; Python ts mode
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))
+    `(font-lock-constant-face ((,class (:foreground ,rose-pine-foam))))
  
     ;; Vimish mode
     `(vimish-fold-overlay ((,class (:background ,rose-pine-bg2))))
