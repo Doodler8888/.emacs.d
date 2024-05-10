@@ -1367,8 +1367,8 @@
 
     ;;    ;; For some reason enbling trashing not only breaks deletion, but also
     ;;    ;; copying and probably moving both in eshell and dired.
-      (setq delete-by-moving-to-trash t)
-    ;;         trash-directory "~/.local/share/trash/")
+      (setq delete-by-moving-to-trash t
+            trash-directory "~/.local/share/trash/")
 
         (setq wdired-allow-to-create-files t)
         (setq wdired-allow-to-change-permissions t)
@@ -2638,7 +2638,7 @@
     ;;   (interactive)
     ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
 
-    (defun org-insert-top-level-heading ()
+  (defun org-insert-top-level-heading ()
       "Insert a new top-level heading with two empty lines before it."
       (interactive)
       (end-of-line)
@@ -2647,20 +2647,46 @@
 
     (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
 
+  ;; (defun create-list-in-region ()
+  ;;   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+  ;;   (interactive)
+  ;;   (if (use-region-p)
+  ;;       (let* ((beg (region-beginning))
+  ;;              (end (region-end))
+  ;;              (region-text (buffer-substring beg end))
+  ;;              (lines (split-string region-text "\n")))
+  ;;         (delete-region beg end)
+  ;;         (when lines
+  ;;           (insert (concat "- " (car lines)))
+  ;;           (dolist (line (cdr lines))
+  ;;             (insert (concat "\n  " line)))    
+  ;;     (message "No region active")))))
+
   (defun create-list-in-region ()
-    "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
-    (interactive)
-    (if (use-region-p)
-        (let* ((beg (region-beginning))
-               (end (region-end))
-               (region-text (buffer-substring beg end))
-               (lines (split-string region-text "\n")))
-          (delete-region beg end)
-          (when lines
-            (insert (concat "- " (car lines)))
-            (dolist (line (cdr lines))
-              (insert (concat "\n  " line)))    
-      (message "No region active")))))
+  "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+  (interactive)
+  (if (use-region-p)
+      (let* ((beg (region-beginning))
+             (end (region-end))
+             ;; Adjust `end` to exclude the newline at the end of the selection if present.
+             (end (if (and (> end beg)
+                           (save-excursion
+                             (goto-char end)
+                             (beginning-of-line)
+                             (<= (point) end)))
+                      (progn
+                        (goto-char end)
+                        (backward-char)
+                        (point))
+                    end))
+             (region-text (buffer-substring beg end))
+             (lines (split-string region-text "\n")))
+        (delete-region beg end)
+        (when lines
+          (insert (concat "- " (car lines)))
+          (dolist (line (cdr lines))
+            (insert (concat "\n  " line)))))
+    (message "No region active")))
 
     ;; (setq org-src-fontify-natively t)
 
@@ -2902,6 +2928,16 @@
 
 #+begin_src emacs-lisp
 
+  (defun copy-buffer-to-new-buffer ()
+    "Create a copy of the current buffer, placing the contents in a new named buffer."
+    (interactive)
+    (let ((content (buffer-string))  ; Get the content of the current buffer
+          (name (generate-new-buffer-name "BufferCopy")))  ; Generate a new buffer name
+      (switch-to-buffer name)  ; Create and switch to the new buffer
+      (insert content)  ; Insert the original content into the new buffer
+      (set-buffer-major-mode (other-buffer))  ; Set the major mode based on the original buffer
+      (message "Buffer copied to %s" name)))
+
   (defun print-commands-starting-with (input)
     "Print all Emacs commands starting with INPUT to a scratch buffer."
     (interactive "sInput: ")
@@ -3106,5 +3142,5 @@
     "Open a specific file."
     (interactive)
     (find-file "~/Downloads/books"))
-  
+
 #+end_src
