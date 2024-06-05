@@ -66,6 +66,7 @@
   - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
+  - [[#org-capture][Org capture]]
   - [[#org-download][Org download]]
   - [[#drill][Drill]]
   - [[#agenda][Agenda]]
@@ -530,6 +531,9 @@
       "tx" '(tab-bar-close-tab :wk "Close a tab")
       "tr" '(tab-bar-rename-tab :wk "Rename a tab")
 
+      ;; Org capture
+      "nn" '(org-capture :wk "Create a quick note")
+      
       ;; Windows
       "w"  'hydra-window-size/body
 
@@ -2699,6 +2703,20 @@
 
 #+end_src
 
+** Org capture
+
+#+begin_src emacs-lisp
+  
+  ;; Set the path to your Org notes file
+  (setq org-default-notes-file "/home/wurfkreuz/.secret_dotfiles/org/notes/quick_notes.org")
+
+  ;; Configure org-capture templates
+  (setq org-capture-templates
+        '(("n" "Note" plain (file org-default-notes-file)
+          "%?\nEntered on %U\n\n\n" :append t)))
+
+#+end_src
+
 ** Org download
 
 #+begin_src emacs-lisp
@@ -2886,6 +2904,9 @@
   (global-set-key (kbd "C-s C-s") 'swiper-isearch)
   (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
   (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
+  ;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
+  (define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
+  ;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
   (global-set-key (kbd "C-h M-f") 'describe-face)
 
   (global-unset-key (kbd "C-t"))
