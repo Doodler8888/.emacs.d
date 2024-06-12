@@ -532,7 +532,7 @@
       "tr" '(tab-bar-rename-tab :wk "Rename a tab")
 
       ;; Org capture
-      "nn" '(org-capture :wk "Create a quick note")
+      "n" '(org-capture :wk "Create a quick note")
       
       ;; Windows
       "w"  'hydra-window-size/body
@@ -2706,14 +2706,13 @@
 ** Org capture
 
 #+begin_src emacs-lisp
-  
+
   ;; Set the path to your Org notes file
   (setq org-default-notes-file "/home/wurfkreuz/.secret_dotfiles/org/notes/quick_notes.org")
 
-  ;; Configure org-capture templates
   (setq org-capture-templates
         '(("n" "Note" plain (file org-default-notes-file)
-          "%?\nEntered on %U\n\n\n" :append t)))
+          "%?\nEntered on %U\n" :append t :empty-lines-before 1)))
 
 #+end_src
 
@@ -3165,3 +3164,9 @@
     (find-file "~/Downloads/books"))
 
 #+end_src
+
+
+
+
+
+

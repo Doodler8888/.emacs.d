@@ -4,7 +4,7 @@
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
 (("org-capture-last-stored"
  (filename . "~/.secret_dotfiles/org/notes/quick_notes.org")
- (front-context-string . "** Second note \n")
- (rear-context-string . "][Org capture]]\n") (position . 509)
- (last-modified 26208 1553 966685 266000))
+ (front-context-string . "net nodie\nEntere")
+ (rear-context-string . "-05 Wed 10:03]\n\n") (position . 51)
+ (last-modified 26208 3539 124339 266000))
 )
