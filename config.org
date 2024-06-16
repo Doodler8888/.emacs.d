@@ -58,7 +58,7 @@
   - [[#posframe][Posframe]]
   - [[#popper][Popper]]
 - [[#language-support][Language Support]]
-  - [[#pyenv][Pyenv]]
+  - [[#python][Python]]
   - [[#flymake][Flymake]]
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
@@ -1659,14 +1659,14 @@
 
    (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
 
-   (defun senv ()
-     "Activate Python virtual environment located in ./.venv."
-     (interactive)
-     (let ((venv-path (expand-file-name "./.venv")))
-       (setenv "VIRTUAL_ENV" venv-path)
-       (setq exec-path (cons (concat venv-path "/bin") exec-path))
-       (setenv "PATH" (concat venv-path "/bin:" (getenv "PATH")))
-       (message "Activated virtual environment in %s" venv-path)))
+   ;; (defun senv ()
+   ;;   "Activate Python virtual environment located in ./.venv."
+   ;;   (interactive)
+   ;;   (let ((venv-path (expand-file-name "./.venv")))
+   ;;     (setenv "VIRTUAL_ENV" venv-path)
+   ;;     (setq exec-path (cons (concat venv-path "/bin") exec-path))
+   ;;     (setenv "PATH" (concat venv-path "/bin:" (getenv "PATH")))
+   ;;     (message "Activated virtual environment in %s" venv-path)))
 
   (connection-local-set-profile-variables
   'remote-trash-directory
@@ -2305,15 +2305,17 @@
 
 * Language Support
 
-** Pyenv
+** Python
 
 #+begin_src emacs-lisp
 
-  (use-package pyvenv
-    :config
-    (pyvenv-mode 1)  ; Enable pyvenv mode to manage Python virtual environments
-  )
-  
+    (use-package virtualenvwrapper
+      :config
+      (venv-initialize-interactive-shells) ; for shell-mode
+      (venv-initialize-eshell) ; for eshell
+      (setq venv-location "/home/wurfkreuz/.projects/server-python/.venv")
+    )
+
 #+end_src
 
 ** Flymake
