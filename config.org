@@ -368,7 +368,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy))
     (evil-collection-init))
 
   (add-hook 'text-mode-hook 'display-line-numbers-mode)
@@ -2249,7 +2249,7 @@
             "\\*cider-doc.*"
             "\\*cider-error.*"
             "\\*helpful.*"
-            "\\*man.*"
+            ;; "\\*man.*"
             ;; "\\*eshell:.*"
             "\\*Warnings\\*"
             ;; "\\*xref\\*"
@@ -3166,9 +3166,3 @@
     (find-file "~/Downloads/books"))
 
 #+end_src
-
-
-
-
-
-
