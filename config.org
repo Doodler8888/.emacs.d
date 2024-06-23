@@ -761,6 +761,7 @@
 
 #+begin_src emacs-lisp
 
+  ;; Corfu setup
   (use-package corfu
     :ensure t
     :init
@@ -772,20 +773,20 @@
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
     (corfu-echo-mode)
-    (corfu-history-mode)
-    )
+    (corfu-history-mode))
 
-  (defun my-enable-corfu-in-eshell ()
-    "Enable Corfu auto-completion in Eshell and set up completion functions."
-    (setq-local corfu-auto t))
+  ;; (defun my-enable-corfu-in-eshell ()
+  ;;   "Enable Corfu auto-completion in Eshell and set up completion functions."
+  ;;   (setq-local corfu-auto t)
+  ;;   (add-to-list 'completion-at-point-functions #'my-eshell-chmod-completion))
 
-  (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
+  ;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
   (with-eval-after-load 'evil
     (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
 
   (with-eval-after-load 'corfu
-  (define-key corfu-map (kbd "RET") nil))
+    (define-key corfu-map (kbd "RET") nil))
 
   ;; Cape setup
   (use-package cape
@@ -795,8 +796,55 @@
     (setq completion-at-point-functions
           (list #'cape-file
                 #'cape-dabbrev
-                #'cape-elisp-block)
-    ))
+                #'cape-elisp-block)))
+
+  ;; ;; Define custom completion function for chmod
+  ;; (defun my-eshell-chmod-completion ()
+  ;;   "Provide completion for the `chmod` command in Eshell."
+  ;;   (when (and (eq major-mode 'eshell-mode)
+  ;;             (save-excursion
+  ;;               (eshell-bol)
+  ;;               (looking-at-p "chmod ")))
+  ;;     (let* ((point (point))
+  ;;           (begin (save-excursion (eshell-bol) (search-forward "chmod ") (point)))
+  ;;           (end (point))
+  ;;           (completions '("400" "500" "600" "644" "755" "777")))
+  ;;       (list begin end completions))))
+
+  (defun my-eshell-chmod-completion ()
+    "Provide dynamic completion for the `chmod` command in Eshell."
+    (when (and (eq major-mode 'eshell-mode)
+              (save-excursion
+                (eshell-bol)
+                (looking-at-p "chmod ")))
+      (let* ((point (point))
+            (begin (save-excursion (eshell-bol) (search-forward "chmod ") (point)))
+            (end (point))
+            (input (buffer-substring-no-properties begin end))
+            (initial-completions '("a" "g" "o" "u" "+" "-" "="))
+            (second-level-completions '("X" "g" "o" "r" "s" "t" "u" "w" "x"))
+            completions)
+        (setq completions
+              (cond
+              ;; Provide initial completions
+              ((string-match-p "\\`chmod +[agou+-=]*\\'" input)
+                initial-completions)
+              ;; Provide second level completions
+              ((string-match-p "\\`chmod +\\([agou+-=]+\\)$" input)
+                second-level-completions)
+              ;; Default case
+              (t
+                initial-completions)))
+        (list begin end completions))))
+
+  (defun my-enable-corfu-in-eshell ()
+    "Enable Corfu auto-completion in Eshell and set up completion functions."
+    (setq-local corfu-auto t)
+    (add-to-list 'completion-at-point-functions #'my-eshell-chmod-completion))
+
+  (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
+
+  (provide 'my-eshell-chmod-completion)
 
 #+end_src
 
@@ -1483,6 +1531,25 @@
         ;;   (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-toggle-bak-extension)
         ;;   (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-toggle-bak-extension))
 
+  (defun dired-next-line-preserve-column (arg)
+    "Move to the next line in Dired, preserving the current column position."
+    (interactive "p")
+    (let ((col (current-column)))
+      (dired-next-line arg)
+      (move-to-column col)))
+
+  (defun dired-previous-line-preserve-column (arg)
+    "Move to the previous line in Dired, preserving the current column position."
+    (interactive "p")
+    (let ((col (current-column)))
+      (dired-previous-line arg)
+      (move-to-column col)))
+
+  (with-eval-after-load 'dired
+    (evil-define-key 'normal dired-mode-map
+      "j" 'dired-next-line-preserve-column
+      "k" 'dired-previous-line-preserve-column))
+
 #+end_src
 
 
@@ -1676,6 +1743,30 @@
   `(:application tramp :protocol "sudo" :machine ,system-name)
   'remote-trash-directory)
    
+#+end_src
+
+*** Custom completions
+
+#+begin_src emacs-lisp
+
+  ;; (defun chmod-completions ()
+  ;;   "Completion function for chmod command."
+  ;;   (when (and (eshell-looking-at-argument-p)
+  ;;              (looking-back "chmod\\s-+\\(.*\\)" (line-beginning-position)))
+  ;;     (let ((choices '("u" "g" "o" "a" "+" "-" "=" "r" "w" "x"
+  ;;       	       "0" "1" "2" "3" "4" "5" "6" "7")))
+  ;;       (list (match-beginning 1)
+  ;;             (point)
+  ;;             choices
+  ;;             :exclusive 'no))))
+
+  ;; (defun eshell-mode-hook-setup ()
+  ;;   "Set up eshell mode."
+  ;;   (add-hook 'pcomplete-try-first-hook
+  ;;             #'chmod-completions nil t))
+
+  ;; (add-hook 'eshell-mode-hook #'eshell-mode-hook-setup)
+
 #+end_src
 
 ** Async shell
