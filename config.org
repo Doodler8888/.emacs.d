@@ -503,6 +503,7 @@
     (w/leader-keys
 
       ;; Fuzzy finder
+      ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
       "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
       "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
       "ff" '(ivy-fzf-current :wk "Find file fuzzy finder with a git directory as an anchor")
@@ -543,6 +544,7 @@
 
       ;; Popper
       "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
+      "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
 
       "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
 
@@ -556,9 +558,9 @@
       "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
       "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
 
-      "ee" '(eshell :wk "Eshell")
+      ;; "ee" '(eshell :wk "Eshell")
       "en" '(eshell-new :wk "Spawn a new eshell buffer")
-      "ep" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
+      "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
 
       ;; Evaluation
       "e" '(:ignore t :wk "Evaluate/Eshell")
@@ -1597,154 +1599,178 @@
 
 #+begin_src emacs-lisp
 
-   (setq eshell-destroy-buffer-when-process-dies t)
+     (setq eshell-destroy-buffer-when-process-dies t)
 
-   (use-package eshell-syntax-highlighting
-     :after esh-mode  ;; don't change to 'eshell-mode'
-     :config
-     (eshell-syntax-highlighting-global-mode +1))
+     (use-package eshell-syntax-highlighting
+       :after esh-mode  ;; don't change to 'eshell-mode'
+       :config
+       (eshell-syntax-highlighting-global-mode +1))
 
-   (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-   ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
+     (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
+     ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
 
-   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
-         eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-         eshell-history-size 100000
-         eshell-buffer-maximum-lines 5000
-         ;; eshell-save-history-on-exit t
-           eshell-history-file-name "~/.emacs.d/eshell_history"
-           eshell-hist-ignoredups t
-           eshell-scroll-to-bottom-on-input t
-           eshell-destroy-buffer-when-process-dies t
-           eshell-banner-message ""
-           eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok" "bat"))
+     (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
+           eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
+           eshell-history-size 100000
+           eshell-buffer-maximum-lines 5000
+           ;; eshell-save-history-on-exit t
+             eshell-history-file-name "~/.emacs.d/eshell_history"
+             eshell-hist-ignoredups t
+             eshell-scroll-to-bottom-on-input t
+             eshell-destroy-buffer-when-process-dies t
+             eshell-banner-message ""
+             eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok" "bat"))
 
-     (add-hook 'eshell-mode-hook
-               (lambda ()
-                 (setq-local scroll-margin 0)))
+       (add-hook 'eshell-mode-hook
+                 (lambda ()
+                   (setq-local scroll-margin 0)))
+
+       (with-eval-after-load 'eshell
+         ;; Set eshell-save-history-on-exit to nil
+         (setq eshell-save-history-on-exit nil)
+
+         ;; Define eshell-append-history function
+         (defun eshell-append-history ()
+           "Call `eshell-write-history' with the `append' parameter set to `t'."
+           (when eshell-history-ring
+             (let ((newest-cmd-ring (make-ring 1)))
+               (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+               (let ((eshell-history-ring newest-cmd-ring))
+                 (eshell-write-history eshell-history-file-name t)))))
+
+       ;; Add eshell-append-history to eshell-pre-command-hook
+       (add-hook 'eshell-pre-command-hook #'eshell-append-history))
+
+       (defun eshell-insert-last-argument ()
+         "Insert the last argument of the previous command."
+         (interactive)
+         (let* ((last-command (eshell-previous-input-string 0))
+                (args (split-string-and-unquote last-command))
+                (last-arg (car (last args))))
+           (when last-arg
+             (insert last-arg))))
+
+       (defun setup-eshell-keys ()
+         (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+       ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+
+       (add-hook 'eshell-mode-hook 'setup-eshell-keys)
+
+       (with-eval-after-load 'evil
+         (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+         (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+
+       (defun eshell/edit (filename)
+         "Open FILENAME in the current buffer, using the current TRAMP address."
+         (interactive "sEnter the filename to edit: ")
+         ;; Extract the current TRAMP address from the Eshell buffer's default directory
+         (let ((tramp-address (file-remote-p default-directory)))
+           (if tramp-address
+               ;; If we're in a TRAMP directory, use the extracted address
+               (find-file (concat tramp-address filename))
+             ;; If not in a TRAMP directory, fall back to a default address or prompt the user
+             (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
+             ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
+             )))
+
+       (defalias 'e 'eshell/edit)
+
+       (require 'em-tramp) ; to load eshell’s sudo
+       ;; (setq eshell-prefer-lisp-functions t)
+       ;; (setq eshell-prefer-lisp-variables t)
+       ;; (setq password-cache t) ; enable password caching
+       ;; (setq password-cache-expiry 10)
+       ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+
+     (defun eshell-clear-buffer ()
+       "Clear the current Eshell buffer."
+       (interactive)
+       (let ((inhibit-read-only t))
+         (erase-buffer)
+         ;; Move to the beginning of the buffer
+         (goto-char (point-min))
+         ;; Reinsert the prompt at the correct position
+         (eshell-reset)))
 
      (with-eval-after-load 'eshell
-       ;; Set eshell-save-history-on-exit to nil
-       (setq eshell-save-history-on-exit nil)
+       (with-eval-after-load 'evil
+         (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+         (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
-       ;; Define eshell-append-history function
-       (defun eshell-append-history ()
-         "Call `eshell-write-history' with the `append' parameter set to `t'."
-         (when eshell-history-ring
-           (let ((newest-cmd-ring (make-ring 1)))
-             (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
-             (let ((eshell-history-ring newest-cmd-ring))
-               (eshell-write-history eshell-history-file-name t)))))
-
-     ;; Add eshell-append-history to eshell-pre-command-hook
-     (add-hook 'eshell-pre-command-hook #'eshell-append-history))
-
-     (defun eshell-insert-last-argument ()
-       "Insert the last argument of the previous command."
+     (defun eshell-new ()
+       "Create a new Eshell buffer with a unique name and open it in the current window."
        (interactive)
-       (let* ((last-command (eshell-previous-input-string 0))
-              (args (split-string-and-unquote last-command))
-              (last-arg (car (last args))))
-         (when last-arg
-           (insert last-arg))))
-
-     (defun setup-eshell-keys ()
-       (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
-     ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
-
-     (add-hook 'eshell-mode-hook 'setup-eshell-keys)
-
-     (with-eval-after-load 'evil
-       (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-       (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
-
-     (defun eshell/edit (filename)
-       "Open FILENAME in the current buffer, using the current TRAMP address."
-       (interactive "sEnter the filename to edit: ")
-       ;; Extract the current TRAMP address from the Eshell buffer's default directory
-       (let ((tramp-address (file-remote-p default-directory)))
-         (if tramp-address
-             ;; If we're in a TRAMP directory, use the extracted address
-             (find-file (concat tramp-address filename))
-           ;; If not in a TRAMP directory, fall back to a default address or prompt the user
-           (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
-           ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
-           )))
-
-     (defalias 'e 'eshell/edit)
-
-     (require 'em-tramp) ; to load eshell’s sudo
-     ;; (setq eshell-prefer-lisp-functions t)
-     ;; (setq eshell-prefer-lisp-variables t)
-     ;; (setq password-cache t) ; enable password caching
-     ;; (setq password-cache-expiry 10)
-     ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
-
-   (defun eshell-clear-buffer ()
-     "Clear the current Eshell buffer."
-     (interactive)
-     (let ((inhibit-read-only t))
-       (erase-buffer)
-       ;; Move to the beginning of the buffer
-       (goto-char (point-min))
-       ;; Reinsert the prompt at the correct position
-       (eshell-reset)))
-
-   (with-eval-after-load 'eshell
-     (with-eval-after-load 'evil
-       (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
-       (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
-
-   (defun eshell-new ()
-     "Create a new Eshell buffer with a unique name and open it in the current window."
-     (interactive)
-     (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-       (eshell)
-       (switch-to-buffer eshell-buffer-name)))
+       (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+         (eshell)
+         (switch-to-buffer eshell-buffer-name)))
 
 
-   (defun eshell-new-pop ()
-     "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
-     (interactive)
-     (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-       (eshell)
-       (switch-to-buffer eshell-buffer-name)
-       ;; Check if popper-mode is enabled and popper-toggle-type is available
-       (when (and (featurep 'popper) (bound-and-true-p popper-mode))
-         (popper-toggle-type eshell-buffer-name))))
+     (defun eshell-new-pop ()
+       "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
+       (interactive)
+       (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+         (eshell)
+         (switch-to-buffer eshell-buffer-name)
+         ;; Check if popper-mode is enabled and popper-toggle-type is available
+         (when (and (featurep 'popper) (bound-and-true-p popper-mode))
+           (popper-toggle-type eshell-buffer-name))))
 
-   (defun eshell-expand-filename-at-point ()
-     "Expand the filename at point to its absolute path in eshell."
-     (interactive)
-     (let* ((filename (thing-at-point 'filename t))
-           (expanded (and filename (expand-file-name filename))))
-       (if expanded
-           (let ((bounds (bounds-of-thing-at-point 'filename)))
-             (delete-region (car bounds) (cdr bounds))
-             (insert expanded))
-         (message "No valid filename at point!"))))
+     (defun eshell-expand-filename-at-point ()
+       "Expand the filename at point to its absolute path in eshell."
+       (interactive)
+       (let* ((filename (thing-at-point 'filename t))
+             (expanded (and filename (expand-file-name filename))))
+         (if expanded
+             (let ((bounds (bounds-of-thing-at-point 'filename)))
+               (delete-region (car bounds) (cdr bounds))
+               (insert expanded))
+           (message "No valid filename at point!"))))
 
-   (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
+     (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
 
-   ;; (defun senv ()
-   ;;   "Activate Python virtual environment located in ./.venv."
-   ;;   (interactive)
-   ;;   (let ((venv-path (expand-file-name "./.venv")))
-   ;;     (setenv "VIRTUAL_ENV" venv-path)
-   ;;     (setq exec-path (cons (concat venv-path "/bin") exec-path))
-   ;;     (setenv "PATH" (concat venv-path "/bin:" (getenv "PATH")))
-   ;;     (message "Activated virtual environment in %s" venv-path)))
+    (connection-local-set-profile-variables
+      'remote-trash-directory
+      '((trash-directory . "/sudo::~/.local/share/Trash")))
 
-  (connection-local-set-profile-variables
-  'remote-trash-directory
-  '((trash-directory . "/sudo::~/.local/share/Trash")))
+    (connection-local-set-profiles
+      `(:application tramp :protocol "sudo" :machine ,system-name)
+      'remote-trash-directory)
 
-  (connection-local-set-profiles
-  `(:application tramp :protocol "sudo" :machine ,system-name)
-  'remote-trash-directory)
-   
+  (with-eval-after-load 'eshell
+  (evil-define-key 'normal eshell-mode-map
+    "j" 'next-line
+    "k" 'previous-line)
+  (evil-define-key 'visual eshell-mode-map
+    "j" 'next-line
+    "k" 'previous-line))
+
 #+end_src
 
+*** Custom commands
+
+#+begin_src emacs-lisp
+
+  ;; (defun FD ()
+  ;;   "List open files for the current Emacs process."
+  ;;   (interactive)
+  ;;   (let ((pid (number-to-string (emacs-pid))))
+  ;;     (insert (concat "ls -l /proc/" pid "/fd\n"))
+  ;;     (eshell-send-input)))
+
+  (defun FD ()
+    "Display open files for the current Emacs process."
+    (interactive)
+    (let* ((pid (number-to-string (emacs-pid)))
+          (command (concat "ls -l /proc/" pid "/fd")))
+      ;; Use `shell-command-to-string` to execute the command and capture its output as a string.
+      (let ((output (shell-command-to-string command)))
+        ;; Display the output in a buffer.
+        (with-output-to-temp-buffer "*FD Output*"
+          (princ output))
+        ;; Optionally, switch to the output buffer.
+        (switch-to-buffer-other-window "*FD Output*"))))
+  
+#+end_src
 *** Custom completions
 
 #+begin_src emacs-lisp
@@ -2335,6 +2361,7 @@
             "*Flycheck errors.*"
             "\\*compilation\\*"
             "\\*eshell\\*.*"
+            ;; ("^\\*eshell.*\\*" . hide)
             "\\*persistent-shell\\*.*"
             "\\*cider-repl.*"
             "\\*cider-doc.*"
@@ -2355,14 +2382,83 @@
     (popper-mode +1)
     (popper-echo-mode +1))
 
-  (defun m-f-toggle-or-forward-word ()
-    "Toggle popper or move forward a word depending on context."
-    (interactive)
-    (if (window-minibuffer-p)
-        (forward-word)
-      (popper-toggle)))
+  (use-package shackle
+    :ensure t
+    :config
+    (shackle-mode 1))
 
-  (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+    (defun my-buffer-is-popper-popup-p ()
+      "Check if the current buffer is considered a Popper popup."
+      (and (boundp 'popper-popup-status)
+          (buffer-local-value 'popper-popup-status (current-buffer))))
+
+  (defun my-check-current-buffer-popper-status ()
+    "Print whether the current buffer is a Popper popup."
+    (interactive)
+    (if (my-buffer-is-popper-popup-p)
+        (message "Current buffer IS a Popper popup.")
+      (message "Current buffer is NOT a Popper popup.")))
+
+  (defun my-popper-toggle-type ()
+    "Pin the current buffer to its current window, then toggle its popup status."
+    (interactive)
+    (let ((buffer (current-buffer))
+          (window (selected-window)))
+      ;; Define a temporary rule to pin the buffer to its current window
+      (setq shackle-rules
+            (append shackle-rules
+                    `((,(buffer-name buffer) :same t))))
+      ;; Update the shackle mode
+      (shackle-mode 1)
+      ;; Toggle the popup status
+      (popper-toggle-type)
+      ;; Remove the temporary rule
+      (setq shackle-rules
+            (cl-remove-if (lambda (rule) (equal (car rule) (buffer-name buffer)))
+                          shackle-rules))
+      ;; Update the shackle mode
+      (shackle-mode 1)
+      ;; Ensure the buffer stays in the current window
+      (set-window-buffer window buffer)))
+
+  (defun my-remove-popper-status-from-frame-buffers ()
+    "Remove popper status from all buffers with popper mode in the current frame."
+    (interactive)
+    (let ((frame-buffers (buffer-list (selected-frame)))
+          (current-buffer (current-buffer))
+          (current-window (selected-window)))
+      (unwind-protect
+          (dolist (buffer frame-buffers)
+            (when (and (buffer-live-p buffer)
+                      (get-buffer-window buffer))
+              (with-selected-window (get-buffer-window buffer)
+                (with-current-buffer buffer
+                  (when (my-buffer-is-popper-popup-p)
+                    (my-popper-toggle-type))))))
+        ;; Ensure we return to the original buffer and window
+        (when (window-live-p current-window)
+          (select-window current-window))
+        (when (buffer-live-p current-buffer)
+          (set-buffer current-buffer)))))
+
+  ;; (defun m-f-toggle-or-forward-word ()
+  ;;   "Toggle popper or move forward a word depending on context."
+  ;;   (interactive)
+  ;;   (if (window-minibuffer-p)
+  ;;       (forward-word)
+  ;;     (popper-toggle)))
+
+  ;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+  (global-set-key (kbd "M-f") 'popper-toggle)
+
+  ;; (defun ido-switch-buffer-without-popper ()
+  ;;   "Wrapper around `counsel-switch-buffer' that disables Popper mode if active."
+  ;;   (interactive)
+  ;;   (let ((selected-buffer (ido-switch-buffer)))
+  ;;     (when selected-buffer
+  ;;       (with-current-buffer selected-buffer
+  ;;         (when (bound-and-true-p popper-mode)
+  ;;           (popper-toggle))))))
 
   (defun popper-flymake-diagnostics ()
     "Popper window specifically for Flymake diagnostics buffer."
@@ -2389,7 +2485,9 @@
   (with-eval-after-load 'evil
     ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
     ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+    ;; (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+    ;; (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+    (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
     (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 #+end_src
@@ -2400,18 +2498,42 @@
 
 #+begin_src emacs-lisp
 
-    (use-package virtualenvwrapper
-      :config
-      (venv-initialize-interactive-shells) ; for shell-mode
-      (venv-initialize-eshell) ; for eshell
-      (setq venv-location "/home/wurfkreuz/.projects/server-python/.venv")
-    )
+  ;; (use-package virtualenvwrapper
+  ;;   :config
+  ;;   (venv-initialize-interactive-shells) ; for shell-mode
+  ;;   (venv-initialize-eshell) ; for eshell
+  ;;   (setq venv-location "/home/wurfkreuz/.projects/server-python/.venv")
+  ;; )
 
+  (use-package pyvenv
+    :config
+    (pyvenv-mode 1))  
+  
 #+end_src
 
 ** Flymake
 
 #+begin_src emacs-lisp
+
+  ;; (use-package flymake
+  ;;   :ensure t
+  ;;   :config
+  ;;   ;; Define a function to enable flymake-mode in dockerfile-mode
+  ;;   (defun enable-flymake-mode ()
+  ;;     "Enable flymake-mode in dockerfile-mode."
+  ;;     (if (string-equal major-mode "dockerfile-mode")
+  ;;         (flymake-mode 1)))
+
+  (defun enable-flymake-mode ()
+    "Enable flymake-mode in dockerfile-mode."
+    (if (string-equal major-mode "dockerfile-mode")
+        (flymake-mode 1)))
+
+  ;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
+  (add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
+
+  (use-package flymake-hadolint)
+  (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
 
 #+end_src
 

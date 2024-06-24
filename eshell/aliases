@@ -1,3 +1,4 @@
+alias activate-venv my-eshell-activate-venv
 alias u eshell/sudo $*
 alias md mkdir $*
 alias la ls -la $*
