@@ -35,6 +35,8 @@
   - [[#wgrep][Wgrep]]
   - [[#embark][Embark]]
   - [[#ivycounsel][Ivy/Counsel]]
+  - [[#with-editor][With-editor]]
+  - [[#cron][Cron]]
   - [[#prescient][Prescient]]
   - [[#fzf][Fzf]]
   - [[#helpful][Helpful]]
@@ -833,7 +835,7 @@
 
 
   (straight-use-package
-   '(fish-completion :host gitlab :repo "LemonBreezes/emacs-fish-completion"))
+   '(fish-completion :host github :repo "LemonBreezes/emacs-fish-completion"))
 
   (when (and (executable-find "fish")
            (require 'fish-completion nil t))
@@ -1278,6 +1280,31 @@
 
 #+end_src
 
+** With-editor
+
+#+begin_src emacs-lisp
+
+  (use-package with-editor
+    :init
+    (add-hook 'shell-mode-hook  'with-editor-export-editor)
+    (add-hook 'eshell-mode-hook 'with-editor-export-editor)
+    (add-hook 'term-exec-hook   'with-editor-export-editor))
+
+#+end_src
+
+** Cron
+
+#+begin_src emacs-lisp
+
+  ;; (use-package crontab-mode)
+
+  (straight-use-package
+   '(emacs-crontab-mode :host gitlab :repo "Bacaliu/emacs-crontab-mode"))
+;;
+;;  (require emacs-crontab-mode)
+  
+#+end_src
+
 ** Prescient
 
 #+begin_src emacs-lisp
@@ -1288,6 +1315,7 @@
   ;;   (ivy-prescient-mode 1))
     
 #+end_src
+
 ** Fzf
 
 #+begin_src emacs-lisp
@@ -1734,6 +1762,13 @@
   (evil-define-key 'visual eshell-mode-map
     "j" 'next-line
     "k" 'previous-line))
+
+  (defun my/eshell-setup ()
+    "Setup eshell environment."
+    (setq shell-file-name "/bin/zsh") ; Set your preferred shell if needed
+    (setenv "PATH" "/home/wurfkreuz/.dotfiles/scripts/python/.venv/bin:$PATH"))
+
+  (add-hook 'eshell-mode-hook 'my/eshell-setup)
 
 #+end_src
 
@@ -2352,8 +2387,7 @@
             "*Flymake diagnostics.*"
             "*Flycheck errors.*"
             "\\*compilation\\*"
-            "\\*eshell\\*.*"
-            ;; ("^\\*eshell.*\\*" . hide)
+            ;; "\\*eshell\\*.*"
             "\\*persistent-shell\\*.*"
             "\\*cider-repl.*"
             "\\*cider-doc.*"
@@ -3382,5 +3416,10 @@
       (let ((filename (file-truename buffer-file-name)))
         (shell-command (concat "chmod +x " (shell-quote-argument filename)))
         (message "Execute permissions added to %s" filename))))
+
+  (defun crontab-edit ()
+    "Run `crontab -e' in a emacs buffer."
+    (interactive)
+    (with-editor-async-shell-command "crontab -e"))
   
 #+end_src
