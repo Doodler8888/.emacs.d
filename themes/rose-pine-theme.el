@@ -151,6 +151,8 @@
  			      :weight normal))))  ; Set the weight to normal
  
     ;; Eshell
+    `(eshell-ls-special ((,class (:foreground ,rose-pine-iris))))
+    `(eshell-ls-missing ((,class (:foreground ,rose-pine-love))))
     `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
     `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
     `(eshell-ls-readonly ((,class (:foreground ,rose-pine-subtext))))

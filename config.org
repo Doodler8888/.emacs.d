@@ -546,7 +546,7 @@
       "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
       "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
 
-      "xx" '(kill-buffer-and-window :wk "Close buffer with its window")
+      "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
 
       "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
 
@@ -763,7 +763,38 @@
 
 #+begin_src emacs-lisp
 
-  ;; Corfu setup
+  (defun my-eshell-directory-completions ()
+    "Generate a list of all directories in the current working directory, including hidden ones."
+    (let ((current-dir (eshell/pwd)))
+      (cl-remove-if-not
+      #'file-directory-p
+      (directory-files current-dir t nil t))))
+
+  (defun my-eshell-completion-at-point ()
+    "Provide completion for Eshell using custom directory completions."
+    (let ((bounds (bounds-of-thing-at-point 'filename)))
+      (when bounds
+        (let* ((start (car bounds))
+              (end (cdr bounds))
+              (input (buffer-substring-no-properties start end))
+              (completions (my-eshell-directory-completions))
+              (matches (cl-remove-if-not
+                        (lambda (dir)
+                          (string-prefix-p input (file-name-nondirectory dir)))
+                        completions)))
+          (when matches
+            (list start end (mapcar #'file-name-nondirectory matches) :exclusive 'no))))))
+
+  (defun my-eshell-setup ()
+    "Set up custom completions and key bindings for Eshell."
+    (add-to-list 'completion-at-point-functions 'my-eshell-completion-at-point))
+
+  (add-hook 'eshell-mode-hook 'my-eshell-setup)
+
+  ;; (with-eval-after-load 'esh-mode
+  ;;   (define-key eshell-mode-map (kbd "TAB") 'completion-at-point))
+
+    ;; Corfu setup
   (use-package corfu
     :ensure t
     :init
@@ -775,14 +806,14 @@
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
     (corfu-echo-mode)
-    (corfu-history-mode))
+    (corfu-history-mode)
+    (corfu-popupinfo-mode))
 
-  ;; (defun my-enable-corfu-in-eshell ()
-  ;;   "Enable Corfu auto-completion in Eshell and set up completion functions."
-  ;;   (setq-local corfu-auto t)
-  ;;   (add-to-list 'completion-at-point-functions #'my-eshell-chmod-completion))
+  (defun my-enable-corfu-in-eshell ()
+    "Enable Corfu auto-completion in Eshell and set up completion functions."
+    (setq-local corfu-auto t))
 
-  ;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
+  (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
   (with-eval-after-load 'evil
     (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
@@ -800,53 +831,13 @@
                 #'cape-dabbrev
                 #'cape-elisp-block)))
 
-  ;; ;; Define custom completion function for chmod
-  ;; (defun my-eshell-chmod-completion ()
-  ;;   "Provide completion for the `chmod` command in Eshell."
-  ;;   (when (and (eq major-mode 'eshell-mode)
-  ;;             (save-excursion
-  ;;               (eshell-bol)
-  ;;               (looking-at-p "chmod ")))
-  ;;     (let* ((point (point))
-  ;;           (begin (save-excursion (eshell-bol) (search-forward "chmod ") (point)))
-  ;;           (end (point))
-  ;;           (completions '("400" "500" "600" "644" "755" "777")))
-  ;;       (list begin end completions))))
 
-  (defun my-eshell-chmod-completion ()
-    "Provide dynamic completion for the `chmod` command in Eshell."
-    (when (and (eq major-mode 'eshell-mode)
-              (save-excursion
-                (eshell-bol)
-                (looking-at-p "chmod ")))
-      (let* ((point (point))
-            (begin (save-excursion (eshell-bol) (search-forward "chmod ") (point)))
-            (end (point))
-            (input (buffer-substring-no-properties begin end))
-            (initial-completions '("a" "g" "o" "u" "+" "-" "="))
-            (second-level-completions '("X" "g" "o" "r" "s" "t" "u" "w" "x"))
-            completions)
-        (setq completions
-              (cond
-              ;; Provide initial completions
-              ((string-match-p "\\`chmod +[agou+-=]*\\'" input)
-                initial-completions)
-              ;; Provide second level completions
-              ((string-match-p "\\`chmod +\\([agou+-=]+\\)$" input)
-                second-level-completions)
-              ;; Default case
-              (t
-                initial-completions)))
-        (list begin end completions))))
+  (straight-use-package
+   '(fish-completion :host gitlab :repo "LemonBreezes/emacs-fish-completion"))
 
-  (defun my-enable-corfu-in-eshell ()
-    "Enable Corfu auto-completion in Eshell and set up completion functions."
-    (setq-local corfu-auto t)
-    (add-to-list 'completion-at-point-functions #'my-eshell-chmod-completion))
-
-  (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
-
-  (provide 'my-eshell-chmod-completion)
+  (when (and (executable-find "fish")
+           (require 'fish-completion nil t))
+  (global-fish-completion-mode))
 
 #+end_src
 
@@ -1771,6 +1762,7 @@
         (switch-to-buffer-other-window "*FD Output*"))))
   
 #+end_src
+
 *** Custom completions
 
 #+begin_src emacs-lisp
@@ -2535,6 +2527,11 @@
   (use-package flymake-hadolint)
   (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
 
+  (use-package flymake-shellcheck
+    :commands flymake-shellcheck-load
+    :init
+    (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
+  
 #+end_src
 
 ** Modes
@@ -3378,4 +3375,12 @@
     (interactive)
     (find-file "~/Downloads/books"))
 
+  (defun add-execute-permissions-to-current-file ()
+    "Add execute permissions to the file associated with the current buffer."
+    (interactive)
+    (when buffer-file-name
+      (let ((filename (file-truename buffer-file-name)))
+        (shell-command (concat "chmod +x " (shell-quote-argument filename)))
+        (message "Execute permissions added to %s" filename))))
+  
 #+end_src

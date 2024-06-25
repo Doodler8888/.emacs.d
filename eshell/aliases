@@ -7,6 +7,9 @@ alias take mkdir $* && cd $*
 alias rf rm -rf $*
 alias d cd $* && ls -la
 alias dot cd ~/.dotfiles
+alias D cd ~/Downloads
+alias S cd ~/.source
+alias E cd ~/.source
 alias menv python3 -m venv ./.venv
 alias denv deactivate
 alias tree exa -T
