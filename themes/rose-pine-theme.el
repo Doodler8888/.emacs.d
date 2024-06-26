@@ -152,6 +152,7 @@
  
     ;; Eshell
     `(eshell-ls-special ((,class (:foreground ,rose-pine-iris))))
+    `(eshell-ls-unreadable ((,class (:foreground ,rose-pine-fg2))))
     `(eshell-ls-missing ((,class (:foreground ,rose-pine-love))))
     `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
     `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))

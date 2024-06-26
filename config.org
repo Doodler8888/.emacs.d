@@ -385,7 +385,7 @@
       (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
     (defun my-evil-insert-state-minibuffer-setup ()
-
+      (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
       (define-key evil-insert-state-local-map (kbd "M-TAB") 'ivy-partial-or-done))
 
     (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
@@ -1656,12 +1656,15 @@
     "Kill all TRAMP buffers."
     (interactive)
     (dolist (buffer (buffer-list))
-      (when (and (buffer-live-p buffer)
-                (string-match-p "^/.*@.*:" (or (buffer-file-name buffer) "")))
-        (kill-buffer buffer))))
+      (let ((buffer-name (buffer-name buffer)))
+        ;; (message "Checking buffer: %s" buffer-name)
+        (when (and (buffer-live-p buffer)
+                  (string-match-p "\\`\\*tramp/\\|\\*eshell:/\\|\\`/\\(\\(sudo\\|ssh\\|scp\\|rsync\\|ftp\\|telnet\\|adb\\|docker\\|doas\\):\\|\\(su\\|sudo\\|ssh\\).*@\\)" buffer-name))
+          (message "Killing TRAMP buffer: %s" buffer-name)
+          (kill-buffer buffer)))))
 
   (add-hook 'kill-emacs-hook #'kill-tramp-buffers)
-  
+
 #+end_src
 
 * Shells and Terminals
