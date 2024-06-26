@@ -3334,6 +3334,12 @@
     ;; Execute 'push' asynchronously and display output in a separate buffer.
     (async-shell-command "push"))
 
+  (defun push-all ()
+    "Execute git add, commit, and push in sequence asynchronously."
+    (interactive)
+    ;; Execute 'push' asynchronously and display output in a separate buffer.
+    (async-shell-command "push -a"))
+  
   (defun s ()
     "Reload the ~/.zshrc file in the current shell."
     (interactive)
@@ -3398,7 +3404,7 @@
     "Open a specific file."
     (interactive)
     (find-file "/etc/systemd/system"))
-  
+
   (defun add-execute-permissions-to-current-file ()
     "Add execute permissions to the file associated with the current buffer."
     (interactive)
