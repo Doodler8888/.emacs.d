@@ -386,7 +386,7 @@
 
   (defun my-evil-insert-state-minibuffer-setup ()
     (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+    (define-key evil-insert-state-local-map (kbd "C-a") 'ivy-partial-or-done))
 
   (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
@@ -822,6 +822,16 @@
 
   (with-eval-after-load 'corfu
     (define-key corfu-map (kbd "RET") nil))
+
+  (defun corfu-enable-in-minibuffer ()
+    "Enable Corfu in the minibuffer."
+    (when (local-variable-p 'completion-at-point-functions)
+      ;; (setq-local corfu-auto nil) ;; Enable/disable auto completion
+      (setq-local corfu-echo-delay nil ;; Disable automatic echo and popup
+                  corfu-popupinfo-delay nil)
+      (corfu-mode 1)))
+  
+  (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 
   ;; Cape setup
   (use-package cape
@@ -3423,4 +3433,3 @@
     (with-editor-async-shell-command "crontab -e"))
   
 #+end_src
-
