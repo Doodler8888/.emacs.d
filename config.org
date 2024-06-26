@@ -518,9 +518,10 @@
       ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
       "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
       "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-      "ff" '(ivy-fzf-current :wk "Find file fuzzy finder with a git directory as an anchor")
+      "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
       ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
       "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
+      "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
       "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
       ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
 
@@ -1236,7 +1237,7 @@
 
     (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
-    (defun ivy-fzf-current ()
+    (defun ivy-fzf-project ()
       "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
       (interactive)
       (let ((default-directory (projectile-project-root))
@@ -1253,6 +1254,14 @@
         (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
                   :action (lambda (f)
                             (find-file (expand-file-name f default-directory))))))
+
+    (defun ivy-fzf-current-directory ()
+      "Run a customized `ivy-fzf`-like file selection using `fd` from the current directory."
+      (interactive)
+      (let ((fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                  :action (lambda (f)
+                          (find-file (expand-file-name f default-directory))))))
 
     (defun ivy-fzf-root ()
       "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
@@ -3342,7 +3351,7 @@
     (interactive)
     ;; Execute 'push' asynchronously and display output in a separate buffer.
     (async-shell-command "push -a"))
-  
+
   (defun s ()
     "Reload the ~/.zshrc file in the current shell."
     (interactive)
@@ -3403,6 +3412,11 @@
     (interactive)
     (find-file "~/.emacs.d/snippets/"))
 
+  (defun log ()
+    "Open a specific file."
+    (interactive)
+    (find-file "/var/log"))
+  
   (defun service ()
     "Open a specific file."
     (interactive)
