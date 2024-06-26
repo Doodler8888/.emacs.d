@@ -308,91 +308,101 @@
 
 #+begin_src emacs-lisp
 
-  (use-package undo-tree
-    :config
-    (global-undo-tree-mode))
+    (use-package undo-tree
+      :config
+      (global-undo-tree-mode))
 
-  (use-package evil
-    :init
-    (setq evil-want-C-u-scroll t
-          evil-want-C-i-jump nil
-          evil-want-integration t
-          evil-want-minibuffer t
-          evil-undo-system 'undo-tree)
-    :config
-    (evil-mode 1)
-    (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-    (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-    (define-key evil-motion-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-    (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-    (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-    (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-    (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-    (setq evil-shift-width 2))
+    (use-package evil
+      :init
+      (setq evil-want-C-u-scroll t
+            evil-want-C-i-jump nil
+            evil-want-integration t
+            evil-want-minibuffer t
+            evil-undo-system 'undo-tree)
+      :config
+      (evil-mode 1)
+      (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+      (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+      (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+      (define-key evil-motion-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+      (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+      (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+      (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+      (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+      (setq evil-shift-width 2))
 
-  (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
+    (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
+    (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
+    (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
+    (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
 
 
-  (setq evil-undo-system 'undo-tree)
+    (setq evil-undo-system 'undo-tree)
 
-  (use-package evil-surround
-    :config
-    (global-evil-surround-mode 1)
-    ;; Add custom surround pairs
-    (setq-default evil-surround-pairs-alist
-                  (append evil-surround-pairs-alist
-                          '((?/ . ("/" . "/"))
-                            (?~ . ("~" . "~"))
-                            (?* . ("*" . "*"))
-                            (?= . ("=" . "="))
-                            (?+ . ("+" . "+"))))))
+    (use-package evil-surround
+      :config
+      (global-evil-surround-mode 1)
+      ;; Add custom surround pairs
+      (setq-default evil-surround-pairs-alist
+                    (append evil-surround-pairs-alist
+                            '((?/ . ("/" . "/"))
+                              (?~ . ("~" . "~"))
+                              (?* . ("*" . "*"))
+                              (?= . ("=" . "="))
+                              (?+ . ("+" . "+"))))))
 
-  (use-package evil-commentary
-    :config
-    (evil-commentary-mode))
+    (use-package evil-commentary
+      :config
+      (evil-commentary-mode))
 
-  (use-package evil-org
-    :after org
-    :config
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys)
-    (add-hook 'org-mode-hook 'evil-org-mode)
-    (add-hook 'evil-org-mode-hook
-              (lambda ()
-                (evil-org-set-key-theme)))
-    )
+    (use-package evil-org
+      :after org
+      :config
+      (require 'evil-org-agenda)
+      (evil-org-agenda-set-keys)
+      (add-hook 'org-mode-hook 'evil-org-mode)
+      (add-hook 'evil-org-mode-hook
+                (lambda ()
+                  (evil-org-set-key-theme)))
+      )
 
-  (use-package evil-collection
-    :after evil
-    :init ;;    (setq evil-want-keybinding nil)
-    :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy))
-    (evil-collection-init))
+    (use-package evil-collection
+      :after evil
+      :init ;;    (setq evil-want-keybinding nil)
+      :config
+      (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy))
+      (evil-collection-init))
 
-  (add-hook 'text-mode-hook 'display-line-numbers-mode)
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+    (add-hook 'text-mode-hook 'display-line-numbers-mode)
+    (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-  (defun my-evil-yank-to-end-of-line ()
-    "Yank text from the current point to the end of the line."
-    (interactive)
-    (evil-yank (point) (line-end-position)))
+    (defun my-evil-yank-to-end-of-line ()
+      "Yank text from the current point to the end of the line."
+      (interactive)
+      (evil-yank (point) (line-end-position)))
+
+    (with-eval-after-load 'evil
+      (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
+
+    (defun my-evil-insert-state-minibuffer-setup ()
+
+      (define-key evil-insert-state-local-map (kbd "M-TAB") 'ivy-partial-or-done))
+
+    (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+
+    ;; (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
+    ;; (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
 
   (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
+    (define-key evil-ex-completion-map (kbd "<insert-state> C-n") nil))
 
-  (defun my-evil-insert-state-minibuffer-setup ()
-    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-    (define-key evil-insert-state-local-map (kbd "M-TAB") 'ivy-partial-or-done))
-
-  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
-
-  (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
-  (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
-
+  (with-eval-after-load 'evil
+    (define-key evil-ex-completion-map (kbd "<insert-state> C-p") nil))
+    
+  (with-eval-after-load 'evil
+    (define-key evil-ex-completion-map (kbd "<insert-state> <up>") 'previous-complete-history-element)
+    (define-key evil-ex-completion-map (kbd "<insert-state> <down>") 'next-complete-history-element))
+  
 #+end_src
 
 *** Custom keybindings
