@@ -3412,11 +3412,12 @@
     (interactive)
     (find-file "~/.emacs.d/snippets/"))
 
-  (defun log ()
+  ;; When i had this function as 'log', i had an unexplained org mode bug.
+  (defun logs ()
     "Open a specific file."
     (interactive)
     (find-file "/var/log"))
-  
+
   (defun service ()
     "Open a specific file."
     (interactive)
