@@ -809,12 +809,11 @@
 
     ;; Corfu setup
   (use-package corfu
-    :ensure t
     :init
     (global-corfu-mode)
-    :custom
-    (corfu-auto nil)
-    (corfu-min-length 2)
+    ;; :custom
+    ;; (corfu-auto nil)
+    ;; (corfu-min-length 2)
     :config
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
@@ -822,11 +821,11 @@
     (corfu-history-mode)
     (corfu-popupinfo-mode))
 
-  (defun my-enable-corfu-in-eshell ()
-    "Enable Corfu auto-completion in Eshell and set up completion functions."
-    (setq-local corfu-auto t))
+  ;; (defun my-enable-corfu-in-eshell ()
+  ;;   "Enable Corfu auto-completion in Eshell and set up completion functions."
+  ;;   (setq-local corfu-auto t))
 
-  (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
+  ;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
   (with-eval-after-load 'evil
     (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
@@ -841,7 +840,7 @@
       (setq-local corfu-echo-delay nil ;; Disable automatic echo and popup
                   corfu-popupinfo-delay nil)
       (corfu-mode 1)))
-  
+
   (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 
   ;; Cape setup
@@ -1319,6 +1318,13 @@
     (add-hook 'eshell-mode-hook 'with-editor-export-editor)
     (add-hook 'term-exec-hook   'with-editor-export-editor))
 
+  (defun suppress-with-editor-export-message (orig-fun &rest args)
+    (let ((inhibit-message t))
+      (apply orig-fun args)))
+
+  (with-eval-after-load 'with-editor
+    (advice-add 'with-editor-export-editor :around #'suppress-with-editor-export-message))
+  
 #+end_src
 
 ** Cron
@@ -3421,7 +3427,7 @@
   (defun service ()
     "Open a specific file."
     (interactive)
-    (find-file "/etc/systemd/system"))
+
 
   (defun add-execute-permissions-to-current-file ()
     "Add execute permissions to the file associated with the current buffer."
@@ -3453,13 +3459,5 @@
       (dired dir)))
 
   (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-  ;; test
-  ;; test
-  ;; test
 
 #+end_src
