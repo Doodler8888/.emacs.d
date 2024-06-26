@@ -37,6 +37,7 @@
   - [[#ivycounsel][Ivy/Counsel]]
   - [[#with-editor][With-editor]]
   - [[#cron][Cron]]
+  - [[#systemd][Systemd]]
   - [[#prescient][Prescient]]
   - [[#fzf][Fzf]]
   - [[#helpful][Helpful]]
@@ -65,7 +66,6 @@
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
   - [[#lsp-mode][Lsp Mode]]
-  - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
   - [[#org-capture][Org capture]]
@@ -386,7 +386,7 @@
 
   (defun my-evil-insert-state-minibuffer-setup ()
     (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-    (define-key evil-insert-state-local-map (kbd "C-a") 'ivy-partial-or-done))
+    (define-key evil-insert-state-local-map (kbd "M-TAB") 'ivy-partial-or-done))
 
   (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
@@ -1315,6 +1315,14 @@
   
 #+end_src
 
+** Systemd
+
+#+begin_src emacs-lisp
+
+  (use-package systemd) 
+  
+#+end_src
+
 ** Prescient
 
 #+begin_src emacs-lisp
@@ -1621,6 +1629,29 @@
   ;; ;; project name, which makes tramp oh-so-much-slower.
   ;; (setq projectile-mode-line "Projectile")
 
+  ;; I get errors with files opened through tramp with elevated privilages. This
+  ;; code tries to fix that but i think it might lead to some unexpected
+  ;; behavior.
+
+  (defun my/disable-lockfiles-for-tramp ()
+    "Disable lockfiles for tramp."
+    (when (and buffer-file-name
+              (file-remote-p buffer-file-name))
+      (setq-local create-lockfiles nil)))
+
+  (add-hook 'find-file-hook #'my/disable-lockfiles-for-tramp)
+  (add-hook 'before-save-hook #'my/disable-lockfiles-for-tramp)
+
+  (defun kill-tramp-buffers ()
+    "Kill all TRAMP buffers."
+    (interactive)
+    (dolist (buffer (buffer-list))
+      (when (and (buffer-live-p buffer)
+                (string-match-p "^/.*@.*:" (or (buffer-file-name buffer) "")))
+        (kill-buffer buffer))))
+
+  (add-hook 'kill-emacs-hook #'kill-tramp-buffers)
+  
 #+end_src
 
 * Shells and Terminals
@@ -1772,13 +1803,6 @@
   (evil-define-key 'visual eshell-mode-map
     "j" 'next-line
     "k" 'previous-line))
-
-  (defun my/eshell-setup ()
-    "Setup eshell environment."
-    (setq shell-file-name "/bin/zsh") ; Set your preferred shell if needed
-    (setenv "PATH" "/home/wurfkreuz/.dotfiles/scripts/python/.venv/bin:$PATH"))
-
-  (add-hook 'eshell-mode-hook 'my/eshell-setup)
 
 #+end_src
 
@@ -2771,75 +2795,22 @@
 
   (add-hook 'python-ts-mode-hook #'my/disable-python-flymake)
 
-  ;; (use-package lsp-ui
-  ;;   :after lsp-mode
-  ;;   :config
-  ;;   (setq lsp-ui-sideline-enable t
-  ;;         lsp-ui-sideline-show-diagnostics t
-  ;;         lsp-ui-sideline-show-hover t
-  ;;         lsp-ui-sideline-show-code-actions t
-  ;;         lsp-ui-doc-enable t
-  ;;         lsp-ui-doc-position 'top
-  ;;         lsp-ui-doc-include-signature t
-  ;;         lsp-ui-peek-enable t
-  ;;         lsp-ui-imenu-enable t)
-  ;;   (add-hook 'lsp-mode-hook #'lsp-ui-mode)))
+  (use-package lsp-ui
+    :after lsp-mode
+    :init
+    (setq lsp-ui-doc-allow-mouse t)
+    :hook (lsp-mode . lsp-ui-mode))
 
-  ;; (use-package lsp-mode
-  ;; ;; :commands (lsp lsp-deferred)
-  ;; :init
-  ;; ;; (setenv "LSP_USE_PLISTS" "1")
-  ;; ;; Increase the amount of data emacs reads from processes
-  ;; ;; (setq read-process-output-max (* 3 1024 1024))
-  ;; ;; (setq lsp-clients-clangd-args '("--header-insertion-decorators=0"
-  ;; ;;                                 "--clang-tidy"
-  ;; ;;                                 "--enable-config"))
-  ;; ;; Small speedups
-  ;; ;; (setopt lsp-log-max 0)
-  ;; ;; (setopt lsp-log-io nil)
-  ;; ;; General lsp-mode settings
-  ;; ;; (setq ;; lsp-completion-provider :none
-  ;;       ;; lsp-enable-snippet t
-  ;;       ;; lsp-enable-on-type-formatting nil
-  ;;       ;; lsp-enable-indentation nil
-  ;;       ;; lsp-diagnostics-provider :flymake
-  ;;       ;; lsp-keymap-prefix "C-x L"
-  ;;       ;; lsp-eldoc-render-all t)
-  ;; ;; to enable the lenses
-  ;; ;; (add-hook 'lsp-mode-hook #'lsp-lens-mode)
-  ;; ;; (add-hook 'lsp-completion-mode-hook
-  ;; ;;           (lambda ()
-  ;; ;;             (setf (alist-get 'lsp-capf completion-category-defaults)
-  ;; ;;                   '((styles . (orderless))))))
+  ;; (define-key evil-normal-state-map (kbd "K") 'lsp-describe-thing-at-point)
+  (defun my/lsp-describe-thing-at-point ()
+    "Call `lsp-describe-thing-at-point` and switch to the documentation window."
+    (interactive)
+    (let ((orig-window (selected-window)))
+      (lsp-describe-thing-at-point)
+      (select-window (get-buffer-window "*lsp-help*"))))
 
-  ;; :config
-  ;; (lsp-register-client
-  ;; (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-  ;;                 :major-modes '(go-mode)
-  ;;                 :server-id 'gopls))
-
-  ;; (use-package lsp-ui
-  ;;   :after lsp
-  ;;   :init
-  ;;   (setq lsp-ui-sideline-show-code-actions t)
-  ;;   (setq lsp-ui-sideline-show-diagnostics t))
-  ;; )
-
-  ;; (use-package lsp-ui
-  ;;   :after lsp-mode
-  ;;   :init
-  ;;   (setq lsp-ui-sideline-show-code-actions t)
-  ;;   (setq lsp-ui-sideline-show-diagnostics t))
-  ;;   ;; :custom
-  ;;   ;; (lsp-ui-doc-position 'bottom) ;; Set the position of the lsp-ui-doc to bottom
-  ;;   ;; (lsp-ui-doc-alignment 'window) ;; Align the doc to the window
-  ;;   :hook (lsp-mode . lsp-ui-mode))
-
-  ;; ;; (defun my/lsp-ui-doc-hide ()
-  ;; ;;   (unless (eq this-command 'lsp-ui-doc-focus-frame)
-  ;; ;;     (lsp-ui-doc-hide)))
-
-  ;; (add-hook 'pre-command-hook 'my/lsp-ui-doc-hide)
+  ;; Bind the custom function to 'K' in Evil's normal mode
+  (define-key evil-normal-state-map (kbd "K") 'my/lsp-describe-thing-at-point)
 
   ;; (use-package lsp-haskell
   ;;   :ensure t
@@ -2861,17 +2832,6 @@
     "Add the current directory to LSP workspace folders."
     (interactive)
     (lsp-workspace-folders-add (expand-file-name default-directory)))
-  
-#+end_src
-
-** Eglot
-
-#+begin_src emacs-lisp
-
-  ;; (use-package eglot-booster
-  ;; :elpaca (eglot-booster :host github :repo "jdtsmith/eglot-booster")
-  ;; :after eglot
-  ;; :config (eglot-booster-mode))
 
 #+end_src
 
@@ -2881,81 +2841,81 @@
 
 #+begin_src emacs-lisp
 
-    ;; (org-link-minor-mode 1)
+  ;; (org-link-minor-mode 1)
 
-    ;; (setq org-startup-folded t) 
-    ;; (setq org-emphasis-alist
-    ;;       ;; '(("*" bold)
-    ;;         '(("/" italic)))
-    ;;         ;; ("_" underline)
-    ;;         ;; ("=" org-verbatim verbatim)
-    ;;         ;; ("~" org-code verbatim)
-    ;;         ;; ("+" org-strike-through t)))
-    ;;   (define-prefix-command 'my-prefix-map)
+  ;; (setq org-startup-folded t) 
+  ;; (setq org-emphasis-alist
+  ;;       ;; '(("*" bold)
+  ;;         '(("/" italic)))
+  ;;         ;; ("_" underline)
+  ;;         ;; ("=" org-verbatim verbatim)
+  ;;         ;; ("~" org-code verbatim)
+  ;;         ;; ("+" org-strike-through t)))
+  ;;   (define-prefix-command 'my-prefix-map)
 
-    ;; (defun todo ()
-    ;;   "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
-    ;;   (interactive)
-    ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
-
-  (defun org-insert-top-level-heading ()
-      "Insert a new top-level heading with two empty lines before it."
-      (interactive)
-      (end-of-line)
-      (insert "\n\n\n* ")
-      (end-of-line))
-
-    (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
-
-  ;; (defun create-list-in-region ()
-  ;;   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+  ;; (defun todo ()
+  ;;   "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
   ;;   (interactive)
-  ;;   (if (use-region-p)
-  ;;       (let* ((beg (region-beginning))
-  ;;              (end (region-end))
-  ;;              (region-text (buffer-substring beg end))
-  ;;              (lines (split-string region-text "\n")))
-  ;;         (delete-region beg end)
-  ;;         (when lines
-  ;;           (insert (concat "- " (car lines)))
-  ;;           (dolist (line (cdr lines))
-  ;;             (insert (concat "\n  " line)))    
-  ;;     (message "No region active")))))
+  ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
 
-  (defun create-list-in-region ()
-  "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
-  (interactive)
-  (if (use-region-p)
-      (let* ((beg (region-beginning))
-             (end (region-end))
-             ;; Adjust `end` to exclude the newline at the end of the selection if present.
-             (end (if (and (> end beg)
-                           (save-excursion
-                             (goto-char end)
-                             (beginning-of-line)
-                             (<= (point) end)))
-                      (progn
-                        (goto-char end)
-                        (backward-char)
-                        (point))
-                    end))
-             (region-text (buffer-substring beg end))
-             (lines (split-string region-text "\n")))
-        (delete-region beg end)
-        (when lines
-          (insert (concat "- " (car lines)))
-          (dolist (line (cdr lines))
-            (insert (concat "\n  " line)))))
-    (message "No region active")))
+(defun org-insert-top-level-heading ()
+    "Insert a new top-level heading with two empty lines before it."
+    (interactive)
+    (end-of-line)
+    (insert "\n\n\n* ")
+    (end-of-line))
 
-    ;; (setq org-src-fontify-natively t)
+  (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
 
-    ;; (defun my/org-show-all-and-refresh ()
-    ;;   "Expand all blocks and refresh fontification."
-    ;;   (org-show-all '(blocks))
-    ;;   (redisplay t))
+;; (defun create-list-in-region ()
+;;   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+;;   (interactive)
+;;   (if (use-region-p)
+;;       (let* ((beg (region-beginning))
+;;              (end (region-end))
+;;              (region-text (buffer-substring beg end))
+;;              (lines (split-string region-text "\n")))
+;;         (delete-region beg end)
+;;         (when lines
+;;           (insert (concat "- " (car lines)))
+;;           (dolist (line (cdr lines))
+;;             (insert (concat "\n  " line)))    
+;;     (message "No region active")))))
 
-    ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
+(defun create-list-in-region ()
+"Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+(interactive)
+(if (use-region-p)
+    (let* ((beg (region-beginning))
+           (end (region-end))
+           ;; Adjust `end` to exclude the newline at the end of the selection if present.
+           (end (if (and (> end beg)
+                         (save-excursion
+                           (goto-char end)
+                           (beginning-of-line)
+                           (<= (point) end)))
+                    (progn
+                      (goto-char end)
+                      (backward-char)
+                      (point))
+                  end))
+           (region-text (buffer-substring beg end))
+           (lines (split-string region-text "\n")))
+      (delete-region beg end)
+      (when lines
+        (insert (concat "- " (car lines)))
+        (dolist (line (cdr lines))
+          (insert (concat "\n  " line)))))
+  (message "No region active")))
+
+  ;; (setq org-src-fontify-natively t)
+
+  ;; (defun my/org-show-all-and-refresh ()
+  ;;   "Expand all blocks and refresh fontification."
+  ;;   (org-show-all '(blocks))
+  ;;   (redisplay t))
+
+  ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
 
 #+end_src
 
@@ -3419,6 +3379,16 @@
     (interactive)
     (find-file "~/Downloads/books"))
 
+  (defun snip ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.emacs.d/snippets/"))
+
+  (defun service ()
+    "Open a specific file."
+    (interactive)
+    (find-file "/etc/systemd/system"))
+  
   (defun add-execute-permissions-to-current-file ()
     "Add execute permissions to the file associated with the current buffer."
     (interactive)
@@ -3431,5 +3401,23 @@
     "Run `crontab -e' in a emacs buffer."
     (interactive)
     (with-editor-async-shell-command "crontab -e"))
-  
+
+  (defun my-create-path-and-view-dir ()
+    "Prompt for a file path, create directories and file as needed, then view the parent directory."
+    (interactive)
+    (let* ((path (read-file-name "Enter path: "))
+          (dir (file-name-directory path))
+          (file (file-name-nondirectory path)))
+      ;; Create directories as needed
+      (when dir
+        (make-directory dir t))
+      ;; Create the file if it doesn't already exist
+      (unless (file-exists-p path)
+        (with-temp-buffer
+          (write-file path)))
+      ;; Switch to viewing the parent directory in Dired mode
+      (dired dir)))
+
+  (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
+
 #+end_src
