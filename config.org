@@ -576,7 +576,8 @@
       "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
 
       ;; Tramp
-      "se" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
+      "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
+      "ur" '(tramp-revert :wk "Edit file with sudo privileges")
       
       ;; Evaluation
       "e" '(:ignore t :wk "Evaluate/Eshell")
@@ -1689,6 +1690,46 @@
   ;;     (message "Killed %d TRAMP-related buffer(s)" killed-buffers)))
 
   ;; (add-hook 'kill-emacs-hook #'kill-tramp-buffers)
+
+  (defun extract-local-path-from-tramp-buffer-and-display ()
+    (interactive)
+    "Extract the local part of the path from a TRAMP buffer and display it."
+    (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
+          (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
+          (local-part (tramp-file-name-localname path-components))) ; Extract the local part
+      (message "%s" local-part))) ; Display the local part as a message
+
+  (defun tramp-revert ()
+    "Extract the local part of the path from a TRAMP buffer and attempt to reopen the file."
+    (interactive)
+    (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
+          (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
+          (local-part (tramp-file-name-localname path-components))) ; Extract the local part
+      ;; Kill the current buffer before attempting to reopen the file
+      (kill-current-buffer)
+      ;; Attempt to reopen the file with the extracted local path
+      (find-file local-part)))
+
+  ;; (defun revert-all-tramp-buffers-to-local-permissions ()
+  ;;   "Attempt to revert all TRAMP buffers to local permissions."
+  ;;   (interactive)
+  ;;   (let ((reverted-buffers 0))
+  ;;     (dolist (buffer (buffer-list))
+  ;;       (with-current-buffer buffer
+  ;;         (let ((buffer-name (buffer-name buffer))
+  ;;               (file-name (buffer-file-name buffer)))
+  ;;           (when (or (and buffer-name
+  ;;                         (or (string-match-p "\\`\\*tramp/" buffer-name)
+  ;;                             (string-match-p "\\`\\*eshell:/" buffer-name)
+  ;;                             (string-match-p "\\`/sudo:" buffer-name)))
+  ;;                       (and file-name
+  ;;                           (file-remote-p file-name)))
+  ;;             (message "Attempting to revert TRAMP buffer: %s, File: %s" buffer-name (or file-name "No file"))
+  ;;             (tramp-revert-to-local-permissions)
+  ;;             (setq reverted-buffers (1+ reverted-buffers))))))
+  ;;     (message "Attempted to revert %d TRAMP-related buffer(s) to local permissions" reverted-buffers)))
+
+  ;; (add-hook 'kill-emacs-hook #'revert-all-tramp-buffers-to-local-permissions)
 
 #+end_src
 
@@ -3433,6 +3474,11 @@
     (interactive)
     (find-file "~/.dotfiles"))
 
+  (defun etc ()
+    "Open a specific file."
+    (interactive)
+    (find-file "/etc"))
+  
   (defun snip ()
     "Open a specific file."
     (interactive)
@@ -3462,22 +3508,22 @@
     (interactive)
     (with-editor-async-shell-command "crontab -e"))
 
-  (defun my-create-path-and-view-dir ()
-    "Prompt for a file path, create directories and file as needed, then view the parent directory."
-    (interactive)
-    (let* ((path (read-file-name "Enter path: "))
-          (dir (file-name-directory path))
-          (file (file-name-nondirectory path)))
-      ;; Create directories as needed
-      (when dir
-        (make-directory dir t))
-      ;; Create the file if it doesn't already exist
-      (unless (file-exists-p path)
-        (with-temp-buffer
-          (write-file path)))
-      ;; Switch to viewing the parent directory in Dired mode
-      (dired dir)))
+  ;; (defun my-create-path-and-view-dir ()
+  ;;   "Prompt for a file path, create directories and file as needed, then view the parent directory."
+  ;;   (interactive)
+  ;;   (let* ((path (read-file-name "Enter path: "))
+  ;;         (dir (file-name-directory path))
+  ;;         (file (file-name-nondirectory path)))
+  ;;     ;; Create directories as needed
+  ;;     (when dir
+  ;;       (make-directory dir t))
+  ;;     ;; Create the file if it doesn't already exist
+  ;;     (unless (file-exists-p path)
+  ;;       (with-temp-buffer
+  ;;         (write-file path)))
+  ;;     ;; Switch to viewing the parent directory in Dired mode
+  ;;     (dired dir)))
 
-  (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
+  ;; (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
 
 #+end_src
