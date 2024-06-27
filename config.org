@@ -3426,8 +3426,7 @@
 
   (defun service ()
     "Open a specific file."
-    (interactive)
-
+    (interactive))
 
   (defun add-execute-permissions-to-current-file ()
     "Add execute permissions to the file associated with the current buffer."
