@@ -1832,6 +1832,11 @@
     "j" 'next-line
     "k" 'previous-line))
 
+  (defun my-eshell-evil-setup ()
+    (evil-define-key 'normal eshell-mode-map (kbd "0") 'beginning-of-line))
+
+  (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
+
 #+end_src
 
 *** Custom commands
@@ -3426,7 +3431,8 @@
 
   (defun service ()
     "Open a specific file."
-    (interactive))
+    (interactive)
+    (find-file "/etc/systemd/system"))
 
   (defun add-execute-permissions-to-current-file ()
     "Add execute permissions to the file associated with the current buffer."
