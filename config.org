@@ -575,6 +575,9 @@
       "en" '(eshell-new :wk "Spawn a new eshell buffer")
       "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
 
+      ;; Tramp
+      "se" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
+      
       ;; Evaluation
       "e" '(:ignore t :wk "Evaluate/Eshell")
       "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
@@ -992,8 +995,8 @@
   (use-package sudo-edit
     :config
       (w/leader-keys
-        "sf" '(sudo-edit-find-file :wk "Sudo find file")
-        "se" '(sudo-edit :wk "Sudo edit file")))
+        "sf" '(sudo-edit-find-file :wk "Sudo find file")))
+        ;; "se" '(sudo-edit :wk "Sudo edit file")))
 
 #+end_src
 
@@ -1667,18 +1670,25 @@
   (add-hook 'find-file-hook #'my/disable-lockfiles-for-tramp)
   (add-hook 'before-save-hook #'my/disable-lockfiles-for-tramp)
 
-  (defun kill-tramp-buffers ()
-    "Kill all TRAMP buffers."
-    (interactive)
-    (dolist (buffer (buffer-list))
-      (let ((buffer-name (buffer-name buffer)))
-        ;; (message "Checking buffer: %s" buffer-name)
-        (when (and (buffer-live-p buffer)
-                  (string-match-p "\\`\\*tramp/\\|\\*eshell:/\\|\\`/\\(\\(sudo\\|ssh\\|scp\\|rsync\\|ftp\\|telnet\\|adb\\|docker\\|doas\\):\\|\\(su\\|sudo\\|ssh\\).*@\\)" buffer-name))
-          (message "Killing TRAMP buffer: %s" buffer-name)
-          (kill-buffer buffer)))))
+  ;; (defun kill-tramp-buffers ()
+  ;;   "Kill all TRAMP buffers."
+  ;;   (interactive)
+  ;;   (let ((killed-buffers 0))
+  ;;     (dolist (buffer (buffer-list))
+  ;;       (let ((buffer-name (buffer-name buffer))
+  ;;             (file-name (buffer-file-name buffer)))
+  ;;         (when (or (and buffer-name
+  ;;                       (or (string-match-p "\\`\\*tramp/" buffer-name)
+  ;;                           (string-match-p "\\`\\*eshell:/" buffer-name)
+  ;;                           (string-match-p "\\`/sudo:" buffer-name)))
+  ;;                   (and file-name
+  ;;                       (file-remote-p file-name)))
+  ;;           (message "Identified TRAMP buffer: %s, File: %s" buffer-name (or file-name "No file"))
+  ;;           (kill-buffer buffer)
+  ;;           (setq killed-buffers (1+ killed-buffers)))))
+  ;;     (message "Killed %d TRAMP-related buffer(s)" killed-buffers)))
 
-  (add-hook 'kill-emacs-hook #'kill-tramp-buffers)
+  ;; (add-hook 'kill-emacs-hook #'kill-tramp-buffers)
 
 #+end_src
 
@@ -1687,150 +1697,150 @@
 
 #+begin_src emacs-lisp
 
-     (setq eshell-destroy-buffer-when-process-dies t)
+  (setq eshell-destroy-buffer-when-process-dies t)
 
-     (use-package eshell-syntax-highlighting
-       :after esh-mode  ;; don't change to 'eshell-mode'
-       :config
-       (eshell-syntax-highlighting-global-mode +1))
+  (use-package eshell-syntax-highlighting
+    :after esh-mode  ;; don't change to 'eshell-mode'
+    :config
+    (eshell-syntax-highlighting-global-mode +1))
 
-     (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-     ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
+  (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
+  ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
 
-     (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
-           eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-           eshell-history-size 100000
-           eshell-buffer-maximum-lines 5000
-           ;; eshell-save-history-on-exit t
-             eshell-history-file-name "~/.emacs.d/eshell_history"
-             eshell-hist-ignoredups t
-             eshell-scroll-to-bottom-on-input t
-             eshell-destroy-buffer-when-process-dies t
-             eshell-banner-message ""
-             eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok" "bat"))
+  (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
+        eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
+        eshell-history-size 100000
+        eshell-buffer-maximum-lines 5000
+        ;; eshell-save-history-on-exit t
+        eshell-history-file-name "~/.emacs.d/eshell_history"
+        eshell-hist-ignoredups t
+        eshell-scroll-to-bottom-on-input t
+        eshell-destroy-buffer-when-process-dies t
+        eshell-banner-message ""
+        eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok" "bat"))
 
-       (add-hook 'eshell-mode-hook
-                 (lambda ()
-                   (setq-local scroll-margin 0)))
-
-       (with-eval-after-load 'eshell
-         ;; Set eshell-save-history-on-exit to nil
-         (setq eshell-save-history-on-exit nil)
-
-         ;; Define eshell-append-history function
-         (defun eshell-append-history ()
-           "Call `eshell-write-history' with the `append' parameter set to `t'."
-           (when eshell-history-ring
-             (let ((newest-cmd-ring (make-ring 1)))
-               (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
-               (let ((eshell-history-ring newest-cmd-ring))
-                 (eshell-write-history eshell-history-file-name t)))))
-
-       ;; Add eshell-append-history to eshell-pre-command-hook
-       (add-hook 'eshell-pre-command-hook #'eshell-append-history))
-
-       (defun eshell-insert-last-argument ()
-         "Insert the last argument of the previous command."
-         (interactive)
-         (let* ((last-command (eshell-previous-input-string 0))
-                (args (split-string-and-unquote last-command))
-                (last-arg (car (last args))))
-           (when last-arg
-             (insert last-arg))))
-
-       (defun setup-eshell-keys ()
-         (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
-       ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
-
-       (add-hook 'eshell-mode-hook 'setup-eshell-keys)
-
-       (with-eval-after-load 'evil
-         (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-         (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
-
-       (defun eshell/edit (filename)
-         "Open FILENAME in the current buffer, using the current TRAMP address."
-         (interactive "sEnter the filename to edit: ")
-         ;; Extract the current TRAMP address from the Eshell buffer's default directory
-         (let ((tramp-address (file-remote-p default-directory)))
-           (if tramp-address
-               ;; If we're in a TRAMP directory, use the extracted address
-               (find-file (concat tramp-address filename))
-             ;; If not in a TRAMP directory, fall back to a default address or prompt the user
-             (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
-             ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
-             )))
-
-       (defalias 'e 'eshell/edit)
-
-       (require 'em-tramp) ; to load eshell’s sudo
-       ;; (setq eshell-prefer-lisp-functions t)
-       ;; (setq eshell-prefer-lisp-variables t)
-       ;; (setq password-cache t) ; enable password caching
-       ;; (setq password-cache-expiry 10)
-       ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
-
-     (defun eshell-clear-buffer ()
-       "Clear the current Eshell buffer."
-       (interactive)
-       (let ((inhibit-read-only t))
-         (erase-buffer)
-         ;; Move to the beginning of the buffer
-         (goto-char (point-min))
-         ;; Reinsert the prompt at the correct position
-         (eshell-reset)))
-
-     (with-eval-after-load 'eshell
-       (with-eval-after-load 'evil
-         (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
-         (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
-
-     (defun eshell-new ()
-       "Create a new Eshell buffer with a unique name and open it in the current window."
-       (interactive)
-       (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-         (eshell)
-         (switch-to-buffer eshell-buffer-name)))
-
-
-     (defun eshell-new-pop ()
-       "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
-       (interactive)
-       (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-         (eshell)
-         (switch-to-buffer eshell-buffer-name)
-         ;; Check if popper-mode is enabled and popper-toggle-type is available
-         (when (and (featurep 'popper) (bound-and-true-p popper-mode))
-           (popper-toggle-type eshell-buffer-name))))
-
-     (defun eshell-expand-filename-at-point ()
-       "Expand the filename at point to its absolute path in eshell."
-       (interactive)
-       (let* ((filename (thing-at-point 'filename t))
-             (expanded (and filename (expand-file-name filename))))
-         (if expanded
-             (let ((bounds (bounds-of-thing-at-point 'filename)))
-               (delete-region (car bounds) (cdr bounds))
-               (insert expanded))
-           (message "No valid filename at point!"))))
-
-     (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
-
-    (connection-local-set-profile-variables
-      'remote-trash-directory
-      '((trash-directory . "/sudo::~/.local/share/Trash")))
-
-    (connection-local-set-profiles
-      `(:application tramp :protocol "sudo" :machine ,system-name)
-      'remote-trash-directory)
+  (add-hook 'eshell-mode-hook
+            (lambda ()
+              (setq-local scroll-margin 0)))
 
   (with-eval-after-load 'eshell
-  (evil-define-key 'normal eshell-mode-map
-    "j" 'next-line
-    "k" 'previous-line)
-  (evil-define-key 'visual eshell-mode-map
-    "j" 'next-line
-    "k" 'previous-line))
+    ;; Set eshell-save-history-on-exit to nil
+    (setq eshell-save-history-on-exit nil)
+
+    ;; Define eshell-append-history function
+    (defun eshell-append-history ()
+      "Call `eshell-write-history' with the `append' parameter set to `t'."
+      (when eshell-history-ring
+        (let ((newest-cmd-ring (make-ring 1)))
+          (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+          (let ((eshell-history-ring newest-cmd-ring))
+            (eshell-write-history eshell-history-file-name t)))))
+
+    ;; Add eshell-append-history to eshell-pre-command-hook
+    (add-hook 'eshell-pre-command-hook #'eshell-append-history))
+
+  (defun eshell-insert-last-argument ()
+    "Insert the last argument of the previous command."
+    (interactive)
+    (let* ((last-command (eshell-previous-input-string 0))
+           (args (split-string-and-unquote last-command))
+           (last-arg (car (last args))))
+      (when last-arg
+        (insert last-arg))))
+
+  (defun setup-eshell-keys ()
+    (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+  ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+
+  (add-hook 'eshell-mode-hook 'setup-eshell-keys)
+
+  (with-eval-after-load 'evil
+    (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+    (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+
+  (defun eshell/edit (filename)
+    "Open FILENAME in the current buffer, using the current TRAMP address."
+    (interactive "sEnter the filename to edit: ")
+    ;; Extract the current TRAMP address from the Eshell buffer's default directory
+    (let ((tramp-address (file-remote-p default-directory)))
+      (if tramp-address
+          ;; If we're in a TRAMP directory, use the extracted address
+          (find-file (concat tramp-address filename))
+        ;; If not in a TRAMP directory, fall back to a default address or prompt the user
+        (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
+        ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
+        )))
+
+  (defalias 'e 'eshell/edit)
+
+  (require 'em-tramp) ; to load eshell’s sudo
+  ;; (setq eshell-prefer-lisp-functions t)
+  ;; (setq eshell-prefer-lisp-variables t)
+  ;; (setq password-cache t) ; enable password caching
+  ;; (setq password-cache-expiry 10)
+  ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+
+  (defun eshell-clear-buffer ()
+    "Clear the current Eshell buffer."
+    (interactive)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      ;; Move to the beginning of the buffer
+      (goto-char (point-min))
+      ;; Reinsert the prompt at the correct position
+      (eshell-reset)))
+
+  (with-eval-after-load 'eshell
+    (with-eval-after-load 'evil
+      (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+      (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
+
+  (defun eshell-new ()
+    "Create a new Eshell buffer with a unique name and open it in the current window."
+    (interactive)
+    (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+      (eshell)
+      (switch-to-buffer eshell-buffer-name)))
+
+
+  (defun eshell-new-pop ()
+    "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
+    (interactive)
+    (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+      (eshell)
+      (switch-to-buffer eshell-buffer-name)
+      ;; Check if popper-mode is enabled and popper-toggle-type is available
+      (when (and (featurep 'popper) (bound-and-true-p popper-mode))
+        (popper-toggle-type eshell-buffer-name))))
+
+  (defun eshell-expand-filename-at-point ()
+    "Expand the filename at point to its absolute path in eshell."
+    (interactive)
+    (let* ((filename (thing-at-point 'filename t))
+           (expanded (and filename (expand-file-name filename))))
+      (if expanded
+          (let ((bounds (bounds-of-thing-at-point 'filename)))
+            (delete-region (car bounds) (cdr bounds))
+            (insert expanded))
+        (message "No valid filename at point!"))))
+
+  (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
+
+  (connection-local-set-profile-variables
+   'remote-trash-directory
+   '((trash-directory . "/sudo::~/.local/share/Trash")))
+
+  (connection-local-set-profiles
+   `(:application tramp :protocol "sudo" :machine ,system-name)
+   'remote-trash-directory)
+
+  (with-eval-after-load 'eshell
+    (evil-define-key 'normal eshell-mode-map
+      "j" 'next-line
+      "k" 'previous-line)
+    (evil-define-key 'visual eshell-mode-map
+      "j" 'next-line
+      "k" 'previous-line))
 
   (defun my-eshell-evil-setup ()
     (evil-define-key 'normal eshell-mode-map (kbd "0") 'beginning-of-line))
@@ -3417,6 +3427,11 @@
     "Open a specific file."
     (interactive)
     (find-file "~/Downloads/books"))
+
+  (defun dot ()
+    "Open a specific file."
+    (interactive)
+    (find-file "~/.dotfiles"))
 
   (defun snip ()
     "Open a specific file."
