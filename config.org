@@ -18,6 +18,7 @@
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
   - [[#circe][Circe]]
+  - [[#docker][Docker]]
   - [[#folds][Folds]]
   - [[#ispell][Ispell]]
   - [[#jinx][Jinx]]
@@ -179,7 +180,7 @@
 
   ;; Auto pairing
   (add-hook 'prog-mode-hook (electric-pair-mode t))
-  
+
   ;; Don't pair '<'
   (setq electric-pair-inhibit-predicate
         `(lambda (c)
@@ -211,8 +212,17 @@
   (setq undo-tree-auto-save-history t)
   (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
   (make-directory (concat user-emacs-directory "auto-saves") t)
+  ;; (setq auto-save-file-name-transforms
+  ;;       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
   (setq auto-save-file-name-transforms
-        `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+      `((".*" ,(concat user-emacs-directory "auto-saves/\\1") t)))
+  (add-hook 'eshell-mode-hook
+          (lambda ()
+            (setq buffer-file-name (expand-file-name
+                                    (concat "eshell-auto-save-"
+                                            (md5 (buffer-name)))
+                                    (concat user-emacs-directory "auto-saves/")))))
+
   (make-directory (concat user-emacs-directory "lock-files") t)
   (setq lock-file-name-transforms
         `((".*" ,(concat user-emacs-directory "lock-files/") t)))
@@ -390,8 +400,8 @@
 
     (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
-    ;; (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
-    ;; (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
+    (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
+    (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
 
   (with-eval-after-load 'evil
     (define-key evil-ex-completion-map (kbd "<insert-state> C-n") nil))
@@ -402,7 +412,7 @@
   (with-eval-after-load 'evil
     (define-key evil-ex-completion-map (kbd "<insert-state> <up>") 'previous-complete-history-element)
     (define-key evil-ex-completion-map (kbd "<insert-state> <down>") 'next-complete-history-element))
-  
+
 #+end_src
 
 *** Custom keybindings
@@ -697,6 +707,51 @@
 
   (use-package circe)
   
+#+end_src
+
+** Docker
+
+#+begin_src emacs-lisp
+
+  (use-package docker
+    :config
+    (add-hook 'docker-image-mode-hook
+              (lambda ()
+                (evil-define-key 'normal docker-image-mode-map (kbd "m") 'tablist-mark-forward)
+                (evil-define-key 'normal docker-image-mode-map (kbd "D") 'docker-image-rm)
+                (evil-define-key 'visual docker-image-mode-map (kbd "m") 'my-tablist-mark-visual)
+                ;; (evil-define-key 'visual-line docker-image-mode-map (kbd "m") 'my-tablist-mark-visual-lines)
+                (evil-define-key 'visual docker-image-mode-map (kbd "D") 'docker-image-rm))))
+
+  (defun my-tablist-mark-visual ()
+    "Mark each line in the visual selection in docker-image-mode."
+    (interactive)
+    (if (eq major-mode 'docker-image-mode)
+        (let ((beg (region-beginning))
+              (end (region-end)))
+          (save-excursion
+            (goto-char beg)
+            (while (<= (point) end)
+              (tablist-mark-forward)
+              (forward-line 1))))
+      (message "Not in docker-image-mode")))
+
+  ;; (defun my-tablist-mark-visual-lines ()
+  ;;   "Mark each line in the visual line selection in docker-image-mode."
+  ;;   (interactive)
+  ;;   (if (eq major-mode 'docker-image-mode)
+  ;;       (let ((beg (region-beginning))
+  ;;             (end (region-end)))
+  ;;         (save-excursion
+  ;;           (goto-char beg)
+  ;;           (while (<= (point) end)
+  ;;             (tablist-mark-forward)
+  ;;             ;; Ensure we move to the beginning of the next visual line.
+  ;;             (forward-line 1)
+  ;;             (while (and (<= (point) end) (not (eolp)))
+  ;;               (forward-char)))))
+  ;;     (message "Not in docker-image-mode")))
+
 #+end_src
 
 ** Folds
@@ -2512,6 +2567,7 @@
             "\\*cider-error.*"
             "\\*helpful.*"
             ;; "\\*man.*"
+            "\\*grep.*"
             ;; "\\*eshell:.*"
             "\\*Warnings\\*"
             ;; "\\*xref\\*"
@@ -2531,10 +2587,10 @@
     :config
     (shackle-mode 1))
 
-    (defun my-buffer-is-popper-popup-p ()
-      "Check if the current buffer is considered a Popper popup."
-      (and (boundp 'popper-popup-status)
-          (buffer-local-value 'popper-popup-status (current-buffer))))
+  (defun my-buffer-is-popper-popup-p ()
+    "Check if the current buffer is considered a Popper popup."
+    (and (boundp 'popper-popup-status)
+        (buffer-local-value 'popper-popup-status (current-buffer))))
 
   (defun my-check-current-buffer-popper-status ()
     "Print whether the current buffer is a Popper popup."
@@ -2543,66 +2599,16 @@
         (message "Current buffer IS a Popper popup.")
       (message "Current buffer is NOT a Popper popup.")))
 
-  (defun my-popper-toggle-type ()
-    "Pin the current buffer to its current window, then toggle its popup status."
-    (interactive)
-    (let ((buffer (current-buffer))
-          (window (selected-window)))
-      ;; Define a temporary rule to pin the buffer to its current window
-      (setq shackle-rules
-            (append shackle-rules
-                    `((,(buffer-name buffer) :same t))))
-      ;; Update the shackle mode
-      (shackle-mode 1)
-      ;; Toggle the popup status
-      (popper-toggle-type)
-      ;; Remove the temporary rule
-      (setq shackle-rules
-            (cl-remove-if (lambda (rule) (equal (car rule) (buffer-name buffer)))
-                          shackle-rules))
-      ;; Update the shackle mode
-      (shackle-mode 1)
-      ;; Ensure the buffer stays in the current window
-      (set-window-buffer window buffer)))
-
-  (defun my-remove-popper-status-from-frame-buffers ()
-    "Remove popper status from all buffers with popper mode in the current frame."
-    (interactive)
-    (let ((frame-buffers (buffer-list (selected-frame)))
-          (current-buffer (current-buffer))
-          (current-window (selected-window)))
-      (unwind-protect
-          (dolist (buffer frame-buffers)
-            (when (and (buffer-live-p buffer)
-                      (get-buffer-window buffer))
-              (with-selected-window (get-buffer-window buffer)
-                (with-current-buffer buffer
-                  (when (my-buffer-is-popper-popup-p)
-                    (my-popper-toggle-type))))))
-        ;; Ensure we return to the original buffer and window
-        (when (window-live-p current-window)
-          (select-window current-window))
-        (when (buffer-live-p current-buffer)
-          (set-buffer current-buffer)))))
-
-  ;; (defun m-f-toggle-or-forward-word ()
-  ;;   "Toggle popper or move forward a word depending on context."
-  ;;   (interactive)
-  ;;   (if (window-minibuffer-p)
-  ;;       (forward-word)
-  ;;     (popper-toggle)))
+  (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
+    (when-let ((buf (get-buffer (or buffer (current-buffer)))))
+      (with-current-buffer buf
+        (if (popper-popup-p buf)
+            (setq popper-popup-status 'raised)
+          (setq popper-popup-status nil))
+        (setq mode-line-format (default-value 'mode-line-format)))))
 
   ;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
   (global-set-key (kbd "M-f") 'popper-toggle)
-
-  ;; (defun ido-switch-buffer-without-popper ()
-  ;;   "Wrapper around `counsel-switch-buffer' that disables Popper mode if active."
-  ;;   (interactive)
-  ;;   (let ((selected-buffer (ido-switch-buffer)))
-  ;;     (when selected-buffer
-  ;;       (with-current-buffer selected-buffer
-  ;;         (when (bound-and-true-p popper-mode)
-  ;;           (popper-toggle))))))
 
   (defun popper-flymake-diagnostics ()
     "Popper window specifically for Flymake diagnostics buffer."
@@ -2862,6 +2868,8 @@
           lsp-eldoc-enable-hover nil
           lsp-eldoc-render-all nil
           lsp-signature-render-documentation nil))
+  
+  (setq lsp-pyright-multi-root nil)
 
   (use-package lsp-pyright
     :ensure t
@@ -2872,10 +2880,21 @@
     ;; Modify the command to start the server
     (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
 
+  (defun set-lsp-pyright-venv-path ()
+    "Interactively set the `lsp-pyright-venv-path` to a selected directory."
+    (interactive)
+    (let ((selected-dir (read-directory-name "Select Python virtual environment directory: ")))
+      (if (file-directory-p selected-dir)
+          (progn
+            (setq lsp-pyright-venv-path selected-dir)
+            (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-path))
+            ;; (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-directory))
+        (message "Invalid directory or operation cancelled."))))
+
   (defun my/disable-python-flymake ()
-  "Disable default Python Flymake checker."
-  (setq-local flymake-diagnostic-functions
-              (remove 'python-flymake flymake-diagnostic-functions)))
+    "Disable default Python Flymake checker."
+    (setq-local flymake-diagnostic-functions
+                (remove 'python-flymake flymake-diagnostic-functions)))
 
   (add-hook 'python-ts-mode-hook #'my/disable-python-flymake)
 
