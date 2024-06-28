@@ -214,6 +214,8 @@
   (make-directory (concat user-emacs-directory "auto-saves") t)
   ;; (setq auto-save-file-name-transforms
   ;;       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+  ;; THE CODE BELOW CAN POTETIALLY BREAK SOMETHING. IF SO, THEN UNCOMMENT THE
+  ;; CODE ABOVE. AND COMMENT THE CODE BELOW.
   (setq auto-save-file-name-transforms
       `((".*" ,(concat user-emacs-directory "auto-saves/\\1") t)))
   (add-hook 'eshell-mode-hook
