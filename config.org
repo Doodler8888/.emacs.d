@@ -212,18 +212,18 @@
   (setq undo-tree-auto-save-history t)
   (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
   (make-directory (concat user-emacs-directory "auto-saves") t)
-  ;; (setq auto-save-file-name-transforms
-  ;;       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
-  ;; THE CODE BELOW CAN POTETIALLY BREAK SOMETHING. IF SO, THEN UNCOMMENT THE
-  ;; CODE ABOVE. AND COMMENT THE CODE BELOW.
   (setq auto-save-file-name-transforms
-      `((".*" ,(concat user-emacs-directory "auto-saves/\\1") t)))
-  (add-hook 'eshell-mode-hook
-          (lambda ()
-            (setq buffer-file-name (expand-file-name
-                                    (concat "eshell-auto-save-"
-                                            (md5 (buffer-name)))
-                                    (concat user-emacs-directory "auto-saves/")))))
+        `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+  ;; ;; THE CODE BELOW CAN POTETIALLY BREAK SOMETHING. IF SO, THEN UNCOMMENT THE
+  ;; ;; CODE ABOVE. AND COMMENT THE CODE BELOW.
+  ;; (setq auto-save-file-name-transforms
+  ;;     `((".*" ,(concat user-emacs-directory "auto-saves/\\1") t)))
+  ;; (add-hook 'eshell-mode-hook
+  ;;         (lambda ()
+  ;;           (setq buffer-file-name (expand-file-name
+  ;;                                   (concat "eshell-auto-save-"
+  ;;                                           (md5 (buffer-name)))
+  ;;                                   (concat user-emacs-directory "auto-saves/")))))
 
   (make-directory (concat user-emacs-directory "lock-files") t)
   (setq lock-file-name-transforms
@@ -1951,26 +1951,21 @@
 
 #+begin_src emacs-lisp
 
-  ;; (defun FD ()
-  ;;   "List open files for the current Emacs process."
-  ;;   (interactive)
-  ;;   (let ((pid (number-to-string (emacs-pid))))
-  ;;     (insert (concat "ls -l /proc/" pid "/fd\n"))
-  ;;     (eshell-send-input)))
-
   (defun FD ()
-    "Display open files for the current Emacs process."
+    "Display open files for the current Emacs process.
+  If called from eshell, display in eshell. Otherwise, use a separate buffer."
     (interactive)
     (let* ((pid (number-to-string (emacs-pid)))
-          (command (concat "ls -l /proc/" pid "/fd")))
-      ;; Use `shell-command-to-string` to execute the command and capture its output as a string.
-      (let ((output (shell-command-to-string command)))
-        ;; Display the output in a buffer.
+          (command (concat "ls -l /proc/" pid "/fd"))
+          (output (shell-command-to-string command)))
+      (if (eq major-mode 'eshell-mode)
+          ;; In eshell, print directly to the eshell buffer
+          (eshell-printn output)
+        ;; Outside eshell, use the original behavior
         (with-output-to-temp-buffer "*FD Output*"
           (princ output))
-        ;; Optionally, switch to the output buffer.
         (switch-to-buffer-other-window "*FD Output*"))))
-  
+
 #+end_src
 
 *** Custom completions
