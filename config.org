@@ -720,12 +720,14 @@
               (lambda ()
                 (my-docker-mode-bindings docker-image-mode-map 'docker-image-rm)))
 
-    (add-hook 'docker-container-mode-hook
-              (lambda ()
-                (my-docker-mode-bindings 
-                docker-container-mode-map 
-                'docker-container-rm
-                '(("L" . docker-container-logs))))))
+  (add-hook 'docker-container-mode-hook
+            (lambda ()
+              (my-docker-mode-bindings 
+               docker-container-mode-map 
+               'docker-container-rm
+               '(("L" . docker-container-logs)
+                 ("S" . docker-container-start)
+                 ("O" . docker-container-stop))))))
   
   (defun my-tablist-mark-visual ()
     "Mark each line in the visual selection in docker-image-mode."
@@ -2941,81 +2943,87 @@
 
 #+begin_src emacs-lisp
 
-  ;; (org-link-minor-mode 1)
+  (use-package org
+    :config
+    (setq org-edit-src-content-indentation 0)
+    (setq org-src-preserve-indentation t)
+    (setq org-src-tab-acts-natively t)
+    ;; Other org-mode configurations...
+    )
+  
+    ;; (org-link-minor-mode 1)
 
-  ;; (setq org-startup-folded t) 
-  ;; (setq org-emphasis-alist
-  ;;       ;; '(("*" bold)
-  ;;         '(("/" italic)))
-  ;;         ;; ("_" underline)
-  ;;         ;; ("=" org-verbatim verbatim)
-  ;;         ;; ("~" org-code verbatim)
-  ;;         ;; ("+" org-strike-through t)))
-  ;;   (define-prefix-command 'my-prefix-map)
+    ;; (setq org-startup-folded t) 
+    ;; (setq org-emphasis-alist
+    ;;       ;; '(("*" bold)
+    ;;         '(("/" italic)))
+    ;;         ;; ("_" underline)
+    ;;         ;; ("=" org-verbatim verbatim)
+    ;;         ;; ("~" org-code verbatim)
+    ;;         ;; ("+" org-strike-through t)))
+    ;;   (define-prefix-command 'my-prefix-map)
 
-  ;; (defun todo ()
-  ;;   "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
+    ;; (defun todo ()
+    ;;   "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
+    ;;   (interactive)
+    ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
+
+  (defun org-insert-top-level-heading ()
+      "Insert a new top-level heading with two empty lines before it."
+      (interactive)
+      (end-of-line)
+      (insert "\n\n\n* ")
+      (end-of-line))
+
+    (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+
+  ;; (defun create-list-in-region ()
+  ;;   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
   ;;   (interactive)
-  ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
+  ;;   (if (use-region-p)
+  ;;       (let* ((beg (region-beginning))
+  ;;              (end (region-end))
+  ;;              (region-text (buffer-substring beg end))
+  ;;              (lines (split-string region-text "\n")))
+  ;;         (delete-region beg end)
+  ;;         (when lines
+  ;;           (insert (concat "- " (car lines)))
+  ;;           (dolist (line (cdr lines))
+  ;;             (insert (concat "\n  " line)))    
+  ;;     (message "No region active")))))
 
-(defun org-insert-top-level-heading ()
-    "Insert a new top-level heading with two empty lines before it."
-    (interactive)
-    (end-of-line)
-    (insert "\n\n\n* ")
-    (end-of-line))
+  (defun create-list-in-region ()
+  "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
+  (interactive)
+  (if (use-region-p)
+      (let* ((beg (region-beginning))
+             (end (region-end))
+             ;; Adjust `end` to exclude the newline at the end of the selection if present.
+             (end (if (and (> end beg)
+                           (save-excursion
+                             (goto-char end)
+                             (beginning-of-line)
+                             (<= (point) end)))
+                      (progn
+                        (goto-char end)
+                        (backward-char)
+                        (point))
+                    end))
+             (region-text (buffer-substring beg end))
+             (lines (split-string region-text "\n")))
+        (delete-region beg end)
+        (when lines
+          (insert (concat "- " (car lines)))
+          (dolist (line (cdr lines))
+            (insert (concat "\n  " line)))))
+    (message "No region active")))
 
-  (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
+    ;; (defun my/org-show-all-and-refresh ()
+    ;;   "Expand all blocks and refresh fontification."
+    ;;   (org-show-all '(blocks))
+    ;;   (redisplay t))
 
-;; (defun create-list-in-region ()
-;;   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
-;;   (interactive)
-;;   (if (use-region-p)
-;;       (let* ((beg (region-beginning))
-;;              (end (region-end))
-;;              (region-text (buffer-substring beg end))
-;;              (lines (split-string region-text "\n")))
-;;         (delete-region beg end)
-;;         (when lines
-;;           (insert (concat "- " (car lines)))
-;;           (dolist (line (cdr lines))
-;;             (insert (concat "\n  " line)))    
-;;     (message "No region active")))))
-
-(defun create-list-in-region ()
-"Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
-(interactive)
-(if (use-region-p)
-    (let* ((beg (region-beginning))
-           (end (region-end))
-           ;; Adjust `end` to exclude the newline at the end of the selection if present.
-           (end (if (and (> end beg)
-                         (save-excursion
-                           (goto-char end)
-                           (beginning-of-line)
-                           (<= (point) end)))
-                    (progn
-                      (goto-char end)
-                      (backward-char)
-                      (point))
-                  end))
-           (region-text (buffer-substring beg end))
-           (lines (split-string region-text "\n")))
-      (delete-region beg end)
-      (when lines
-        (insert (concat "- " (car lines)))
-        (dolist (line (cdr lines))
-          (insert (concat "\n  " line)))))
-  (message "No region active")))
-
-  ;; (setq org-src-fontify-natively t)
-
-  ;; (defun my/org-show-all-and-refresh ()
-  ;;   "Expand all blocks and refresh fontification."
-  ;;   (org-show-all '(blocks))
-  ;;   (redisplay t))
-
-  ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
+    ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
 
 #+end_src
 
