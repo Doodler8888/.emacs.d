@@ -112,17 +112,6 @@
                   (:eval (propertize " " 'display '(space :align-to (- right 12))))
                   (vc-mode vc-mode)))  ; Git branch information
 
-  ;; (defun renz/display-ansi-colors ()
-  ;;   "Render colors in a buffer that contains ASCII color escape codes."
-  ;;   (interactive)
-  ;;   (require 'ansi-color)
-  ;;   (let ((inhibit-read-only t))
-  ;;     (ansi-color-apply-on-region (point-min) (point-max))))
-
-  ;; (add-hook 'compilation-filter-hook #'renz/display-ansi-colors)
-
-  ;; (add-hook 'eshell-preoutput-filter-functions  #'ansi-color-apply)
-
 #+end_src
 
 *** Tabs
@@ -567,6 +556,8 @@
       "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
       "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
+      "rr" '(revert-buffer :wk "Refresh a current buffer")
+      
       ;; Popper
       "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
       "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
@@ -683,15 +674,14 @@
   (setq comint-output-filter-functions
         (remove 'ansi-color-process-output comint-output-filter-functions))
 
-  ;; ;; Comint
-  ;; (add-hook 'shell-mode-hook
-  ;;           (lambda ()
-  ;;             ;; Disable font-locking in this buffer to improve performance
-  ;;             (font-lock-mode -1)
-  ;;             ;; Prevent font-locking from being re-enabled in this buffer
-  ;;             (make-local-variable 'font-lock-function)
-  ;;             (setq font-lock-function (lambda (_) nil))
-  ;;             (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+  (add-hook 'shell-mode-hook
+            (lambda ()
+              ;; Disable font-locking in this buffer to improve performance
+              (font-lock-mode -1)
+              ;; Prevent font-locking from being re-enabled in this buffer
+              (make-local-variable 'font-lock-function)
+              (setq font-lock-function (lambda (_) nil))
+              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
 
   ;; Compilation buffers
   (setq compilation-environment '("TERM=xterm-256color"))
@@ -717,14 +707,26 @@
 
   (use-package docker
     :config
+    (defun my-docker-mode-bindings (mode-map rm-func &optional extra-bindings)
+      (evil-define-key 'normal mode-map (kbd "m") 'tablist-mark-forward)
+      (evil-define-key 'normal mode-map (kbd "D") rm-func)
+      (evil-define-key 'visual mode-map (kbd "m") 'my-tablist-mark-visual)
+      (evil-define-key 'visual mode-map (kbd "D") rm-func)
+      (when extra-bindings
+        (dolist (binding extra-bindings)
+          (evil-define-key 'normal mode-map (kbd (car binding)) (cdr binding)))))
+
     (add-hook 'docker-image-mode-hook
               (lambda ()
-                (evil-define-key 'normal docker-image-mode-map (kbd "m") 'tablist-mark-forward)
-                (evil-define-key 'normal docker-image-mode-map (kbd "D") 'docker-image-rm)
-                (evil-define-key 'visual docker-image-mode-map (kbd "m") 'my-tablist-mark-visual)
-                ;; (evil-define-key 'visual-line docker-image-mode-map (kbd "m") 'my-tablist-mark-visual-lines)
-                (evil-define-key 'visual docker-image-mode-map (kbd "D") 'docker-image-rm))))
+                (my-docker-mode-bindings docker-image-mode-map 'docker-image-rm)))
 
+    (add-hook 'docker-container-mode-hook
+              (lambda ()
+                (my-docker-mode-bindings 
+                docker-container-mode-map 
+                'docker-container-rm
+                '(("L" . docker-container-logs))))))
+  
   (defun my-tablist-mark-visual ()
     "Mark each line in the visual selection in docker-image-mode."
     (interactive)
@@ -1815,7 +1817,7 @@
         eshell-scroll-to-bottom-on-input t
         eshell-destroy-buffer-when-process-dies t
         eshell-banner-message ""
-        eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok" "bat"))
+        eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
   (add-hook 'eshell-mode-hook
             (lambda ()
@@ -1900,7 +1902,6 @@
       (eshell)
       (switch-to-buffer eshell-buffer-name)))
 
-
   (defun eshell-new-pop ()
     "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
     (interactive)
@@ -1921,8 +1922,6 @@
             (delete-region (car bounds) (cdr bounds))
             (insert expanded))
         (message "No valid filename at point!"))))
-
-  (add-hook 'eshell-preoutput-filter-functions  'ansi-color-apply)
 
   (connection-local-set-profile-variables
    'remote-trash-directory
@@ -2535,107 +2534,108 @@
 
 #+begin_src emacs-lisp
 
-  (defun my/show-popper-echo-line ()
-    "Briefly toggle popper to show the echo line."
-    (interactive)
-    ;; Ensure popper-mode and popper-echo-mode are active
-    (when (and popper-mode popper-echo-mode)
-      ;; Toggle a popper window and immediately toggle it back
-      (popper-toggle-latest)
-      (popper-toggle-latest)))
+    (defun my/show-popper-echo-line ()
+      "Briefly toggle popper to show the echo line."
+      (interactive)
+      ;; Ensure popper-mode and popper-echo-mode are active
+      (when (and popper-mode popper-echo-mode)
+        ;; Toggle a popper window and immediately toggle it back
+        (popper-toggle-latest)
+        (popper-toggle-latest)))
 
-  (use-package popper
-    :bind (("M-`" . my/show-popper-echo-line))
-           ;; ("M-f"   . popper-toggle))
-           ;; ("M-~"   . popper-cycle))
-    :init
-    (setq popper-window-height 0.33)
-    (setq popper-reference-buffers
-          '("\\*Messages\\*"
-            "Output\\*$"
-            "\\*Async Shell Command\\*"
-            "*Flymake diagnostics.*"
-            "*Flycheck errors.*"
-            "\\*compilation\\*"
-            ;; "\\*eshell\\*.*"
-            "\\*persistent-shell\\*.*"
-            "\\*cider-repl.*"
-            "\\*cider-doc.*"
-            "\\*cider-error.*"
-            "\\*helpful.*"
-            ;; "\\*man.*"
-            "\\*grep.*"
-            ;; "\\*eshell:.*"
-            "\\*Warnings\\*"
-            ;; "\\*xref\\*"
-            ;; "\\*Backtrace\\*"
-            "\\*eldoc\\*"
-            ;; "\\*Ement Notifications\\*"
-            ;; "Output\\*$"
-            ;; "\\*Dtache Shell Command\\*"
-            ;; "\\*mu4e-update\\*"
-            help-mode
-            compilation-mode))
-    (popper-mode +1)
-    (popper-echo-mode +1))
+    (use-package popper
+      :bind (("M-`" . my/show-popper-echo-line))
+             ;; ("M-f"   . popper-toggle))
+             ;; ("M-~"   . popper-cycle))
+      :init
+      (setq popper-window-height 0.33)
+      (setq popper-reference-buffers
+            '("\\*Messages\\*"
+              "Output\\*$"
+              "\\*Async Shell Command\\*"
+              "*Flymake diagnostics.*"
+              "*Flycheck errors.*"
+              "\\* docker container logs .*\\*"
+              "\\*compilation\\*"
+              ;; "\\*eshell\\*.*"
+              "\\*persistent-shell\\*.*"
+              "\\*cider-repl.*"
+              "\\*cider-doc.*"
+              "\\*cider-error.*"
+              "\\*helpful.*"
+              ;; "\\*man.*"
+              "\\*grep.*"
+              ;; "\\*eshell:.*"
+              "\\*Warnings\\*"
+              ;; "\\*xref\\*"
+              ;; "\\*Backtrace\\*"
+              "\\*eldoc\\*"
+              ;; "\\*Ement Notifications\\*"
+              ;; "Output\\*$"
+              ;; "\\*Dtache Shell Command\\*"
+              ;; "\\*mu4e-update\\*"
+              help-mode
+              compilation-mode))
+      (popper-mode +1)
+      (popper-echo-mode +1))
 
-  (use-package shackle
-    :ensure t
-    :config
-    (shackle-mode 1))
+    (use-package shackle
+      :ensure t
+      :config
+      (shackle-mode 1))
 
-  (defun my-buffer-is-popper-popup-p ()
-    "Check if the current buffer is considered a Popper popup."
-    (and (boundp 'popper-popup-status)
-        (buffer-local-value 'popper-popup-status (current-buffer))))
+    (defun my-buffer-is-popper-popup-p ()
+      "Check if the current buffer is considered a Popper popup."
+      (and (boundp 'popper-popup-status)
+          (buffer-local-value 'popper-popup-status (current-buffer))))
 
-  (defun my-check-current-buffer-popper-status ()
-    "Print whether the current buffer is a Popper popup."
-    (interactive)
-    (if (my-buffer-is-popper-popup-p)
-        (message "Current buffer IS a Popper popup.")
-      (message "Current buffer is NOT a Popper popup.")))
+    (defun my-check-current-buffer-popper-status ()
+      "Print whether the current buffer is a Popper popup."
+      (interactive)
+      (if (my-buffer-is-popper-popup-p)
+          (message "Current buffer IS a Popper popup.")
+        (message "Current buffer is NOT a Popper popup.")))
 
-  (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
-    (when-let ((buf (get-buffer (or buffer (current-buffer)))))
-      (with-current-buffer buf
-        (if (popper-popup-p buf)
-            (setq popper-popup-status 'raised)
-          (setq popper-popup-status nil))
-        (setq mode-line-format (default-value 'mode-line-format)))))
+    (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
+      (when-let ((buf (get-buffer (or buffer (current-buffer)))))
+        (with-current-buffer buf
+          (if (popper-popup-p buf)
+              (setq popper-popup-status 'raised)
+            (setq popper-popup-status nil))
+          (setq mode-line-format (default-value 'mode-line-format)))))
 
-  ;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
-  (global-set-key (kbd "M-f") 'popper-toggle)
+    ;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+    (global-set-key (kbd "M-f") 'popper-toggle)
 
-  (defun popper-flymake-diagnostics ()
-    "Popper window specifically for Flymake diagnostics buffer."
-    (interactive)
-    (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-        (popper-toggle)
-      (flymake-show-buffer-diagnostics)))
+    (defun popper-flymake-diagnostics ()
+      "Popper window specifically for Flymake diagnostics buffer."
+      (interactive)
+      (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+          (popper-toggle)
+        (flymake-show-buffer-diagnostics)))
 
-  (defun popper-flycheck-diagnostics ()
-    "Popper window specifically for Flycheck errors buffer."
-    (interactive)
-    (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-        (popper-toggle)
-      (flycheck-list-errors)))
+    (defun popper-flycheck-diagnostics ()
+      "Popper window specifically for Flycheck errors buffer."
+      (interactive)
+      (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
+          (popper-toggle)
+        (flycheck-list-errors)))
 
-  ;; (defun fix-cycle ()
-  ;;   (interactive)
-  ;;   (popper-cycle 1))
+    ;; (defun fix-cycle ()
+    ;;   (interactive)
+    ;;   (popper-cycle 1))
 
-  ;; (defun fix-cycle-backwards ()
-  ;;   (interactive)
-  ;;   (popper-cycle-backwards -1))
+    ;; (defun fix-cycle-backwards ()
+    ;;   (interactive)
+    ;;   (popper-cycle-backwards -1))
 
-  (with-eval-after-load 'evil
-    ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-    ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-    ;; (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
-    ;; (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
-    (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
-    (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+    (with-eval-after-load 'evil
+      ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+      ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+      ;; (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+      ;; (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+      (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
+      (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 #+end_src
 
@@ -2865,7 +2865,7 @@
           lsp-eldoc-enable-hover nil
           lsp-eldoc-render-all nil
           lsp-signature-render-documentation nil))
-  
+
   (setq lsp-pyright-multi-root nil)
 
   (use-package lsp-pyright
@@ -2893,7 +2893,7 @@
     (setq-local flymake-diagnostic-functions
                 (remove 'python-flymake flymake-diagnostic-functions)))
 
-  (add-hook 'python-ts-mode-hook #'my/disable-python-flymake)
+  (add-hook 'python-ts-mode-hook #'my/disable-python-flymake) ;
 
   (use-package lsp-ui
     :after lsp-mode
