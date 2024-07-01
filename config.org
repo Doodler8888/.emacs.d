@@ -203,17 +203,6 @@
   (make-directory (concat user-emacs-directory "auto-saves") t)
   (setq auto-save-file-name-transforms
         `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
-  ;; ;; THE CODE BELOW CAN POTETIALLY BREAK SOMETHING. IF SO, THEN UNCOMMENT THE
-  ;; ;; CODE ABOVE. AND COMMENT THE CODE BELOW.
-  ;; (setq auto-save-file-name-transforms
-  ;;     `((".*" ,(concat user-emacs-directory "auto-saves/\\1") t)))
-  ;; (add-hook 'eshell-mode-hook
-  ;;         (lambda ()
-  ;;           (setq buffer-file-name (expand-file-name
-  ;;                                   (concat "eshell-auto-save-"
-  ;;                                           (md5 (buffer-name)))
-  ;;                                   (concat user-emacs-directory "auto-saves/")))))
-
   (make-directory (concat user-emacs-directory "lock-files") t)
   (setq lock-file-name-transforms
         `((".*" ,(concat user-emacs-directory "lock-files/") t)))
@@ -549,6 +538,9 @@
       ;; Org capture
       "n" '(org-capture :wk "Create a quick note")
       
+      ;; Docker
+      "dd" '(docker-template :wk "Spawn docker.el buffers")
+      
       ;; Windows
       "w"  'hydra-window-size/body
 
@@ -568,8 +560,8 @@
 
       "zz" '(z :wk "Call zoxide prompt")
 
-      "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-      "dt" '(dired-create-empty-file :wk "Create an empty file")
+      ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
+      ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
 
       "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
       "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
@@ -720,6 +712,13 @@
               (lambda ()
                 (my-docker-mode-bindings docker-image-mode-map 'docker-image-rm)))
 
+    (defun docker-template ()
+      "Create docker.el windows with a specific layout"
+      (interactive)
+      (docker-images)
+      (docker-containers)
+      (transpose-frame))
+    
   (add-hook 'docker-container-mode-hook
             (lambda ()
               (my-docker-mode-bindings 
@@ -728,7 +727,7 @@
                '(("L" . docker-container-logs)
                  ("S" . docker-container-start)
                  ("O" . docker-container-stop))))))
-  
+
   (defun my-tablist-mark-visual ()
     "Mark each line in the visual selection in docker-image-mode."
     (interactive)
@@ -2558,6 +2557,7 @@
               "*Flymake diagnostics.*"
               "*Flycheck errors.*"
               "\\* docker container logs .*\\*"
+              "\\* docker inspect .*\\*"
               "\\*compilation\\*"
               ;; "\\*eshell\\*.*"
               "\\*persistent-shell\\*.*"
@@ -2945,12 +2945,12 @@
 
   (use-package org
     :config
-    (setq org-edit-src-content-indentation 0)
-    (setq org-src-preserve-indentation t)
-    (setq org-src-tab-acts-natively t)
-    ;; Other org-mode configurations...
-    )
-  
+    (setq org-edit-src-content-indentation 0))
+  ;;   (setq org-src-preserve-indentation t)
+  ;;   (setq org-src-tab-acts-natively t)
+  ;;   ;; Other org-mode configurations...
+  ;;   )
+
     ;; (org-link-minor-mode 1)
 
     ;; (setq org-startup-folded t) 
