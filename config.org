@@ -154,116 +154,121 @@
 
 #+begin_src emacs-lisp
 
-  ;; (server-start)
-  (global-set-key (kbd "C-x u") 'windmove-up)
-  (setq evil-want-keybinding nil)
+;; (server-start)
+(global-set-key (kbd "C-x u") 'windmove-up)
+(setq evil-want-keybinding nil)
 
-  (setq vc-follow-symlinks t)
+(setq vc-follow-symlinks t)
 
-  (setq dired-recursive-deletes 'always)
+(setq dired-recursive-deletes 'always)
 
-  (setq desktop-load-locked-desktop t)
-  (setq backup-inhibited t)
+(setq desktop-load-locked-desktop t)
+(setq backup-inhibited t)
 
-  (add-hook 'prog-mode-hook (show-paren-mode t))
+(add-hook 'prog-mode-hook (show-paren-mode t))
 
-  ;; Auto pairing
-  (add-hook 'prog-mode-hook (electric-pair-mode t))
+;; Auto pairing
+(add-hook 'prog-mode-hook (electric-pair-mode t))
 
-  ;; Don't pair '<'
-  (setq electric-pair-inhibit-predicate
-        `(lambda (c)
-          (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
+;; Don't pair '<'
+(setq electric-pair-inhibit-predicate
+      `(lambda (c)
+        (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
 
-  ;; Break lines after a certain length
-  (auto-fill-mode 1)
-  (setq-default fill-column 80)
-  (add-hook 'text-mode-hook 'auto-fill-mode)
+;; Break lines after a certain length
+(auto-fill-mode 1)
+(setq-default fill-column 80)
+(add-hook 'text-mode-hook 'auto-fill-mode)
 
-  (setq python-shell-interpreter "/usr/bin/python3")
+(setq python-shell-interpreter "/usr/bin/python3")
 
-  (defalias 'yes-or-no-p 'y-or-n-p)
+(defalias 'yes-or-no-p 'y-or-n-p)
 
-  ;; Autoinsertion on the search buffer
-  (setq ivy-initial-inputs-alist nil)
-  ;; (setq ivy-initial-inputs-alist ;; If you want there are situations where you would like to have it enabled, try this code.
-  ;;     '((counsel-M-x . "")
-  ;;       (t . "^")))
+;; Autoinsertion on the search buffer
+(setq ivy-initial-inputs-alist nil)
+;; (setq ivy-initial-inputs-alist ;; If you want there are situations where you would like to have it enabled, try this code.
+;;     '((counsel-M-x . "")
+;;       (t . "^")))
 
-  ;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
-  (setq-default indent-tabs-mode nil)
-  (savehist-mode 1)
+;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
+(setq-default indent-tabs-mode nil)
+(savehist-mode 1)
 
-  ;; Executable on save if starts with '#!'
-  (add-hook 'after-save-hook
-          'executable-make-buffer-file-executable-if-script-p)
+;; Executable on save if starts with '#!'
+(add-hook 'after-save-hook
+        'executable-make-buffer-file-executable-if-script-p)
 
-  (setq undo-tree-auto-save-history t)
-  (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
-  (make-directory (concat user-emacs-directory "auto-saves") t)
-  (setq auto-save-file-name-transforms
-        `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
-  (make-directory (concat user-emacs-directory "lock-files") t)
-  (setq lock-file-name-transforms
-        `((".*" ,(concat user-emacs-directory "lock-files/") t)))
-  (setq desktop-dirname (concat user-emacs-directory "desktop/"))
-  (make-directory (concat user-emacs-directory "backups") t)
-  (setq backup-directory-alist
-        `((".*" . ,(concat user-emacs-directory "backups/"))))
+(setq undo-tree-auto-save-history t)
+(setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
+(make-directory (concat user-emacs-directory "auto-saves") t)
+(setq auto-save-file-name-transforms
+      `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+(make-directory (concat user-emacs-directory "lock-files") t)
+(setq lock-file-name-transforms
+      `((".*" ,(concat user-emacs-directory "lock-files/") t)))
+(setq desktop-dirname (concat user-emacs-directory "desktop/"))
+(make-directory (concat user-emacs-directory "backups") t)
+(setq backup-directory-alist
+      `((".*" . ,(concat user-emacs-directory "backups/"))))
 
-  (defun my-disable-auto-save-for-scratch ()
-  (when (string= (buffer-name) "*scratch*")
-    (auto-save-mode -1)))
+(defun my-disable-auto-save-for-scratch ()
+(when (string= (buffer-name) "*scratch*")
+  (auto-save-mode -1)))
 
-  (add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
+(add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
 
 
-  ;; Save sessions
-  (unless (file-exists-p desktop-dirname)
-    (make-directory desktop-dirname))
-  (desktop-save-mode 1)
-  (setq desktop-save 't)
-  (setq desktop-path (list desktop-dirname))
-  (setq desktop-auto-save-timeout 30)
-  (setq desktop-auto-save-timeout nil)
+;; Save sessions
+(unless (file-exists-p desktop-dirname)
+  (make-directory desktop-dirname))
+(desktop-save-mode 1)
+(setq desktop-save 't)
+(setq desktop-path (list desktop-dirname))
+(setq desktop-auto-save-timeout 30)
+(setq desktop-auto-save-timeout nil)
 
-  (setq auto-save-interval 1)  ; Auto-save every 1 second
-  (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
-  (setq auto-save-no-message t)
+(setq auto-save-interval 1)  ; Auto-save every 1 second
+(setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
+(setq auto-save-no-message t)
 
-  (auto-save-mode 1)
+(auto-save-mode 1)
 
-  (setq save-place-file (concat user-emacs-directory "saveplace/places"))
+(setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
-  ;; Save cursor position
-  (unless (file-exists-p (concat user-emacs-directory "saveplace/"))
-    (make-directory (concat user-emacs-directory "saveplace/")))
-  (save-place-mode 1)
+;; Save cursor position
+(unless (file-exists-p (concat user-emacs-directory "saveplace/"))
+  (make-directory (concat user-emacs-directory "saveplace/")))
+(save-place-mode 1)
 
-  (if (version< emacs-version "29.0")
-      (pixel-scroll-mode)
-    (pixel-scroll-precision-mode 1)
-    (setq pixel-scroll-precision-large-scroll-height 35.0))
+(if (version< emacs-version "29.0")
+    (pixel-scroll-mode)
+  (pixel-scroll-precision-mode 1)
+  (setq pixel-scroll-precision-large-scroll-height 35.0))
 
-  (scroll-bar-mode -1)
-  (setq-default display-line-numbers-width 3)
-  (setq-default scroll-margin 8)
-  (setq use-dialog-box nil)
-  (set-fringe-mode 0)
-  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-  (setq global-auto-revert-non-file-buffers t)
-  (global-auto-revert-mode 1)
+(scroll-bar-mode -1)
+(setq-default display-line-numbers-width 3)
+(setq-default scroll-margin 8)
+(setq use-dialog-box nil)
+(set-fringe-mode 0)
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(setq global-auto-revert-non-file-buffers t)
+(global-auto-revert-mode 1)
 
-  (setq-default truncate-lines t)
+(setq-default truncate-lines t)
 
-  (setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
+(setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
+(setenv "PATH" (concat (getenv "PATH") ":/usr/bin"))
+(setq exec-path (append exec-path '("/usr/bin")))
 
-  (setq scroll-conservatively 101)
-  (setq scroll-margin 5)
-  (setq scroll-step 1)
+(setq scroll-conservatively 101)
+(setq scroll-margin 5)
+(setq scroll-step 1)
 
-  (require 'midnight)
-  (midnight-delay-set 'midnight-delay "10:00pm")
+(require 'midnight)
+(midnight-delay-set 'midnight-delay "10:00pm")
+
+(setq comint-process-echoes t)
+(setq comint-use-prompt-regexp nil)
 
 #+end_src
 
@@ -569,6 +574,7 @@
       ;; "ee" '(eshell :wk "Eshell")
       "en" '(eshell-new :wk "Spawn a new eshell buffer")
       "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
+      "ep" '(eshell-pop :wk "Execute the eshell command and launch eshell as a popper buffer")
 
       ;; Tramp
       "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
@@ -697,20 +703,31 @@
 
 #+begin_src emacs-lisp
 
-  (use-package docker
-    :config
-    (defun my-docker-mode-bindings (mode-map rm-func &optional extra-bindings)
-      (evil-define-key 'normal mode-map (kbd "m") 'tablist-mark-forward)
-      (evil-define-key 'normal mode-map (kbd "D") rm-func)
-      (evil-define-key 'visual mode-map (kbd "m") 'my-tablist-mark-visual)
-      (evil-define-key 'visual mode-map (kbd "D") rm-func)
-      (when extra-bindings
-        (dolist (binding extra-bindings)
-          (evil-define-key 'normal mode-map (kbd (car binding)) (cdr binding)))))
+(use-package docker
+  :config
+  (defun my-docker-mode-bindings (mode-map rm-func &optional extra-bindings)
+    (evil-define-key 'normal mode-map (kbd "m") 'tablist-mark-forward)
+    (evil-define-key 'normal mode-map (kbd "D") rm-func)
+    (evil-define-key 'visual mode-map (kbd "m") 'my-tablist-mark-visual)
+    (evil-define-key 'visual mode-map (kbd "D") rm-func)
+    (when extra-bindings
+      (dolist (binding extra-bindings)
+        (evil-define-key 'normal mode-map (kbd (car binding)) (cdr binding)))))
 
-    (add-hook 'docker-image-mode-hook
-              (lambda ()
-                (my-docker-mode-bindings docker-image-mode-map 'docker-image-rm)))
+(add-hook 'docker-image-mode-hook
+          (lambda ()
+            (my-docker-mode-bindings docker-image-mode-map 'docker-image-rm)))
+  
+(add-hook 'docker-container-mode-hook
+          (lambda ()
+            (my-docker-mode-bindings 
+             docker-container-mode-map 
+             'docker-container-rm
+             '(("L" . docker-container-logs)
+               ("S" . docker-container-start)
+               ("?" . docker-container-help)
+               ("I" . docker-container-inspect)
+               ("O" . docker-container-stop))))))
 
     (defun docker-template ()
       "Create docker.el windows with a specific layout"
@@ -718,44 +735,62 @@
       (docker-images)
       (docker-containers)
       (transpose-frame))
-    
-  (add-hook 'docker-container-mode-hook
-            (lambda ()
-              (my-docker-mode-bindings 
-               docker-container-mode-map 
-               'docker-container-rm
-               '(("L" . docker-container-logs)
-                 ("S" . docker-container-start)
-                 ("O" . docker-container-stop))))))
 
-  (defun my-tablist-mark-visual ()
-    "Mark each line in the visual selection in docker-image-mode."
-    (interactive)
-    (if (eq major-mode 'docker-image-mode)
-        (let ((beg (region-beginning))
-              (end (region-end)))
-          (save-excursion
-            (goto-char beg)
-            (while (<= (point) end)
-              (tablist-mark-forward)
-              (forward-line 1))))
-      (message "Not in docker-image-mode")))
+(defun my-tablist-mark-visual ()
+  "Mark each line in the visual selection in docker-image-mode."
+  (interactive)
+  (if (eq major-mode 'docker-image-mode)
+      (let ((beg (region-beginning))
+            (end (region-end)))
+        (save-excursion
+          (goto-char beg)
+          (while (<= (point) end)
+            (tablist-mark-forward)
+            (forward-line 1))))
+    (message "Not in docker-image-mode")))
 
-  ;; (defun my-tablist-mark-visual-lines ()
-  ;;   "Mark each line in the visual line selection in docker-image-mode."
-  ;;   (interactive)
-  ;;   (if (eq major-mode 'docker-image-mode)
-  ;;       (let ((beg (region-beginning))
-  ;;             (end (region-end)))
-  ;;         (save-excursion
-  ;;           (goto-char beg)
-  ;;           (while (<= (point) end)
-  ;;             (tablist-mark-forward)
-  ;;             ;; Ensure we move to the beginning of the next visual line.
-  ;;             (forward-line 1)
-  ;;             (while (and (<= (point) end) (not (eolp)))
-  ;;               (forward-char)))))
-  ;;     (message "Not in docker-image-mode")))
+;; (defun my-tablist-mark-visual-lines ()
+;;   "Mark each line in the visual line selection in docker-image-mode."
+;;   (interactive)
+;;   (if (eq major-mode 'docker-image-mode)
+;;       (let ((beg (region-beginning))
+;;             (end (region-end)))
+;;         (save-excursion
+;;           (goto-char beg)
+;;           (while (<= (point) end)
+;;             (tablist-mark-forward)
+;;             ;; Ensure we move to the beginning of the next visual line.
+;;             (forward-line 1)
+;;             (while (and (<= (point) end) (not (eolp)))
+;;               (forward-char)))))
+;;     (message "Not in docker-image-mode")))
+
+(defun container-map-id (container-name)
+  "Display the UID and GID maps of a Docker container.
+Ask for the name of a Docker container, retrieve its PID, and display the UID and GID maps."
+  (interactive "sContainer name: ")
+  (let* ((pid (string-trim (shell-command-to-string (format "docker inspect --format '{{.State.Pid}}' %s" container-name))))
+         (uid-map-file (format "/proc/%s/uid_map" pid))
+         (gid-map-file (format "/proc/%s/gid_map" pid)))
+    (if (and (not (string-empty-p pid))
+             (file-exists-p uid-map-file)
+             (file-exists-p gid-map-file))
+        (with-output-to-temp-buffer "*Docker ID Maps*"
+          (princ (format "UID and GID maps for container '%s' (PID: %s):\n\n" container-name pid))
+          (princ "UID map:\n")
+          (princ (with-temp-buffer
+                   (insert-file-contents uid-map-file)
+                   (buffer-string)))
+          (princ "\nGID map:\n")
+          (princ (with-temp-buffer
+                   (insert-file-contents gid-map-file)
+                   (buffer-string))))
+      (message "Failed to retrieve UID and/or GID maps for container '%s'" container-name))))
+
+(defun my-docker-shell ()
+  (interactive)
+  (let ((container-id (read-string "Enter container ID: ")))
+    (comint-run (format "docker exec -it %s /bin/sh" container-id))))
 
 #+end_src
 
@@ -1221,154 +1256,188 @@
 
 #+begin_src emacs-lisp
 
-  ;; (defun my-find-file-sudo-advice (orig-fun &rest args)
-  ;;   "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
-  ;;   (let ((file (car args)))
-  ;;     (if (or (file-directory-p file) ; Check if it's a directory
-  ;;             (file-writable-p file) ; or if it's writable
-  ;;             (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
-  ;;         (apply orig-fun args) ; then just open it normally
-  ;;       ;; Else, try opening with sudo
-  ;;       (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
+;; (defun my-find-file-sudo-advice (orig-fun &rest args)
+;;   "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
+;;   (let ((file (car args)))
+;;     (if (or (file-directory-p file) ; Check if it's a directory
+;;             (file-writable-p file) ; or if it's writable
+;;             (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
+;;         (apply orig-fun args) ; then just open it normally
+;;       ;; Else, try opening with sudo
+;;       (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
 
-  ;; (advice-add 'find-file :around #'my-find-file-sudo-advice)
+;; (advice-add 'find-file :around #'my-find-file-sudo-advice)
 
-  ;; (defun my-check-parent-directory-writable (dir)
-  ;;   "Recursively check if any parent directory of DIR is writable."
-  ;;   (when dir
-  ;;     (or (file-writable-p dir)
-  ;;         (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
-  ;;           (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
+;; (defun my-check-parent-directory-writable (dir)
+;;   "Recursively check if any parent directory of DIR is writable."
+;;   (when dir
+;;     (or (file-writable-p dir)
+;;         (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
+;;           (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
 
-    (use-package counsel
-      :after ivy
-      :config
-      (counsel-mode))
-    (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
+  (use-package counsel
+    :after ivy
+    :config
+    (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history)
+    (counsel-mode))
+  (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
-    ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
+;; (with-eval-after-load 'shell
+;;   (define-key minibuffer-local-shell-command-map (kbd "M-r") 'counsel-shell-history))
 
-    (use-package ivy
-      :bind
-      ;; ivy-resume resumes the last Ivy-based completion.
-      (("C-c C-r" . ivy-resume)
-       ("C-x B" . ivy-switch-buffer-other-window))
-      :custom
-      (setq ivy-use-virtual-buffers t)
-      (setq ivy-count-format "(%d/%d) ")
-      (setq enable-recursive-minibuffers t)
-      :config
-      (ivy-mode))
+  ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
 
-    (use-package ivy-posframe
-      :ensure t
-      :after ivy
-      :config
-      (ivy-posframe-mode 1))
-    (setq ivy-posframe-width 50)
-    (setq ivy-posframe-display-functions-alist
-          '((counsel-esh-history . ivy-posframe-display-at-window-center)))
+  (use-package ivy
+    :bind
+    ;; ivy-resume resumes the last Ivy-based completion.
+    (("C-c C-r" . ivy-resume)
+     ("C-x B" . ivy-switch-buffer-other-window))
+    :custom
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-count-format "(%d/%d) ")
+    (setq enable-recursive-minibuffers t)
+    :config
+    (ivy-mode))
 
-    ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
-    (use-package all-the-icons-ivy-rich
-      :init
-      (all-the-icons-ivy-rich-mode 1))
+;; Shell command history search using Ivy
+(defun my-ivy-shell-command-history ()
+  "Use `ivy-read` to search through shell command history."
+  (interactive)
+  (let ((history (if (eq this-command 'async-shell-command)
+                     async-shell-command-history
+                   shell-command-history)))
+    (ivy-read "Shell command history: " history
+              :action (lambda (cmd)
+                        (with-selected-window (minibuffer-selected-window)
+                          (delete-minibuffer-contents)
+                          (insert cmd))))))
 
-    (use-package ivy-rich
-      :after ivy
-      :ensure t
-      :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-      :custom
-      (ivy-virtual-abbreviate 'full
-                              ivy-rich-switch-buffer-align-virtual-buffer t
-                              ivy-rich-path-style 'abbrev))
+(defun my-shell-command (command &optional output-buffer error-buffer)
+  "Run shell command with custom history."
+  (interactive (list (my-ivy-shell-command-history)
+                     current-prefix-arg
+                     shell-command-default-error-buffer))
+  (shell-command command output-buffer error-buffer))
 
-    (defun counsel-find-file-check-dir ()
-      "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
-      (interactive)
-      (let* ((current-dir (if (eq major-mode 'dired-mode)
-                              "."
-                            (buffer-file-name))))
-        (ivy-read "Find file: " #'read-file-name-internal
-                  :matcher #'counsel--find-file-matcher
-                  :action #'find-file-check-dir
-                  :preselect current-dir
-                  :require-match 'confirm-after-completion
-                  :history 'file-name-history
-                  :keymap counsel-find-file-map
-                  :caller 'counsel-find-file)))
+(defun my-async-shell-command (command &optional output-buffer error-buffer)
+  "Run async shell command with custom history."
+  (interactive (list (my-ivy-shell-command-history)
+                     current-prefix-arg
+                     shell-command-default-error-buffer))
+  (async-shell-command command output-buffer error-buffer))
 
-    (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
+(global-set-key (kbd "M-!") 'my-shell-command)
+(global-set-key (kbd "M-&") 'my-async-shell-command)
 
-    (defun ivy-fzf-project ()
-      "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
-      (interactive)
-      (let ((default-directory (projectile-project-root))
-            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-        (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
-                            (find-file (expand-file-name f default-directory))))))
+  (use-package ivy-posframe
+    :ensure t
+    :after ivy
+    :config
+    (ivy-posframe-mode 1))
+  (setq ivy-posframe-width 50)
+  (setq ivy-posframe-display-functions-alist
+        '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
-    (defun ivy-fzf-home ()
-      "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
-      (interactive)
-      (let ((default-directory "~/")
-            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
-                            (find-file (expand-file-name f default-directory))))))
+  ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
+  (use-package all-the-icons-ivy-rich
+    :init
+    (all-the-icons-ivy-rich-mode 1))
 
-    (defun ivy-fzf-current-directory ()
-      "Run a customized `ivy-fzf`-like file selection using `fd` from the current directory."
-      (interactive)
-      (let ((fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
+  (use-package ivy-rich
+    :after ivy
+    :ensure t
+    :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
+    :custom
+    (ivy-virtual-abbreviate 'full
+                            ivy-rich-switch-buffer-align-virtual-buffer t
+                            ivy-rich-path-style 'abbrev))
+
+  (defun counsel-find-file-check-dir ()
+    "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
+    (interactive)
+    (let* ((current-dir (if (eq major-mode 'dired-mode)
+                            "."
+                          (buffer-file-name))))
+      (ivy-read "Find file: " #'read-file-name-internal
+                :matcher #'counsel--find-file-matcher
+                :action #'find-file-check-dir
+                :preselect current-dir
+                :require-match 'confirm-after-completion
+                :history 'file-name-history
+                :keymap counsel-find-file-map
+                :caller 'counsel-find-file)))
+
+  (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
+
+  (defun ivy-fzf-project ()
+    "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
+    (interactive)
+    (let ((default-directory (projectile-project-root))
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+      (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
                           (find-file (expand-file-name f default-directory))))))
 
-    (defun ivy-fzf-root ()
-      "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
-      (interactive)
-      (let ((default-directory "/")
-            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
-                            (find-file (expand-file-name f default-directory))))))
+  (defun ivy-fzf-home ()
+    "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
+    (interactive)
+    (let ((default-directory "~/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (find-file (expand-file-name f default-directory))))))
 
-    (defun insert-path-from-ivy-fzf-home ()
-      "Insert the path of a file selected by `ivy-fzf` from the home directory into the current buffer."
-      (interactive)
-      (let ((default-directory "~/")
-            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
-                            (insert (expand-file-name f default-directory))))))
+  (defun ivy-fzf-current-directory ()
+    "Run a customized `ivy-fzf`-like file selection using `fd` from the current directory."
+    (interactive)
+    (let ((fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                        (find-file (expand-file-name f default-directory))))))
 
-    (defun insert-path-from-ivy-fzf-project ()
-      "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
-      (interactive)
-      (let ((default-directory (projectile-project-root))
-            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
-                            (insert (expand-file-name f default-directory))))))
+  (defun ivy-fzf-root ()
+    "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
+    (interactive)
+    (let ((default-directory "/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (find-file (expand-file-name f default-directory))))))
 
-    (defun insert-path-from-ivy-fzf-root ()
-      "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
-      (interactive)
-      (let ((default-directory "/")
-            (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-        (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                  :action (lambda (f)
-                            (insert (expand-file-name f default-directory))))))
+  (defun insert-path-from-ivy-fzf-home ()
+    "Insert the path of a file selected by `ivy-fzf` from the home directory into the current buffer."
+    (interactive)
+    (let ((default-directory "~/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (insert (expand-file-name f default-directory))))))
 
-  ;; (defun counsel-projectile-find-file-or-dir ()
-  ;;   "Use `counsel-find-file` to find a file or directory in the current projectile project."
-  ;;   (interactive)
-  ;;   (let ((project-root (projectile-project-root)))
-  ;;     (if project-root
-  ;;         (counsel-find-file project-root)
-  ;;       (message "Not in a projectile project!"))))
+  (defun insert-path-from-ivy-fzf-project ()
+    "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
+    (interactive)
+    (let ((default-directory (projectile-project-root))
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (insert (expand-file-name f default-directory))))))
+
+  (defun insert-path-from-ivy-fzf-root ()
+    "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
+    (interactive)
+    (let ((default-directory "/")
+          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+                :action (lambda (f)
+                          (insert (expand-file-name f default-directory))))))
+
+;; (defun counsel-projectile-find-file-or-dir ()
+;;   "Use `counsel-find-file` to find a file or directory in the current projectile project."
+;;   (interactive)
+;;   (let ((project-root (projectile-project-root)))
+;;     (if project-root
+;;         (counsel-find-file project-root)
+;;       (message "Not in a projectile project!"))))
 
 #+end_src
 
@@ -1798,152 +1867,158 @@
 
 #+begin_src emacs-lisp
 
-  (setq eshell-destroy-buffer-when-process-dies t)
+(setq eshell-destroy-buffer-when-process-dies t)
 
-  (use-package eshell-syntax-highlighting
-    :after esh-mode  ;; don't change to 'eshell-mode'
-    :config
-    (eshell-syntax-highlighting-global-mode +1))
+(use-package eshell-syntax-highlighting
+  :after esh-mode  ;; don't change to 'eshell-mode'
+  :config
+  (eshell-syntax-highlighting-global-mode +1))
 
-  (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-  ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
+(add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
+;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
 
-  (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
-        eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
-        eshell-history-size 100000
-        eshell-buffer-maximum-lines 5000
-        ;; eshell-save-history-on-exit t
-        eshell-history-file-name "~/.emacs.d/eshell_history"
-        eshell-hist-ignoredups t
-        eshell-scroll-to-bottom-on-input t
-        eshell-destroy-buffer-when-process-dies t
-        eshell-banner-message ""
-        eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
+(setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
+      eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
+      eshell-history-size 100000
+      eshell-buffer-maximum-lines 5000
+      ;; eshell-save-history-on-exit t
+      eshell-history-file-name "~/.emacs.d/eshell_history"
+      eshell-hist-ignoredups t
+      eshell-scroll-to-bottom-on-input t
+      eshell-destroy-buffer-when-process-dies t
+      eshell-banner-message ""
+      eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
-  (add-hook 'eshell-mode-hook
-            (lambda ()
-              (setq-local scroll-margin 0)))
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (setq-local scroll-margin 0)))
 
-  (with-eval-after-load 'eshell
-    ;; Set eshell-save-history-on-exit to nil
-    (setq eshell-save-history-on-exit nil)
+(with-eval-after-load 'eshell
+  ;; Set eshell-save-history-on-exit to nil
+  (setq eshell-save-history-on-exit nil)
 
-    ;; Define eshell-append-history function
-    (defun eshell-append-history ()
-      "Call `eshell-write-history' with the `append' parameter set to `t'."
-      (when eshell-history-ring
-        (let ((newest-cmd-ring (make-ring 1)))
-          (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
-          (let ((eshell-history-ring newest-cmd-ring))
-            (eshell-write-history eshell-history-file-name t)))))
+  ;; Define eshell-append-history function
+  (defun eshell-append-history ()
+    "Call `eshell-write-history' with the `append' parameter set to `t'."
+    (when eshell-history-ring
+      (let ((newest-cmd-ring (make-ring 1)))
+        (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+        (let ((eshell-history-ring newest-cmd-ring))
+          (eshell-write-history eshell-history-file-name t)))))
 
-    ;; Add eshell-append-history to eshell-pre-command-hook
-    (add-hook 'eshell-pre-command-hook #'eshell-append-history))
+  ;; Add eshell-append-history to eshell-pre-command-hook
+  (add-hook 'eshell-pre-command-hook #'eshell-append-history))
 
-  (defun eshell-insert-last-argument ()
-    "Insert the last argument of the previous command."
-    (interactive)
-    (let* ((last-command (eshell-previous-input-string 0))
-           (args (split-string-and-unquote last-command))
-           (last-arg (car (last args))))
-      (when last-arg
-        (insert last-arg))))
+(defun eshell-insert-last-argument ()
+  "Insert the last argument of the previous command."
+  (interactive)
+  (let* ((last-command (eshell-previous-input-string 0))
+         (args (split-string-and-unquote last-command))
+         (last-arg (car (last args))))
+    (when last-arg
+      (insert last-arg))))
 
-  (defun setup-eshell-keys ()
-    (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
-  ;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+(defun setup-eshell-keys ()
+  (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
-  (add-hook 'eshell-mode-hook 'setup-eshell-keys)
+(add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
+(with-eval-after-load 'evil
+  (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+  (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+
+(defun eshell/edit (filename)
+  "Open FILENAME in the current buffer, using the current TRAMP address."
+  (interactive "sEnter the filename to edit: ")
+  ;; Extract the current TRAMP address from the Eshell buffer's default directory
+  (let ((tramp-address (file-remote-p default-directory)))
+    (if tramp-address
+        ;; If we're in a TRAMP directory, use the extracted address
+        (find-file (concat tramp-address filename))
+      ;; If not in a TRAMP directory, fall back to a default address or prompt the user
+      (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
+      ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
+      )))
+
+(defalias 'e 'eshell/edit)
+
+(require 'em-tramp) ; to load eshell’s sudo
+;; (setq eshell-prefer-lisp-functions t)
+;; (setq eshell-prefer-lisp-variables t)
+;; (setq password-cache t) ; enable password caching
+;; (setq password-cache-expiry 10)
+;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+
+(defun eshell-clear-buffer ()
+  "Clear the current Eshell buffer."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    ;; Move to the beginning of the buffer
+    (goto-char (point-min))
+    ;; Reinsert the prompt at the correct position
+    (eshell-reset)))
+
+(with-eval-after-load 'eshell
   (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-    (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+    (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
-  (defun eshell/edit (filename)
-    "Open FILENAME in the current buffer, using the current TRAMP address."
-    (interactive "sEnter the filename to edit: ")
-    ;; Extract the current TRAMP address from the Eshell buffer's default directory
-    (let ((tramp-address (file-remote-p default-directory)))
-      (if tramp-address
-          ;; If we're in a TRAMP directory, use the extracted address
-          (find-file (concat tramp-address filename))
-        ;; If not in a TRAMP directory, fall back to a default address or prompt the user
-        (message "Not in a TRAMP directory. Please specify the TRAMP address manually.")
-        ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
-        )))
+(defun eshell-new ()
+  "Create a new Eshell buffer with a unique name and open it in the current window."
+  (interactive)
+  (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+    (eshell)
+    (switch-to-buffer eshell-buffer-name)))
 
-  (defalias 'e 'eshell/edit)
+(defun eshell-new-pop ()
+  "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
+  (interactive)
+  (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
+    (eshell)
+    (switch-to-buffer eshell-buffer-name)
+    ;; Check if popper-mode is enabled and popper-toggle-type is available
+    (when (and (featurep 'popper) (bound-and-true-p popper-mode))
+      (popper-toggle-type eshell-buffer-name))))
 
-  (require 'em-tramp) ; to load eshell’s sudo
-  ;; (setq eshell-prefer-lisp-functions t)
-  ;; (setq eshell-prefer-lisp-variables t)
-  ;; (setq password-cache t) ; enable password caching
-  ;; (setq password-cache-expiry 10)
-  ;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
+(defun eshell-pop ()
+  "Execute the eshell command and launch eshell as a popper buffer"
+  (interactive)
+  (eshell)
+  (popper-toggle-type))
+  
+(defun eshell-expand-filename-at-point ()
+  "Expand the filename at point to its absolute path in eshell."
+  (interactive)
+  (let* ((filename (thing-at-point 'filename t))
+         (expanded (and filename (expand-file-name filename))))
+    (if expanded
+        (let ((bounds (bounds-of-thing-at-point 'filename)))
+          (delete-region (car bounds) (cdr bounds))
+          (insert expanded))
+      (message "No valid filename at point!"))))
 
-  (defun eshell-clear-buffer ()
-    "Clear the current Eshell buffer."
-    (interactive)
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      ;; Move to the beginning of the buffer
-      (goto-char (point-min))
-      ;; Reinsert the prompt at the correct position
-      (eshell-reset)))
+(connection-local-set-profile-variables
+ 'remote-trash-directory
+ '((trash-directory . "/sudo::~/.local/share/Trash")))
 
-  (with-eval-after-load 'eshell
-    (with-eval-after-load 'evil
-      (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
-      (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
+(connection-local-set-profiles
+ `(:application tramp :protocol "sudo" :machine ,system-name)
+ 'remote-trash-directory)
 
-  (defun eshell-new ()
-    "Create a new Eshell buffer with a unique name and open it in the current window."
-    (interactive)
-    (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-      (eshell)
-      (switch-to-buffer eshell-buffer-name)))
+(with-eval-after-load 'eshell
+  (evil-define-key 'normal eshell-mode-map
+    "j" 'next-line
+    "k" 'previous-line)
+  (evil-define-key 'visual eshell-mode-map
+    "j" 'next-line
+    "k" 'previous-line))
 
-  (defun eshell-new-pop ()
-    "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
-    (interactive)
-    (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-      (eshell)
-      (switch-to-buffer eshell-buffer-name)
-      ;; Check if popper-mode is enabled and popper-toggle-type is available
-      (when (and (featurep 'popper) (bound-and-true-p popper-mode))
-        (popper-toggle-type eshell-buffer-name))))
+(defun my-eshell-evil-setup ()
+  (evil-define-key 'normal eshell-mode-map (kbd "0") 'beginning-of-line))
 
-  (defun eshell-expand-filename-at-point ()
-    "Expand the filename at point to its absolute path in eshell."
-    (interactive)
-    (let* ((filename (thing-at-point 'filename t))
-           (expanded (and filename (expand-file-name filename))))
-      (if expanded
-          (let ((bounds (bounds-of-thing-at-point 'filename)))
-            (delete-region (car bounds) (cdr bounds))
-            (insert expanded))
-        (message "No valid filename at point!"))))
-
-  (connection-local-set-profile-variables
-   'remote-trash-directory
-   '((trash-directory . "/sudo::~/.local/share/Trash")))
-
-  (connection-local-set-profiles
-   `(:application tramp :protocol "sudo" :machine ,system-name)
-   'remote-trash-directory)
-
-  (with-eval-after-load 'eshell
-    (evil-define-key 'normal eshell-mode-map
-      "j" 'next-line
-      "k" 'previous-line)
-    (evil-define-key 'visual eshell-mode-map
-      "j" 'next-line
-      "k" 'previous-line))
-
-  (defun my-eshell-evil-setup ()
-    (evil-define-key 'normal eshell-mode-map (kbd "0") 'beginning-of-line))
-
-  (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
+(add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
 
 #+end_src
 
@@ -2283,135 +2358,145 @@
 
 #+begin_src emacs-lisp
 
-  (defun my-shell-mode-hook ()
-    (setq-local scroll-margin 0))
+(defun my-shell-mode-hook ()
+  (setq-local scroll-margin 0))
 
-  (add-hook 'shell-mode-hook 'my-shell-mode-hook)
+(add-hook 'shell-mode-hook 'my-shell-mode-hook)
 
-  (setq explicit-shell-file-name "/usr/bin/zsh")  ; your shell path here
-  (setq explicit-bash-args '("--login" "-i"))
+(setq explicit-shell-file-name "/usr/bin/zsh")  ; your shell path here
+(setq explicit-bash-args '("--login" "-i"))
 
-  ;; (defvar
-  ;;   shell-toggle-window-configuration nil
-  ;;   "Variable to store the window configuration before opening shell.")
+(defun my-shell-mode-hook ()
+  "Custom shell-mode hook to remove the first line of output."
+  (let ((inhibit-read-only t))
+    (save-excursion
+      (goto-char (point-min))
+      (delete-line))))
 
-  ;; (defvar shell-toggle-selected-window nil
-  ;;   "Variable to store the selected window before opening shell.")
+(add-hook 'shell-mode-hook
+          (lambda ()
+            (run-with-timer 0.1 nil 'my-shell-mode-hook)))
+;; (defvar
+;;   shell-toggle-window-configuration nil
+;;   "Variable to store the window configuration before opening shell.")
 
-  ;; (defun SpawnShellSplitBelow ()
-  ;;   "Open a shell in a small split below or toggle it if already open."
-  ;;   (interactive)
-  ;;   (if (eq major-mode 'shell-mode)
-  ;;       (progn
-  ;;         (when shell-toggle-window-configuration
-  ;;           (set-window-configuration shell-toggle-window-configuration)
-  ;;           (setq shell-toggle-window-configuration nil))
-  ;;         (when shell-toggle-selected-window
-  ;;           (select-window shell-toggle-selected-window)
-  ;;           (setq shell-toggle-selected-window nil)))
-  ;;     (setq shell-toggle-window-configuration (current-window-configuration))
-  ;;     (setq shell-toggle-selected-window (selected-window))
-  ;;     (split-window-below -10)
-  ;;     (other-window 1)
-  ;;     (open-shell-in-current-directory)))
+;; (defvar shell-toggle-selected-window nil
+;;   "Variable to store the selected window before opening shell.")
 
-  ;; (defun open-shell-in-current-directory ()
-  ;;   "Open shell in the directory of the current buffer.
-  ;; If a shell buffer for the directory already exists, switch to it."
-  ;;   (interactive)
-  ;;   (let* ((buffer-dir (if (buffer-file-name)
-  ;;                         (file-name-directory (buffer-file-name))
-  ;;                       default-directory))
-  ;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
-  ;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
-  ;;     (if existing-shell-buffer
-  ;;         (switch-to-buffer existing-shell-buffer)
-  ;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
-  ;;         (shell (generate-new-buffer-name shell-buffer-name))))))
+;; (defun SpawnShellSplitBelow ()
+;;   "Open a shell in a small split below or toggle it if already open."
+;;   (interactive)
+;;   (if (eq major-mode 'shell-mode)
+;;       (progn
+;;         (when shell-toggle-window-configuration
+;;           (set-window-configuration shell-toggle-window-configuration)
+;;           (setq shell-toggle-window-configuration nil))
+;;         (when shell-toggle-selected-window
+;;           (select-window shell-toggle-selected-window)
+;;           (setq shell-toggle-selected-window nil)))
+;;     (setq shell-toggle-window-configuration (current-window-configuration))
+;;     (setq shell-toggle-selected-window (selected-window))
+;;     (split-window-below -10)
+;;     (other-window 1)
+;;     (open-shell-in-current-directory)))
 
-  ;; (with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
+;; (defun open-shell-in-current-directory ()
+;;   "Open shell in the directory of the current buffer.
+;; If a shell buffer for the directory already exists, switch to it."
+;;   (interactive)
+;;   (let* ((buffer-dir (if (buffer-file-name)
+;;                         (file-name-directory (buffer-file-name))
+;;                       default-directory))
+;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
+;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
+;;     (if existing-shell-buffer
+;;         (switch-to-buffer existing-shell-buffer)
+;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
+;;         (shell (generate-new-buffer-name shell-buffer-name))))))
+
+;; (with-eval-after-load 'evil
+;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
 
 
 
 
-  ;; (defvar spawn-toggle-window-configuration nil
-  ;;   "Variable to store the window configuration before opening eshell or shell.")
+;; (defvar spawn-toggle-window-configuration nil
+;;   "Variable to store the window configuration before opening eshell or shell.")
 
-  ;; (defvar spawn-toggle-selected-window nil
-  ;;   "Variable to store the selected window before opening eshell or shell.")
+;; (defvar spawn-toggle-selected-window nil
+;;   "Variable to store the selected window before opening eshell or shell.")
 
-  ;; (defun SpawnEshellSplitBelow ()
-  ;;   "Open a shell in a small split below or toggle it if already open.
-  ;; If the current buffer is a shell buffer, switch to an eshell buffer instead."
-  ;;   (interactive)
-  ;;   (if (eq major-mode 'shell-mode)
-  ;;       (open-eshell-in-current-directory)
-  ;;     (if (eq major-mode 'eshell-mode)
-  ;;         (SpawnToggleOff)
-  ;;       (SpawnToggleOn)
-  ;;       (open-eshell-in-current-directory))))
+;; (defun SpawnEshellSplitBelow ()
+;;   "Open a shell in a small split below or toggle it if already open.
+;; If the current buffer is a shell buffer, switch to an eshell buffer instead."
+;;   (interactive)
+;;   (if (eq major-mode 'shell-mode)
+;;       (open-eshell-in-current-directory)
+;;     (if (eq major-mode 'eshell-mode)
+;;         (SpawnToggleOff)
+;;       (SpawnToggleOn)
+;;       (open-eshell-in-current-directory))))
 
-  ;; (defun open-eshell-in-current-directory ()
-  ;;   "Open eshell in the directory of the current buffer.
-  ;; If an eshell buffer for the directory already exists, switch to it."
-  ;;   (interactive)
-  ;;   (let* ((buffer-dir (if (buffer-file-name)
-  ;;                         (file-name-directory (buffer-file-name))
-  ;;                       default-directory))
-  ;;         (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-  ;;         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-  ;;     (if existing-eshell-buffer
-  ;;         (switch-to-buffer existing-eshell-buffer)
-  ;;       (let ((eshell-buffer (eshell 'N)))
-  ;;         (with-current-buffer eshell-buffer
-  ;;           (rename-buffer eshell-buffer-name)
-  ;;           (eshell/cd buffer-dir))))))
+;; (defun open-eshell-in-current-directory ()
+;;   "Open eshell in the directory of the current buffer.
+;; If an eshell buffer for the directory already exists, switch to it."
+;;   (interactive)
+;;   (let* ((buffer-dir (if (buffer-file-name)
+;;                         (file-name-directory (buffer-file-name))
+;;                       default-directory))
+;;         (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+;;         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+;;     (if existing-eshell-buffer
+;;         (switch-to-buffer existing-eshell-buffer)
+;;       (let ((eshell-buffer (eshell 'N)))
+;;         (with-current-buffer eshell-buffer
+;;           (rename-buffer eshell-buffer-name)
+;;           (eshell/cd buffer-dir))))))
 
-  ;; (defun SpawnShellSplitBelow ()
-  ;;   "Open a shell in a small split below or toggle it if already open.
-  ;; If the current buffer is an eshell buffer, switch to a shell buffer instead."
-  ;;   (interactive)
-  ;;   (if (eq major-mode 'eshell-mode)
-  ;;       (open-shell-in-current-directory)
-  ;;     (if (eq major-mode 'shell-mode)
-  ;;         (SpawnToggleOff)
-  ;;       (SpawnToggleOn)
-  ;;       (open-shell-in-current-directory))))
+;; (defun SpawnShellSplitBelow ()
+;;   "Open a shell in a small split below or toggle it if already open.
+;; If the current buffer is an eshell buffer, switch to a shell buffer instead."
+;;   (interactive)
+;;   (if (eq major-mode 'eshell-mode)
+;;       (open-shell-in-current-directory)
+;;     (if (eq major-mode 'shell-mode)
+;;         (SpawnToggleOff)
+;;       (SpawnToggleOn)
+;;       (open-shell-in-current-directory))))
 
-  ;; (defun open-shell-in-current-directory ()
-  ;;   "Open shell in the directory of the current buffer.
-  ;; If a shell buffer for the directory already exists, switch to it."
-  ;;   (interactive)
-  ;;   (let* ((buffer-dir (if (buffer-file-name)
-  ;;                         (file-name-directory (buffer-file-name))
-  ;;                       default-directory))
-  ;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
-  ;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
-  ;;     (if existing-shell-buffer
-  ;;         (switch-to-buffer existing-shell-buffer)
-  ;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
-  ;;         (shell (generate-new-buffer-name shell-buffer-name))))))
+;; (defun open-shell-in-current-directory ()
+;;   "Open shell in the directory of the current buffer.
+;; If a shell buffer for the directory already exists, switch to it."
+;;   (interactive)
+;;   (let* ((buffer-dir (if (buffer-file-name)
+;;                         (file-name-directory (buffer-file-name))
+;;                       default-directory))
+;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
+;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
+;;     (if existing-shell-buffer
+;;         (switch-to-buffer existing-shell-buffer)
+;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
+;;         (shell (generate-new-buffer-name shell-buffer-name))))))
 
-  ;; (defun SpawnToggleOff ()
-  ;;   "Toggle off eshell or shell buffer and restore the previous window configuration."
-  ;;   (when spawn-toggle-window-configuration
-  ;;     (set-window-configuration spawn-toggle-window-configuration)
-  ;;     (setq spawn-toggle-window-configuration nil))
-  ;;   (when spawn-toggle-selected-window
-  ;;     (select-window spawn-toggle-selected-window)
-  ;;     (setq spawn-toggle-selected-window nil)))
+;; (defun SpawnToggleOff ()
+;;   "Toggle off eshell or shell buffer and restore the previous window configuration."
+;;   (when spawn-toggle-window-configuration
+;;     (set-window-configuration spawn-toggle-window-configuration)
+;;     (setq spawn-toggle-window-configuration nil))
+;;   (when spawn-toggle-selected-window
+;;     (select-window spawn-toggle-selected-window)
+;;     (setq spawn-toggle-selected-window nil)))
 
-  ;; (defun SpawnToggleOn ()
-  ;;   "Store the current window configuration and selected window before spawning eshell or shell."
-  ;;   (setq spawn-toggle-window-configuration (current-window-configuration))
-  ;;   (setq spawn-toggle-selected-window (selected-window))
-  ;;   (split-window-below -10)
-  ;;   (other-window 1))
+;; (defun SpawnToggleOn ()
+;;   "Store the current window configuration and selected window before spawning eshell or shell."
+;;   (setq spawn-toggle-window-configuration (current-window-configuration))
+;;   (setq spawn-toggle-selected-window (selected-window))
+;;   (split-window-below -10)
+;;   (other-window 1))
 
-  ;; (with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
-  ;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
+;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
 
 #+end_src
 
