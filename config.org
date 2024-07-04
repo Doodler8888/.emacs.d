@@ -1299,18 +1299,13 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     :config
     (ivy-mode))
 
-;; Shell command history search using Ivy
 (defun my-ivy-shell-command-history ()
   "Use `ivy-read` to search through shell command history."
   (interactive)
   (let ((history (if (eq this-command 'async-shell-command)
                      async-shell-command-history
                    shell-command-history)))
-    (ivy-read "Shell command history: " history
-              :action (lambda (cmd)
-                        (with-selected-window (minibuffer-selected-window)
-                          (delete-minibuffer-contents)
-                          (insert cmd))))))
+    (ivy-read "Shell command history: " history)))
 
 (defun my-shell-command (command &optional output-buffer error-buffer)
   "Run shell command with custom history."
