@@ -227,11 +227,10 @@
 (setq desktop-auto-save-timeout 30)
 (setq desktop-auto-save-timeout nil)
 
+(auto-save-mode 1)
 (setq auto-save-interval 1)  ; Auto-save every 1 second
 (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
 (setq auto-save-no-message t)
-
-(auto-save-mode 1)
 
 (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -269,7 +268,6 @@
 
 (setq comint-process-echoes t)
 (setq comint-use-prompt-regexp nil)
-
 #+end_src
 
 ** Cursor
@@ -3652,4 +3650,4 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-test
+save test 1337
