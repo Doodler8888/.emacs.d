@@ -2015,6 +2015,26 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
 
+(defun eshell/translate-path-with-sudo (path)
+  "Translate PATH to a Tramp sudo path."
+  (if (string-prefix-p "/" path)
+      (concat "/sudo:root@localhost:" path)
+    path))
+
+(defun eshell/sudo-command-handler (command &rest args)
+  "Handle `eshell/sudo` command by translating the paths to Tramp sudo paths."
+  (let* ((translated-args (mapcar 'eshell/translate-path-with-sudo args))
+         (final-command (string-join (cons command translated-args) " ")))
+    (eshell-command-result final-command)))
+
+(defun eshell/sudo (&rest args)
+  "Execute commands as root using sudo with Tramp paths."
+  (apply 'eshell/sudo-command-handler args))
+
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (add-to-list 'eshell-command-aliases-list
+                         '("sudo" . eshell/sudo))))
 #+end_src
 
 *** Custom commands
