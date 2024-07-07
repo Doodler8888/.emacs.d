@@ -12,6 +12,7 @@
   - [[#find-file][Find-file]]
   - [[#theme-and-font][Theme and Font]]
   - [[#general][General]]
+  - [[#proced][Proced]]
   - [[#avy][Avy]]
   - [[#async][Async]]
   - [[#transient][Transient]]
@@ -366,7 +367,7 @@
       :after evil
       :init ;;    (setq evil-want-keybinding nil)
       :config
-      (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy))
+      (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced))
       (evil-collection-init))
 
     (add-hook 'text-mode-hook 'display-line-numbers-mode)
@@ -601,6 +602,26 @@
 
 #+end_src
 
+** Proced
+
+#+begin_src emacs-lisp
+
+(use-package proced
+  :ensure nil
+  :commands proced
+  ;; :bind (("C-M-p" . proced))
+  :custom
+  ;; (proced-tree-flag t)
+  (proced-goal-attribute nil)
+  (proced-show-remote-processes t)
+  (proced-enable-color-flag t)
+  (proced-format 'custom)
+  :config
+  (add-to-list
+   'proced-format-alist
+   '(custom user pid ppid sess tree pcpu pmem rss start time state (args comm))))
+
+#+end_src
 ** Avy
 
 #+begin_src emacs-lisp
