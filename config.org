@@ -487,12 +487,21 @@
 
 #+begin_src emacs-lisp
 
-  (use-package all-the-icons
-    :ensure t
-    :if (display-graphic-p))
+;; (use-package all-the-icons
+;;   :ensure t
+;;   :if (display-graphic-p))
 
-  (use-package all-the-icons-dired
-    :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+;; (use-package all-the-icons-dired
+;;   :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+
+(use-package all-the-icons
+  :ensure t
+  :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :hook (dired-mode . (lambda ()
+                        (when (not (file-remote-p default-directory))
+                          (all-the-icons-dired-mode t)))))
 
 #+end_src
 
@@ -1346,14 +1355,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (global-set-key (kbd "M-!") 'my-shell-command)
 (global-set-key (kbd "M-&") 'my-async-shell-command)
 
-  (use-package ivy-posframe
-    :ensure t
-    :after ivy
-    :config
-    (ivy-posframe-mode 1))
-  (setq ivy-posframe-width 50)
-  (setq ivy-posframe-display-functions-alist
-        '((counsel-esh-history . ivy-posframe-display-at-window-center)))
+  ;; (use-package ivy-posframe
+  ;;   :ensure t
+  ;;   :after ivy
+  ;;   :config
+  ;;   (ivy-posframe-mode 1))
+  ;; (setq ivy-posframe-width 50)
+  ;; (setq ivy-posframe-display-functions-alist
+  ;;       '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
   ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
   (use-package all-the-icons-ivy-rich
