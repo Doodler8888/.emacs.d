@@ -1,4 +1,4 @@
 # key: srt
 # name: systemctl restart
 # --
-systemctl restart $0
+eshell/sudo systemctl restart $0

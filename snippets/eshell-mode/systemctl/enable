@@ -1,4 +1,4 @@
 # key: see
 # name: systemctl enable
 # --
-systemctl enable $0
+eshell/sudo systemctl enable $0

@@ -1,4 +1,4 @@
 # key: sss
 # name: systemctl status
 # --
-systemctl status $0
+eshell/sudo systemctl status $0

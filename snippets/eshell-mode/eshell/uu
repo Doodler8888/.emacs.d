@@ -1,4 +1,4 @@
 # key: uu
 # name: /sudo:root@localhost:/
 # --
-/sudo:root@localhost:/ $0
+/sudo:root@localhost:/$0
