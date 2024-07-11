@@ -1895,14 +1895,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
 
 (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
-      eshell-aliases-file (concat user-emacs-directory "eshell/aliases")
       eshell-history-size 100000
       eshell-buffer-maximum-lines 5000
       ;; eshell-save-history-on-exit t
       eshell-history-file-name "~/.emacs.d/eshell_history"
       eshell-hist-ignoredups t
       eshell-scroll-to-bottom-on-input t
-      eshell-destroy-buffer-when-process-dies t
       eshell-banner-message ""
       eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
@@ -2037,26 +2035,26 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
 
-(defun eshell/translate-path-with-sudo (path)
-  "Translate PATH to a Tramp sudo path."
-  (if (string-prefix-p "/" path)
-      (concat "/sudo:root@localhost:" path)
-    path))
+;; (defun eshell/translate-path-with-sudo (path)
+;;   "Translate PATH to a Tramp sudo path."
+;;   (if (string-prefix-p "/" path)
+;;       (concat "/sudo:root@localhost:" path)
+;;     path))
 
-(defun eshell/sudo-command-handler (command &rest args)
-  "Handle `eshell/sudo` command by translating the paths to Tramp sudo paths."
-  (let* ((translated-args (mapcar 'eshell/translate-path-with-sudo args))
-         (final-command (string-join (cons command translated-args) " ")))
-    (eshell-command-result final-command)))
+;; (defun eshell/sudo-command-handler (command &rest args)
+;;   "Handle `eshell/sudo` command by translating the paths to Tramp sudo paths."
+;;   (let* ((translated-args (mapcar 'eshell/translate-path-with-sudo args))
+;;          (final-command (string-join (cons command translated-args) " ")))
+;;     (eshell-command-result final-command)))
 
-(defun eshell/sudo (&rest args)
-  "Execute commands as root using sudo with Tramp paths."
-  (apply 'eshell/sudo-command-handler args))
+;; (defun eshell/sudo (&rest args)
+;;   "Execute commands as root using sudo with Tramp paths."
+;;   (apply 'eshell/sudo-command-handler args))
 
-(add-hook 'eshell-mode-hook
-          (lambda ()
-            (add-to-list 'eshell-command-aliases-list
-                         '("sudo" . eshell/sudo))))
+;; (add-hook 'eshell-mode-hook
+;;           (lambda ()
+;;             (add-to-list 'eshell-command-aliases-list
+;;                          '("sudo" . eshell/sudo))))
 #+end_src
 
 *** Custom commands
@@ -3673,5 +3671,3 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
 
 #+end_src
-
-save test 1337
