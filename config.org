@@ -351,10 +351,6 @@
                             (?= . ("=" . "="))
                             (?+ . ("+" . "+"))))))
 
-  ;; (use-package evil-commentary
-  ;;   :config
-  ;;   (evil-commentary-mode))
-
   (use-package evil-org
     :after org
     :config
@@ -431,6 +427,21 @@
 ;; Bind the custom comment operator to "gc"
 (define-key evil-normal-state-map (kbd "gc") 'my-evil-comment)
 (define-key evil-visual-state-map (kbd "gc") 'my-evil-comment)
+
+(defun my-fill-region (beg end)
+  "Fill the region between BEG and END."
+  (interactive "r")
+  (fill-region beg end))
+
+(evil-define-operator my-evil-fill (beg end type)
+  "Fill the text from BEG to END."
+  (interactive "<R>")
+  (my-fill-region beg end))
+
+;; Bind the custom fill operator to "gw"
+(define-key evil-normal-state-map (kbd "gw") 'my-evil-fill)
+(define-key evil-visual-state-map (kbd "gw") 'my-evil-fill)
+
 #+end_src
 
 *** Custom keybindings
