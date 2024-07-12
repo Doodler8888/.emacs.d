@@ -11,7 +11,11 @@
   - [[#cursor][Cursor]]
   - [[#find-file][Find-file]]
   - [[#theme-and-font][Theme and Font]]
+- [[#highlighting][Highlighting]]
+  - [[#treesitter][Treesitter]]
+- [[#packages][Packages]]
   - [[#general][General]]
+  - [[#daemons][Daemons]]
   - [[#proced][Proced]]
   - [[#avy][Avy]]
   - [[#async][Async]]
@@ -25,7 +29,6 @@
   - [[#jinx][Jinx]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
-  - [[#treesitter][Treesitter]]
   - [[#sudo-edit][Sudo Edit]]
   - [[#symex][Symex]]
   - [[#paredit][Paredit]]
@@ -505,6 +508,71 @@
 
 #+end_src
 
+* Highlighting
+
+** Treesitter
+
+#+begin_src emacs-lisp
+
+(add-to-list 'auto-mode-alist '("sshd_config\\'" . conf-mode))
+(add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+  (use-package treesit-auto
+    :config
+    ;; (treesit-auto-add-to-auto-mode-alist
+    ;; '(("\\.py$" . python-ts-mode)
+    ;;   ("\\.rb$" . ruby-ts-mode)
+    ;;   ("\\.go$" . go-ts-mode)
+    ;;   ("\\.bashrc\\'" . shell-mode)
+    ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
+    (global-treesit-auto-mode))
+
+  (use-package clojure-ts-mode)
+
+  ;; (setq treesit-language-source-alist
+  ;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
+  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
+  ;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
+  ;;         (css "https://github.com/tree-sitter/tree-sitter-css")
+  ;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
+  ;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+  ;;         (html "https://github.com/tree-sitter/tree-sitter-html")
+  ;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+  ;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+  ;;         (json "https://github.com/tree-sitter/tree-sitter-json")
+  ;;         (make "https://github.com/alemuller/tree-sitter-make")
+  ;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
+  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
+  ;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+  ;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
+  ;;                     "master" "typescript/src")
+  ;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+  ;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
+  ;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
+  ;;         (typst "https://github.com/uben0/tree-sitter-typst")
+  ;;         (java "https://github.com/tree-sitter/tree-sitter-java")
+  ;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
+  ;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
+
+  ;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+  ;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
+  ;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
+  ;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
+  ;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
+  ;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
+  ;; ;; (with-eval-after-load 'yaml-ts-mode
+  ;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+  ;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+
+#+end_src
+
+* Packages
 ** General
 
 #+begin_src emacs-lisp
@@ -567,7 +635,8 @@
       "rr" '(revert-buffer :wk "Refresh a current buffer")
       
       ;; Popper
-      "pe" '(popper-toggle-type :wk "Expand/contract a buffer")
+      "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
+      "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
       "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
 
       "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
@@ -608,6 +677,14 @@
         :keymaps 'help-mode-map
         "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
     )
+
+#+end_src
+
+** Daemons
+
+#+begin_src emacs-lisp
+
+(use-package daemons)
 
 #+end_src
 
@@ -1057,61 +1134,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       (exec-path-from-shell-copy-env "SHELF_DB_PASS")
       (exec-path-from-shell-copy-env "SHELF_DB_PORT")
       )
-
-#+end_src
-
-** Treesitter
-
-#+begin_src emacs-lisp
-
-  (use-package treesit-auto
-    :config
-    ;; (treesit-auto-add-to-auto-mode-alist
-    ;; '(("\\.py$" . python-ts-mode)
-    ;;   ("\\.rb$" . ruby-ts-mode)
-    ;;   ("\\.go$" . go-ts-mode)
-    ;;   ("\\.bashrc\\'" . shell-mode)
-    ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
-    (global-treesit-auto-mode))
-
-  (use-package clojure-ts-mode)
-
-  ;; (setq treesit-language-source-alist
-  ;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
-  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
-  ;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
-  ;;         (css "https://github.com/tree-sitter/tree-sitter-css")
-  ;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
-  ;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
-  ;;         (html "https://github.com/tree-sitter/tree-sitter-html")
-  ;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-  ;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-  ;;         (json "https://github.com/tree-sitter/tree-sitter-json")
-  ;;         (make "https://github.com/alemuller/tree-sitter-make")
-  ;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
-  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
-  ;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-  ;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
-  ;;                     "master" "typescript/src")
-  ;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-  ;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
-  ;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
-  ;;         (typst "https://github.com/uben0/tree-sitter-typst")
-  ;;         (java "https://github.com/tree-sitter/tree-sitter-java")
-  ;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
-  ;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
-
-  ;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-  ;; ;; (with-eval-after-load 'yaml-ts-mode
-  ;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
 
 #+end_src
 
@@ -2664,109 +2686,128 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-    (defun my/show-popper-echo-line ()
-      "Briefly toggle popper to show the echo line."
-      (interactive)
-      ;; Ensure popper-mode and popper-echo-mode are active
-      (when (and popper-mode popper-echo-mode)
-        ;; Toggle a popper window and immediately toggle it back
-        (popper-toggle-latest)
-        (popper-toggle-latest)))
+(defun my/show-popper-echo-line ()
+  "Briefly toggle popper to show the echo line."
+  (interactive)
+  ;; Ensure popper-mode and popper-echo-mode are active
+  (when (and popper-mode popper-echo-mode)
+    ;; Toggle a popper window and immediately toggle it back
+    (popper-toggle-latest)
+    (popper-toggle-latest)))
 
-    (use-package popper
-      :bind (("M-`" . my/show-popper-echo-line))
-             ;; ("M-f"   . popper-toggle))
-             ;; ("M-~"   . popper-cycle))
-      :init
-      (setq popper-window-height 0.33)
-      (setq popper-reference-buffers
-            '("\\*Messages\\*"
-              "Output\\*$"
-              "\\*Async Shell Command\\*"
-              "*Flymake diagnostics.*"
-              "*Flycheck errors.*"
-              "\\* docker container logs .*\\*"
-              "\\* docker inspect .*\\*"
-              "\\*compilation\\*"
-              ;; "\\*eshell\\*.*"
-              "\\*persistent-shell\\*.*"
-              "\\*cider-repl.*"
-              "\\*cider-doc.*"
-              "\\*cider-error.*"
-              "\\*helpful.*"
-              ;; "\\*man.*"
-              "\\*grep.*"
-              ;; "\\*eshell:.*"
-              "\\*Warnings\\*"
-              ;; "\\*xref\\*"
-              ;; "\\*Backtrace\\*"
-              "\\*eldoc\\*"
-              ;; "\\*Ement Notifications\\*"
-              ;; "Output\\*$"
-              ;; "\\*Dtache Shell Command\\*"
-              ;; "\\*mu4e-update\\*"
-              help-mode
-              compilation-mode))
-      (popper-mode +1)
-      (popper-echo-mode +1))
+(use-package popper
+  :bind (("M-`" . my/show-popper-echo-line))
+         ;; ("M-f"   . popper-toggle))
+         ;; ("M-~"   . popper-cycle))
+  :init
+  (setq popper-window-height 0.33)
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          "*Flymake diagnostics.*"
+          "*Flycheck errors.*"
+          "\\* docker container logs .*\\*"
+          "\\* docker inspect .*\\*"
+          "\\*compilation\\*"
+          ;; "\\*eshell\\*.*"
+          "\\*persistent-shell\\*.*"
+          "\\*cider-repl.*"
+          "\\*cider-doc.*"
+          "\\*cider-error.*"
+          "\\*helpful.*"
+          ;; "\\*man.*"
+          "\\*grep.*"
+          ;; "\\*eshell:.*"
+          "\\*Warnings\\*"
+          ;; "\\*xref\\*"
+          ;; "\\*Backtrace\\*"
+          "\\*eldoc\\*"
+          ;; "\\*Ement Notifications\\*"
+          ;; "Output\\*$"
+          ;; "\\*Dtache Shell Command\\*"
+          ;; "\\*mu4e-update\\*"
+          help-mode
+          compilation-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))
 
-    (use-package shackle
-      :ensure t
-      :config
-      (shackle-mode 1))
+(use-package shackle
+  :ensure t
+  :config
+  (shackle-mode 1))
 
-    (defun my-buffer-is-popper-popup-p ()
-      "Check if the current buffer is considered a Popper popup."
-      (and (boundp 'popper-popup-status)
-          (buffer-local-value 'popper-popup-status (current-buffer))))
+(defun my-buffer-is-popper-popup-p ()
+  "Check if the current buffer is considered a Popper popup."
+  (and (boundp 'popper-popup-status)
+      (buffer-local-value 'popper-popup-status (current-buffer))))
 
-    (defun my-check-current-buffer-popper-status ()
-      "Print whether the current buffer is a Popper popup."
-      (interactive)
-      (if (my-buffer-is-popper-popup-p)
-          (message "Current buffer IS a Popper popup.")
-        (message "Current buffer is NOT a Popper popup.")))
+(defun my-check-current-buffer-popper-status ()
+  "Print whether the current buffer is a Popper popup."
+  (interactive)
+  (if (my-buffer-is-popper-popup-p)
+      (message "Current buffer IS a Popper popup.")
+    (message "Current buffer is NOT a Popper popup.")))
 
-    (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
-      (when-let ((buf (get-buffer (or buffer (current-buffer)))))
-        (with-current-buffer buf
-          (if (popper-popup-p buf)
-              (setq popper-popup-status 'raised)
-            (setq popper-popup-status nil))
-          (setq mode-line-format (default-value 'mode-line-format)))))
+;; (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
+;;   (when-let ((buf (get-buffer (or buffer (current-buffer)))))
+;;     (with-current-buffer buf
+;;       (if (popper-popup-p buf)
+;;           (setq popper-popup-status 'raised)
+;;         (setq popper-popup-status nil))
+;;       (setq mode-line-format (default-value 'mode-line-format)))))
 
-    ;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
-    (global-set-key (kbd "M-f") 'popper-toggle)
+(defadvice popper-raise-popup (around switch-and-stay (&optional buffer) activate)
+  "Advice to modify popper-raise-popup behavior."
+  (when-let ((buf (get-buffer (or buffer (current-buffer)))))
+    (with-current-buffer buf
+      (if (popper-popup-p buf)
+          (setq popper-popup-status 'raised)
+        (setq popper-popup-status nil))
+      (setq mode-line-format (default-value 'mode-line-format)))))
 
-    (defun popper-flymake-diagnostics ()
-      "Popper window specifically for Flymake diagnostics buffer."
-      (interactive)
-      (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-          (popper-toggle)
-        (flymake-show-buffer-diagnostics)))
+(defun popper-toggle-type-original ()
+  "Run popper-toggle-type with the original behavior by temporarily disabling the advice."
+  (interactive)
+  (ad-disable-advice 'popper-raise-popup 'around 'switch-and-stay)
+  (ad-activate 'popper-raise-popup)
+  (unwind-protect
+      (call-interactively 'popper-toggle-type)
+    (ad-enable-advice 'popper-raise-popup 'around 'switch-and-stay)
+    (ad-activate 'popper-raise-popup)))
 
-    (defun popper-flycheck-diagnostics ()
-      "Popper window specifically for Flycheck errors buffer."
-      (interactive)
-      (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-          (popper-toggle)
-        (flycheck-list-errors)))
+;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
+(global-set-key (kbd "M-f") 'popper-toggle)
 
-    ;; (defun fix-cycle ()
-    ;;   (interactive)
-    ;;   (popper-cycle 1))
+(defun popper-flymake-diagnostics ()
+  "Popper window specifically for Flymake diagnostics buffer."
+  (interactive)
+  (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
+      (popper-toggle)
+    (flymake-show-buffer-diagnostics)))
 
-    ;; (defun fix-cycle-backwards ()
-    ;;   (interactive)
-    ;;   (popper-cycle-backwards -1))
+(defun popper-flycheck-diagnostics ()
+  "Popper window specifically for Flycheck errors buffer."
+  (interactive)
+  (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
+      (popper-toggle)
+    (flycheck-list-errors)))
 
-    (with-eval-after-load 'evil
-      ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-      ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-      ;; (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
-      ;; (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
-      (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
-      (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+;; (defun fix-cycle ()
+;;   (interactive)
+;;   (popper-cycle 1))
+
+;; (defun fix-cycle-backwards ()
+;;   (interactive)
+;;   (popper-cycle-backwards -1))
+
+(with-eval-after-load 'evil
+  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
+  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
+  ;; (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
+  ;; (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
+  (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
+  (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 #+end_src
 
