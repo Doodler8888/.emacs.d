@@ -351,9 +351,9 @@
                             (?= . ("=" . "="))
                             (?+ . ("+" . "+"))))))
 
-  ;; (use-package evil-commentary
-  ;;   :config
-  ;;   (evil-commentary-mode))
+  (use-package evil-commentary
+    :config
+    (evil-commentary-mode))
 
   (use-package evil-org
     :after org
@@ -418,19 +418,6 @@
 (add-hook 'docker-container-mode-hook 'my/setup-docker-mark-keymap)
 (add-hook 'docker-image-mode-hook 'my/setup-docker-mark-keymap)
 
-(defun my-comment-on-region (beg end)
-  "Comment or uncomment the region between BEG and END."
-  (interactive "r")
-  (comment-or-uncomment-region beg end))
-
-(evil-define-operator my-evil-comment (beg end type)
-  "Comment or uncomment the text from BEG to END."
-  (interactive "<R>")
-  (my-comment-on-region beg end))
-
-;; Bind the custom comment operator to "gc"
-(define-key evil-normal-state-map (kbd "gc") 'my-evil-comment)
-(define-key evil-visual-state-map (kbd "gc") 'my-evil-comment)
 #+end_src
 
 *** Custom keybindings
