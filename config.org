@@ -308,100 +308,115 @@
 
 #+begin_src emacs-lisp
 
-    (use-package undo-tree
-      :config
-      (global-undo-tree-mode))
+  (use-package undo-tree
+    :config
+    (global-undo-tree-mode))
 
-    (use-package evil
-      :init
-      (setq evil-want-C-u-scroll t
-            evil-want-C-i-jump nil
-            evil-want-integration t
-            evil-want-minibuffer t
-            evil-undo-system 'undo-tree)
-      :config
-      (evil-mode 1)
-      (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-      (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-      (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-      (define-key evil-motion-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-      (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-      (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-      (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-      (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-      (setq evil-shift-width 2))
+  (use-package evil
+    :init
+    (setq evil-want-C-u-scroll t
+          evil-want-C-i-jump nil
+          evil-want-integration t
+          evil-want-minibuffer t
+          evil-undo-system 'undo-tree)
+    :config
+    (evil-mode 1)
+    (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+    (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+    (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+    (define-key evil-motion-state-map (kbd "/") 'avy-goto-char-2-all-windows)
+    (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+    (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+    (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+    (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+    (setq evil-shift-width 2))
 
-    (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
-    (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
-    (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
-    (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
+  (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
+  (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
+  (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
+  (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
 
 
-    (setq evil-undo-system 'undo-tree)
+  (setq evil-undo-system 'undo-tree)
 
-    (use-package evil-surround
-      :config
-      (global-evil-surround-mode 1)
-      ;; Add custom surround pairs
-      (setq-default evil-surround-pairs-alist
-                    (append evil-surround-pairs-alist
-                            '((?/ . ("/" . "/"))
-                              (?~ . ("~" . "~"))
-                              (?* . ("*" . "*"))
-                              (?= . ("=" . "="))
-                              (?+ . ("+" . "+"))))))
+  (use-package evil-surround
+    :config
+    (global-evil-surround-mode 1)
+    ;; Add custom surround pairs
+    (setq-default evil-surround-pairs-alist
+                  (append evil-surround-pairs-alist
+                          '((?/ . ("/" . "/"))
+                            (?~ . ("~" . "~"))
+                            (?* . ("*" . "*"))
+                            (?= . ("=" . "="))
+                            (?+ . ("+" . "+"))))))
 
-    (use-package evil-commentary
-      :config
-      (evil-commentary-mode))
+  (use-package evil-commentary
+    :config
+    (evil-commentary-mode))
 
-    (use-package evil-org
-      :after org
-      :config
-      (require 'evil-org-agenda)
-      (evil-org-agenda-set-keys)
-      (add-hook 'org-mode-hook 'evil-org-mode)
-      (add-hook 'evil-org-mode-hook
-                (lambda ()
-                  (evil-org-set-key-theme)))
-      )
+  (use-package evil-org
+    :after org
+    :config
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys)
+    (add-hook 'org-mode-hook 'evil-org-mode)
+    (add-hook 'evil-org-mode-hook
+              (lambda ()
+                (evil-org-set-key-theme)))
+    )
 
-    (use-package evil-collection
-      :after evil
-      :init ;;    (setq evil-want-keybinding nil)
-      :config
-      (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced))
-      (evil-collection-init))
+  (use-package evil-collection
+    :after evil
+    :init ;;    (setq evil-want-keybinding nil)
+    :config
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker))
+    (evil-collection-init))
 
-    (add-hook 'text-mode-hook 'display-line-numbers-mode)
-    (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (add-hook 'text-mode-hook 'display-line-numbers-mode)
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-    (defun my-evil-yank-to-end-of-line ()
-      "Yank text from the current point to the end of the line."
-      (interactive)
-      (evil-yank (point) (line-end-position)))
-
-    (with-eval-after-load 'evil
-      (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
-
-    (defun my-evil-insert-state-minibuffer-setup ()
-      (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-      (define-key evil-insert-state-local-map (kbd "M-TAB") 'ivy-partial-or-done))
-
-    (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
-
-    (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
-    (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
+  (defun my-evil-yank-to-end-of-line ()
+    "Yank text from the current point to the end of the line."
+    (interactive)
+    (evil-yank (point) (line-end-position)))
 
   (with-eval-after-load 'evil
-    (define-key evil-ex-completion-map (kbd "<insert-state> C-n") nil))
+    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-  (with-eval-after-load 'evil
-    (define-key evil-ex-completion-map (kbd "<insert-state> C-p") nil))
-    
-  (with-eval-after-load 'evil
-    (define-key evil-ex-completion-map (kbd "<insert-state> <up>") 'previous-complete-history-element)
-    (define-key evil-ex-completion-map (kbd "<insert-state> <down>") 'next-complete-history-element))
+  (defun my-evil-insert-state-minibuffer-setup ()
+    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+    (define-key evil-insert-state-local-map (kbd "M-TAB") 'ivy-partial-or-done))
+
+  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+
+  (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
+  (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
+
+(with-eval-after-load 'evil
+  (define-key evil-ex-completion-map (kbd "<insert-state> C-n") nil))
+
+(with-eval-after-load 'evil
+  (define-key evil-ex-completion-map (kbd "<insert-state> C-p") nil))
+  
+(with-eval-after-load 'evil
+  (define-key evil-ex-completion-map (kbd "<insert-state> <up>") 'previous-complete-history-element)
+  (define-key evil-ex-completion-map (kbd "<insert-state> <down>") 'next-complete-history-element))
+
+(defun my/setup-daemons-output-keymap ()
+  "Set up custom keybindings for daemons-output-mode."
+  (evil-local-set-key 'normal (kbd "RET") 'daemons-status-at-point)
+  (evil-local-set-key 'motion (kbd "RET") 'daemons-status-at-point))
+
+(add-hook 'daemons-output-mode-hook 'my/setup-daemons-output-keymap)
+
+(defun my/setup-docker-mark-keymap ()
+  "Set up custom keybindings for daemons-output-mode."
+  (evil-local-set-key 'normal (kbd "m") 'tablist-mark-forward)
+  (evil-local-set-key 'normal (kbd "M") 'tablist-mark-backward))
+
+(add-hook 'docker-container-mode-hook 'my/setup-docker-mark-keymap)
+(add-hook 'docker-image-mode-hook 'my/setup-docker-mark-keymap)
 
 #+end_src
 
@@ -685,6 +700,7 @@
 #+begin_src emacs-lisp
 
 (use-package daemons)
+(setq daemons-always-sudo t)
 
 #+end_src
 
@@ -811,67 +827,7 @@
 
 #+begin_src emacs-lisp
 
-(use-package docker
-  :config
-  (defun my-docker-mode-bindings (mode-map rm-func &optional extra-bindings)
-    (evil-define-key 'normal mode-map (kbd "m") 'tablist-mark-forward)
-    (evil-define-key 'normal mode-map (kbd "D") rm-func)
-    (evil-define-key 'visual mode-map (kbd "m") 'my-tablist-mark-visual)
-    (evil-define-key 'visual mode-map (kbd "D") rm-func)
-    (when extra-bindings
-      (dolist (binding extra-bindings)
-        (evil-define-key 'normal mode-map (kbd (car binding)) (cdr binding)))))
-
-(add-hook 'docker-image-mode-hook
-          (lambda ()
-            (my-docker-mode-bindings docker-image-mode-map 'docker-image-rm)))
-  
-(add-hook 'docker-container-mode-hook
-          (lambda ()
-            (my-docker-mode-bindings 
-             docker-container-mode-map 
-             'docker-container-rm
-             '(("L" . docker-container-logs)
-               ("S" . docker-container-start)
-               ("?" . docker-container-help)
-               ("I" . docker-container-inspect)
-               ("O" . docker-container-stop))))))
-
-    (defun docker-template ()
-      "Create docker.el windows with a specific layout"
-      (interactive)
-      (docker-images)
-      (docker-containers)
-      (transpose-frame))
-
-(defun my-tablist-mark-visual ()
-  "Mark each line in the visual selection in docker-image-mode."
-  (interactive)
-  (if (eq major-mode 'docker-image-mode)
-      (let ((beg (region-beginning))
-            (end (region-end)))
-        (save-excursion
-          (goto-char beg)
-          (while (<= (point) end)
-            (tablist-mark-forward)
-            (forward-line 1))))
-    (message "Not in docker-image-mode")))
-
-;; (defun my-tablist-mark-visual-lines ()
-;;   "Mark each line in the visual line selection in docker-image-mode."
-;;   (interactive)
-;;   (if (eq major-mode 'docker-image-mode)
-;;       (let ((beg (region-beginning))
-;;             (end (region-end)))
-;;         (save-excursion
-;;           (goto-char beg)
-;;           (while (<= (point) end)
-;;             (tablist-mark-forward)
-;;             ;; Ensure we move to the beginning of the next visual line.
-;;             (forward-line 1)
-;;             (while (and (<= (point) end) (not (eolp)))
-;;               (forward-char)))))
-;;     (message "Not in docker-image-mode")))
+(use-package docker)
 
 (defun container-map-id (container-name)
   "Display the UID and GID maps of a Docker container.
@@ -1309,48 +1265,30 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; (defun my-find-file-sudo-advice (orig-fun &rest args)
-;;   "Open file as root if necessary, but skip for directories, writable files, and if parent directory is writable."
-;;   (let ((file (car args)))
-;;     (if (or (file-directory-p file) ; Check if it's a directory
-;;             (file-writable-p file) ; or if it's writable
-;;             (my-check-parent-directory-writable (file-name-directory file))) ; or if any parent directory is writable
-;;         (apply orig-fun args) ; then just open it normally
-;;       ;; Else, try opening with sudo
-;;       (apply orig-fun (list (concat "/sudo:root@localhost:" file))))))
+(use-package counsel
+  :after ivy
+  :config
+  (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history)
+  (counsel-mode))
+(global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
-;; (advice-add 'find-file :around #'my-find-file-sudo-advice)
-
-;; (defun my-check-parent-directory-writable (dir)
-;;   "Recursively check if any parent directory of DIR is writable."
-;;   (when dir
-;;     (or (file-writable-p dir)
-;;         (unless (or (string= dir "/") (string= dir (directory-file-name dir))) ; Stop if at root
-;;           (my-check-parent-directory-writable (file-name-directory (directory-file-name dir)))))))
-
-  (use-package counsel
-    :after ivy
-    :config
-    (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history)
-    (counsel-mode))
-  (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
-
-;; (with-eval-after-load 'shell
-;;   (define-key minibuffer-local-shell-command-map (kbd "M-r") 'counsel-shell-history))
-
-  ;; (push '(counsel-esh-history . ivy-display-function-fallback) ivy-display-functions-alist))
-
-  (use-package ivy
-    :bind
-    ;; ivy-resume resumes the last Ivy-based completion.
-    (("C-c C-r" . ivy-resume)
-     ("C-x B" . ivy-switch-buffer-other-window))
-    :custom
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-count-format "(%d/%d) ")
-    (setq enable-recursive-minibuffers t)
-    :config
-    (ivy-mode))
+(use-package ivy
+  :bind
+  ;; ivy-resume resumes the last Ivy-based completion.
+  (("C-c C-r" . ivy-resume)
+   ("C-x B" . ivy-switch-buffer-other-window))
+  :custom
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-count-format "(%d/%d) ")
+  (setq enable-recursive-minibuffers t)
+  :config
+  (defun my/ivy-evil-delete-line ()
+    "Delete the current line in Ivy minibuffer without affecting the newline."
+    (interactive)
+    (let ((inhibit-read-only t))
+      (evil-delete-line (line-beginning-position) (line-end-position))))
+  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line)
+  (ivy-mode))
 
 (defun my-ivy-shell-command-history ()
   "Use `ivy-read` to search through shell command history."
@@ -1377,107 +1315,107 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (global-set-key (kbd "M-!") 'my-shell-command)
 (global-set-key (kbd "M-&") 'my-async-shell-command)
 
-  ;; (use-package ivy-posframe
-  ;;   :ensure t
-  ;;   :after ivy
-  ;;   :config
-  ;;   (ivy-posframe-mode 1))
-  ;; (setq ivy-posframe-width 50)
-  ;; (setq ivy-posframe-display-functions-alist
-  ;;       '((counsel-esh-history . ivy-posframe-display-at-window-center)))
+;; (use-package ivy-posframe
+;;   :ensure t
+;;   :after ivy
+;;   :config
+;;   (ivy-posframe-mode 1))
+;; (setq ivy-posframe-width 50)
+;; (setq ivy-posframe-display-functions-alist
+;;       '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
-  ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
-  (use-package all-the-icons-ivy-rich
-    :init
-    (all-the-icons-ivy-rich-mode 1))
+;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
+(use-package all-the-icons-ivy-rich
+  :init
+  (all-the-icons-ivy-rich-mode 1))
 
-  (use-package ivy-rich
-    :after ivy
-    :ensure t
-    :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-    :custom
-    (ivy-virtual-abbreviate 'full
-                            ivy-rich-switch-buffer-align-virtual-buffer t
-                            ivy-rich-path-style 'abbrev))
+(use-package ivy-rich
+  :after ivy
+  :ensure t
+  :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
+  :custom
+  (ivy-virtual-abbreviate 'full
+                          ivy-rich-switch-buffer-align-virtual-buffer t
+                          ivy-rich-path-style 'abbrev))
 
-  (defun counsel-find-file-check-dir ()
-    "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
-    (interactive)
-    (let* ((current-dir (if (eq major-mode 'dired-mode)
-                            "."
-                          (buffer-file-name))))
-      (ivy-read "Find file: " #'read-file-name-internal
-                :matcher #'counsel--find-file-matcher
-                :action #'find-file-check-dir
-                :preselect current-dir
-                :require-match 'confirm-after-completion
-                :history 'file-name-history
-                :keymap counsel-find-file-map
-                :caller 'counsel-find-file)))
+(defun counsel-find-file-check-dir ()
+  "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
+  (interactive)
+  (let* ((current-dir (if (eq major-mode 'dired-mode)
+                          "."
+                        (buffer-file-name))))
+    (ivy-read "Find file: " #'read-file-name-internal
+              :matcher #'counsel--find-file-matcher
+              :action #'find-file-check-dir
+              :preselect current-dir
+              :require-match 'confirm-after-completion
+              :history 'file-name-history
+              :keymap counsel-find-file-map
+              :caller 'counsel-find-file)))
 
-  (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
+(global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
-  (defun ivy-fzf-project ()
-    "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
-    (interactive)
-    (let ((default-directory (projectile-project-root))
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory))))))
-
-  (defun ivy-fzf-home ()
-    "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
-    (interactive)
-    (let ((default-directory "~/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory))))))
-
-  (defun ivy-fzf-current-directory ()
-    "Run a customized `ivy-fzf`-like file selection using `fd` from the current directory."
-    (interactive)
-    (let ((fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
+(defun ivy-fzf-project ()
+  "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
+  (interactive)
+  (let ((default-directory (projectile-project-root))
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+    (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
                         (find-file (expand-file-name f default-directory))))))
 
-  (defun ivy-fzf-root ()
-    "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
-    (interactive)
-    (let ((default-directory "/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (find-file (expand-file-name f default-directory))))))
+(defun ivy-fzf-home ()
+  "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
+  (interactive)
+  (let ((default-directory "~/")
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
+                        (find-file (expand-file-name f default-directory))))))
 
-  (defun insert-path-from-ivy-fzf-home ()
-    "Insert the path of a file selected by `ivy-fzf` from the home directory into the current buffer."
-    (interactive)
-    (let ((default-directory "~/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory))))))
+(defun ivy-fzf-current-directory ()
+  "Run a customized `ivy-fzf`-like file selection using `fd` from the current directory."
+  (interactive)
+  (let ((fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
+                        (find-file (expand-file-name f default-directory))))))
 
-  (defun insert-path-from-ivy-fzf-project ()
-    "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
-    (interactive)
-    (let ((default-directory (projectile-project-root))
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory))))))
+(defun ivy-fzf-root ()
+  "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
+  (interactive)
+  (let ((default-directory "/")
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
+                        (find-file (expand-file-name f default-directory))))))
 
-  (defun insert-path-from-ivy-fzf-root ()
-    "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
-    (interactive)
-    (let ((default-directory "/")
-          (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-      (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-                :action (lambda (f)
-                          (insert (expand-file-name f default-directory))))))
+(defun insert-path-from-ivy-fzf-home ()
+  "Insert the path of a file selected by `ivy-fzf` from the home directory into the current buffer."
+  (interactive)
+  (let ((default-directory "~/")
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
+                        (insert (expand-file-name f default-directory))))))
+
+(defun insert-path-from-ivy-fzf-project ()
+  "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
+  (interactive)
+  (let ((default-directory (projectile-project-root))
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
+                        (insert (expand-file-name f default-directory))))))
+
+(defun insert-path-from-ivy-fzf-root ()
+  "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
+  (interactive)
+  (let ((default-directory "/")
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+              :action (lambda (f)
+                        (insert (expand-file-name f default-directory))))))
 
 ;; (defun counsel-projectile-find-file-or-dir ()
 ;;   "Use `counsel-find-file` to find a file or directory in the current projectile project."
@@ -2709,6 +2647,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           "*Flycheck errors.*"
           "\\* docker container logs .*\\*"
           "\\* docker inspect .*\\*"
+          "\\*daemons-output for .*\\*"
           "\\*compilation\\*"
           ;; "\\*eshell\\*.*"
           "\\*persistent-shell\\*.*"
