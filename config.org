@@ -19,6 +19,7 @@
   - [[#proced][Proced]]
   - [[#avy][Avy]]
   - [[#async][Async]]
+  - [[#which-key][Which-key]]
   - [[#transient][Transient]]
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
@@ -53,7 +54,6 @@
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
   - [[#async-shell][Async shell]]
-  - [[#eat][Eat]]
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
@@ -592,106 +592,110 @@
 
 #+begin_src emacs-lisp
 
-  (use-package general
-    :config
-    (general-evil-setup)
-    (general-create-definer w/leader-keys
-      :states '(normal insert visual emacs)
-      :keymaps 'override
-      :prefix "SPC" ;; set leader
-      :global-prefix "M-SPC") ;; access leader in insert mode
+(use-package general
+  :config
+  (general-evil-setup)
+  (general-create-definer w/leader-keys
+    :states '(normal insert visual emacs)
+    :keymaps 'override
+    :prefix "SPC" ;; set leader
+    :global-prefix "M-SPC") ;; access leader in insert mode
 
-    (w/leader-keys
+  (w/leader-keys
 
-      ;; Fuzzy finder
-      ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
-      "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
-      "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-      "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
-      ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
-      "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
-      "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
-      "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
-      ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
+    ;; Fuzzy finder
+    ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
+    "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
+    "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
+    "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
+    ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
+    "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
+    "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
+    "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
+    ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
 
-      ;; Session management
-      "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
-      "sd" '(delete-desktop-session :wk "Delete selected session")
-      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
-      "sr" '(rename-desktop-session :wk "Rename a desktop session")
+    ;; Session management
+    "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
+    "sd" '(delete-desktop-session :wk "Delete selected session")
+    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+    "sr" '(rename-desktop-session :wk "Rename a desktop session")
 
-      ;; Org
-      "ot" '(todo :wk "Opens the org todo file")
+    ;; Org
+    "ot" '(todo :wk "Opens the org todo file")
 
-      ;; Paredit
-      "pfs" '(paredit-forward-slurp-sexp)
-      
-      ;; Hyperbole
-      "he" '(hkey-either :wk "Opens the org todo file")
-      
-      ;; Tab management
-      "tn" '(tab-bar-new-tab :wk "Create a new tab")
-      "tx" '(tab-bar-close-tab :wk "Close a tab")
-      "tr" '(tab-bar-rename-tab :wk "Rename a tab")
-
-      ;; Org capture
-      "n" '(org-capture :wk "Create a quick note")
-      
-      ;; Docker
-      "dd" '(docker-template :wk "Spawn docker.el buffers")
-      
-      ;; Windows
-      "w"  'hydra-window-size/body
-
-      ;; Buffers
-      "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
-      "bx" '(kill-current-buffer :wk "Close selecetd buffer")
-
-      "rr" '(revert-buffer :wk "Refresh a current buffer")
-      
-      ;; Popper
-      "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
-      "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
-      "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
-
-      "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
-
-      "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
-
-      "zz" '(z :wk "Call zoxide prompt")
-
-      ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-      ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
-
-      "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
-      "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
-
-      ;; "ee" '(eshell :wk "Eshell")
-      "en" '(eshell-new :wk "Spawn a new eshell buffer")
-      "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
-      "ep" '(eshell-pop :wk "Execute the eshell command and launch eshell as a popper buffer")
-
-      ;; Tramp
-      "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
-      "ur" '(tramp-revert :wk "Edit file with sudo privileges")
-      
-      ;; Evaluation
-      "e" '(:ignore t :wk "Evaluate/Eshell")
-      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-      "ex" '(eval-expression :wk "Evaluate and elisp expression")
-      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-      "er" '(eval-region :wk "Evaluate elisp in region")
-
-      ;; Eshell
-      "es" '(counsel-esh-history :wk "Eshell history")
-
-      )
+    ;; Paredit
+    "pfs" '(paredit-forward-slurp-sexp)
     
-      (w/leader-keys
-        :keymaps 'help-mode-map
-        "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
+    ;; Hyperbole
+    "he" '(hkey-either :wk "Opens the org todo file")
+    
+    ;; Tab management
+    "tn" '(tab-bar-new-tab :wk "Create a new tab")
+    "tx" '(tab-bar-close-tab :wk "Close a tab")
+    "tr" '(tab-bar-rename-tab :wk "Rename a tab")
+
+    ;; Org capture
+    "n" '(org-capture :wk "Create a quick note")
+    
+    ;; Docker
+    "D" '(docker-template :wk "Spawn docker template")
+
+    ;; Daemons
+    "do" '(daemons-stop :wk "Stop daemon")
+    "ds" '(daemons-start :wk "Start daemon")
+    "de" '(daemons-enable :wk "Enable daemon")
+    "dd" '(daemons-disable :wk "Disable daemon")
+    
+    ;; Windows
+    "w"  'hydra-window-size/body
+
+    ;; Buffers
+    "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
+    "bx" '(kill-current-buffer :wk "Close selecetd buffer")
+
+    "rr" '(revert-buffer :wk "Refresh a current buffer")
+    
+    ;; Popper
+    "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
+    "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
+    "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
+
+    "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
+
+    "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
+
+    "zz" '(z :wk "Call zoxide prompt")
+
+    ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
+    ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
+
+    "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
+    "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
+
+    ;; Tramp
+    "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
+    "ur" '(tramp-revert :wk "Edit file with sudo privileges")
+    
+    ;; Evaluation
+    "e" '(:ignore t :wk "Evaluate/Eshell")
+    ;; "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+    ;; "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+    ;; "ex" '(eval-expression :wk "Evaluate and elisp expression")
+    ;; "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+    "er" '(eval-region :wk "Evaluate elisp in region")
+
+    ;; Eshell
+    "E" '(eshell :wk "Eshell")
+    "en" '(eshell-new :wk "Spawn a new eshell buffer")
+    ;; "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
+    "ee" '(eshell-pop :wk "'eshell' command in popper mode")
+
     )
+  
+    (w/leader-keys
+      :keymaps 'help-mode-map
+      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
+  )
 
 #+end_src
 
@@ -701,6 +705,56 @@
 
 (use-package daemons)
 (setq daemons-always-sudo t)
+
+(defun daemons--completing-read (&optional action)
+  "Call `completing-read' with the current daemons list.
+ACTION is the specific action being performed (e.g., 'stop', 'start')."
+  (let ((prompt (if action
+                    (format "Daemon name (%s): " action)
+                  "Daemon name: ")))
+    (completing-read prompt (daemons--list (daemons-init-system-submodule)))))
+
+(defun daemons-stop (name)
+  "Stop the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "stop")))
+  (daemons--run-action 'stop name))
+
+(defun daemons-start (name)
+  "Start the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "start")))
+  (daemons--run-action 'start name))
+
+(defun daemons-restart (name)
+  "Restart the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "restart")))
+  (daemons--run-action 'restart name))
+
+(defun daemons-reload (name)
+  "Reload the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "reload")))
+  (daemons--run-action 'reload name))
+
+(defun daemons-enable (name)
+  "Enable the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "enable")))
+  (daemons--run-action 'enable name))
+
+(defun daemons-disable (name)
+  "Disable the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "disable")))
+  (daemons--run-action 'disable name))
 
 #+end_src
 
@@ -746,6 +800,18 @@
     :config
     (autoload 'dired-async-mode "dired-async.el" nil t)
     (dired-async-mode 1))
+
+#+end_src
+
+** Which-key
+
+#+begin_src emacs-lisp
+
+(use-package which-key
+  :init
+  (which-key-mode)
+  :config
+  (setq which-key-max-description-length 40))
 
 #+end_src
 
@@ -850,6 +916,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                    (insert-file-contents gid-map-file)
                    (buffer-string))))
       (message "Failed to retrieve UID and/or GID maps for container '%s'" container-name))))
+
+(defun docker-template ()
+  "Create docker.el windows with a specific layout"
+  (interactive)
+  (delete-other-windows)
+  (docker-images)
+  (docker-containers)
+  (transpose-frame))
 
 (defun my-docker-shell ()
   (interactive)
@@ -1593,145 +1667,164 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-        ;; (add-hook 'dired-mode-hook
-        ;;         (lambda ()
-        ;;           (wdired-change-to-wdired-mode)))
+      ;; (add-hook 'dired-mode-hook
+      ;;         (lambda ()
+      ;;           (wdired-change-to-wdired-mode)))
 
-        (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/etc/")
-        (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
+      (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/etc/")
+      (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
 
-    ;;    ;; For some reason enbling trashing not only breaks deletion, but also
-    ;;    ;; copying and probably moving both in eshell and dired.
-      (setq delete-by-moving-to-trash t
-            trash-directory "~/.local/share/trash/")
+  ;;    ;; For some reason enbling trashing not only breaks deletion, but also
+  ;;    ;; copying and probably moving both in eshell and dired.
+    (setq delete-by-moving-to-trash t
+          trash-directory "~/.local/share/trash/")
 
-        (setq wdired-allow-to-create-files t)
-        (setq wdired-allow-to-change-permissions t)
+      (setq wdired-allow-to-create-files t)
+      (setq wdired-allow-to-change-permissions t)
 
-        (setq evil-move-cursor-back nil)
-        (add-hook 'wdired-mode-hook #'evil-normal-state)
+      (setq evil-move-cursor-back nil)
+      (add-hook 'wdired-mode-hook #'evil-normal-state)
 
-        (defun my-dired-do-symlink-with-sudo ()
-          "Create a symlink, using sudo if necessary."
-          (interactive)
-          (let* ((files (dired-get-marked-files))
-                (default-directory (if (file-remote-p default-directory)
-                                        (tramp-file-name-localname (tramp-dissect-file-name default-directory))
-                                      default-directory))
-                (target (read-file-name "Symlink to: " default-directory))
-                (sudo-target (if (file-writable-p (file-name-directory target))
-                                  target
-                                (concat "/sudo::" target))))
-            (dolist (file files)
-              (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
-                (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
-
-        (defun my-dired-setup ()
-          (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
-
-        (add-hook 'dired-mode-hook 'my-dired-setup)
-
-        ;; (defun my-dired-do-delete-with-sudo ()
-        ;;   "Attempt to move the marked files to trash, using sudo if necessary."
-        ;;   (interactive)
-        ;;   (let ((files (dired-get-marked-files)))
-        ;;     (dolist (file files)
-        ;;       (if (yes-or-no-p (format "Move %s to trash? " (file-name-nondirectory file)))
-        ;;           (if (file-writable-p (file-name-directory file))
-        ;;               (dired-delete-file file 'trash)
-        ;;             (let ((sudo-file (concat "/sudo::" file)))
-        ;;               (when (yes-or-no-p (format "Insufficient permissions to move %s to trash. Retry with sudo? " (file-name-nondirectory file)))
-        ;;                 (with-temp-buffer
-        ;;                   (cd (file-name-directory sudo-file))
-        ;;                   (dired-delete-file sudo-file 'trash))))))))
-        ;;   (revert-buffer))
-
-        ;; (evil-define-key 'normal dired-mode-map (kbd "D") 'my-dired-do-delete-with-sudo)
-
-  ;; (defun dired-run-bak-on-marked-files (beg end)
-  ;; "Run the 'bak' script on marked files or visually selected files in Dired."
-  ;; (interactive
-  ;;  (if (use-region-p)
-  ;;      (list (region-beginning) (region-end)) ; If there's an active region, use it
-  ;;    (list nil nil))) ; Otherwise, process marked files
-  ;; (if (and beg end)
-  ;;     ;; If beg and end are provided, process files in the region
-  ;;     (save-excursion
-  ;;       (goto-char beg)
-  ;;       (let ((end-marker (copy-marker end)))
-  ;;         (while (< (point) end-marker)
-  ;;           (when (dired-move-to-filename)
-  ;;             (let ((file (dired-get-filename nil t)))
-  ;;               (start-process "bak-process" nil "bak" file)))
-  ;;           (dired-next-line 1))))
-  ;;   ;; If no region is active, process marked files
-  ;;   (let ((files (dired-get-marked-files)))
-  ;;     (dolist (file files)
-  ;;       (start-process "bak-process" nil "bak" file))))
-  ;; ;; Exit visual mode if in Evil mode
-  ;; (when (bound-and-true-p evil-local-mode)
-  ;;   (evil-normal-state)))
-
-  (defun dired-run-bak-on-marked-files (beg end)
-    "Run the 'bak' script on marked files or visually selected files in Dired, with an option to copy."
-    (interactive
-    (if (use-region-p)
-        (list (region-beginning) (region-end)) ; If there's an active region, use it
-      (list nil nil))) ; Otherwise, process marked files
-    ;; Prompt the user to ask if they want to copy the files.
-    (let ((copy-flag (if (yes-or-no-p "Copy files? ") "-c" nil)))
-      (if (and beg end)
-          ;; If beg and end are provided, process files in the region
-          (save-excursion
-            (goto-char beg)
-            (let ((end-marker (copy-marker end)))
-              (while (< (point) end-marker)
-                (when (dired-move-to-filename)
-                  (let ((file (dired-get-filename nil t)))
-                    ;; Conditionally include the -c flag based on user input
-                    (if copy-flag
-                        (start-process "bak-process" nil "bak" copy-flag file)
-                      (start-process "bak-process" nil "bak" file))))
-                (dired-next-line 1))))
-        ;; If no region is active, process marked files
-        (let ((files (dired-get-marked-files)))
+      (defun my-dired-do-symlink-with-sudo ()
+        "Create a symlink, using sudo if necessary."
+        (interactive)
+        (let* ((files (dired-get-marked-files))
+              (default-directory (if (file-remote-p default-directory)
+                                      (tramp-file-name-localname (tramp-dissect-file-name default-directory))
+                                    default-directory))
+              (target (read-file-name "Symlink to: " default-directory))
+              (sudo-target (if (file-writable-p (file-name-directory target))
+                                target
+                              (concat "/sudo::" target))))
           (dolist (file files)
-            ;; Conditionally include the -c flag based on user input
-            (if copy-flag
-                (start-process "bak-process" nil "bak" copy-flag file)
-              (start-process "bak-process" nil "bak" file))))))
-    ;; Exit visual mode if in Evil mode
-    (when (bound-and-true-p evil-local-mode)
-      (evil-normal-state)))
+            (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
+              (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
 
       (defun my-dired-setup ()
-        (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files)
-        (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files))
+        (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
 
       (add-hook 'dired-mode-hook 'my-dired-setup)
 
-        ;; (defun my-dired-setup ()
-        ;;   (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-toggle-bak-extension)
-        ;;   (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-toggle-bak-extension))
+      ;; (defun my-dired-do-delete-with-sudo ()
+      ;;   "Attempt to move the marked files to trash, using sudo if necessary."
+      ;;   (interactive)
+      ;;   (let ((files (dired-get-marked-files)))
+      ;;     (dolist (file files)
+      ;;       (if (yes-or-no-p (format "Move %s to trash? " (file-name-nondirectory file)))
+      ;;           (if (file-writable-p (file-name-directory file))
+      ;;               (dired-delete-file file 'trash)
+      ;;             (let ((sudo-file (concat "/sudo::" file)))
+      ;;               (when (yes-or-no-p (format "Insufficient permissions to move %s to trash. Retry with sudo? " (file-name-nondirectory file)))
+      ;;                 (with-temp-buffer
+      ;;                   (cd (file-name-directory sudo-file))
+      ;;                   (dired-delete-file sudo-file 'trash))))))))
+      ;;   (revert-buffer))
 
-  (defun dired-next-line-preserve-column (arg)
-    "Move to the next line in Dired, preserving the current column position."
-    (interactive "p")
-    (let ((col (current-column)))
-      (dired-next-line arg)
-      (move-to-column col)))
+      ;; (evil-define-key 'normal dired-mode-map (kbd "D") 'my-dired-do-delete-with-sudo)
 
-  (defun dired-previous-line-preserve-column (arg)
-    "Move to the previous line in Dired, preserving the current column position."
-    (interactive "p")
-    (let ((col (current-column)))
-      (dired-previous-line arg)
-      (move-to-column col)))
+;; (defun dired-run-bak-on-marked-files (beg end)
+;; "Run the 'bak' script on marked files or visually selected files in Dired."
+;; (interactive
+;;  (if (use-region-p)
+;;      (list (region-beginning) (region-end)) ; If there's an active region, use it
+;;    (list nil nil))) ; Otherwise, process marked files
+;; (if (and beg end)
+;;     ;; If beg and end are provided, process files in the region
+;;     (save-excursion
+;;       (goto-char beg)
+;;       (let ((end-marker (copy-marker end)))
+;;         (while (< (point) end-marker)
+;;           (when (dired-move-to-filename)
+;;             (let ((file (dired-get-filename nil t)))
+;;               (start-process "bak-process" nil "bak" file)))
+;;           (dired-next-line 1))))
+;;   ;; If no region is active, process marked files
+;;   (let ((files (dired-get-marked-files)))
+;;     (dolist (file files)
+;;       (start-process "bak-process" nil "bak" file))))
+;; ;; Exit visual mode if in Evil mode
+;; (when (bound-and-true-p evil-local-mode)
+;;   (evil-normal-state)))
 
-  (with-eval-after-load 'dired
-    (evil-define-key 'normal dired-mode-map
-      "j" 'dired-next-line-preserve-column
-      "k" 'dired-previous-line-preserve-column))
+(defun dired-run-bak-on-marked-files (beg end)
+  "Run the 'bak' script on marked files or visually selected files in Dired, with an option to copy."
+  (interactive
+  (if (use-region-p)
+      (list (region-beginning) (region-end)) ; If there's an active region, use it
+    (list nil nil))) ; Otherwise, process marked files
+  ;; Prompt the user to ask if they want to copy the files.
+  (let ((copy-flag (if (yes-or-no-p "Copy files? ") "-c" nil)))
+    (if (and beg end)
+        ;; If beg and end are provided, process files in the region
+        (save-excursion
+          (goto-char beg)
+          (let ((end-marker (copy-marker end)))
+            (while (< (point) end-marker)
+              (when (dired-move-to-filename)
+                (let ((file (dired-get-filename nil t)))
+                  ;; Conditionally include the -c flag based on user input
+                  (if copy-flag
+                      (start-process "bak-process" nil "bak" copy-flag file)
+                    (start-process "bak-process" nil "bak" file))))
+              (dired-next-line 1))))
+      ;; If no region is active, process marked files
+      (let ((files (dired-get-marked-files)))
+        (dolist (file files)
+          ;; Conditionally include the -c flag based on user input
+          (if copy-flag
+              (start-process "bak-process" nil "bak" copy-flag file)
+            (start-process "bak-process" nil "bak" file))))))
+  ;; Exit visual mode if in Evil mode
+  (when (bound-and-true-p evil-local-mode)
+    (evil-normal-state)))
+
+    (defun my-dired-setup ()
+      (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files)
+      (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files))
+
+    (add-hook 'dired-mode-hook 'my-dired-setup)
+
+      ;; (defun my-dired-setup ()
+      ;;   (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-toggle-bak-extension)
+      ;;   (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-toggle-bak-extension))
+
+(defun dired-next-line-preserve-column (arg)
+  "Move to the next line in Dired, preserving the current column position."
+  (interactive "p")
+  (let ((col (current-column)))
+    (dired-next-line arg)
+    (move-to-column col)))
+
+(defun dired-previous-line-preserve-column (arg)
+  "Move to the previous line in Dired, preserving the current column position."
+  (interactive "p")
+  (let ((col (current-column)))
+    (dired-previous-line arg)
+    (move-to-column col)))
+
+(with-eval-after-load 'dired
+  (evil-define-key 'normal dired-mode-map
+    "j" 'dired-next-line-preserve-column
+    "k" 'dired-previous-line-preserve-column))
+
+
+;; (defun my-create-path-and-view-dir ()
+;;   "Prompt for a file path, create directories and file as needed, then view the parent directory."
+;;   (interactive)
+;;   (let* ((path (read-file-name "Enter path: "))
+;;         (dir (file-name-directory path))
+;;         (file (file-name-nondirectory path)))
+;;     ;; Create directories as needed
+;;     (when dir
+;;       (make-directory dir t))
+;;     ;; Create the file if it doesn't already exist
+;;     (unless (file-exists-p path)
+;;       (with-temp-buffer
+;;         (write-file path)))
+;;     ;; Switch to viewing the parent directory in Dired mode
+;;     (dired dir)))
+
+;; (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
 
 #+end_src
 
@@ -2004,26 +2097,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
 
-;; (defun eshell/translate-path-with-sudo (path)
-;;   "Translate PATH to a Tramp sudo path."
-;;   (if (string-prefix-p "/" path)
-;;       (concat "/sudo:root@localhost:" path)
-;;     path))
-
-;; (defun eshell/sudo-command-handler (command &rest args)
-;;   "Handle `eshell/sudo` command by translating the paths to Tramp sudo paths."
-;;   (let* ((translated-args (mapcar 'eshell/translate-path-with-sudo args))
-;;          (final-command (string-join (cons command translated-args) " ")))
-;;     (eshell-command-result final-command)))
-
-;; (defun eshell/sudo (&rest args)
-;;   "Execute commands as root using sudo with Tramp paths."
-;;   (apply 'eshell/sudo-command-handler args))
-
-;; (add-hook 'eshell-mode-hook
-;;           (lambda ()
-;;             (add-to-list 'eshell-command-aliases-list
-;;                          '("sudo" . eshell/sudo))))
 #+end_src
 
 *** Custom commands
@@ -2044,30 +2117,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         (with-output-to-temp-buffer "*FD Output*"
           (princ output))
         (switch-to-buffer-other-window "*FD Output*"))))
-
-#+end_src
-
-*** Custom completions
-
-#+begin_src emacs-lisp
-
-  ;; (defun chmod-completions ()
-  ;;   "Completion function for chmod command."
-  ;;   (when (and (eshell-looking-at-argument-p)
-  ;;              (looking-back "chmod\\s-+\\(.*\\)" (line-beginning-position)))
-  ;;     (let ((choices '("u" "g" "o" "a" "+" "-" "=" "r" "w" "x"
-  ;;       	       "0" "1" "2" "3" "4" "5" "6" "7")))
-  ;;       (list (match-beginning 1)
-  ;;             (point)
-  ;;             choices
-  ;;             :exclusive 'no))))
-
-  ;; (defun eshell-mode-hook-setup ()
-  ;;   "Set up eshell mode."
-  ;;   (add-hook 'pcomplete-try-first-hook
-  ;;             #'chmod-completions nil t))
-
-  ;; (add-hook 'eshell-mode-hook #'eshell-mode-hook-setup)
 
 #+end_src
 
@@ -2097,48 +2146,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
   (with-eval-after-load 'shell
     (add-hook 'shell-mode-hook 'async-shell-command-filter-hook))
-
-#+end_src
-
-** Eat
-
-#+begin_src emacs-lisp
-
-  ;; (use-package eat
-  ;;   :straight (emacs-eat :type git :host github :repo "kephale/emacs-eat")
-  ;;   :custom
-  ;;   (eat-kill-buffer-on-exit t)
-  ;;   :hook
-  ;;   ((eshell-mode . eat-eshell-visual-command-mode)
-  ;;   (eshell-mode . eat-eshell-mode)
-  ;;   (eat-mode . evil-insert-state)))
-
-  ;; (let ((lisp-dir "~/.emacs.d/lisp")
-  ;;       (emacs-eat-dir "~/.emacs.d/lisp/emacs-eat")
-  ;;       (emacs-eat-repo "git@github.com:kephale/emacs-eat.git"))
-  ;;   ;; Check if the lisp directory exists, if not, create it
-  ;;   (unless (file-directory-p lisp-dir)
-  ;;     (make-directory lisp-dir t))
-
-  ;;   ;; Check if the emacs-eat directory exists
-  ;;   (unless (file-directory-p emacs-eat-dir)
-  ;;     ;; If emacs-eat directory does not exist, check if git is available
-  ;;     (if (executable-find "git")
-  ;;         (progn
-  ;;           (message "Cloning emacs-eat...")
-  ;;           (shell-command (concat "git clone " emacs-eat-repo " " emacs-eat-dir))
-  ;;           (message "emacs-eat cloned successfully."))
-  ;;       (error "Git is not installed, cannot clone emacs-eat"))))
-
-  ;; Add emacs-eat to the load-path
-  ;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-eat")
-  ;; (require 'eat)
-  ;; (eat-eshell-mode 1)
-  ;; ;; (setq eshell-visual-commands nil)
-
-  ;; (add-hook 'eshell-first-time-mode-hook
-  ;;           #'eat-eshell-visual-command-mode)
-  ;; (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode)
 
 #+end_src
 
@@ -2380,127 +2387,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (add-hook 'shell-mode-hook
           (lambda ()
             (run-with-timer 0.1 nil 'my-shell-mode-hook)))
-;; (defvar
-;;   shell-toggle-window-configuration nil
-;;   "Variable to store the window configuration before opening shell.")
-
-;; (defvar shell-toggle-selected-window nil
-;;   "Variable to store the selected window before opening shell.")
-
-;; (defun SpawnShellSplitBelow ()
-;;   "Open a shell in a small split below or toggle it if already open."
-;;   (interactive)
-;;   (if (eq major-mode 'shell-mode)
-;;       (progn
-;;         (when shell-toggle-window-configuration
-;;           (set-window-configuration shell-toggle-window-configuration)
-;;           (setq shell-toggle-window-configuration nil))
-;;         (when shell-toggle-selected-window
-;;           (select-window shell-toggle-selected-window)
-;;           (setq shell-toggle-selected-window nil)))
-;;     (setq shell-toggle-window-configuration (current-window-configuration))
-;;     (setq shell-toggle-selected-window (selected-window))
-;;     (split-window-below -10)
-;;     (other-window 1)
-;;     (open-shell-in-current-directory)))
-
-;; (defun open-shell-in-current-directory ()
-;;   "Open shell in the directory of the current buffer.
-;; If a shell buffer for the directory already exists, switch to it."
-;;   (interactive)
-;;   (let* ((buffer-dir (if (buffer-file-name)
-;;                         (file-name-directory (buffer-file-name))
-;;                       default-directory))
-;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
-;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
-;;     (if existing-shell-buffer
-;;         (switch-to-buffer existing-shell-buffer)
-;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
-;;         (shell (generate-new-buffer-name shell-buffer-name))))))
-
-;; (with-eval-after-load 'evil
-;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
-
-
-
-
-;; (defvar spawn-toggle-window-configuration nil
-;;   "Variable to store the window configuration before opening eshell or shell.")
-
-;; (defvar spawn-toggle-selected-window nil
-;;   "Variable to store the selected window before opening eshell or shell.")
-
-;; (defun SpawnEshellSplitBelow ()
-;;   "Open a shell in a small split below or toggle it if already open.
-;; If the current buffer is a shell buffer, switch to an eshell buffer instead."
-;;   (interactive)
-;;   (if (eq major-mode 'shell-mode)
-;;       (open-eshell-in-current-directory)
-;;     (if (eq major-mode 'eshell-mode)
-;;         (SpawnToggleOff)
-;;       (SpawnToggleOn)
-;;       (open-eshell-in-current-directory))))
-
-;; (defun open-eshell-in-current-directory ()
-;;   "Open eshell in the directory of the current buffer.
-;; If an eshell buffer for the directory already exists, switch to it."
-;;   (interactive)
-;;   (let* ((buffer-dir (if (buffer-file-name)
-;;                         (file-name-directory (buffer-file-name))
-;;                       default-directory))
-;;         (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-;;         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-;;     (if existing-eshell-buffer
-;;         (switch-to-buffer existing-eshell-buffer)
-;;       (let ((eshell-buffer (eshell 'N)))
-;;         (with-current-buffer eshell-buffer
-;;           (rename-buffer eshell-buffer-name)
-;;           (eshell/cd buffer-dir))))))
-
-;; (defun SpawnShellSplitBelow ()
-;;   "Open a shell in a small split below or toggle it if already open.
-;; If the current buffer is an eshell buffer, switch to a shell buffer instead."
-;;   (interactive)
-;;   (if (eq major-mode 'eshell-mode)
-;;       (open-shell-in-current-directory)
-;;     (if (eq major-mode 'shell-mode)
-;;         (SpawnToggleOff)
-;;       (SpawnToggleOn)
-;;       (open-shell-in-current-directory))))
-
-;; (defun open-shell-in-current-directory ()
-;;   "Open shell in the directory of the current buffer.
-;; If a shell buffer for the directory already exists, switch to it."
-;;   (interactive)
-;;   (let* ((buffer-dir (if (buffer-file-name)
-;;                         (file-name-directory (buffer-file-name))
-;;                       default-directory))
-;;         (shell-buffer-name (format "*shell: %s*" buffer-dir))
-;;         (existing-shell-buffer (get-buffer shell-buffer-name)))
-;;     (if existing-shell-buffer
-;;         (switch-to-buffer existing-shell-buffer)
-;;       (let ((default-directory buffer-dir)) ;; Ensure shell starts in the correct directory
-;;         (shell (generate-new-buffer-name shell-buffer-name))))))
-
-;; (defun SpawnToggleOff ()
-;;   "Toggle off eshell or shell buffer and restore the previous window configuration."
-;;   (when spawn-toggle-window-configuration
-;;     (set-window-configuration spawn-toggle-window-configuration)
-;;     (setq spawn-toggle-window-configuration nil))
-;;   (when spawn-toggle-selected-window
-;;     (select-window spawn-toggle-selected-window)
-;;     (setq spawn-toggle-selected-window nil)))
-
-;; (defun SpawnToggleOn ()
-;;   "Store the current window configuration and selected window before spawning eshell or shell."
-;;   (setq spawn-toggle-window-configuration (current-window-configuration))
-;;   (setq spawn-toggle-selected-window (selected-window))
-;;   (split-window-below -10)
-;;   (other-window 1))
-
-;; (with-eval-after-load 'evil
-;;   (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
-;;   (define-key evil-normal-state-map (kbd "M-s") 'SpawnShellSplitBelow))
 
 #+end_src
 
@@ -2755,13 +2641,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ** Python
 
 #+begin_src emacs-lisp
-
-  ;; (use-package virtualenvwrapper
-  ;;   :config
-  ;;   (venv-initialize-interactive-shells) ; for shell-mode
-  ;;   (venv-initialize-eshell) ; for eshell
-  ;;   (setq venv-location "/home/wurfkreuz/.projects/server-python/.venv")
-  ;; )
 
   (use-package pyvenv
     :config
@@ -3062,21 +2941,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
     ;; (org-link-minor-mode 1)
 
-    ;; (setq org-startup-folded t) 
-    ;; (setq org-emphasis-alist
-    ;;       ;; '(("*" bold)
-    ;;         '(("/" italic)))
-    ;;         ;; ("_" underline)
-    ;;         ;; ("=" org-verbatim verbatim)
-    ;;         ;; ("~" org-code verbatim)
-    ;;         ;; ("+" org-strike-through t)))
-    ;;   (define-prefix-command 'my-prefix-map)
-
-    ;; (defun todo ()
-    ;;   "Open the todo_list.org file located in the ~/.secret_dotfiles/org directory."
-    ;;   (interactive)
-    ;;   (find-file (expand-file-name "~/.secret_dotfiles/org/todo_list.org")))
-
   (defun org-insert-top-level-heading ()
       "Insert a new top-level heading with two empty lines before it."
       (interactive)
@@ -3085,21 +2949,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       (end-of-line))
 
     (define-key org-mode-map (kbd "M-o M-h") 'org-insert-top-level-heading)
-
-  ;; (defun create-list-in-region ()
-  ;;   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
-  ;;   (interactive)
-  ;;   (if (use-region-p)
-  ;;       (let* ((beg (region-beginning))
-  ;;              (end (region-end))
-  ;;              (region-text (buffer-substring beg end))
-  ;;              (lines (split-string region-text "\n")))
-  ;;         (delete-region beg end)
-  ;;         (when lines
-  ;;           (insert (concat "- " (car lines)))
-  ;;           (dolist (line (cdr lines))
-  ;;             (insert (concat "\n  " line)))    
-  ;;     (message "No region active")))))
 
   (defun create-list-in-region ()
   "Convert the highlighted text into a single org-mode list item, properly formatting multiline text."
@@ -3126,13 +2975,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           (dolist (line (cdr lines))
             (insert (concat "\n  " line)))))
     (message "No region active")))
-
-    ;; (defun my/org-show-all-and-refresh ()
-    ;;   "Expand all blocks and refresh fontification."
-    ;;   (org-show-all '(blocks))
-    ;;   (redisplay t))
-
-    ;; (add-hook 'org-mode-hook #'my/org-show-all-and-refresh)
 
 #+end_src
 
@@ -3640,23 +3482,5 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     "Run `crontab -e' in a emacs buffer."
     (interactive)
     (with-editor-async-shell-command "crontab -e"))
-
-  ;; (defun my-create-path-and-view-dir ()
-  ;;   "Prompt for a file path, create directories and file as needed, then view the parent directory."
-  ;;   (interactive)
-  ;;   (let* ((path (read-file-name "Enter path: "))
-  ;;         (dir (file-name-directory path))
-  ;;         (file (file-name-nondirectory path)))
-  ;;     ;; Create directories as needed
-  ;;     (when dir
-  ;;       (make-directory dir t))
-  ;;     ;; Create the file if it doesn't already exist
-  ;;     (unless (file-exists-p path)
-  ;;       (with-temp-buffer
-  ;;         (write-file path)))
-  ;;     ;; Switch to viewing the parent directory in Dired mode
-  ;;     (dired dir)))
-
-  ;; (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
 
 #+end_src
