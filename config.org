@@ -152,7 +152,7 @@
       (global-set-key (kbd (format "M-%d" n))
                       `(lambda () (interactive) (tab-bar-select-tab ,n)))))
 
-    #+end_src
+#+end_src
 
 ** System
 
@@ -252,7 +252,8 @@
 (setq-default display-line-numbers-width 3)
 (setq-default scroll-margin 8)
 (setq use-dialog-box nil)
-(set-fringe-mode 0)
+;; (set-fringe-mode 1)
+(fringe-mode '(1 . 1))
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
@@ -322,9 +323,6 @@
     :config
     (evil-mode 1)
     (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (define-key evil-normal-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-    (define-key evil-visual-state-map (kbd "/") 'avy-goto-char-2-all-windows)
-    (define-key evil-motion-state-map (kbd "/") 'avy-goto-char-2-all-windows)
     (define-key evil-normal-state-map (kbd "C-n") 'next-line)
     (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
     (define-key evil-insert-state-map (kbd "C-n") 'next-line)
@@ -806,17 +804,33 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
    '(custom user pid ppid sess tree pcpu pmem rss start time state (args comm))))
 
 #+end_src
+
 ** Avy
 
 #+begin_src emacs-lisp
 
-  (use-package avy)
-
+(use-package avy
+  :ensure t
+  :config
+  ;; Custom command to invoke avy-goto-char-2 across all windows except in Dired buffers
   (defun avy-goto-char-2-all-windows ()
-    "Invoke `avy-goto-char-2` across all windows in the current frame."
+    "Invoke `avy-goto-char-2` across all windows in the current frame, except in Dired buffers."
     (interactive)
     (let ((avy-all-windows t))
-      (call-interactively 'evil-avy-goto-char-2)))
+      (unless (derived-mode-p 'dired-mode)
+        (call-interactively 'evil-avy-goto-char-2))))
+
+  ;; Custom command to switch behavior based on whether the buffer is Dired
+  (defun my/conditional-search-or-avy ()
+    "Use `evil-search-forward` in Dired buffers, otherwise use `avy-goto-char-2-all-windows`."
+    (interactive)
+    (if (derived-mode-p 'dired-mode)
+        (evil-search-forward)
+      (avy-goto-char-2-all-windows)))
+
+  ;; Override `/` keybinding globally in Evil normal state map
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy)))
 
 #+end_src
 
