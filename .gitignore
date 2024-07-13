@@ -33,6 +33,7 @@ eshell_history
 /.lsp-session-v1
 /.lsp
 /mentor/
+#config.org#
 
 # Ignore the entire eshell directory
 /eshell/*
