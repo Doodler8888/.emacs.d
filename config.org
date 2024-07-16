@@ -3022,6 +3022,30 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :config
   (setq org-drill-maximum-items-per-session 100))
 
+(defun org-drill-present-sequence (session)
+  (org-drill-with-hidden-comments
+   (let ((drill-sections (org-drill-hide-all-subheadings-except nil))
+         (current-section 0))
+     (org-drill--show-latex-fragments)
+     (ignore-errors
+       (org-display-inline-images t))
+     (org-cycle-hide-drawers 'all)
+     ;; Show the main heading content first
+     (org-drill-presentation-prompt session)
+     ;; Then iterate through subheadings
+     (while (< current-section (length drill-sections))
+       (save-excursion
+         (goto-char (nth current-section drill-sections))
+         (org-fold-show-subtree))
+       (org-drill-presentation-prompt session)
+       (setq current-section (1+ current-section)))
+     ;; Hide all subheadings at the end
+     (org-drill-hide-subheadings-if (lambda () t)))))
+
+(with-eval-after-load 'org-drill
+  (add-to-list 'org-drill-card-type-alist
+               '("sequence" org-drill-present-sequence nil t)))
+
 #+end_src
 
 ** Agenda
