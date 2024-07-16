@@ -180,7 +180,7 @@
 
 ;; Break lines after a certain length
 (auto-fill-mode 1)
-(setq-default fill-column 80)
+(setq-default fill-column 79)
 (add-hook 'text-mode-hook 'auto-fill-mode)
 
 (setq python-shell-interpreter "/usr/bin/python3")
@@ -189,9 +189,6 @@
 
 ;; Autoinsertion on the search buffer
 (setq ivy-initial-inputs-alist nil)
-;; (setq ivy-initial-inputs-alist ;; If you want there are situations where you would like to have it enabled, try this code.
-;;     '((counsel-M-x . "")
-;;       (t . "^")))
 
 ;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (setq-default indent-tabs-mode nil)
@@ -251,8 +248,10 @@
 (setq-default display-line-numbers-width 3)
 (setq-default scroll-margin 8)
 (setq use-dialog-box nil)
-;; (set-fringe-mode 1)
+;; (set-fringe-mode 0)
 (fringe-mode '(1 . 1))
+;; (set-display-table-slot standard-display-table 'truncation ?\ )
+;; (set-display-table-slot standard-display-table 'truncation ?\N{ZERO WIDTH SPACE})
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
@@ -302,7 +301,7 @@
        (when (not (file-exists-p dir))
         (make-directory dir t)))
      (find-file filename wildcards))
-     #+end_src
+#+end_src
 
 ** Evil Mode
 
@@ -1840,6 +1839,20 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
 
+(defun OpenDiredBufferInSplit ()
+  "Open a Dired buffer in a vertical split on the right, showing the directory of the current buffer."
+  (interactive)
+  (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
+    (split-window-right)
+    (windmove-right)
+    (dired current-dir)))
+
+(defun OpenDiredBufferInCurrentWindow ()
+  "Open a Dired buffer in the current window, showing the directory of the current buffer."
+  (interactive)
+  (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
+    (dired current-dir)))
+
 #+end_src
 
 
@@ -3294,6 +3307,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (call-process "reboot"))
 
 (defun notes ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.secret_dotfiles/org")))
+
+(defun org ()
   "Open org notes directory."
   (interactive)
   (find-file (expand-file-name "~/.secret_dotfiles/org")))
