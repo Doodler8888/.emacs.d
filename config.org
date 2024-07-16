@@ -20,7 +20,6 @@
   - [[#proced][Proced]]
   - [[#avy][Avy]]
   - [[#async][Async]]
-  - [[#which-key][Which-key]]
   - [[#transient][Transient]]
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
@@ -37,7 +36,6 @@
   - [[#hyperbole][Hyperbole]]
   - [[#zoxide][Zoxide]]
   - [[#cider][Cider]]
-  - [[#projectile][Projectile]]
   - [[#mentor][Mentor]]
   - [[#wgrep][Wgrep]]
   - [[#embark][Embark]]
@@ -60,11 +58,9 @@
 - [[#database][Database]]
 - [[#sessions][Sessions]]
 - [[#buffers][Buffers]]
-  - [[#dired-buffer][Dired buffer]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
-  - [[#posframe][Posframe]]
   - [[#popper][Popper]]
 - [[#language-support][Language Support]]
   - [[#python][Python]]
@@ -92,14 +88,16 @@
 
 #+begin_src emacs-lisp
 
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (setq inhibit-startup-screen t)
-  (setq display-line-numbers 'visual
-        display-line-numbers-type 'relative)
-  (add-hook 'conf-mode-hook 'display-line-numbers-mode)
-  (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
-  (global-display-line-numbers-mode 1)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(setq inhibit-startup-screen t)
+(global-display-line-numbers-mode 1)
+(setq display-line-numbers 'visual
+      display-line-numbers-type 'relative)
+(add-hook 'conf-mode-hook 'display-line-numbers-mode)
+(add-hook 'conf-space-mode-hook 'display-line-numbers-mode) ;; it breaks tramp with pipes?
+(add-hook 'text-mode-hook 'display-line-numbers-mode)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
   (defun my-mode-line-major-mode ()
     "Returns a clean name of the current major mode."
@@ -354,16 +352,16 @@
 ;;   :config
 ;;   (evil-commentary-mode))
 
-  (use-package evil-org
-    :after org
-    :config
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys)
-    (add-hook 'org-mode-hook 'evil-org-mode)
-    (add-hook 'evil-org-mode-hook
-              (lambda ()
-                (evil-org-set-key-theme)))
-    )
+;;  (use-package evil-org
+;;    :after org
+;;    :config
+;;    (require 'evil-org-agenda)
+;;    (evil-org-agenda-set-keys)
+;;    (add-hook 'org-mode-hook 'evil-org-mode)
+;;    (add-hook 'evil-org-mode-hook
+;;              (lambda ()
+;;                (evil-org-set-key-theme)))
+;;    )
 
   (use-package evil-collection
     :after evil
@@ -371,9 +369,6 @@
     :config
     (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker))
     (evil-collection-init))
-
-  (add-hook 'text-mode-hook 'display-line-numbers-mode)
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
   (defun my-evil-yank-to-end-of-line ()
     "Yank text from the current point to the end of the line."
@@ -487,25 +482,8 @@
 
 #+begin_src emacs-lisp
 
-  ;; (require 'color)
-  ;;  (hl-line-mode 1)
-
   (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
   (load-theme 'rose-pine t)
-
-  ;; (use-package gruvbox-theme
-  ;;   :config
-  ;;   (load-theme 'gruvbox-dark-hard t))
-
-  ;; (use-package doom-themes
-  ;;   :ensure t
-  ;;   :config
-  ;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-  ;;         doom-themes-enable-italic nil) ; if nil, italics is universally disabled
-  ;;   (load-theme 'doom-one t)
-  ;;   ;Corrects (and improves) org-mode's native fontifcation.
-  ;;   (doom-themes-org-config))
-
 
   (when (member "NotoSansM Nerd Font Mono" (font-family-list))
     (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
@@ -531,13 +509,6 @@
 *** Icons
 
 #+begin_src emacs-lisp
-
-;; (use-package all-the-icons
-;;   :ensure t
-;;   :if (display-graphic-p))
-
-;; (use-package all-the-icons-dired
-;;   :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
 
 (use-package all-the-icons
   :ensure t
@@ -652,10 +623,10 @@
 
     ;; Paredit
     "pfs" '(paredit-forward-slurp-sexp)
-    
+
     ;; Hyperbole
     "he" '(hkey-either :wk "Opens the org todo file")
-    
+
     ;; Tab management
     "tn" '(tab-bar-new-tab :wk "Create a new tab")
     "tx" '(tab-bar-close-tab :wk "Close a tab")
@@ -663,7 +634,7 @@
 
     ;; Org capture
     "n" '(org-capture :wk "Create a quick note")
-    
+
     ;; Docker
     "D" '(docker-template :wk "Spawn docker template")
 
@@ -672,7 +643,7 @@
     "ds" '(daemons-start :wk "Start daemon")
     "de" '(daemons-enable :wk "Enable daemon")
     "dd" '(daemons-disable :wk "Disable daemon")
-    
+
     ;; Windows
     "w"  'hydra-window-size/body
 
@@ -681,7 +652,7 @@
     "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
     "rr" '(revert-buffer :wk "Refresh a current buffer")
-    
+
     ;; Popper
     "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
     "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
@@ -702,7 +673,7 @@
     ;; Tramp
     "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
     "ur" '(tramp-revert :wk "Edit file with sudo privileges")
-    
+
     ;; Evaluation
     "e" '(:ignore t :wk "Evaluate/Eshell")
     ;; "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
@@ -718,7 +689,7 @@
     "ee" '(eshell-pop :wk "'eshell' command in popper mode")
 
     )
-  
+
     (w/leader-keys
       :keymaps 'help-mode-map
       "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
@@ -846,17 +817,17 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+end_src
 
-** Which-key
-
-#+begin_src emacs-lisp
-
-(use-package which-key
-  :init
-  (which-key-mode)
-  :config
-  (setq which-key-max-description-length 40))
-
-#+end_src
+#** Which-key
+#
+##+begin_src emacs-lisp
+#
+#(use-package which-key
+#  :init
+#  (which-key-mode)
+#  :config
+#  (setq which-key-max-description-length 40))
+#
+##+end_src
 
 ** Transient
 
@@ -929,7 +900,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
   (use-package circe)
-  
+
 #+end_src
 
 ** Docker
@@ -1004,7 +975,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;;       '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)))
 
   (setq ispell-alternate-dictionary "/usr/share/hunspell/en_US.dic")
-  
+
 #+end_src
 
 ** Jinx
@@ -1270,10 +1241,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ** Zoxide
 
 #+begin_src emacs-lisp
-  
+
   (straight-use-package
    '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
-    
+
 #+end_src
 
 ** Cider
@@ -1324,40 +1295,40 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+RESULTS:
 
-** Projectile
-
-#+begin_src emacs-lisp
-
-  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
-    "Advice to make Projectile recognize custom project roots."
-    (or
-     ;; First, check if the specific directory should be treated as a project root.
-     (when (string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name default-directory))
-       "/home/wurfkreuz/.secret_dotfiles/org/")
-     ;; Next, look for 'bb.edn' up the directory tree to identify a project root.
-     (let ((current-dir (expand-file-name default-directory))
-           (project-root nil))
-       (while (and (not project-root) (not (string= current-dir "/")))
-         (when (file-exists-p (concat current-dir "bb.edn"))
-           (setq project-root current-dir))
-         (setq current-dir (file-name-directory (directory-file-name current-dir))))
-       project-root)
-     ;; Fallback to the original projectile root detection if none of the above conditions are met.
-     (apply original-projectile-root args)))
-
-  (use-package projectile
-    :config
-    (projectile-mode 1)
-    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
-  
-#+end_src
+#** Projectile
+#
+##+begin_src emacs-lisp
+#
+#  (defun my/projectile-project-root-advice (original-projectile-root &rest args)
+#    "Advice to make Projectile recognize custom project roots."
+#    (or
+#     ;; First, check if the specific directory should be treated as a project root.
+#     (when (string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name default-directory))
+#       "/home/wurfkreuz/.secret_dotfiles/org/")
+#     ;; Next, look for 'bb.edn' up the directory tree to identify a project root.
+#     (let ((current-dir (expand-file-name default-directory))
+#           (project-root nil))
+#       (while (and (not project-root) (not (string= current-dir "/")))
+#         (when (file-exists-p (concat current-dir "bb.edn"))
+#           (setq project-root current-dir))
+#         (setq current-dir (file-name-directory (directory-file-name current-dir))))
+#       project-root)
+#     ;; Fallback to the original projectile root detection if none of the above conditions are met.
+#     (apply original-projectile-root args)))
+#
+#  (use-package projectile
+#    :config
+#    (projectile-mode 1)
+#    (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
+#
+##+end_src
 
 ** Mentor
 
 #+begin_src emacs-lisp
 
   (use-package mentor)
-  
+
 #+end_src
 
 ** Wgrep
@@ -1365,7 +1336,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 #+begin_src emacs-lisp
 
   (use-package wgrep)
-  
+
 #+end_src
 
 ** Embark
@@ -1560,7 +1531,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
   (with-eval-after-load 'with-editor
     (advice-add 'with-editor-export-editor :around #'suppress-with-editor-export-message))
-  
+
 #+end_src
 
 ** Cron
@@ -1573,7 +1544,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
    '(emacs-crontab-mode :host gitlab :repo "Bacaliu/emacs-crontab-mode"))
 ;;
 ;;  (require emacs-crontab-mode)
-  
+
 #+end_src
 
 ** Systemd
@@ -1592,7 +1563,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;;   :after counsel
   ;;   :config
   ;;   (ivy-prescient-mode 1))
-    
+
 #+end_src
 
 ** Fzf
@@ -1634,7 +1605,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (interactive)
     (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
     (fzf))
-  
+
   (defun fzf-from-home-no-prompt ()
     "Starts fzf from the user's home directory using fd to include hidden files
       and exclude certain directories without prompting for a directory."
@@ -1672,7 +1643,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (global-set-key (kbd "C-h x") #'helpful-command)
     (setq counsel-describe-function-function #'helpful-callable)
     (setq counsel-describe-variable-function #'helpful-variable))
-  
+
 #+end_src
 
 ** Hydra
@@ -2107,7 +2078,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive)
   (eshell)
   (popper-toggle-type))
-  
+
 (defun eshell-expand-filename-at-point ()
   "Expand the filename at point to its absolute path in eshell."
   (interactive)
@@ -2139,6 +2110,16 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (evil-define-key 'normal eshell-mode-map (kbd "0") 'beginning-of-line))
 
 (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
+
+(defun my/select-man-window (&rest _)
+  "Select the window displaying the man page."
+  (let ((man-window (cl-find-if (lambda (window)
+                                  (string-match-p "^\\*Man " (buffer-name (window-buffer window))))
+                                (window-list))))
+    (when man-window
+      (select-window man-window))))
+
+(advice-add 'Man-getpage-in-background :after #'my/select-man-window)
 
 #+end_src
 
@@ -2177,7 +2158,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                       (buffer-file-name))))
       (async-shell-command (concat command " " filename))))
 
-  
+
   (defun async-shell-command-filter-hook ()
   "Filter async shell command output via `comint-output-filter'."
   (when (equal (buffer-name (current-buffer)) "*Async Shell Command*")
@@ -2348,7 +2329,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
   (setq desktop-files-not-to-save
       (concat "\\(^/[^/:]*:\\|(ftp)$\\)\\|" desktop-files-not-to-save))
-  
+
   (defun delete-desktop-session ()
     "Delete a desktop session by name, chosen from available sessions."
     (interactive)
@@ -2387,26 +2368,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   #+end_src
 
 * Buffers
-
-** Dired buffer
-
-#+begin_src emacs-lisp
-
-  (defun OpenDiredBufferInSplit ()
-    "Open a Dired buffer in a vertical split on the right, showing the directory of the current buffer."
-    (interactive)
-    (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
-      (split-window-right)
-      (windmove-right)
-      (dired current-dir)))
-
-  (defun OpenDiredBufferInCurrentWindow ()
-    "Open a Dired buffer in the current window, showing the directory of the current buffer."
-    (interactive)
-    (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
-      (dired current-dir)))
-
-#+end_src
 
 ** Shell buffer
 
@@ -2540,16 +2501,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-** Posframe
-
-#+begin_src emacs-lisp
-
-  (use-package vertico-posframe)
-
-#+end_src
-
 ** Popper
-
 
 #+begin_src emacs-lisp
 
@@ -2688,7 +2640,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (use-package pyvenv
     :config
     (pyvenv-mode 1))  
-  
+
 #+end_src
 
 ** Flymake
@@ -2719,7 +2671,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     :commands flymake-shellcheck-load
     :init
     (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
-  
+
 #+end_src
 
 ** Modes
@@ -2848,20 +2800,20 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
      (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
                       :major-modes '(go-ts-mode) ; Corrected to go-mode
                       :server-id 'gopls)) ; Correct server-id for Go
-    
+
     ;; Register Haskell LSP client
     (lsp-register-client
      (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
                       :major-modes '(haskell-mode)
                       :server-id 'hls))
-    
+
     ;; Register Python LSP client
     ;; (setq lsp-pylsp-plugins-flake8-enabled t)
     ;; (lsp-register-client
     ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
     ;;                   :major-modes '(python-ts-mode)
     ;;                   :server-id 'pylsp))
-    
+
     ;; Register Clojure LSP client
     (lsp-register-client
      (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
@@ -3038,14 +2990,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package org-download
-    :init
-    (setq org-download-image-dir "~/.secret_dotfiles/org/images")
-    :config
-    (add-hook 'org-mode-hook 'org-download-enable)
-    (add-hook 'org-mode-hook
-              (lambda ()
-                (org-display-inline-images))))
+;;  (use-package org-download
+;;    :init
+;;    (setq org-download-image-dir "~/.secret_dotfiles/org/images")
+;;    :config
+;;    (add-hook 'org-mode-hook 'org-download-enable)
+;;    (add-hook 'org-mode-hook
+;;              (lambda ()
+;;                (org-display-inline-images))))
 
 #+end_src
 
