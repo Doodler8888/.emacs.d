@@ -58,6 +58,7 @@
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
+  - [[#pgmacs][Pgmacs]]
 - [[#sessions][Sessions]]
 - [[#buffers][Buffers]]
   - [[#shell-buffer][Shell buffer]]
@@ -2207,12 +2208,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;     (split-string output "\n" t)))
 
 (setq sql-connection-alist
-      '((my-postgres
+      '((default-postgres
          (sql-product 'postgres)
-         (sql-user "<your_default_user>")
-         (sql-database "<your_default_database>")
-         (sql-server "<your_server>")
-         (sql-port "<your_port>"))))
+         (sql-server "localhost")
+         (sql-port 5432))))
 
 (defun my/postgres-list-custom-roles ()
   "Return a list of custom PostgreSQL roles, including 'postgres' but excluding other system roles."
@@ -2238,25 +2237,73 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
          (selected-database (completing-read "Select PostgreSQL database: " databases nil t)))
     selected-database))
 
-(defun sql-postgres (role database)
+(defun sql-postgres (role database server port)
   "Run psql as an inferior process in Emacs, connecting to a database as a specific role."
-  (interactive "sRole: \nsDatabase: ")
+  (interactive "sRole: \nsDatabase: \nsServer: \nsPort: ")
   (let ((sql-connection-alist
          `((dynamic-postgres
             (sql-product 'postgres)
             (sql-user ,role)
             (sql-database ,database)
-            (sql-server "localhost")
-            (sql-port 5432)))))
+            (sql-server ,server)
+            (sql-port ,(string-to-number port))))))
     (sql-connect 'dynamic-postgres)))
 
-(defun my/select-role-and-database-and-login ()
-  "Prompt for a PostgreSQL role and then a database owned by that role, then log into sql-interactive-mode."
+(defun psql ()
+  "Prompt for a PostgreSQL role, a database owned by that role, server, and port, then log into sql-interactive-mode."
   (interactive)
   (let* ((selected-role (my/select-postgres-role))
-         (selected-database (my/select-postgres-database selected-role)))
-    (sql-postgres selected-role selected-database)))
+         (selected-database (my/select-postgres-database selected-role))
+         (selected-server (read-string "Enter SQL Server (default localhost): " nil nil "localhost"))
+         (selected-port (read-string "Enter SQL Port (default 5432): " nil nil "5432")))
+    (sql-postgres selected-role selected-database selected-server selected-port)))
 
+;; (defun psql-session ()
+;;   "Open sql buffer with psql shell"
+;;   (interactive)
+;;   (let ((psql-buffer (call-interactively 'psql)))
+;;     (when (and (boundp 'sql-buffer) sql-buffer)
+;;       (delete-other-windows)
+;;       (switch-to-buffer (get-buffer-create "*SQL Buffer*"))
+;;       (sql-mode)
+;;       (split-window-below)
+;;       (other-window 1)
+;;       (switch-to-buffer sql-buffer)
+;;       (balance-windows))))
+
+(defun psql-session ()
+  "Open sql buffer with psql shell and a temporary SQL file for LSP support"
+  (interactive)
+  (let* ((temp-sql-file (make-temp-file "psql-session-" nil ".sql"))
+         (psql-buffer (save-window-excursion
+                        (call-interactively 'psql)
+                        (get-buffer sql-buffer)))
+         (sql-buffer (find-file-noselect temp-sql-file)))
+    (when (and psql-buffer sql-buffer)
+      (delete-other-windows)
+      (switch-to-buffer sql-buffer)
+      (sql-mode)
+      (lsp) ; Explicitly start LSP
+      (split-window-below)
+      (other-window 1)
+      (switch-to-buffer psql-buffer)
+      (balance-windows))))
+
+;; Optionally, add a hook to delete the temporary file when the buffer is killed
+(add-hook 'kill-buffer-hook
+          (lambda ()
+            (when (and buffer-file-name
+                       (string-match-p "psql-session-.*\\.sql$" buffer-file-name))
+              (delete-file buffer-file-name))))
+
+;; (defun show-table (table-name)
+;;   "Describe the specified table by selecting a few rows."
+;;   (interactive "sTable name: ")
+;;   (let ((query (format "SELECT * FROM %s LIMIT 5;" table-name)))
+;;     (with-current-buffer sql-buffer
+;;       (goto-char (point-max))
+;;       (insert query)
+;;       (sql-send-paragraph))))
 
 ;;     ;; Define the connection details for PostgreSQL, including two databases
 ;;     (setq sql-connection-alist
@@ -2273,31 +2320,17 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;             (sql-port 5432)
 ;;             (sql-database "shelf"))))
 
-;; (defun my-sql-connect-with-buffer (connection)
-;; "Connect to a SQL database using `sql-connect' and open a new SQL mode buffer."
-;; (interactive (list (completing-read "Select database: "
-;;                                     (mapcar #'car sql-connection-alist)
-;;                                     nil t)))
-;; (let ((sql-buffer (sql-connect connection)))
-;;   (when (and (boundp 'sql-buffer) sql-buffer)
-;;     (delete-other-windows)
-;;     (switch-to-buffer (get-buffer-create "*SQL Buffer*"))
-;;     (sql-mode)
-;;     (split-window-below)
-;;     (other-window 1)
-;;     (switch-to-buffer sql-buffer)
-;;     (balance-windows))))
+#+end_src
 
-;; (defun show-table (table-name)
-;;   "Describe the specified table by selecting a few rows."
-;;   (interactive "sTable name: ")
-;;   (let ((query (format "SELECT * FROM %s LIMIT 5;" table-name)))
-;;     (with-current-buffer sql-buffer
-;;       (goto-char (point-max))
-;;       (insert query)
-;;       (sql-send-paragraph))))
+** Pgmacs
 
+#+begin_src emacs-lisp
 
+;; (straight-use-package
+;;  '(pg-el :type git :host github :repo "emarsden/pg-el"))
+
+;; (straight-use-package
+;;  '(pgmacs :type git :host github :repo "emarsden/pgmacs"))
 
 #+end_src
 
@@ -2842,139 +2875,148 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package lsp-mode
-    :commands lsp
-    :hook ((go-ts-mode . lsp)
-           (clojure-ts-mode . lsp)
-           (haskell-mode . lsp)
-           (python-ts-mode . lsp))
-    ;; (raku-mode . lsp))
-    :init
-    (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
-    (setq lsp-lens-enable nil)
-    :config
-    ;; Register Go LSP client
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                      :major-modes '(go-ts-mode) ; Corrected to go-mode
-                      :server-id 'gopls)) ; Correct server-id for Go
+(use-package lsp-mode
+  :commands lsp
+  :hook ((go-ts-mode . lsp)
+         (clojure-ts-mode . lsp)
+         (haskell-mode . lsp)
+         (python-ts-mode . lsp))
+  ;; (raku-mode . lsp))
+  :init
+  (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
+  (setq lsp-lens-enable nil)
+  :config
+  ;; Register Go LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+                    :major-modes '(go-ts-mode) ; Corrected to go-mode
+                    :server-id 'gopls)) ; Correct server-id for Go
 
-    ;; Register Haskell LSP client
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
-                      :major-modes '(haskell-mode)
-                      :server-id 'hls))
+  ;; Register Haskell LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
+                    :major-modes '(haskell-mode)
+                    :server-id 'hls))
 
-    ;; Register Python LSP client
-    ;; (setq lsp-pylsp-plugins-flake8-enabled t)
-    ;; (lsp-register-client
-    ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
-    ;;                   :major-modes '(python-ts-mode)
-    ;;                   :server-id 'pylsp))
+  ;; Register Python LSP client
+  ;; (setq lsp-pylsp-plugins-flake8-enabled t)
+  ;; (lsp-register-client
+  ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
+  ;;                   :major-modes '(python-ts-mode)
+  ;;                   :server-id 'pylsp))
 
-    ;; Register Clojure LSP client
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
-                      :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
-                      :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
+(add-hook 'sql-mode-hook 'lsp)
+(setq lsp-sqls-workspace-config-path nil)
+(setq lsp-sqls-connections
+      `(((driver . "mysql") (dataSourceName . "yyoncho:local@tcp(localhost:3306)/foo"))
+        ((driver . "mssql") (dataSourceName . "Server=localhost;Database=sammy;User Id=yyoncho;Password=hunter2;"))
+        ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz dbname=wurfkreuz sslmode=disable")))
+        ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz password=%s dbname=shelf sslmode=disable"
+                                                            (getenv "SHELF_DB_PASS"))))))
+  
+  ;; Register Clojure LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
+                    :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
+                    :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
 
-    ;; ;; Register Raku Navigator LSP client
-    ;; (lsp-register-client
-    ;;  (make-lsp-client :new-connection (lsp-stdio-connection
-    ;;                                    (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
-    ;;                   :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
-    ;;                   :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
+  ;; ;; Register Raku Navigator LSP client
+  ;; (lsp-register-client
+  ;;  (make-lsp-client :new-connection (lsp-stdio-connection
+  ;;                                    (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
+  ;;                   :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
+  ;;                   :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
 
-    ;; General LSP settings
-    (lsp-signature-mode nil)
-    (setq lsp-idle-delay 0.1
-          lsp-diagnostics-provider :flymake
-          lsp-headerline-breadcrumb-enable nil
-          gc-cons-threshold (* 100 1024 1024)
-          read-process-output-max (* 1024 1024)
-          lsp-log-max 0
-          lsp-log-io nil
-          lsp-enable-symbol-highlighting nil
-          lsp-signature-render-documentation nil
-          lsp--last-signature nil
-          lsp--last-signature-index nil
-          lsp--last-signature-buffer nil
-          lsp-signature-auto-activate nil
-          lsp-signature-cycle nil
-          lsp-signature-doc-lines nil
-          lsp-signature-face nil
-          lsp-signature-function nil
-          lsp-signature-posframe nil
-          lsp-eldoc-enable-hover nil
-          lsp-eldoc-render-all nil
-          lsp-signature-render-documentation nil))
+  ;; General LSP settings
+  (lsp-signature-mode nil)
+  (setq lsp-idle-delay 0.1
+        lsp-diagnostics-provider :flymake
+        lsp-headerline-breadcrumb-enable nil
+        gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 1024 1024)
+        lsp-log-max 0
+        lsp-log-io nil
+        lsp-enable-symbol-highlighting nil
+        lsp-signature-render-documentation nil
+        lsp--last-signature nil
+        lsp--last-signature-index nil
+        lsp--last-signature-buffer nil
+        lsp-signature-auto-activate nil
+        lsp-signature-cycle nil
+        lsp-signature-doc-lines nil
+        lsp-signature-face nil
+        lsp-signature-function nil
+        lsp-signature-posframe nil
+        lsp-eldoc-enable-hover nil
+        lsp-eldoc-render-all nil
+        lsp-signature-render-documentation nil))
 
-  (setq lsp-pyright-multi-root nil)
+(setq lsp-pyright-multi-root nil)
 
-  (use-package lsp-pyright
-    :ensure t
-    :hook (python-ts-mode . (lambda ()
-                              (require 'lsp-pyright)
-                              (lsp-deferred)))  ; Use lsp-deferred to start the server after the buffer is loaded
-    :init
-    ;; Modify the command to start the server
-    (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
+(use-package lsp-pyright
+  :ensure t
+  :hook (python-ts-mode . (lambda ()
+                            (require 'lsp-pyright)
+                            (lsp-deferred)))  ; Use lsp-deferred to start the server after the buffer is loaded
+  :init
+  ;; Modify the command to start the server
+  (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
 
-  (defun set-lsp-pyright-venv-path ()
-    "Interactively set the `lsp-pyright-venv-path` to a selected directory."
-    (interactive)
-    (let ((selected-dir (read-directory-name "Select Python virtual environment directory: ")))
-      (if (file-directory-p selected-dir)
-          (progn
-            (setq lsp-pyright-venv-path selected-dir)
-            (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-path))
-            ;; (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-directory))
-        (message "Invalid directory or operation cancelled."))))
+(defun set-lsp-pyright-venv-path ()
+  "Interactively set the `lsp-pyright-venv-path` to a selected directory."
+  (interactive)
+  (let ((selected-dir (read-directory-name "Select Python virtual environment directory: ")))
+    (if (file-directory-p selected-dir)
+        (progn
+          (setq lsp-pyright-venv-path selected-dir)
+          (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-path))
+          ;; (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-directory))
+      (message "Invalid directory or operation cancelled."))))
 
-  (defun my/disable-python-flymake ()
-    "Disable default Python Flymake checker."
-    (setq-local flymake-diagnostic-functions
-                (remove 'python-flymake flymake-diagnostic-functions)))
+(defun my/disable-python-flymake ()
+  "Disable default Python Flymake checker."
+  (setq-local flymake-diagnostic-functions
+              (remove 'python-flymake flymake-diagnostic-functions)))
 
-  (add-hook 'python-ts-mode-hook #'my/disable-python-flymake) ;
+(add-hook 'python-ts-mode-hook #'my/disable-python-flymake) ;
 
-  (use-package lsp-ui
-    :after lsp-mode
-    :init
-    (setq lsp-ui-doc-allow-mouse t)
-    :hook (lsp-mode . lsp-ui-mode))
+(use-package lsp-ui
+  :after lsp-mode
+  :init
+  (setq lsp-ui-doc-allow-mouse t)
+  :hook (lsp-mode . lsp-ui-mode))
 
-  ;; (define-key evil-normal-state-map (kbd "K") 'lsp-describe-thing-at-point)
-  (defun my/lsp-describe-thing-at-point ()
-    "Call `lsp-describe-thing-at-point` and switch to the documentation window."
-    (interactive)
-    (let ((orig-window (selected-window)))
-      (lsp-describe-thing-at-point)
-      (select-window (get-buffer-window "*lsp-help*"))))
+;; (define-key evil-normal-state-map (kbd "K") 'lsp-describe-thing-at-point)
+(defun my/lsp-describe-thing-at-point ()
+  "Call `lsp-describe-thing-at-point` and switch to the documentation window."
+  (interactive)
+  (let ((orig-window (selected-window)))
+    (lsp-describe-thing-at-point)
+    (select-window (get-buffer-window "*lsp-help*"))))
 
-  ;; Bind the custom function to 'K' in Evil's normal mode
-  (define-key evil-normal-state-map (kbd "K") 'my/lsp-describe-thing-at-point)
+;; Bind the custom function to 'K' in Evil's normal mode
+(define-key evil-normal-state-map (kbd "K") 'my/lsp-describe-thing-at-point)
 
-  ;; (use-package lsp-haskell
-  ;;   :ensure t
-  ;;   :init
-  ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-  ;;   :after lsp
-  ;;   :config
-  ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-  ;;   )
+;; (use-package lsp-haskell
+;;   :ensure t
+;;   :init
+;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+;;   :after lsp
+;;   :config
+;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
+;;   )
 
-  (defun remove-from-lsp-file-watch-ignored ()
-    "Interactively remove a pattern from `lsp-file-watch-ignored`."
-    (interactive)
-    (let ((pattern (completing-read "Remove pattern: " lsp-file-watch-ignored)))
-      (setq lsp-file-watch-ignored (remove pattern lsp-file-watch-ignored))
-      (message "Removed pattern: %s" pattern)))
+(defun remove-from-lsp-file-watch-ignored ()
+  "Interactively remove a pattern from `lsp-file-watch-ignored`."
+  (interactive)
+  (let ((pattern (completing-read "Remove pattern: " lsp-file-watch-ignored)))
+    (setq lsp-file-watch-ignored (remove pattern lsp-file-watch-ignored))
+    (message "Removed pattern: %s" pattern)))
 
-  (defun add-lsp-workspace-folder ()
-    "Add the current directory to LSP workspace folders."
-    (interactive)
-    (lsp-workspace-folders-add (expand-file-name default-directory)))
+(defun add-lsp-workspace-folder ()
+  "Add the current directory to LSP workspace folders."
+  (interactive)
+  (lsp-workspace-folders-add (expand-file-name default-directory)))
 
 #+end_src
 
