@@ -1,2 +1,0 @@
-#!/bin/sh
-echo $SUDO_ASKPASS_PASSWORD

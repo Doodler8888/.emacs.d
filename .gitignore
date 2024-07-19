@@ -28,6 +28,7 @@ eshell_history
 /lock-files/
 /.cache
 .org-id-locations
+projects
 /auto-saves
 /lsp-servers
 /.lsp-session-v1
