@@ -74,8 +74,8 @@
   - [[#general-1][General]]
   - [[#org-capture][Org capture]]
   - [[#org-download][Org download]]
-  - [[#drill][Drill]]
-  - [[#agenda][Agenda]]
+  - [[#org-drill][Org-drill]]
+  - [[#org-agenda][Org Agenda]]
   - [[#org-roam][Org-roam]]
   - [[#templates][Templates]]
   - [[#visuals-1][Visuals]]
@@ -645,6 +645,7 @@
     "ds" '(daemons-start :wk "Start daemon")
     "de" '(daemons-enable :wk "Enable daemon")
     "dd" '(daemons-disable :wk "Disable daemon")
+    "du" '(daemons-status :wk "Status daemon")
 
     ;; Windows
     "w"  'hydra-window-size/body
@@ -755,6 +756,13 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
    (list
     (daemons--completing-read "disable")))
   (daemons--run-action 'disable name))
+
+;; (defun daemons-status (name)
+;;   "Check the status the daemon with NAME."
+;;   (interactive
+;;    (list
+;;     (daemons--completing-read "status")))
+;;   (daemons--run-action 'status name))
 
 #+end_src
 
@@ -2192,44 +2200,104 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-      ;; Define the connection details for PostgreSQL, including two databases
-      (setq sql-connection-alist
-            '((postgres-wurfkreuz
-              (sql-product 'postgres)
-              (sql-user "wurfkreuz")
-              (sql-server "localhost")
-              (sql-port 5432)
-              (sql-database "wurfkreuz"))
-              (postgres-shelf
-              (sql-product 'postgres)
-              (sql-user "wurfkreuz") ; Assuming the same user for simplicity
-              (sql-server "localhost")
-              (sql-port 5432)
-              (sql-database "shelf"))))
+;; (defun my/postgres-list-roles ()
+;;   "Return a list of PostgreSQL roles without establishing a connection."
+;;   (let* ((cmd "psql -Atq -c \"SELECT rolname FROM pg_roles;\"")
+;;          (output (shell-command-to-string cmd)))
+;;     (split-string output "\n" t)))
 
-  (defun my-sql-connect-with-buffer (connection)
-  "Connect to a SQL database using `sql-connect' and open a new SQL mode buffer."
-  (interactive (list (completing-read "Select database: "
-                                      (mapcar #'car sql-connection-alist)
-                                      nil t)))
-  (let ((sql-buffer (sql-connect connection)))
-    (when (and (boundp 'sql-buffer) sql-buffer)
-      (delete-other-windows)
-      (switch-to-buffer (get-buffer-create "*SQL Buffer*"))
-      (sql-mode)
-      (split-window-below)
-      (other-window 1)
-      (switch-to-buffer sql-buffer)
-      (balance-windows))))
+(setq sql-connection-alist
+      '((my-postgres
+         (sql-product 'postgres)
+         (sql-user "<your_default_user>")
+         (sql-database "<your_default_database>")
+         (sql-server "<your_server>")
+         (sql-port "<your_port>"))))
 
-  (defun show-table (table-name)
-    "Describe the specified table by selecting a few rows."
-    (interactive "sTable name: ")
-    (let ((query (format "SELECT * FROM %s LIMIT 5;" table-name)))
-      (with-current-buffer sql-buffer
-        (goto-char (point-max))
-        (insert query)
-        (sql-send-paragraph))))
+(defun my/postgres-list-custom-roles ()
+  "Return a list of custom PostgreSQL roles, including 'postgres' but excluding other system roles."
+  (let* ((cmd "psql -Atq -c \"SELECT rolname FROM pg_roles WHERE rolname NOT LIKE 'pg_%' OR rolname = 'postgres';\"")
+         (output (shell-command-to-string cmd)))
+    (split-string output "\n" t)))
+
+(defun my/select-postgres-role ()
+  "Prompt for a PostgreSQL role with completion and return the selected role."
+  (let* ((roles (my/postgres-list-custom-roles))
+         (selected-role (completing-read "Select PostgreSQL role: " roles nil t)))
+    selected-role))
+
+(defun my/postgres-list-databases-for-role (role)
+  "Return a list of PostgreSQL databases owned by the given ROLE."
+  (let* ((cmd (format "psql -Atq -c \"SELECT datname FROM pg_database WHERE datdba = (SELECT oid FROM pg_roles WHERE rolname = '%s');\"" role))
+         (output (shell-command-to-string cmd)))
+    (split-string output "\n" t)))
+
+(defun my/select-postgres-database (role)
+  "Prompt for a PostgreSQL database owned by ROLE with completion and return the selected database."
+  (let* ((databases (my/postgres-list-databases-for-role role))
+         (selected-database (completing-read "Select PostgreSQL database: " databases nil t)))
+    selected-database))
+
+(defun sql-postgres (role database)
+  "Run psql as an inferior process in Emacs, connecting to a database as a specific role."
+  (interactive "sRole: \nsDatabase: ")
+  (let ((sql-connection-alist
+         `((dynamic-postgres
+            (sql-product 'postgres)
+            (sql-user ,role)
+            (sql-database ,database)
+            (sql-server "localhost")
+            (sql-port 5432)))))
+    (sql-connect 'dynamic-postgres)))
+
+(defun my/select-role-and-database-and-login ()
+  "Prompt for a PostgreSQL role and then a database owned by that role, then log into sql-interactive-mode."
+  (interactive)
+  (let* ((selected-role (my/select-postgres-role))
+         (selected-database (my/select-postgres-database selected-role)))
+    (sql-postgres selected-role selected-database)))
+
+
+;;     ;; Define the connection details for PostgreSQL, including two databases
+;;     (setq sql-connection-alist
+;;           '((postgres-wurfkreuz
+;;             (sql-product 'postgres)
+;;             (sql-user "wurfkreuz")
+;;             (sql-server "localhost")
+;;             (sql-port 5432)
+;;             (sql-database "wurfkreuz"))
+;;             (postgres-shelf
+;;             (sql-product 'postgres)
+;;             (sql-user "wurfkreuz") ; Assuming the same user for simplicity
+;;             (sql-server "localhost")
+;;             (sql-port 5432)
+;;             (sql-database "shelf"))))
+
+;; (defun my-sql-connect-with-buffer (connection)
+;; "Connect to a SQL database using `sql-connect' and open a new SQL mode buffer."
+;; (interactive (list (completing-read "Select database: "
+;;                                     (mapcar #'car sql-connection-alist)
+;;                                     nil t)))
+;; (let ((sql-buffer (sql-connect connection)))
+;;   (when (and (boundp 'sql-buffer) sql-buffer)
+;;     (delete-other-windows)
+;;     (switch-to-buffer (get-buffer-create "*SQL Buffer*"))
+;;     (sql-mode)
+;;     (split-window-below)
+;;     (other-window 1)
+;;     (switch-to-buffer sql-buffer)
+;;     (balance-windows))))
+
+;; (defun show-table (table-name)
+;;   "Describe the specified table by selecting a few rows."
+;;   (interactive "sTable name: ")
+;;   (let ((query (format "SELECT * FROM %s LIMIT 5;" table-name)))
+;;     (with-current-buffer sql-buffer
+;;       (goto-char (point-max))
+;;       (insert query)
+;;       (sql-send-paragraph))))
+
+
 
 #+end_src
 
@@ -2991,7 +3059,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-** Drill
+** Org-drill
 
 #+begin_src emacs-lisp
 
@@ -3023,9 +3091,35 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-to-list 'org-drill-card-type-alist
                '("sequence" org-drill-present-sequence nil t)))
 
+(defvar my-eshell-aliases
+  '(("mkdir" "/usr/bin/mkdir $*")
+    ("kill" "/usr/bin/kill $*")
+    ("ls" "/usr/bin/ls $*"))
+  "A list of Eshell aliases.")
+
+(defun my-eshell-disable-aliases ()
+  "Disable Eshell aliases defined in `my-eshell-aliases`."
+  (dolist (alias my-eshell-aliases)
+    (setq eshell-command-aliases-list
+          (assq-delete-all (car alias) eshell-command-aliases-list))))
+
+(defun my-eshell-enable-aliases ()
+  "Enable Eshell aliases defined in `my-eshell-aliases`."
+  (dolist (alias my-eshell-aliases)
+    (add-to-list 'eshell-command-aliases-list alias)))
+
+(defun my-eshell-check-remote-directory ()
+  "Check if the current directory is remote and disable/enable aliases accordingly."
+  (if (file-remote-p default-directory)
+      (my-eshell-disable-aliases)
+    (my-eshell-enable-aliases)))
+
+(add-hook 'eshell-directory-change-hook 'my-eshell-check-remote-directory)
+(add-hook 'eshell-mode-hook 'my-eshell-enable-aliases)
+
 #+end_src
 
-** Agenda
+** Org Agenda
 
 #+begin_src emacs-lisp
 
@@ -3416,7 +3510,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (defun alias ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.emacs.d/eshell/aliases"))
+  (find-file "~/.emacs.d/eshell/alias"))
 
 (defun root ()
   "Open a specific file."
