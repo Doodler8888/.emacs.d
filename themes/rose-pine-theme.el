@@ -84,6 +84,13 @@
  
     ;; Raku mode
     `(raku-operator ((,class (:foreground ,rose-pine-subtext))))
+
+    ;;; SQL mode
+    ;(defun my-sql-mode-custom-faces ()
+    ;  "Customize faces for SQL mode."
+    ;  (face-remap-add-relative 'font-lock-builtin-face :foreground ,rose-pine-foam))
+    ;
+    ;(add-hook 'sql-mode-hook 'my-sql-mode-custom-faces)
  
     ;; Dired mode
     `(dired-directory ((,class (:foreground ,rose-pine-gold))))

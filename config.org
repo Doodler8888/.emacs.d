@@ -485,27 +485,36 @@
 
 #+begin_src emacs-lisp
 
-  (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
-  (load-theme 'rose-pine t)
+(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
+(load-theme 'rose-pine t)
 
-  (when (member "NotoSansM Nerd Font Mono" (font-family-list))
-    (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
+;; SQL mode
+(defun my-sql-mode-custom-faces ()
+  "Customize faces for SQL mode."
+  (face-remap-add-relative 'font-lock-builtin-face :foreground "#9ccfd8"))
 
-    ;; Set a different font for italics
-    (set-face-attribute 'italic nil
-                        :family "NotoSans Nerd Font"
-                        :slant 'italic
-                        :weight 'normal
-                        :height 130)
+(add-hook 'sql-mode-hook 'my-sql-mode-custom-faces)
+(add-hook 'sql-interactive-mode-hook 'my-sql-mode-custom-faces)
 
-    (add-hook 'org-mode-hook
-              (lambda ()
-                (set-face-attribute 'org-verbatim nil
-                                    ;; :family "NotoSerifNerdFontPropo-CondensedExtraLight"
-                                    :family "NotoSerifNerdFont"
-                                    :height 130
-                                    ;; :foreground "#8bc34a"  ; Adjust the color as desired
-                                    :weight 'normal))))
+
+(when (member "NotoSansM Nerd Font Mono" (font-family-list))
+  (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
+
+  ;; Set a different font for italics
+  (set-face-attribute 'italic nil
+                      :family "NotoSans Nerd Font"
+                      :slant 'italic
+                      :weight 'normal
+                      :height 130)
+
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (set-face-attribute 'org-verbatim nil
+                                  ;; :family "NotoSerifNerdFontPropo-CondensedExtraLight"
+                                  :family "NotoSerifNerdFont"
+                                  :height 130
+                                  ;; :foreground "#8bc34a"  ; Adjust the color as desired
+                                  :weight 'normal))))
 
 #+end_src
 
@@ -537,54 +546,64 @@
 
 #+begin_src emacs-lisp
 
-  (use-package treesit-auto
-    :config
-    ;; (treesit-auto-add-to-auto-mode-alist
-    ;; '(("\\.py$" . python-ts-mode)
-    ;;   ("\\.rb$" . ruby-ts-mode)
-    ;;   ("\\.go$" . go-ts-mode)
-    ;;   ("\\.bashrc\\'" . shell-mode)
-    ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
-    (global-treesit-auto-mode))
+(use-package treesit-auto
+  :config
+  ;; (treesit-auto-add-to-auto-mode-alist
+  ;; '(("\\.py$" . python-ts-mode)
+  ;;   ("\\.rb$" . ruby-ts-mode)
+  ;;   ("\\.go$" . go-ts-mode)
+  ;;   ("\\.bashrc\\'" . shell-mode)
+  ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
+  (global-treesit-auto-mode))
 
-  (use-package clojure-ts-mode)
+;; (use-package dockerfile-ts-mode
+;;   :straight (:type built-in)
+;;   :defer t
+;;   :mode (("\\Dockerfile\\'" . dockerfile-ts-mode)
+;;          ("\\.dockerignore\\'" . dockerfile-ts-mode)))
 
-  ;; (setq treesit-language-source-alist
-  ;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
-  ;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
-  ;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
-  ;;         (css "https://github.com/tree-sitter/tree-sitter-css")
-  ;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-  ;;         (go "https://github.com/tree-sitter/tree-sitter-go")
-  ;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
-  ;;         (html "https://github.com/tree-sitter/tree-sitter-html")
-  ;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-  ;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-  ;;         (json "https://github.com/tree-sitter/tree-sitter-json")
-  ;;         (make "https://github.com/alemuller/tree-sitter-make")
-  ;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-  ;;         (python "https://github.com/tree-sitter/tree-sitter-python")
-  ;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
-  ;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-  ;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
-  ;;                     "master" "typescript/src")
-  ;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-  ;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
-  ;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
-  ;;         (typst "https://github.com/uben0/tree-sitter-typst")
-  ;;         (java "https://github.com/tree-sitter/tree-sitter-java")
-  ;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
-  ;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
+(use-package clojure-ts-mode)
 
-  ;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-  ;; ;; (with-eval-after-load 'yaml-ts-mode
-  ;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
-  ;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+;; (add-to-list
+;;  'treesit-language-source-alist
+;;  '(sql "https://github.com/DerekStride/tree-sitter-sql"))
+
+;; (setq treesit-language-source-alist
+;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
+;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
+;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
+;;         (css "https://github.com/tree-sitter/tree-sitter-css")
+;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+;;         (go "https://github.com/tree-sitter/tree-sitter-go")
+;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+;;         (html "https://github.com/tree-sitter/tree-sitter-html")
+;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+;;         (json "https://github.com/tree-sitter/tree-sitter-json")
+;;         (make "https://github.com/alemuller/tree-sitter-make")
+;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+;;         (python "https://github.com/tree-sitter/tree-sitter-python")
+;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
+;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
+;;                     "master" "typescript/src")
+;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
+;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
+;;         (typst "https://github.com/uben0/tree-sitter-typst")
+;;         (java "https://github.com/tree-sitter/tree-sitter-java")
+;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
+;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
+
+;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
+;; ;; (with-eval-after-load 'yaml-ts-mode
+;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
 
 #+end_src
 
@@ -647,6 +666,7 @@
     "de" '(daemons-enable :wk "Enable daemon")
     "dd" '(daemons-disable :wk "Disable daemon")
     "du" '(daemons-status :wk "Status daemon")
+    "dr" '(daemons-restart :wk "Restart daemon")
 
     ;; Windows
     "w"  'hydra-window-size/body
@@ -721,49 +741,49 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
   (interactive
    (list
     (daemons--completing-read "stop")))
-  (daemons--run-action 'stop name))
+  (daemons--run-with-output-buffer 'stop name))
 
 (defun daemons-start (name)
   "Start the daemon with NAME."
   (interactive
    (list
     (daemons--completing-read "start")))
-  (daemons--run-action 'start name))
+  (daemons--run-with-output-buffer 'start name))
 
 (defun daemons-restart (name)
   "Restart the daemon with NAME."
   (interactive
    (list
     (daemons--completing-read "restart")))
-  (daemons--run-action 'restart name))
+  (daemons--run-with-output-buffer 'restart name))
 
 (defun daemons-reload (name)
   "Reload the daemon with NAME."
   (interactive
    (list
     (daemons--completing-read "reload")))
-  (daemons--run-action 'reload name))
+  (daemons--run-with-output-buffer 'reload name))
 
 (defun daemons-enable (name)
   "Enable the daemon with NAME."
   (interactive
    (list
     (daemons--completing-read "enable")))
-  (daemons--run-action 'enable name))
+  (daemons--run-with-output-buffer 'enable name))
 
 (defun daemons-disable (name)
   "Disable the daemon with NAME."
   (interactive
    (list
     (daemons--completing-read "disable")))
-  (daemons--run-action 'disable name))
+  (daemons--run-with-output-buffer 'disable name))
 
-;; (defun daemons-status (name)
-;;   "Check the status the daemon with NAME."
-;;   (interactive
-;;    (list
-;;     (daemons--completing-read "status")))
-;;   (daemons--run-action 'status name))
+(defun daemons-status (name)
+  "Status the daemon with NAME."
+  (interactive
+   (list
+    (daemons--completing-read "status")))
+  (daemons--run-with-output-buffer 'status name))
 
 #+end_src
 
@@ -1486,7 +1506,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Run a customized `ivy-fzf`-like file selection using `fd` from START-DIRECTORY."
   (interactive)
   (let ((default-directory "/")
-        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib32 --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
     (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
               :action (lambda (f)
                         (find-file (expand-file-name f default-directory))))))
@@ -1513,7 +1533,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
   (interactive)
   (let ((default-directory "/")
-        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib32 --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
     (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
               :action (lambda (f)
                         (insert (expand-file-name f default-directory))))))
@@ -2201,12 +2221,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; (defun my/postgres-list-roles ()
-;;   "Return a list of PostgreSQL roles without establishing a connection."
-;;   (let* ((cmd "psql -Atq -c \"SELECT rolname FROM pg_roles;\"")
-;;          (output (shell-command-to-string cmd)))
-;;     (split-string output "\n" t)))
-
 (setq sql-connection-alist
       '((default-postgres
          (sql-product 'postgres)
@@ -2237,7 +2251,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
          (selected-database (completing-read "Select PostgreSQL database: " databases nil t)))
     selected-database))
 
-(defun sql-postgres (role database server port)
+(defun my-custom-sql-postgres (role database server port)
   "Run psql as an inferior process in Emacs, connecting to a database as a specific role."
   (interactive "sRole: \nsDatabase: \nsServer: \nsPort: ")
   (let ((sql-connection-alist
@@ -2256,45 +2270,29 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
          (selected-database (my/select-postgres-database selected-role))
          (selected-server (read-string "Enter SQL Server (default localhost): " nil nil "localhost"))
          (selected-port (read-string "Enter SQL Port (default 5432): " nil nil "5432")))
-    (sql-postgres selected-role selected-database selected-server selected-port)))
-
-;; (defun psql-session ()
-;;   "Open sql buffer with psql shell"
-;;   (interactive)
-;;   (let ((psql-buffer (call-interactively 'psql)))
-;;     (when (and (boundp 'sql-buffer) sql-buffer)
-;;       (delete-other-windows)
-;;       (switch-to-buffer (get-buffer-create "*SQL Buffer*"))
-;;       (sql-mode)
-;;       (split-window-below)
-;;       (other-window 1)
-;;       (switch-to-buffer sql-buffer)
-;;       (balance-windows))))
+    (my-custom-sql-postgres selected-role selected-database selected-server selected-port)))
 
 (defun psql-session ()
-  "Open sql buffer with psql shell and a temporary SQL file for LSP support"
+  "Open sql buffer with psql shell and a temporary SQL file for LSP support."
   (interactive)
-  (let* ((temp-sql-file (make-temp-file "psql-session-" nil ".sql"))
-         (psql-buffer (save-window-excursion
-                        (call-interactively 'psql)
-                        (get-buffer sql-buffer)))
-         (sql-buffer (find-file-noselect temp-sql-file)))
-    (when (and psql-buffer sql-buffer)
-      (delete-other-windows)
-      (switch-to-buffer sql-buffer)
-      (sql-mode)
-      (lsp) ; Explicitly start LSP
-      (split-window-below)
-      (other-window 1)
-      (switch-to-buffer psql-buffer)
-      (balance-windows))))
-
-;; Optionally, add a hook to delete the temporary file when the buffer is killed
-(add-hook 'kill-buffer-hook
-          (lambda ()
-            (when (and buffer-file-name
-                       (string-match-p "psql-session-.*\\.sql$" buffer-file-name))
-              (delete-file buffer-file-name))))
+  (let* ((temp-dir (concat temporary-file-directory "psql-session/")))
+    ;; Ensure the temporary directory exists
+    (unless (file-directory-p temp-dir)
+      (make-directory temp-dir t))
+    (let* ((temp-sql-file (make-temp-file (concat temp-dir "psql-session-") nil ".sql"))
+           (psql-buffer (save-window-excursion
+                          (call-interactively 'psql)
+                          (get-buffer sql-buffer)))
+           (sql-buffer (find-file-noselect temp-sql-file)))
+      (when (and psql-buffer sql-buffer)
+        (delete-other-windows)
+        (switch-to-buffer sql-buffer)
+        (sql-mode)
+        ;; (lsp) ; Explicitly start LSP
+        (split-window-below)
+        (other-window 1)
+        (switch-to-buffer psql-buffer)
+        (balance-windows)))))
 
 ;; (defun show-table (table-name)
 ;;   "Describe the specified table by selecting a few rows."
@@ -2617,6 +2615,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           "\\*Async Shell Command\\*"
           "*Flymake diagnostics.*"
           "*Flycheck errors.*"
+          "*Python.*"
           "\\* docker container logs .*\\*"
           "\\* docker inspect .*\\*"
           "\\*daemons-output for .*\\*"
@@ -2755,13 +2754,26 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
   (add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
 
-  (use-package flymake-hadolint)
-  (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
+(use-package flymake-hadolint)
+(add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
 
-  (use-package flymake-shellcheck
-    :commands flymake-shellcheck-load
-    :init
-    (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
+;; If i need to run hadolint with dockerfile-ts-mode
+;; (defun my/dockerfile-ts-mode-setup ()
+;;   "Setup for dockerfile-ts-mode with flymake-hadolint."
+;;   (message "Running dockerfile-ts-mode setup")
+;;   (flymake-hadolint-setup)
+;;   (flymake-mode 1))
+
+;; (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
+;; (add-hook 'dockerfile-ts-mode-hook #'my/dockerfile-ts-mode-setup)
+
+;; Optional: Ensure flymake is enabled
+(add-hook 'dockerfile-ts-mode-hook 'flymake-mode)
+
+(use-package flymake-shellcheck
+  :commands flymake-shellcheck-load
+  :init
+  (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
 
 #+end_src
 
@@ -2898,21 +2910,28 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                     :major-modes '(haskell-mode)
                     :server-id 'hls))
 
-  ;; Register Python LSP client
-  ;; (setq lsp-pylsp-plugins-flake8-enabled t)
-  ;; (lsp-register-client
-  ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
-  ;;                   :major-modes '(python-ts-mode)
-  ;;                   :server-id 'pylsp))
+;; Register Python LSP client
+;; (setq lsp-pylsp-plugins-flake8-enabled t)
+;; (lsp-register-client
+;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
+;;                   :major-modes '(python-ts-mode)
+;;                   :server-id 'pylsp))
 
-(add-hook 'sql-mode-hook 'lsp)
-(setq lsp-sqls-workspace-config-path nil)
-(setq lsp-sqls-connections
-      `(((driver . "mysql") (dataSourceName . "yyoncho:local@tcp(localhost:3306)/foo"))
-        ((driver . "mssql") (dataSourceName . "Server=localhost;Database=sammy;User Id=yyoncho;Password=hunter2;"))
-        ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz dbname=wurfkreuz sslmode=disable")))
-        ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz password=%s dbname=shelf sslmode=disable"
-                                                            (getenv "SHELF_DB_PASS"))))))
+;; (add-hook 'sql-mode-hook 'lsp)
+;; (setq lsp-sqls-workspace-config-path nil)
+;; (setq lsp-sqls-connections
+;;       `(((driver . "mysql") (dataSourceName . "yyoncho:local@tcp(localhost:3306)/foo"))
+;;         ((driver . "mssql") (dataSourceName . "Server=localhost;Database=sammy;User Id=yyoncho;Password=hunter2;"))
+;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz dbname=wurfkreuz sslmode=disable")))
+;;         ((driver . "postgresql")
+;;          (dataSourceName . (concat "host=127.0.0.1 "
+;;                                    "port=5432 "
+;;                                    "user=wurfkreuz "
+;;                                    "password=" (getenv "POSTGRES_PASSWORD") " "
+;;                                    "dbname=server "
+;;                                    "sslmode=disable")))
+;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz password=%s dbname=shelf sslmode=disable"
+;;                                                             (getenv "SHELF_DB_PASS"))))))
   
   ;; Register Clojure LSP client
   (lsp-register-client
