@@ -960,13 +960,29 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                    (buffer-string))))
       (message "Failed to retrieve UID and/or GID maps for container '%s'" container-name))))
 
+;; (defun docker-template ()
+;;   "Create docker.el windows with a specific layout"
+;;   (interactive)
+;;   (delete-other-windows)
+;;   (docker-images)
+;;   (docker-containers)
+;;   (transpose-frame)
+;;   (docker-volumes)
+;; )
+
 (defun docker-template ()
   "Create docker.el windows with a specific layout"
   (interactive)
   (delete-other-windows)
-  (docker-images)
+  (evil-window-split)
+  (evil-window-split)
+  (docker-volumes)
   (docker-containers)
-  (transpose-frame))
+  (docker-images)
+  (delete-window (nth 1 (window-list)))
+  (delete-window (nth 2 (window-list)))
+  (delete-window (nth 3 (window-list)))
+)
 
 (defun my-docker-shell ()
   (interactive)
@@ -1056,90 +1072,90 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (defun my-eshell-directory-completions ()
-    "Generate a list of all directories in the current working directory, including hidden ones."
-    (let ((current-dir (eshell/pwd)))
-      (cl-remove-if-not
-      #'file-directory-p
-      (directory-files current-dir t nil t))))
+(defun my-eshell-directory-completions ()
+  "Generate a list of all directories in the current working directory, including hidden ones."
+  (let ((current-dir (eshell/pwd)))
+    (cl-remove-if-not
+    #'file-directory-p
+    (directory-files current-dir t nil t))))
 
-  (defun my-eshell-completion-at-point ()
-    "Provide completion for Eshell using custom directory completions."
-    (let ((bounds (bounds-of-thing-at-point 'filename)))
-      (when bounds
-        (let* ((start (car bounds))
-              (end (cdr bounds))
-              (input (buffer-substring-no-properties start end))
-              (completions (my-eshell-directory-completions))
-              (matches (cl-remove-if-not
-                        (lambda (dir)
-                          (string-prefix-p input (file-name-nondirectory dir)))
-                        completions)))
-          (when matches
-            (list start end (mapcar #'file-name-nondirectory matches) :exclusive 'no))))))
+(defun my-eshell-completion-at-point ()
+  "Provide completion for Eshell using custom directory completions."
+  (let ((bounds (bounds-of-thing-at-point 'filename)))
+    (when bounds
+      (let* ((start (car bounds))
+            (end (cdr bounds))
+            (input (buffer-substring-no-properties start end))
+            (completions (my-eshell-directory-completions))
+            (matches (cl-remove-if-not
+                      (lambda (dir)
+                        (string-prefix-p input (file-name-nondirectory dir)))
+                      completions)))
+        (when matches
+          (list start end (mapcar #'file-name-nondirectory matches) :exclusive 'no))))))
 
-  (defun my-eshell-setup ()
-    "Set up custom completions and key bindings for Eshell."
-    (add-to-list 'completion-at-point-functions 'my-eshell-completion-at-point))
+(defun my-eshell-setup ()
+  "Set up custom completions and key bindings for Eshell."
+  (add-to-list 'completion-at-point-functions 'my-eshell-completion-at-point))
 
-  (add-hook 'eshell-mode-hook 'my-eshell-setup)
+(add-hook 'eshell-mode-hook 'my-eshell-setup)
 
-  ;; (with-eval-after-load 'esh-mode
-  ;;   (define-key eshell-mode-map (kbd "TAB") 'completion-at-point))
+;; (with-eval-after-load 'esh-mode
+;;   (define-key eshell-mode-map (kbd "TAB") 'completion-at-point))
 
-    ;; Corfu setup
-  (use-package corfu
-    :init
-    (global-corfu-mode)
-    ;; :custom
-    ;; (corfu-auto nil)
-    ;; (corfu-min-length 2)
-    :config
-    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
-    (corfu-echo-mode)
-    (corfu-history-mode)
-    (corfu-popupinfo-mode))
+  ;; Corfu setup
+(use-package corfu
+  :init
+  (global-corfu-mode)
+  ;; :custom
+  ;; (corfu-auto nil)
+  ;; (corfu-min-length 2)
+  :config
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+  (corfu-echo-mode)
+  (corfu-history-mode)
+  (corfu-popupinfo-mode))
 
-  ;; (defun my-enable-corfu-in-eshell ()
-  ;;   "Enable Corfu auto-completion in Eshell and set up completion functions."
-  ;;   (setq-local corfu-auto t))
+;; (defun my-enable-corfu-in-eshell ()
+;;   "Enable Corfu auto-completion in Eshell and set up completion functions."
+;;   (setq-local corfu-auto t))
 
-  ;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
+;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
-  (with-eval-after-load 'evil
-    (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
+(with-eval-after-load 'evil
+  (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
 
-  (with-eval-after-load 'corfu
-    (define-key corfu-map (kbd "RET") nil))
+(with-eval-after-load 'corfu
+  (define-key corfu-map (kbd "RET") nil))
 
-  (defun corfu-enable-in-minibuffer ()
-    "Enable Corfu in the minibuffer."
-    (when (local-variable-p 'completion-at-point-functions)
-      ;; (setq-local corfu-auto nil) ;; Enable/disable auto completion
-      (setq-local corfu-echo-delay nil ;; Disable automatic echo and popup
-                  corfu-popupinfo-delay nil)
-      (corfu-mode 1)))
+(defun corfu-enable-in-minibuffer ()
+  "Enable Corfu in the minibuffer."
+  (when (local-variable-p 'completion-at-point-functions)
+    ;; (setq-local corfu-auto nil) ;; Enable/disable auto completion
+    (setq-local corfu-echo-delay nil ;; Disable automatic echo and popup
+                corfu-popupinfo-delay nil)
+    (corfu-mode 1)))
 
-  (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+(add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 
-  ;; Cape setup
-  (use-package cape
-    :ensure t
-    :after corfu
-    :init
-    (setq completion-at-point-functions
-          (list #'cape-file
-                #'cape-dabbrev
-                #'cape-elisp-block)))
+;; Cape setup
+(use-package cape
+  :ensure t
+  :after corfu
+  :init
+  (setq completion-at-point-functions
+        (list #'cape-file
+              #'cape-dabbrev
+              #'cape-elisp-block)))
 
 
-  (straight-use-package
-   '(fish-completion :host github :repo "LemonBreezes/emacs-fish-completion"))
+(straight-use-package
+ '(fish-completion :host github :repo "LemonBreezes/emacs-fish-completion"))
 
-  (when (and (executable-find "fish")
-           (require 'fish-completion nil t))
-  (global-fish-completion-mode))
+(when (and (executable-find "fish")
+         (require 'fish-completion nil t))
+(global-fish-completion-mode))
 
 #+end_src
 
@@ -2767,8 +2783,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
 ;; (add-hook 'dockerfile-ts-mode-hook #'my/dockerfile-ts-mode-setup)
 
-;; Optional: Ensure flymake is enabled
-(add-hook 'dockerfile-ts-mode-hook 'flymake-mode)
+;; ;; Optional: Ensure flymake is enabled
+;; (add-hook 'dockerfile-ts-mode-hook 'flymake-mode)
 
 (use-package flymake-shellcheck
   :commands flymake-shellcheck-load
@@ -2792,9 +2808,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
     (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
 
-  (use-package ansible
-    :config
-    (add-hook 'yaml-ts-mode-hook '(lambda () (ansible 1))))
+;; yaml-ts doesn't work because of this hook?
+;; (use-package ansible
+;;   :config
+;;   (add-hook 'yaml-ts-mode-hook '(lambda () (ansible 1))))
 
   (require 'compile)
   (add-to-list 'compilation-error-regexp-alist
@@ -3612,6 +3629,16 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Open a specific file."
   (interactive)
   (find-file "~/Downloads/books"))
+
+(defun backup ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.backups/"))
+
+(defun backup ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/org/projects"))
 
 (defun dot ()
   "Open a specific file."
