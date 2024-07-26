@@ -17,6 +17,9 @@
 - [[#packages][Packages]]
   - [[#general][General]]
   - [[#daemons][Daemons]]
+  - [[#pdf][PDF]]
+  - [[#kubernetes][Kubernetes]]
+  - [[#axe-aws][Axe (AWS)]]
   - [[#proced][Proced]]
   - [[#avy][Avy]]
   - [[#async][Async]]
@@ -784,6 +787,77 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
    (list
     (daemons--completing-read "status")))
   (daemons--run-with-output-buffer 'status name))
+
+#+end_src
+
+** PDF
+
+#+begin_src emacs-lisp
+
+;; (use-package pdf-tools
+;;   :commands (pdf-view-mode pdf-tools-install)
+;;   ;; :bind (:map pdf-view-mode-map
+;;   ;;             ("j" . pdf-view-next-line-or-next-page)
+;;   ;;             ("k" . pdf-view-previous-line-or-previous-page)
+;;   ;;             ("C-=" . pdf-view-enlarge)
+;;   ;;             ("C--" . pdf-view-shrink))
+;;   :config
+;;   (pdf-tools-install)
+;;   ;; (define-pdf-cache-function pagelabels)
+;;   :hook ((pdf-view-mode . (lambda () (display-line-numbers-mode -1)))
+;;          (pdf-view-mode . pdf-tools-enable-minor-modes)))
+
+;; ;; (use-package pdf-tools
+;; ;;   :defer t
+;; ;;   :commands (pdf-loader-install)
+;; ;;   :mode "\\.pdf\\'"
+;; ;;   :bind (:map pdf-view-mode-map
+;; ;;               ("j" . pdf-view-next-line-or-next-page)
+;; ;;               ("k" . pdf-view-previous-line-or-previous-page)
+;; ;;               ("C-=" . pdf-view-enlarge)
+;; ;;               ("C--" . pdf-view-shrink))
+;; ;;   :init (pdf-loader-install)
+;; ;;   :config (add-to-list 'revert-without-query ".pdf")
+;; ;;   :hook ((pdf-view-mode . (lambda () (display-line-numbers-mode -1)))
+;; ;;          (pdf-view-mode . pdf-tools-enable-minor-modes)))
+
+
+;; (use-package saveplace-pdf-view
+;;   :hook (pdf-view-mode . save-place-mode))
+
+;; (defun my/pdf-view-save-current-page ()
+;;   "Save the current page number of the PDF in the buffer-local variable."
+;;   (interactive)
+;;   (when (eq major-mode 'pdf-view-mode)
+;;     (set (make-local-variable 'my/pdf-view-last-viewed-page)
+;;          (pdf-view-current-page))))
+
+;; (defun my/pdf-view-restore-last-page ()
+;;   "Restore the last viewed page of the PDF."
+;;   (interactive)
+;;   (when (and (eq major-mode 'pdf-view-mode)
+;;              (boundp 'my/pdf-view-last-viewed-page)
+;;              my/pdf-view-last-viewed-page)
+;;     (pdf-view-goto-page my/pdf-view-last-viewed-page)))
+
+;; (add-hook 'kill-buffer-hook 'my/pdf-view-save-current-page)
+;; (add-hook 'pdf-view-mode-hook 'my/pdf-view-restore-last-page)
+
+#+end_src
+
+** Kubernetes
+
+#+begin_src emacs-lisp
+
+(use-package kubernetes)
+
+#+end_src
+
+** Axe (AWS)
+
+#+begin_src emacs-lisp
+
+;; (use-package axe)
 
 #+end_src
 
@@ -3053,6 +3127,31 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Add the current directory to LSP workspace folders."
   (interactive)
   (lsp-workspace-folders-add (expand-file-name default-directory)))
+
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
+
+(add-hook 'yaml-mode-hook #'lsp-deferred)
+
+(with-eval-after-load 'lsp-mode
+  (add-to-list 'lsp-language-id-configuration '(yaml-mode . "yaml"))
+  
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "yaml-language-server --stdio")
+                    :major-modes '(yaml-mode)
+                    :server-id 'yaml-ls
+                    :initialized-fn (lambda (workspace)
+                      (with-lsp-workspace workspace
+                        (lsp--set-configuration
+                         (ht ("yaml" (ht ("schemas" 
+                           (ht ("kubernetes" "k8s-*.yaml")
+                               ("http://json.schemastore.org/github-workflow" ".github/workflows/*")
+                               ("http://json.schemastore.org/github-action" ".github/action.{yml,yaml}")
+                               ("http://json.schemastore.org/ansible-stable-2.9" "roles/tasks/**/*.{yml,yaml}")
+                               ("http://json.schemastore.org/prettierrc" ".prettierrc.{yml,yaml}")
+                               ("http://json.schemastore.org/kustomization" "kustomization.{yml,yaml}")
+                               ("http://json.schemastore.org/chart" "Chart.{yml,yaml}")
+                               ("http://json.schemastore.org/circleciconfig" ".circleci/**/*.{yml,yaml}"))))))))))))
 
 #+end_src
 
