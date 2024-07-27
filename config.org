@@ -849,7 +849,13 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-(use-package kubernetes)
+;; (use-package kubernetes)
+;;   ;; :straight (:no-byte-compile t))
+
+;; (use-package kubernetes-evil
+;;   :after kubernetes)
+
+;; (fset 'k8s 'kubernetes-overview)
 
 #+end_src
 
@@ -3127,31 +3133,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Add the current directory to LSP workspace folders."
   (interactive)
   (lsp-workspace-folders-add (expand-file-name default-directory)))
-
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
-(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
-
-(add-hook 'yaml-mode-hook #'lsp-deferred)
-
-(with-eval-after-load 'lsp-mode
-  (add-to-list 'lsp-language-id-configuration '(yaml-mode . "yaml"))
-  
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "yaml-language-server --stdio")
-                    :major-modes '(yaml-mode)
-                    :server-id 'yaml-ls
-                    :initialized-fn (lambda (workspace)
-                      (with-lsp-workspace workspace
-                        (lsp--set-configuration
-                         (ht ("yaml" (ht ("schemas" 
-                           (ht ("kubernetes" "k8s-*.yaml")
-                               ("http://json.schemastore.org/github-workflow" ".github/workflows/*")
-                               ("http://json.schemastore.org/github-action" ".github/action.{yml,yaml}")
-                               ("http://json.schemastore.org/ansible-stable-2.9" "roles/tasks/**/*.{yml,yaml}")
-                               ("http://json.schemastore.org/prettierrc" ".prettierrc.{yml,yaml}")
-                               ("http://json.schemastore.org/kustomization" "kustomization.{yml,yaml}")
-                               ("http://json.schemastore.org/chart" "Chart.{yml,yaml}")
-                               ("http://json.schemastore.org/circleciconfig" ".circleci/**/*.{yml,yaml}"))))))))))))
 
 #+end_src
 
