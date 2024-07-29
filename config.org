@@ -2294,6 +2294,33 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (advice-add 'Man-getpage-in-background :after #'my/select-man-window)
 
+(defvar my-eshell-aliases
+  '(("mkdir" "/usr/bin/mkdir $*")
+    ("kill" "/usr/bin/kill $*")
+    ("grep" "/usr/bin/grep $*")
+    ("ls" "/usr/bin/ls $*"))
+  "A list of Eshell aliases.")
+
+(defun my-eshell-disable-aliases ()
+  "Disable Eshell aliases defined in `my-eshell-aliases`."
+  (dolist (alias my-eshell-aliases)
+    (setq eshell-command-aliases-list
+          (assq-delete-all (car alias) eshell-command-aliases-list))))
+
+(defun my-eshell-enable-aliases ()
+  "Enable Eshell aliases defined in `my-eshell-aliases`."
+  (dolist (alias my-eshell-aliases)
+    (add-to-list 'eshell-command-aliases-list alias)))
+
+(defun my-eshell-check-remote-directory ()
+  "Check if the current directory is remote and disable/enable aliases accordingly."
+  (if (file-remote-p default-directory)
+      (my-eshell-disable-aliases)
+    (my-eshell-enable-aliases)))
+
+(add-hook 'eshell-directory-change-hook 'my-eshell-check-remote-directory)
+(add-hook 'eshell-mode-hook 'my-eshell-enable-aliases)
+
 #+end_src
 
 *** Custom commands
@@ -3389,32 +3416,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (with-eval-after-load 'org-drill
   (add-to-list 'org-drill-card-type-alist
                '("sequence" org-drill-present-sequence nil t)))
-
-(defvar my-eshell-aliases
-  '(("mkdir" "/usr/bin/mkdir $*")
-    ("kill" "/usr/bin/kill $*")
-    ("ls" "/usr/bin/ls $*"))
-  "A list of Eshell aliases.")
-
-(defun my-eshell-disable-aliases ()
-  "Disable Eshell aliases defined in `my-eshell-aliases`."
-  (dolist (alias my-eshell-aliases)
-    (setq eshell-command-aliases-list
-          (assq-delete-all (car alias) eshell-command-aliases-list))))
-
-(defun my-eshell-enable-aliases ()
-  "Enable Eshell aliases defined in `my-eshell-aliases`."
-  (dolist (alias my-eshell-aliases)
-    (add-to-list 'eshell-command-aliases-list alias)))
-
-(defun my-eshell-check-remote-directory ()
-  "Check if the current directory is remote and disable/enable aliases accordingly."
-  (if (file-remote-p default-directory)
-      (my-eshell-disable-aliases)
-    (my-eshell-enable-aliases)))
-
-(add-hook 'eshell-directory-change-hook 'my-eshell-check-remote-directory)
-(add-hook 'eshell-mode-hook 'my-eshell-enable-aliases)
 
 #+end_src
 

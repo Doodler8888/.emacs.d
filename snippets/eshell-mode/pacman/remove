@@ -1,0 +1,4 @@
+# key: remove
+# name: pacman -R
+# --
+eshell/sudo sudo pacman -R $0

@@ -1,4 +1,5 @@
 alias kill /usr/bin/kill $*
+alias grep /usr/bin/grep $*
 alias sdl systemd-analyze verify $*
 alias clear eshell-clear-buffer
 alias grrc git rm -r --cached $*
@@ -26,6 +27,7 @@ alias d cd $* && ls -la
 alias rf rm -rf $*
 alias take mkdir $* && cd $*
 alias install eshell/sudo pacman -Syu $*
+alias remove eshell/sudo sudo pacman -R $*
 alias la ls -la $*
 alias u eshell/sudo $*
 alias activate-venv my-eshell-activate-venv

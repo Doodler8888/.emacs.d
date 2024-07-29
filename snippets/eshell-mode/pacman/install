@@ -1,0 +1,4 @@
+# key: install
+# name: pacman -Syu
+# --
+eshell/sudo sudo pacman -Syu $0
