@@ -539,14 +539,14 @@
 
 * Highlighting
 
-** Treesitter
-
 #+begin_src emacs-lisp
 
 (add-to-list 'auto-mode-alist '("sshd_config\\'" . conf-mode))
 (add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
 
 #+end_src
+
+** Treesitter
 
 #+begin_src emacs-lisp
 
@@ -605,9 +605,9 @@
 ;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
 ;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
 ;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
-;; ;; (with-eval-after-load 'yaml-ts-mode
-;;   (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
-;;   (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+
+(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
 
 #+end_src
 
@@ -863,7 +863,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
     (kbd "c") 'kubernetes-config-view
     (kbd "d") 'kubernetes-describe-pod
     (kbd "D") 'kubernetes-mark-pod-for-delete
-    (kbd "e") 'kubernetes-exec-into
+    (kbd "E") 'kubernetes-exec-into
     (kbd "f") 'kubernetes-file-from-pod
     (kbd "g") 'kubernetes-overview-refresh
     (kbd "H") 'kubernetes-overview-set-sections
@@ -877,7 +877,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
     (kbd "r") 'kubernetes-rollout-history
     (kbd "u") 'kubernetes-unmark-all
     (kbd "U") 'kubernetes-rollout-undo
-    (kbd "v") 'kubernetes-view-pod
+    (kbd "V") 'kubernetes-view-pod
     (kbd "x") 'kubernetes-delete-marked-objects
     (kbd "y") 'kubernetes-copy-pod-name))
 
@@ -3229,6 +3229,23 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive)
   (lsp-workspace-folders-add (expand-file-name default-directory)))
 
+(setq lsp-yaml-schemas
+      `((kubernetes . "k8s-*.yaml")
+        (github-workflow . ".github/workflows/*")
+        (github-action . ".github/action.{yml,yaml}")
+        (ansible-stable-2.9 . "roles/tasks/**/*.{yml,yaml}")
+        (prettierrc . ".prettierrc.{yml,yaml}")
+        (kustomization . "kustomization.{yml,yaml}")
+        (chart . "Chart.{yml,yaml}")
+        (circleciconfig . ".circleci/**/*.{yml,yaml}")))
+
+(setq lsp-yaml-schema-store-enable t)
+(setq lsp-yaml-schema-store-local-db "~/.emacs.d/.cache/lsp/lsp-yaml-schemas.json")
+(setq lsp-yaml-schema-store-uri "https://www.schemastore.org/api/json/catalog.json")
+
+;; Setup lsp-mode for yaml files
+(add-hook 'yaml-ts-mode-hook #'lsp)
+  
 #+end_src
 
 * Org Mode
