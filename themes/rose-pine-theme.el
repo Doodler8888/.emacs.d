@@ -87,6 +87,9 @@
     `(magit-section-heading ((,class (:foreground ,rose-pine-foam))))
     `(magit-section-highlight ((,class (:background ,rose-pine-subtle))))
     
+    ;; Docker
+    `(docker-face-dangling ((,class (:foreground ,rose-pine-subtext))))
+
     ;; Ansi
     `(ansi-color-blue ((,class (:foreground ,nord-blue))))
     `(ansi-color-blue ((,class (:background ,nord-blue))))

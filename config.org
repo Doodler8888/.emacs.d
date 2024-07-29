@@ -63,6 +63,7 @@
 - [[#database][Database]]
   - [[#pgmacs][Pgmacs]]
 - [[#sessions][Sessions]]
+  - [[#restoration-by-tab-names][Restoration by Tab names]]
 - [[#buffers][Buffers]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
@@ -618,6 +619,7 @@
 (use-package general
   :config
   (general-evil-setup)
+  
   (general-create-definer w/leader-keys
     :states '(normal insert visual emacs)
     :keymaps 'override
@@ -851,12 +853,36 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 (use-package kubernetes
 ;;   ;; :straight (:no-byte-compile t))
-:config
-(setq kubernetes-poll-frequency 3600
-      kubernetes-redraw-frequency 3600))
+  :config
+  (setq kubernetes-poll-frequency 3600
+        kubernetes-redraw-frequency 3600))
 
-(use-package kubernetes-evil
-  :after kubernetes)
+(with-eval-after-load 'kubernetes-overview
+  (evil-define-key 'normal kubernetes-overview-mode-map
+    (kbd "?") 'kubernetes-overview-popup
+    (kbd "c") 'kubernetes-config-view
+    (kbd "d") 'kubernetes-describe-pod
+    (kbd "D") 'kubernetes-mark-pod-for-delete
+    (kbd "e") 'kubernetes-exec-into
+    (kbd "f") 'kubernetes-file-from-pod
+    (kbd "g") 'kubernetes-overview-refresh
+    (kbd "H") 'kubernetes-overview-set-sections
+    (kbd "i") 'kubernetes-navigate
+    (kbd "K") 'kubernetes-kill-pod
+    (kbd "L") 'kubernetes-logs
+    (kbd "m") 'kubernetes-mark-for-delete
+    (kbd "M") 'kubernetes-unmark
+    (kbd "n") 'kubernetes-overview-next-line
+    (kbd "p") 'kubernetes-overview-previous-line
+    (kbd "r") 'kubernetes-rollout-history
+    (kbd "u") 'kubernetes-unmark-all
+    (kbd "U") 'kubernetes-rollout-undo
+    (kbd "v") 'kubernetes-view-pod
+    (kbd "x") 'kubernetes-delete-marked-objects
+    (kbd "y") 'kubernetes-copy-pod-name))
+
+;; (use-package kubernetes-evil
+;;   :after kubernetes)
 
 (fset 'k8s 'kubernetes-overview)
 
@@ -2555,6 +2581,71 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
   #+end_src
 
+** Restoration by Tab names
+
+#+begin_src emacs-lisp
+
+(defun docker-tab-exists-p ()
+  "Check if a tab named 'docker' exists."
+  (let ((tabs (funcall tab-bar-tabs-function)))
+    (cl-some (lambda (tab)
+               (string= (alist-get 'name tab) "docker"))
+             tabs)))
+
+(defun check-and-switch-to-docker-tab ()
+  "Check if a 'docker' tab exists and switch to it if it does."
+  (interactive)
+  (if (docker-tab-exists-p)
+      (progn
+        (tab-bar-switch-to-tab "docker")
+        (message "Switched to Docker tab")
+        (docker-template))
+    (message "No Docker tab found")))
+
+
+(defun check-and-switch-to-kubernetes-tab ()
+  "Check if a 'kubernetes tab exists and switch to it if it does."
+  (interactive)
+  (if (docker-tab-exists-p)
+      (progn
+        (tab-bar-switch-to-tab "kubernetes")
+        (message "Switched to Kubernetes tab")
+        (kubernetes-overview))
+    (message "No Kubernetes tab found")))
+
+(add-hook 'desktop-after-read-hook #'check-and-switch-to-kubernetes-tab)
+(add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-tab)
+
+;; (defun check-and-switch-to-docker-or-kubernetes-tab ()
+;;   "Check if 'docker' or 'kubernetes' tabs exist and switch to them if they do."
+;;   (interactive)
+;;   (let* ((tabs (funcall tab-bar-tabs-function))
+;;          (docker-tab (cl-find-if (lambda (tab) (string= (alist-get 'name tab) "docker")) tabs))
+;;          (kubernetes-tab (cl-find-if (lambda (tab) (string= (alist-get 'name tab) "kubernetes")) tabs)))
+;;     (cond
+;;      ;; If Docker tab exists, switch to it and activate its function
+;;      ((and docker-tab)
+;;       (tab-bar-switch-to-tab-by-id (alist-get 'id docker-tab))
+;;       (message "Switched to Docker tab")
+;;       (docker-template)
+;;       ;; After activating Docker tab, check for Kubernetes tab
+;;       (when kubernetes-tab
+;;         (tab-bar-switch-to-tab-by-id (alist-get 'id kubernetes-tab))
+;;         (message "Switched to Kubernetes tab")
+;;         (kubernetes-overview)))
+;;      ;; If only Kubernetes tab exists, switch to it and activate its function
+;;      ((and kubernetes-tab (not docker-tab))
+;;       (tab-bar-switch-to-tab-by-id (alist-get 'id kubernetes-tab))
+;;       (message "Switched to Kubernetes tab")
+;;       (kubernetes-overview))
+;;      ;; If neither tab exists
+;;      (t (message "No Docker or Kubernetes tab found")))))
+
+;; ;; Add the modified function to desktop-after-read-hook
+;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-or-kubernetes-tab)
+
+#+end_src
+
 * Buffers
 
 ** Shell buffer
@@ -2718,6 +2809,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           "\\* docker container logs .*\\*"
           "\\* docker inspect .*\\*"
           "\\*daemons-output for .*\\*"
+          "\\*kubernetes logs.*\\*"
           "\\*compilation\\*"
           ;; "\\*eshell\\*.*"
           "\\*persistent-shell\\*.*"
