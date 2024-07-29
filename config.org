@@ -40,7 +40,7 @@
   - [[#hyperbole][Hyperbole]]
   - [[#zoxide][Zoxide]]
   - [[#cider][Cider]]
-  - [[#projectile][Projectile]]
+  - [[#projectprojectile][Project/Projectile]]
   - [[#mentor][Mentor]]
   - [[#wgrep][Wgrep]]
   - [[#embark][Embark]]
@@ -1447,7 +1447,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-** Projectile
+** Project/Projectile
 
 #+begin_src emacs-lisp
 
@@ -1472,6 +1472,27 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;   :config
 ;;   (projectile-mode 1)
 ;;   (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
+
+(require 'project)
+
+(defcustom project-root-markers
+  '("Cargo.toml" "compile_commands.json" "compile_flags.txt"
+    "project.clj" ".git" "deps.edn" "shadow-cljs.edn")
+  "Files or directories that indicate the root of a project."
+  :type '(repeat string)
+  :group 'project)
+
+(defun project-root-p (path)
+  "Check if the current PATH has any of the project root markers."
+  (catch 'found
+    (dolist (marker project-root-markers)
+      (when (file-exists-p (concat path marker))
+        (throw 'found marker)))))
+
+(defun project-find-root (path)
+  "Search up the PATH for `project-root-markers'."
+  (when-let ((root (locate-dominating-file path #'project-root-p)))
+    (cons 'transient (expand-file-name root))))
 
 #+end_src
 
@@ -1604,9 +1625,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (defun ivy-fzf-project ()
   "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
   (interactive)
-  (let ((default-directory (projectile-project-root))
-        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
-    (ivy-read "Find file in project: " (split-string (shell-command-to-string fzf-command) "\n")
+  (let* ((project (project-current t))
+         (default-directory (if project (project-root project) default-directory))
+         (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --hidden"))
+    (ivy-read "Find file in project: " 
+              (split-string (shell-command-to-string fzf-command) "\n" t)
               :action (lambda (f)
                         (find-file (expand-file-name f default-directory))))))
 
