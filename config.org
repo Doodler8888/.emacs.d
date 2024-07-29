@@ -1490,9 +1490,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         (throw 'found marker)))))
 
 (defun project-find-root (path)
-  "Search up the PATH for `project-root-markers'."
-  (when-let ((root (locate-dominating-file path #'project-root-p)))
-    (cons 'transient (expand-file-name root))))
+  "Search up the PATH for `project-root-markers' with additional conditions."
+  (cond
+   ;; Check if the path is within the specific directory
+   ((string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name path))
+    (cons 'transient "/home/wurfkreuz/.secret_dotfiles/org/"))
+   
+   ;; Fall back to the original project root detection
+   (t (when-let ((root (locate-dominating-file path #'project-root-p)))
+        (cons 'transient (expand-file-name root))))))
 
 #+end_src
 
