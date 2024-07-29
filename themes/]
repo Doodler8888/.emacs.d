@@ -13,13 +13,10 @@
       (rose-pine-pine "#31748f")
       (rose-pine-foam "#9ccfd8")
       (rose-pine-iris "#c4a7e7")
+      ;; (rose-pine-highlight "#26233a")
       (rose-pine-highlight "#403d52")
-      (rose-pine-highlight2 "#26233a")
       (rose-pine-subtext "#6e6a86")
       (rose-pine-subtext0 "#908caa")
-      (rose-pine-subtle "#2e2c3d")
-      (nord-blue "#5E81AC")
-      (nord-bright-blue "#81A1C1")
       (rose-pine-blendedfoam "#403d52"))
 
   (custom-theme-set-faces
@@ -77,21 +74,15 @@
 
     ;; Kubernetes
     `(kubernetes-context-name ((,class (:foreground ,rose-pine-fg))))
-    `(kubernetes-namespace ((,class (:foreground ,rose-pine-fg))))
-    `(kubernetes-dimmed ((,class (:foreground ,rose-pine-subtext))))
-    `(kubernetes-json-key ((,class (:foreground ,rose-pine-gold))))
-    `(kubernetes-pending-deletion ((,class (:foreground ,rose-pine-love))))
-    `(kubernetes-progress-indicator ((,class (:foreground ,rose-pine-foam))))
-    `(kubernetes-selector ((,class (:foreground ,rose-pine-fg))))
-    `(kubernetes-delete-mark ((,class (:foreground ,rose-pine-iris))))
+    `(kubernetes-context-namespace ((,class (:foreground ,rose-pine-fg))))
+    `(kubernetes-context-dimmed ((,class (:foreground ,rose-pine-subtext))))
+    `(kubernetes-context-json-key ((,class (:foreground ,rose-pine-gold))))
+    `(kubernetes-context-pending-deletion ((,class (:foreground ,rose-pine-love))))
+    `(kubernetes-context-progress-indicator ((,class (:foreground ,rose-pine-foam))))
+    `(kubernetes-context-selector ((,class (:foreground ,rose-pine-fg))))
+    `(kubernetes-context-delete-mark ((,class (:foreground ,rose-pine-iris))))
     `(magit-section-heading ((,class (:foreground ,rose-pine-foam))))
-    `(magit-section-highlight ((,class (:background ,rose-pine-subtle))))
     
-    ;; Ansi
-    `(ansi-color-blue ((,class (:foreground ,nord-blue))))
-    `(ansi-color-blue ((,class (:background ,nord-blue))))
-    `(ansi-color-bright-blue ((,class (:foreground ,nord-bright-blue))))
-    `(ansi-color-bright-blue ((,class (:background ,nord-bright-blue))))
 
     ;; Haskell mode
     `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'

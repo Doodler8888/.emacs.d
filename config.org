@@ -678,7 +678,7 @@
     "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
     "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
-    "rr" '(revert-buffer :wk "Refresh a current buffer")
+    ;; "rr" '(revert-buffer :wk "Refresh a current buffer")
 
     ;; Popper
     "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
@@ -849,13 +849,16 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-;; (use-package kubernetes)
+(use-package kubernetes
 ;;   ;; :straight (:no-byte-compile t))
+:config
+(setq kubernetes-poll-frequency 3600
+      kubernetes-redraw-frequency 3600))
 
-;; (use-package kubernetes-evil
-;;   :after kubernetes)
+(use-package kubernetes-evil
+  :after kubernetes)
 
-;; (fset 'k8s 'kubernetes-overview)
+(fset 'k8s 'kubernetes-overview)
 
 #+end_src
 
@@ -3425,58 +3428,67 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  ;; (global-unset-key (kbd "M-;"))
+;; (global-unset-key (kbd "M-;"))
 
-  (defun my-noop ()
-  "A no-op function that does nothing."
-  (interactive))
+(defun my-noop ()
+"A no-op function that does nothing."
+(interactive))
 
-  (global-set-key (kbd "M-;") 'my-noop)
+(global-set-key (kbd "M-;") 'my-noop)
 
-  (global-unset-key (kbd "C-s"))
-  (global-unset-key (kbd "M-TAB"))
-  (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
-  (global-set-key (kbd "C-s C-s") 'swiper-isearch)
-  (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
-  (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
-  ;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
-  (define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
-  ;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
-  (global-set-key (kbd "C-h M-f") 'describe-face)
+(global-unset-key (kbd "C-s"))
+(global-unset-key (kbd "M-TAB"))
+(global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
+(global-set-key (kbd "C-s C-s") 'swiper-isearch)
+(global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
+(global-set-key (kbd "C-s C-b") 'sql-send-buffer)
+;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
+(define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
+;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
+(global-set-key (kbd "C-h M-f") 'describe-face)
 
-  (global-unset-key (kbd "C-t"))
-  (global-unset-key (kbd "C-y"))
+(global-unset-key (kbd "C-t"))
+(global-unset-key (kbd "C-y"))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "C-t") nil)
-    (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-    (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-    (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point)
-    (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
-    (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
-    (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map (kbd "C-t") nil)
+  (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
+  (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
+  (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point)
+  (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
+  (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
+  (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
-  (defun my-org-cycle-or-yasnippet-expand ()
-    "Expand Yasnippet or perform org-cycle based on the context."
-    (interactive)
-    ;; First, try to expand a Yasnippet if possible.
-    (unless (and (bound-and-true-p yas-minor-mode) ; Check if YASnippet mode is active
-                (fboundp 'yas-expand)            ; Check if yas-expand is callable
-                (yas-expand))                     ; Try to expand a snippet
-      ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
-      (when (eq major-mode 'org-mode)
-        (org-cycle))))
+(defun my-org-cycle-or-yasnippet-expand ()
+  "Expand Yasnippet or perform org-cycle based on the context."
+  (interactive)
+  ;; First, try to expand a Yasnippet if possible.
+  (unless (and (bound-and-true-p yas-minor-mode) ; Check if YASnippet mode is active
+              (fboundp 'yas-expand)            ; Check if yas-expand is callable
+              (yas-expand))                     ; Try to expand a snippet
+    ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
+    (when (eq major-mode 'org-mode)
+      (org-cycle))))
 
-  (with-eval-after-load 'evil
-    (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
+(with-eval-after-load 'evil
+  (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
 
-  (with-eval-after-load 'org
-    ;; Override the keybinding in org-mode specifically
-    (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-    (define-key evil-normal-state-map (kbd "C-t C-s") 'flyspell-mode))
+(with-eval-after-load 'org
+  ;; Override the keybinding in org-mode specifically
+  (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root)
+  (define-key evil-normal-state-map (kbd "C-t C-s") 'flyspell-mode))
 
-  (global-unset-key (kbd "C-<tab>"))
-  (global-set-key (kbd "<C-tab>") 'previous-buffer)
+(global-unset-key (kbd "C-<tab>"))
+(global-set-key (kbd "<C-tab>") 'previous-buffer)
+
+(defun my-refresh-command ()
+  "Choose the appropriate refresh command based on the major mode."
+  (interactive)
+  (if (eq major-mode 'kubernetes-overview-mode)
+      (kubernetes-refresh)
+    (revert-buffer)))
+
+(global-set-key (kbd "C-c r") 'my-refresh-command)
 
 #+end_src
 
