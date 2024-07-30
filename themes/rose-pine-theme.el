@@ -18,9 +18,20 @@
       (rose-pine-subtext "#6e6a86")
       (rose-pine-subtext0 "#908caa")
       (rose-pine-subtle "#2e2c3d")
+      (rose-pine-blendedfoam "#403d52")
+      (nord-black "#2E3440")
+      (nord-bright-black "#3B4252")
       (nord-blue "#5E81AC")
       (nord-bright-blue "#81A1C1")
-      (rose-pine-blendedfoam "#403d52"))
+      (nord-cyan "#8FBCBB")
+      (nord-bright-cyan "#88C0D0")
+      (nord-green "#A3BE8C")
+      (nord-magenta "#B48EAD")
+      (nord-red "#BF616A")
+      (nord-white "#E5E9F0")
+      (nord-bright-white "#ECEFF4")
+      (nord-yellow "#EBCB8B")
+      )
 
   (custom-theme-set-faces
    'rose-pine
@@ -68,7 +79,14 @@
     `(ivy-modified-buffer ((,class (:foreground ,rose-pine-fg))))
     `(ivy-modified-outside-buffer ((,class (:foreground ,rose-pine-fg))))
     `(ivy-virtual ((,class (:foreground ,rose-pine-fg))))
+    `(all-the-icons-ivy-rich-time-face ((,class (:foreground ,rose-pine-subtext))))
+    `(all-the-icons-ivy-rich-package-status-installed-face ((,class (:foreground ,rose-pine-subtext))))
+    `(all-the-icons-ivy-rich-off-face ((,class (:foreground ,rose-pine-subtext))))
+    `(all-the-icons-ivy-rich-file-priv-no ((,class (:foreground ,rose-pine-subtext))))
 
+    ;; Vterm
+    `(all-the-icons-ivy-rich-file-priv-no ((,class (:foreground ,rose-pine-subtext))))
+    
     ;; Avy
     `(avy-lead-face ((,class (:background ,rose-pine-bg2))))
     `(avy-lead-face-0 ((,class (:background ,rose-pine-bg2))))
@@ -91,10 +109,22 @@
     `(docker-face-dangling ((,class (:foreground ,rose-pine-subtext))))
 
     ;; Ansi
-    `(ansi-color-blue ((,class (:foreground ,nord-blue))))
-    `(ansi-color-blue ((,class (:background ,nord-blue))))
-    `(ansi-color-bright-blue ((,class (:foreground ,nord-bright-blue))))
-    `(ansi-color-bright-blue ((,class (:background ,nord-bright-blue))))
+    `(ansi-color-black ((,class (:foreground ,nord-black :background ,nord-black))))
+    `(ansi-color-bright-black ((,class (:foreground ,nord-bright-black :background ,nord-bright-black))))
+    `(ansi-color-blue ((,class (:foreground ,nord-blue :background ,nord-blue))))
+    `(ansi-color-bright-blue ((,class (:foreground ,nord-bright-blue :background ,nord-bright-blue))))
+    `(ansi-color-cyan ((,class (:foreground ,nord-cyan :background ,nord-cyan))))
+    `(ansi-color-bright-cyan ((,class (:foreground ,nord-bright-cyan :background ,nord-bright-cyan))))
+    `(ansi-color-green ((,class (:foreground ,nord-green :background ,nord-green))))
+    `(ansi-color-bright-green ((,class (:foreground ,nord-green :background ,nord-green))))
+    `(ansi-color-magenta ((,class (:foreground ,nord-magenta :background ,nord-magenta))))
+    `(ansi-color-bright-magenta ((,class (:foreground ,nord-magenta :background ,nord-magenta))))
+    `(ansi-color-red ((,class (:foreground ,nord-red :background ,nord-red))))
+    `(ansi-color-bright-red ((,class (:foreground ,nord-red :background ,nord-red))))
+    `(ansi-color-white ((,class (:foreground ,nord-white :background ,nord-white))))
+    `(ansi-color-bright-white ((,class (:foreground ,nord-bright-white :background ,nord-bright-white))))
+    `(ansi-color-yellow ((,class (:foreground ,nord-yellow :background ,nord-yellow))))
+    `(ansi-color-bright-yellow ((,class (:foreground ,nord-yellow :background ,nord-yellow))))
 
     ;; Haskell mode
     `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
