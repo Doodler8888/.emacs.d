@@ -1,0 +1,4 @@
+# key: ula
+# name: /usr/bin/ls
+# --
+/usr/bin/ls -la $0

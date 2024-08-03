@@ -28,6 +28,7 @@
   - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
   - [[#circe][Circe]]
+  - [[#vterm][Vterm]]
   - [[#docker][Docker]]
   - [[#folds][Folds]]
   - [[#ispell][Ispell]]
@@ -1010,9 +1011,22 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 (use-package xterm-color)
 
+(setq docker-vterm-support t)
+(setq docker-container-shell-file-name "vterm")
+
+
 ;; Breaks rendering inside docker shells entered using 'shell-command'.
 ;; (setq comint-output-filter-functions
 ;;       (remove 'ansi-color-process-output comint-output-filter-functions))
+
+(defun my/setup-docker-buffer ()
+  "Set up a buffer for Docker output."
+  (setq-local ansi-color-for-comint-mode t)
+  (setq-local xterm-color-preserve-properties t)
+  (font-lock-mode -1)  ; Disable font-lock to improve performance
+  )
+
+(add-hook 'docker-container-logs-mode-hook #'my/setup-docker-buffer)
 
 (add-hook 'shell-mode-hook
           (lambda ()
@@ -1038,6 +1052,22 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
   (use-package circe)
+
+#+end_src
+
+** Vterm
+
+#+begin_src emacs-lisp
+
+(use-package vterm)
+
+(defun my/customize-vterm-mode-map ()
+  "Customize the `vterm-mode-map` to remove unwanted keybindings."
+  (let ((keymap vterm-mode-map))
+    (define-key keymap (kbd "M-f") nil)
+    (define-key keymap (kbd "M-`") nil)))
+
+(add-hook 'vterm-mode-hook #'my/customize-vterm-mode-map)
 
 #+end_src
 
@@ -2226,8 +2256,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (with-eval-after-load 'eshell
   (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
-    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
+    (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
+    (evil-define-key 'normal eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)))
 
 (defun eshell-new ()
   "Create a new Eshell buffer with a unique name and open it in the current window."
@@ -2297,8 +2327,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (defvar my-eshell-aliases
   '(("mkdir" "/usr/bin/mkdir $*")
     ("kill" "/usr/bin/kill $*")
-    ("grep" "/usr/bin/grep $*")
-    ("ls" "/usr/bin/ls $*"))
+    ("grep" "/usr/bin/grep $*"))
+    ;; ("ls" "/usr/bin/ls $*"))
   "A list of Eshell aliases.")
 
 (defun my-eshell-disable-aliases ()
@@ -3287,13 +3317,22 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (setq lsp-yaml-schemas
       `((kubernetes . "k8s-*.yaml")
-        (github-workflow . ".github/workflows/*")
-        (github-action . ".github/action.{yml,yaml}")
-        (ansible-stable-2.9 . "roles/tasks/**/*.{yml,yaml}")
-        (prettierrc . ".prettierrc.{yml,yaml}")
-        (kustomization . "kustomization.{yml,yaml}")
-        (chart . "Chart.{yml,yaml}")
-        (circleciconfig . ".circleci/**/*.{yml,yaml}")))
+        ;; (github-workflow . ".github/workflows/*")
+        ;; (github-action . ".github/action.{yml,yaml}")
+        ;; (ansible-tasks . "roles/tasks/**/*.{yml,yaml}")
+        ;; (prettierrc . ".prettierrc.{yml,yaml}")
+        ;; (kustomization . "kustomization.{yml,yaml}")
+        ;; (chart . "Chart.{yml,yaml}")
+        ;; (circleciconfig . ".circleci/**/*.{yml,yaml}")))
+        ))
+
+;; (setq lsp-yaml-custom-tags
+;;       `("- !include"
+;;         "- !merge"))
+
+;; Add this line to associate the schema URI with the symbol
+;; (setq lsp-yaml-schema-store-mappings
+;;       `(("ansible-tasks" . "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks")))
 
 (setq lsp-yaml-schema-store-enable t)
 (setq lsp-yaml-schema-store-local-db "~/.emacs.d/.cache/lsp/lsp-yaml-schemas.json")
@@ -3902,6 +3941,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive)
   (find-file "/tmp"))
 
+(defun passwd ()
+  "Open a specific file."
+  (interactive)
+  (find-file "/etc/passwd"))
+
 (defun service ()
   "Open a specific file."
   (interactive)
@@ -3919,5 +3963,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Run `crontab -e' in a emacs buffer."
   (interactive)
   (with-editor-async-shell-command "crontab -e"))
+
+(defun run-ansible-check-and-lint ()
+  "Run ansible-lint and ansible-playbook --check on the current file."
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (if filename
+        (progn
+          (async-shell-command (format "ansible-lint %s" filename))
+          (async-shell-command (format "ansible-playbook --check %s" filename)))
+      (message "No file associated with this buffer"))))
 
 #+end_src

@@ -29,6 +29,7 @@ alias take mkdir $* && cd $*
 alias install eshell/sudo pacman -Syu $*
 alias remove eshell/sudo sudo pacman -R $*
 alias la ls -la $*
+alias ula /usr/bin/ls -la $*
 alias u eshell/sudo $*
 alias activate-venv my-eshell-activate-venv
 alias md mkdir $*

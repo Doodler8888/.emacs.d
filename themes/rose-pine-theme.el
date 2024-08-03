@@ -125,6 +125,7 @@
     `(ansi-color-bright-white ((,class (:foreground ,nord-bright-white :background ,nord-bright-white))))
     `(ansi-color-yellow ((,class (:foreground ,nord-yellow :background ,nord-yellow))))
     `(ansi-color-bright-yellow ((,class (:foreground ,nord-yellow :background ,nord-yellow))))
+    `(ansi-color-bold ((,class (:foreground ,nord-yellow))))
 
     ;; Haskell mode
     `(haskell-keyword-face ((,class (:foreground ,rose-pine-pine))))  ; For keywords like 'do'
@@ -151,6 +152,11 @@
     `(dired-symlink ((,class (:foreground ,rose-pine-subtext))))
     `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
     `(dired-marked ((,class (:foreground ,rose-pine-iris))))
+
+    `(dired-async-failures ((,class (:foreground ,rose-pine-love))))
+    `(dired-async-message ((,class (:foreground ,rose-pine-gold))))
+    `(dired-async-mode-message ((,class (:foreground ,rose-pine-gold))))
+    `(dired-broken-symlink ((,class (:foreground ,rose-pine-love))))
  
     ;; Ansible mode
     `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
