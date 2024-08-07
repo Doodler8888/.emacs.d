@@ -134,19 +134,15 @@
     `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
     `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
  
+    ;; Terraform mode
+    `(terraform-resource-type-face ((,class (:foreground ,rose-pine-iris))))
+
     ;; Clojure ts mode
     `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))
  
     ;; Raku mode
     `(raku-operator ((,class (:foreground ,rose-pine-subtext))))
 
-    ;;; SQL mode
-    ;(defun my-sql-mode-custom-faces ()
-    ;  "Customize faces for SQL mode."
-    ;  (face-remap-add-relative 'font-lock-builtin-face :foreground ,rose-pine-foam))
-    ;
-    ;(add-hook 'sql-mode-hook 'my-sql-mode-custom-faces)
- 
     ;; Dired mode
     `(dired-directory ((,class (:foreground ,rose-pine-gold))))
     `(dired-symlink ((,class (:foreground ,rose-pine-subtext))))

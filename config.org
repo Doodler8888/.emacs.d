@@ -48,7 +48,6 @@
   - [[#ivycounsel][Ivy/Counsel]]
   - [[#with-editor][With-editor]]
   - [[#cron][Cron]]
-  - [[#systemd][Systemd]]
   - [[#prescient][Prescient]]
   - [[#fzf][Fzf]]
   - [[#helpful][Helpful]]
@@ -65,6 +64,7 @@
   - [[#pgmacs][Pgmacs]]
 - [[#sessions][Sessions]]
   - [[#restoration-by-tab-names][Restoration by Tab names]]
+  - [[#easysession][Easysession]]
 - [[#buffers][Buffers]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
@@ -201,7 +201,16 @@
 
 ;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (setq-default indent-tabs-mode nil)
-(savehist-mode 1)
+;; (savehist-mode 1)
+(use-package savehist
+  :ensure nil
+  :hook
+  (after-init . savehist-mode)
+  :config
+  (add-to-list 'savehist-additional-variables 'kill-ring)
+  (add-to-list 'savehist-additional-variables 'mark-ring)
+  (add-to-list 'savehist-additional-variables 'search-ring)
+  (add-to-list 'savehist-additional-variables 'regexp-search-ring))
 
 ;; Executable on save if starts with '#!'
 (add-hook 'after-save-hook
@@ -501,6 +510,12 @@
 (add-hook 'sql-mode-hook 'my-sql-mode-custom-faces)
 (add-hook 'sql-interactive-mode-hook 'my-sql-mode-custom-faces)
 
+;; SQL mode
+(defun my-terraform-mode-custom-faces ()
+  "Customize faces for terraform mode."
+  (face-remap-add-relative 'font-lock-type-face :foreground "#9ccfd8"))
+
+(add-hook 'terraform-mode-hook 'my-terraform-mode-custom-faces)
 
 (when (member "NotoSansM Nerd Font Mono" (font-family-list))
   (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
@@ -568,6 +583,11 @@
 ;;          ("\\.dockerignore\\'" . dockerfile-ts-mode)))
 
 (use-package clojure-ts-mode)
+
+;; (straight-use-package
+;;  '(terraform-ts-mode :host github :repo "kgrotel/terraform-ts-mode"))
+
+;; (use-package terraform-ts-mode)
 
 ;; (add-to-list
 ;;  'treesit-language-source-alist
@@ -1764,22 +1784,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-** Systemd
-
-#+begin_src emacs-lisp
-
-;; (use-package systemd) 
-
-#+end_src
-
 ** Prescient
 
 #+begin_src emacs-lisp
 
-  ;; (use-package ivy-prescient
-  ;;   :after counsel
-  ;;   :config
-  ;;   (ivy-prescient-mode 1))
+;; (use-package ivy-prescient
+;;   :after counsel
+;;   :config
+;;   (ivy-prescient-mode 1))
 
 #+end_src
 
@@ -2256,8 +2268,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (with-eval-after-load 'eshell
   (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
-    (evil-define-key 'normal eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)))
+    ;; (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
+    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
 (defun eshell-new ()
   "Create a new Eshell buffer with a unique name and open it in the current window."
@@ -2688,47 +2700,45 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         (docker-template))
     (message "No Docker tab found")))
 
+;; (defun kubernetes-tab-exists-p ()
+;;   "Check if a tab named 'kubernetes' exists."
+;;   (let ((tabs (funcall tab-bar-tabs-function)))
+;;     (cl-some (lambda (tab)
+;;                (string= (alist-get 'name tab) "kubernetes"))
+;;              tabs)))
 
-(defun check-and-switch-to-kubernetes-tab ()
-  "Check if a 'kubernetes tab exists and switch to it if it does."
-  (interactive)
-  (if (docker-tab-exists-p)
-      (progn
-        (tab-bar-switch-to-tab "kubernetes")
-        (message "Switched to Kubernetes tab")
-        (kubernetes-overview))
-    (message "No Kubernetes tab found")))
+;; (defun check-and-switch-to-kubernetes-tab ()
+;;   "Check if a 'kubernetes tab exists and switch to it if it does."
+;;   (interactive)
+;;   (if (kubernetes-tab-exists-p)
+;;       (progn
+;;         (tab-bar-switch-to-tab "kubernetes")
+;;         (message "Switched to Kubernetes tab")
+;;         (kubernetes-overview))
+;;     (message "No Kubernetes tab found")))
 
-(add-hook 'desktop-after-read-hook #'check-and-switch-to-kubernetes-tab)
+;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-kubernetes-tab)
 (add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-tab)
 
-;; (defun check-and-switch-to-docker-or-kubernetes-tab ()
-;;   "Check if 'docker' or 'kubernetes' tabs exist and switch to them if they do."
-;;   (interactive)
-;;   (let* ((tabs (funcall tab-bar-tabs-function))
-;;          (docker-tab (cl-find-if (lambda (tab) (string= (alist-get 'name tab) "docker")) tabs))
-;;          (kubernetes-tab (cl-find-if (lambda (tab) (string= (alist-get 'name tab) "kubernetes")) tabs)))
-;;     (cond
-;;      ;; If Docker tab exists, switch to it and activate its function
-;;      ((and docker-tab)
-;;       (tab-bar-switch-to-tab-by-id (alist-get 'id docker-tab))
-;;       (message "Switched to Docker tab")
-;;       (docker-template)
-;;       ;; After activating Docker tab, check for Kubernetes tab
-;;       (when kubernetes-tab
-;;         (tab-bar-switch-to-tab-by-id (alist-get 'id kubernetes-tab))
-;;         (message "Switched to Kubernetes tab")
-;;         (kubernetes-overview)))
-;;      ;; If only Kubernetes tab exists, switch to it and activate its function
-;;      ((and kubernetes-tab (not docker-tab))
-;;       (tab-bar-switch-to-tab-by-id (alist-get 'id kubernetes-tab))
-;;       (message "Switched to Kubernetes tab")
-;;       (kubernetes-overview))
-;;      ;; If neither tab exists
-;;      (t (message "No Docker or Kubernetes tab found")))))
+#+end_src
 
-;; ;; Add the modified function to desktop-after-read-hook
-;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-or-kubernetes-tab)
+** Easysession
+
+#+begin_src emacs-lisp
+
+
+;; (straight-use-package
+;;  '(easysession :host github :repo "jamescherti/easysession.el"))
+
+;; ;; (easysession-save-mode 1)
+
+;; (use-package easysession
+;;   :ensure t
+;;   :custom
+;;   (easysession-save-interval (* 10 60))
+;;   :init
+;;   (add-hook 'emacs-startup-hook #'easysession-load-including-geometry 98)
+;;   (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
 
 #+end_src
 
@@ -2894,7 +2904,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           "*Python.*"
           "\\* docker container logs .*\\*"
           "\\* docker inspect .*\\*"
-          "\\*daemons-output for .*\\*"
+          ;; "\\*daemons-output for .*\\*"
           "\\*kubernetes logs.*\\*"
           "\\*compilation\\*"
           ;; "\\*eshell\\*.*"
@@ -3179,9 +3189,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; Register Go LSP client
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                    :major-modes '(go-ts-mode) ; Corrected to go-mode
-                    :server-id 'gopls)) ; Correct server-id for Go
-
+                    :major-modes '(go-ts-mode)
+                    :server-id 'gopls))
+  
+  ;; Register Terraform LSP client
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- terraform-ls")
+                    :major-modes '(terraform-mode)
+                    :server-id 'terraform-ls))
+  
   ;; Register Haskell LSP client
   (lsp-register-client
    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
@@ -3317,22 +3333,20 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (setq lsp-yaml-schemas
       `((kubernetes . "k8s-*.yaml")
+        (gitlab-ci . ".gitlab-ci.yml")
         ;; (github-workflow . ".github/workflows/*")
         ;; (github-action . ".github/action.{yml,yaml}")
         ;; (ansible-tasks . "roles/tasks/**/*.{yml,yaml}")
         ;; (prettierrc . ".prettierrc.{yml,yaml}")
         ;; (kustomization . "kustomization.{yml,yaml}")
         ;; (chart . "Chart.{yml,yaml}")
-        ;; (circleciconfig . ".circleci/**/*.{yml,yaml}")))
+        ;; (circleciconfig . ".circleci/**/*.{yml,yaml}")
         ))
 
-;; (setq lsp-yaml-custom-tags
-;;       `("- !include"
-;;         "- !merge"))
-
 ;; Add this line to associate the schema URI with the symbol
-;; (setq lsp-yaml-schema-store-mappings
-;;       `(("ansible-tasks" . "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks")))
+(setq lsp-yaml-schema-store-mappings
+      `(("gitlab-ci" . "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json")
+        ("ansible-tasks" . "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks")))
 
 (setq lsp-yaml-schema-store-enable t)
 (setq lsp-yaml-schema-store-local-db "~/.emacs.d/.cache/lsp/lsp-yaml-schemas.json")
@@ -3413,14 +3427,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;;  (use-package org-download
-;;    :init
-;;    (setq org-download-image-dir "~/.secret_dotfiles/org/images")
-;;    :config
-;;    (add-hook 'org-mode-hook 'org-download-enable)
-;;    (add-hook 'org-mode-hook
-;;              (lambda ()
-;;                (org-display-inline-images))))
+(use-package org-download
+  :init
+  (setq org-download-image-dir "~/.secret_dotfiles/org/images")
+  :config
+  (add-hook 'org-mode-hook 'org-download-enable)
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (org-display-inline-images))))
 
 #+end_src
 
@@ -3899,6 +3913,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Open a specific file."
   (interactive)
   (find-file "~/Downloads/books"))
+
+(defun D ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/Downloads"))
 
 (defun backup ()
   "Open a specific file."
