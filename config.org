@@ -85,7 +85,6 @@
   - [[#org-roam][Org-roam]]
   - [[#templates][Templates]]
   - [[#visuals-1][Visuals]]
-  - [[#source-block-tag-expansion-cheat-sheet][Source block tag expansion cheat sheet]]
   - [[#enabling-table-of-contents][Enabling Table of Contents]]
   - [[#custom-key-bindings][Custom key bindings]]
 - [[#keybindings][Keybindings]]
@@ -510,7 +509,7 @@
 (add-hook 'sql-mode-hook 'my-sql-mode-custom-faces)
 (add-hook 'sql-interactive-mode-hook 'my-sql-mode-custom-faces)
 
-;; SQL mode
+;; Terraform mode
 (defun my-terraform-mode-custom-faces ()
   "Customize faces for terraform mode."
   (face-remap-add-relative 'font-lock-type-face :foreground "#9ccfd8"))
@@ -3539,15 +3538,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 #+end_src
-
-** Source block tag expansion cheat sheet
-
-   | Name | Description |
-   |------+-------------|
-   | se   | lisp        |
-   |------+-------------|
-   |      |             |
-
 
 ** Enabling Table of Contents
 

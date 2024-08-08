@@ -136,6 +136,8 @@
  
     ;; Terraform mode
     `(terraform-resource-type-face ((,class (:foreground ,rose-pine-iris))))
+    `(terraform-builtin-face ((,class (:foreground ,rose-pine-rose))))
+    `(terraform-resource-name-face ((,class (:foreground ,rose-pine-pine))))
 
     ;; Clojure ts mode
     `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))
