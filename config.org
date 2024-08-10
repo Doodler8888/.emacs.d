@@ -45,6 +45,7 @@
   - [[#mentor][Mentor]]
   - [[#wgrep][Wgrep]]
   - [[#embark][Embark]]
+  - [[#verticoconsult][Vertico/Consult]]
   - [[#ivycounsel][Ivy/Counsel]]
   - [[#with-editor][With-editor]]
   - [[#cron][Cron]]
@@ -54,6 +55,8 @@
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
   - [[#dired-keybindings][Dired keybindings]]
+  - [[#dired-du][Dired-du]]
+- [[#magit][Magit]]
 - [[#tramp][Tramp]]
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
@@ -383,7 +386,7 @@
     :after evil
     :init ;;    (setq evil-want-keybinding nil)
     :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker))
+    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker magit))
     (evil-collection-init))
 
   (defun my-evil-yank-to-end-of-line ()
@@ -394,11 +397,11 @@
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-  (defun my-evil-insert-state-minibuffer-setup ()
-    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+  ;; (defun my-evil-insert-state-minibuffer-setup ()
+  ;;   (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+  ;;   (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
 
-  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+  ;; (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
   (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
   (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
@@ -1577,6 +1580,25 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
+** Vertico/Consult
+
+#+begin_src emacs-lisp
+
+(use-package vertico
+  ;; :custom
+  ;; (vertico-scroll-margin 0) ;; Different scroll margin
+  ;; (vertico-count 20) ;; Show more candidates
+  ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+  ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  :init
+  (vertico-mode))
+
+(use-package consult)
+
+(use-package embark-consult)
+
+#+end_src
+
 ** Ivy/Counsel
 
 #+begin_src emacs-lisp
@@ -1584,9 +1606,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (use-package counsel
   :after ivy
   :config
-  (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history)
-  (counsel-mode))
-(global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
+  (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history))
+;;   (counsel-mode))
+;; (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
 (use-package ivy
   :bind
@@ -1603,8 +1625,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (interactive)
     (let ((inhibit-read-only t))
       (evil-delete-line (line-beginning-position) (line-end-position))))
-  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line)
-  (ivy-mode))
+  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line))
+  ;; (ivy-mode))
 
 (defun my-ivy-shell-command-history ()
   "Use `ivy-read` to search through shell command history."
@@ -1646,36 +1668,36 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; (setq ivy-posframe-display-functions-alist
 ;;       '((counsel-esh-history . ivy-posframe-display-at-window-center)))
 
-;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
-(use-package all-the-icons-ivy-rich
-  :init
-  (all-the-icons-ivy-rich-mode 1))
+;; ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
+;; (use-package all-the-icons-ivy-rich
+;;   :init
+;;   (all-the-icons-ivy-rich-mode 1))
 
-(use-package ivy-rich
-  :after ivy
-  :ensure t
-  :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-  :custom
-  (ivy-virtual-abbreviate 'full
-                          ivy-rich-switch-buffer-align-virtual-buffer t
-                          ivy-rich-path-style 'abbrev))
+;; (use-package ivy-rich
+;;   :after ivy
+;;   :ensure t
+;;   :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
+;;   :custom
+;;   (ivy-virtual-abbreviate 'full
+;;                           ivy-rich-switch-buffer-align-virtual-buffer t
+;;                           ivy-rich-path-style 'abbrev))
 
-(defun counsel-find-file-check-dir ()
-  "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
-  (interactive)
-  (let* ((current-dir (if (eq major-mode 'dired-mode)
-                          "."
-                        (buffer-file-name))))
-    (ivy-read "Find file: " #'read-file-name-internal
-              :matcher #'counsel--find-file-matcher
-              :action #'find-file-check-dir
-              :preselect current-dir
-              :require-match 'confirm-after-completion
-              :history 'file-name-history
-              :keymap counsel-find-file-map
-              :caller 'counsel-find-file)))
+;; (defun counsel-find-file-check-dir ()
+;;   "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
+;;   (interactive)
+;;   (let* ((current-dir (if (eq major-mode 'dired-mode)
+;;                           "."
+;;                         (buffer-file-name))))
+;;     (ivy-read "Find file: " #'read-file-name-internal
+;;               :matcher #'counsel--find-file-matcher
+;;               :action #'find-file-check-dir
+;;               :preselect current-dir
+;;               :require-match 'confirm-after-completion
+;;               :history 'file-name-history
+;;               :keymap counsel-find-file-map
+;;               :caller 'counsel-find-file)))
 
-(global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
+;; (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
 
 (defun ivy-fzf-project ()
   "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
@@ -2094,6 +2116,23 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
+** Dired-du
+
+#+begin_src emacs-lisp
+
+;; (use-package dired-du)
+;; (add-hook 'dired-mode-hook #'dired-du-mode)
+
+#+end_src
+
+* Magit
+
+#+begin_src emacs-lisp
+
+(use-package magit)
+
+#+end_src
+
 * Tramp
 
 #+begin_src emacs-lisp
@@ -2173,6 +2212,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ** Eshell
 
 #+begin_src emacs-lisp
+
+(use-package eshell
+  :ensure nil
+  :hook ((eshell-directory-change . sync-dir-in-buffer-name)
+         (eshell-mode . eshell-specific-outline-regexp))
+  :custom
+  (eshell-input-filter 'my-eshell-input-filter)
+  :config
+  (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
 
 (setq eshell-destroy-buffer-when-process-dies t)
 
@@ -2339,7 +2387,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   '(("mkdir" "/usr/bin/mkdir $*")
     ("kill" "/usr/bin/kill $*")
     ("grep" "/usr/bin/grep $*"))
-    ;; ("ls" "/usr/bin/ls $*"))
+  ;; ("ls" "/usr/bin/ls $*"))
   "A list of Eshell aliases.")
 
 (defun my-eshell-disable-aliases ()
@@ -2361,6 +2409,52 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-directory-change-hook 'my-eshell-check-remote-directory)
 (add-hook 'eshell-mode-hook 'my-eshell-enable-aliases)
+
+(defun eshell/cat-with-syntax-highlighting (filename)
+  "Like cat(1) but with syntax highlighting.
+   Stole from aweshell"
+  (let ((existing-buffer (get-file-buffer filename))
+        (buffer (find-file-noselect filename)))
+    (eshell-print
+     (with-current-buffer buffer
+       (if (fboundp 'font-lock-ensure)
+           (font-lock-ensure)
+         (with-no-warnings
+           (font-lock-fontify-buffer)))
+       (let ((contents (buffer-string)))
+         (remove-text-properties 0 (length contents) '(read-only nil) contents)
+         contents)))
+    (unless existing-buffer
+      (kill-buffer buffer))
+    nil))
+(advice-add 'eshell/cat :override #'eshell/cat-with-syntax-highlighting)
+
+(defun sync-dir-in-buffer-name ()
+  "Update eshell buffer to show directory path.
+Stolen from aweshell."
+  (let* ((root (projectile-project-root))
+         (root-name (projectile-project-name root)))
+    (if root-name
+        (rename-buffer (format "*eshell %s* %s" root-name (s-chop-prefix root default-directory)) t)
+      (rename-buffer (format "*eshell %s*" default-directory) t))))
+
+(defun eshell-specific-outline-regexp ()
+  (setq-local outline-regexp eshell-prompt-regexp))
+
+(defun eshell-redirect-to-buffer (buffer)
+  "Auto create command for redirecting to buffer."
+  (interactive (list (read-buffer "Redirect to buffer: ")))
+  (insert (format " >>> #<%s>" buffer)))
+
+(defun my-eshell-input-filter (input)
+  "Do not save on the following:
+     - empty lines
+     - commands that start with a space, `cd`, `ls`/`l`"
+  (and
+   (eshell-input-filter-default input)
+   (eshell-input-filter-initial-space input)
+   (not (string-prefix-p "cd " input))
+   (not (string-prefix-p "ls " input))))
 
 #+end_src
 
@@ -2817,7 +2911,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
             (eshell/cd buffer-dir))))))
 
   (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
+    (define-key evil-insert-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
   ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
   (defun SpawnEshellInProjectRoot ()
@@ -3944,6 +4039,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Open a specific file."
   (interactive)
   (find-file "~/.source"))
+
+(defun colors ()
+  "Open a specific file."
+  (interactive)
+  (list-faces-display))
 
 (defun tmp ()
   "Open a specific file."
