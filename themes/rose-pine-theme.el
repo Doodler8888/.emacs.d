@@ -190,8 +190,17 @@
     ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
     ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
  
+    ;; Vertico
+    `(vertico-current ((,class (:background ,rose-pine-subtle))))
+
+    ;; Orderless
+    `(orderless-match-face-0 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtext))))
+    `(orderless-match-face-1 ((,class (:foreground ,rose-pine-iris :background ,rose-pine-subtext))))
+    `(orderless-match-face-2 ((,class (:foreground ,rose-pine-foam :background ,rose-pine-subtext))))
+    `(orderless-match-face-3 ((,class (:foreground ,rose-pine-gold :background ,rose-pine-subtext))))
+    
     ;; Ivy
-    `(ivy-current-match ((,class (:background ,rose-pine-subtext))))
+    `(ivy-current-match ((,class (:background ,rose-pine-subtle))))
     `(ivy-minibuffer-match-face-1 ((,class (:background ,rose-pine-subtext))))
     `(ivy-minibuffer-match-face-2 ((,class (:background ,rose-pine-subtext))))
     `(ivy-minibuffer-match-face-3 ((,class (:background ,rose-pine-subtext))))
