@@ -54,8 +54,6 @@
   - [[#helpful][Helpful]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
-  - [[#dired-keybindings][Dired keybindings]]
-  - [[#dired-du][Dired-du]]
 - [[#magit][Magit]]
 - [[#tramp][Tramp]]
 - [[#shells-and-terminals][Shells and Terminals]]
@@ -632,6 +630,9 @@
 (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
 
+(add-hook 'yaml-ts-mode-hook (lambda () 
+  (auto-fill-mode -1)))
+
 #+end_src
 
 * Packages
@@ -668,6 +669,10 @@
     "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
     "sr" '(rename-desktop-session :wk "Rename a desktop session")
 
+    ;; Git
+    "gs" '(vc-switch-branch :wk "Switch to another branch")
+    "gc" '(vc-create-branch :wk "Create branch")
+    
     ;; Org
     "ot" '(todo :wk "Opens the org todo file")
 
@@ -1584,31 +1589,28 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-(use-package vertico
-  ;; :custom
-  ;; (vertico-scroll-margin 0) ;; Different scroll margin
-  ;; (vertico-count 20) ;; Show more candidates
-  ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
-  ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+;; (use-package vertico
+;;   :custom
+;;   (vertico-scroll-margin 0) ;; Different scroll margin
+;;   ;; (vertico-count 20) ;; Show more candidates
+;;   ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+;;   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+;;   :init
+;;   (vertico-mode))
+
+(use-package marginalia
   :init
-  (vertico-mode))
+  (marginalia-mode))
 
-(use-package consult)
+;; (use-package consult)
 
-(use-package embark-consult)
+;; (use-package embark-consult)
 
 #+end_src
 
 ** Ivy/Counsel
 
 #+begin_src emacs-lisp
-
-(use-package counsel
-  :after ivy
-  :config
-  (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history))
-;;   (counsel-mode))
-;; (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
 (use-package ivy
   :bind
@@ -1625,8 +1627,17 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (interactive)
     (let ((inhibit-read-only t))
       (evil-delete-line (line-beginning-position) (line-end-position))))
-  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line))
-  ;; (ivy-mode))
+  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line)
+  :init
+  (ivy-mode))
+
+(use-package counsel
+  :after ivy
+  :config
+  (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history))
+  ;; :init
+  ;; (counsel-mode))
+;; (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
 (defun my-ivy-shell-command-history ()
   "Use `ivy-read` to search through shell command history."
@@ -1745,14 +1756,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
               :action (lambda (f)
                         (insert (expand-file-name f default-directory))))))
 
-(defun insert-path-from-ivy-fzf-project ()
-  "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
-  (interactive)
-  (let ((default-directory (projectile-project-root))
-        (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
-    (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
-              :action (lambda (f)
-                        (insert (expand-file-name f default-directory))))))
+;; (defun insert-path-from-ivy-fzf-project ()
+;;   "Insert the path of a file selected by `ivy-fzf` from a project directory into the current buffer."
+;;   (interactive)
+;;   (let ((default-directory (projectile-project-root))
+;;         (fzf-command "fd --hidden --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp --exclude '.config/vivaldi' --exclude snap --type f --hidden"))
+;;     (ivy-read "Find file: " (split-string (shell-command-to-string fzf-command) "\n")
+;;               :action (lambda (f)
+;;                         (insert (expand-file-name f default-directory))))))
 
 (defun insert-path-from-ivy-fzf-root ()
   "Insert the path of a file selected by `ivy-fzf` from the root directory into the current buffer."
@@ -2106,30 +2117,18 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-
-** Dired keybindings
-
-#+begin_src emacs-lisp
-
-  ;; (evil-define-key 'normal dired-mode-map
-  ;;   (kbd "+") 'dired-create-directory))
-
-#+end_src
-
-** Dired-du
-
-#+begin_src emacs-lisp
-
-;; (use-package dired-du)
-;; (add-hook 'dired-mode-hook #'dired-du-mode)
-
-#+end_src
-
 * Magit
 
 #+begin_src emacs-lisp
 
-(use-package magit)
+(use-package magit
+  :config
+  (define-key magit-mode-map (kbd "M-1") nil)
+  (define-key magit-mode-map (kbd "M-2") nil)
+  (define-key magit-mode-map (kbd "M-3") nil)
+  (define-key magit-mode-map (kbd "M-4") nil)
+  (define-key magit-mode-map (kbd "M-5") nil)
+  )
 
 #+end_src
 
@@ -2215,8 +2214,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package eshell
   :ensure nil
-  :hook ((eshell-directory-change . sync-dir-in-buffer-name)
-         (eshell-mode . eshell-specific-outline-regexp))
+  :hook ((eshell-mode . eshell-specific-outline-regexp))
+          ;; (eshell-directory-change . sync-dir-in-buffer-name)
   :custom
   (eshell-input-filter 'my-eshell-input-filter)
   :config
@@ -2429,14 +2428,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     nil))
 (advice-add 'eshell/cat :override #'eshell/cat-with-syntax-highlighting)
 
-(defun sync-dir-in-buffer-name ()
-  "Update eshell buffer to show directory path.
-Stolen from aweshell."
-  (let* ((root (projectile-project-root))
-         (root-name (projectile-project-name root)))
-    (if root-name
-        (rename-buffer (format "*eshell %s* %s" root-name (s-chop-prefix root default-directory)) t)
-      (rename-buffer (format "*eshell %s*" default-directory) t))))
+;; (defun sync-dir-in-buffer-name ()
+;;   "Update eshell buffer to show directory path.
+;; Stolen from aweshell."
+;;   (let* ((root (projectile-project-root))
+;;          (root-name (projectile-project-name root)))
+;;     (if root-name
+;;         (rename-buffer (format "*eshell %s* %s" root-name (s-chop-prefix root default-directory)) t)
+;;       (rename-buffer (format "*eshell %s*" default-directory) t))))
 
 (defun eshell-specific-outline-regexp ()
   (setq-local outline-regexp eshell-prompt-regexp))
@@ -2454,7 +2453,31 @@ Stolen from aweshell."
    (eshell-input-filter-default input)
    (eshell-input-filter-initial-space input)
    (not (string-prefix-p "cd " input))
-   (not (string-prefix-p "ls " input))))
+   (not (string-prefix-p "ls " input))
+   (not (string-prefix-p "la " input))))
+
+(defun eshell-outline-ivy ()
+  "Show Eshell outline candidates using Ivy."
+  (interactive)
+  (let* ((buf (current-buffer))
+         (candidates (with-current-buffer buf
+                       (save-excursion
+                         (goto-char (point-min))
+                         (let ((outline-regexp eshell-prompt-regexp)
+                               (case-fold-search nil)
+                               candidates)
+                           (while (re-search-forward outline-regexp nil t)
+                             (push (cons (buffer-substring-no-properties
+                                          (line-beginning-position)
+                                          (line-end-position))
+                                         (point))
+                                   candidates))
+                           (nreverse candidates))))))
+    (ivy-read "Eshell outline: "
+              candidates
+              :action (lambda (candidate)
+                        (with-current-buffer buf
+                          (goto-char (cdr candidate)))))))
 
 #+end_src
 
@@ -2866,99 +2889,122 @@ Stolen from aweshell."
 
 #+begin_src emacs-lisp
 
-  (defvar
-    eshell-toggle-window-configuration nil
-    "Variable to store the window configuration before opening eshell.")
+(defvar
+  eshell-toggle-window-configuration nil
+  "Variable to store the window configuration before opening eshell.")
 
-  (defvar eshell-toggle-selected-window nil
-    "Variable to store the selected window before opening eshell.")
+(defvar eshell-toggle-selected-window nil
+  "Variable to store the selected window before opening eshell.")
 
-  (defun SpawnEshellSplitBelow ()
-    "Open a shell in a small split below or toggle it if already open."
-    (interactive)
-    (if (eq major-mode 'eshell-mode)
-        (progn
-          (when eshell-toggle-window-configuration
-            (set-window-configuration eshell-toggle-window-configuration)
-            (setq eshell-toggle-window-configuration nil))
-          (when eshell-toggle-selected-window
-            (select-window eshell-toggle-selected-window)
-            (setq eshell-toggle-selected-window nil)))
-      (setq eshell-toggle-window-configuration (current-window-configuration))
-      (setq eshell-toggle-selected-window (selected-window))
-      ;; Calculate one third of the total window height
-      (let ((one-third-height (/ (window-total-height) 3)))
-        ;; Ensure the height is at least 1 to avoid errors
-        (setq one-third-height (max one-third-height 1))
-        (split-window-below (- one-third-height))
-        (other-window 1)
-        (open-eshell-in-current-directory))))
+(defun SpawnEshellSplitBelow ()
+  "Open a shell in a small split below or toggle it if already open."
+  (interactive)
+  (if (eq major-mode 'eshell-mode)
+      (progn
+        (when eshell-toggle-window-configuration
+          (set-window-configuration eshell-toggle-window-configuration)
+          (setq eshell-toggle-window-configuration nil))
+        (when eshell-toggle-selected-window
+          (select-window eshell-toggle-selected-window)
+          (setq eshell-toggle-selected-window nil)))
+    (setq eshell-toggle-window-configuration (current-window-configuration))
+    (setq eshell-toggle-selected-window (selected-window))
+    ;; Calculate one third of the total window height
+    (let ((one-third-height (/ (window-total-height) 3)))
+      ;; Ensure the height is at least 1 to avoid errors
+      (setq one-third-height (max one-third-height 1))
+      (split-window-below (- one-third-height))
+      (other-window 1)
+      (open-eshell-in-current-directory))))
 
-  (defun open-eshell-in-current-directory ()
-    "Open eshell in the directory of the current buffer.
-      If an eshell buffer for the directory already exists, switch to it."
-    (interactive)
-    (let* ((buffer-dir (if (buffer-file-name)
-                           (file-name-directory (buffer-file-name))
-                         default-directory))
-           (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
-           (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-      (if existing-eshell-buffer
-          (switch-to-buffer existing-eshell-buffer)
-        (let ((eshell-buffer (eshell 'N)))
-          (with-current-buffer eshell-buffer
-            (rename-buffer eshell-buffer-name)
-            (eshell/cd buffer-dir))))))
+(defun open-eshell-in-current-directory ()
+  "Open eshell in the directory of the current buffer.
+    If an eshell buffer for the directory already exists, switch to it."
+  (interactive)
+  (let* ((buffer-dir (if (buffer-file-name)
+                         (file-name-directory (buffer-file-name))
+                       default-directory))
+         (eshell-buffer-name (concat "*eshell:" buffer-dir "*"))
+         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+    (if existing-eshell-buffer
+        (switch-to-buffer existing-eshell-buffer)
+      (let ((eshell-buffer (eshell 'N)))
+        (with-current-buffer eshell-buffer
+          (rename-buffer eshell-buffer-name)
+          (eshell/cd buffer-dir))))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
-    (define-key evil-insert-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
-  ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
+  (define-key evil-insert-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
+;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
-  (defun SpawnEshellInProjectRoot ()
-    "Open eshell in the project's root directory or toggle it if already open."
-    (interactive)
-    (if (eq major-mode 'eshell-mode)
-        (progn
-          (when eshell-toggle-window-configuration
-            (set-window-configuration eshell-toggle-window-configuration)
-            (setq eshell-toggle-window-configuration nil))
-          (when eshell-toggle-selected-window
-            (select-window eshell-toggle-selected-window)
-            (setq eshell-toggle-selected-window nil)))
-      (setq eshell-toggle-window-configuration (current-window-configuration))
-      (setq eshell-toggle-selected-window (selected-window))
-      ;; Calculate one third of the total window height
-      (let ((one-third-height (/ (window-total-height) 3)))
-        ;; Ensure the height is at least 1 to avoid errors
-        (setq one-third-height (max one-third-height 1))
-        (split-window-below (- one-third-height))
-        (other-window 1)
-        (let ((project-root (projectile-project-root)))
-          (open-eshell-in-directory project-root)))))
+(defun SpawnEshellInProjectRoot ()
+  "Open eshell in the project's root directory or toggle it if already open."
+  (interactive)
+  (if (eq major-mode 'eshell-mode)
+      (progn
+        (when eshell-toggle-window-configuration
+          (set-window-configuration eshell-toggle-window-configuration)
+          (setq eshell-toggle-window-configuration nil))
+        (when eshell-toggle-selected-window
+          (select-window eshell-toggle-selected-window)
+          (setq eshell-toggle-selected-window nil)))
+    (setq eshell-toggle-window-configuration (current-window-configuration))
+    (setq eshell-toggle-selected-window (selected-window))
+    ;; Calculate one third of the total window height
+    (let ((one-third-height (/ (window-total-height) 3)))
+      ;; Ensure the height is at least 1 to avoid errors
+      (setq one-third-height (max one-third-height 1))
+      (split-window-below (- one-third-height))
+      (other-window 1)
+      (let ((project-root (projectile-project-root)))
+        (open-eshell-in-directory project-root)))))
 
-  (defun open-eshell-in-directory (dir)
-    "Open eshell in the specified directory DIR.
-  If an eshell buffer for the directory already exists, switch to it."
-    (interactive "DDirectory: ")
-    (let* ((eshell-buffer-name (concat "*eshell:" dir "*"))
-           (existing-eshell-buffer (get-buffer eshell-buffer-name)))
-      (if existing-eshell-buffer
-          (switch-to-buffer existing-eshell-buffer)
-        (let ((eshell-buffer (eshell 'N)))
-          (with-current-buffer eshell-buffer
-            (rename-buffer eshell-buffer-name)
-            (eshell/cd dir))))))
+(defun open-eshell-in-directory (dir)
+  "Open eshell in the specified directory DIR.
+If an eshell buffer for the directory already exists, switch to it."
+  (interactive "DDirectory: ")
+  (let* ((eshell-buffer-name (concat "*eshell:" dir "*"))
+         (existing-eshell-buffer (get-buffer eshell-buffer-name)))
+    (if existing-eshell-buffer
+        (switch-to-buffer existing-eshell-buffer)
+      (let ((eshell-buffer (eshell 'N)))
+        (with-current-buffer eshell-buffer
+          (rename-buffer eshell-buffer-name)
+          (eshell/cd dir))))))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
 
-  (defun kill-all-eshell-buffers ()
-    "Kill all Eshell buffers."
-    (interactive)
-    (dolist (buffer (buffer-list))
-      (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
-        (kill-buffer buffer))))
+(defun kill-all-eshell-buffers ()
+  "Kill all Eshell buffers."
+  (interactive)
+  (dolist (buffer (buffer-list))
+    (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
+      (kill-buffer buffer))))
+
+(defvar-local my-previous-window-configuration nil
+  "Stores the window configuration before switching to eshell.")
+
+(defvar-local my-eshell-buffer nil
+  "Stores the eshell buffer for each frame.")
+
+(defun my-toggle-fullscreen-eshell ()
+  "Toggle between current window configuration and fullscreen eshell."
+  (interactive)
+  (if (eq major-mode 'eshell-mode)
+      ;; If we're in eshell, restore the previous window configuration
+      (when my-previous-window-configuration
+        (set-window-configuration my-previous-window-configuration)
+        (setq my-previous-window-configuration nil))
+    ;; If we're not in eshell, switch to fullscreen eshell
+    (setq my-previous-window-configuration (current-window-configuration))
+    (delete-other-windows)
+    (let ((eshell-buffer (or (frame-parameter nil 'my-eshell-buffer)
+                             (let ((new-eshell (eshell t)))
+                               (set-frame-parameter nil 'my-eshell-buffer new-eshell)
+                               new-eshell))))
+      (switch-to-buffer eshell-buffer))))
 
 #+end_src
 
@@ -3766,6 +3812,14 @@ Stolen from aweshell."
     (revert-buffer)))
 
 (global-set-key (kbd "C-c r") 'my-refresh-command)
+
+(defun my-disable-magit-keybindings ()
+  "Disable specific keybindings in Magit."
+  (define-key magit-mode-map (kbd "M-1") nil) ; Disable M-1
+  (define-key magit-mode-map (kbd "M-2") nil) ; Disable M-2
+  ;; Add more keybindings as needed
+  )
+
 
 #+end_src
 
