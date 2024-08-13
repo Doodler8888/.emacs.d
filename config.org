@@ -395,11 +395,11 @@
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-  ;; (defun my-evil-insert-state-minibuffer-setup ()
-  ;;   (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-  ;;   (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+  (defun my-evil-insert-state-minibuffer-setup ()
+    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
 
-  ;; (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
   (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
   (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
