@@ -1046,14 +1046,14 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 ;; (setq comint-output-filter-functions
 ;;       (remove 'ansi-color-process-output comint-output-filter-functions))
 
-(defun my/setup-docker-buffer ()
-  "Set up a buffer for Docker output."
-  (setq-local ansi-color-for-comint-mode t)
-  (setq-local xterm-color-preserve-properties t)
-  (font-lock-mode -1)  ; Disable font-lock to improve performance
-  )
+;; (defun my/setup-docker-buffer ()
+;;   "Set up a buffer for Docker output."
+;;   (setq-local ansi-color-for-comint-mode t)
+;;   (setq-local xterm-color-preserve-properties t)
+;;   (font-lock-mode -1)  ; Disable font-lock to improve performance
+;;   )
 
-(add-hook 'docker-container-logs-mode-hook #'my/setup-docker-buffer)
+;; (add-hook 'docker-container-logs-mode-hook #'my/setup-docker-buffer)
 
 (add-hook 'shell-mode-hook
           (lambda ()
@@ -2239,7 +2239,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       eshell-hist-ignoredups t
       eshell-scroll-to-bottom-on-input t
       eshell-banner-message ""
-      eshell-visual-commands'("bash" "htop" "ssh" "top" "gpg" "paru" "ngrok"))
+      eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
 (add-hook 'eshell-mode-hook
           (lambda ()
@@ -2314,7 +2314,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (with-eval-after-load 'eshell
   (with-eval-after-load 'evil
-    ;; (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
+    (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
     (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
 (defun eshell-new ()
@@ -2834,7 +2834,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;     (message "No Kubernetes tab found")))
 
 ;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-kubernetes-tab)
-(add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-tab)
+;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-tab)
 
 #+end_src
 
@@ -3473,7 +3473,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (setq lsp-yaml-schemas
       `((kubernetes . "k8s-*.yaml")
-        (gitlab-ci . ".gitlab-ci.yml")
+        ;; (gitlab-ci . ".gitlab-ci.yml") ;; For some reason it stops working if it's uncommented, but it works if the line is commented.
         ;; (github-workflow . ".github/workflows/*")
         ;; (github-action . ".github/action.{yml,yaml}")
         ;; (ansible-tasks . "roles/tasks/**/*.{yml,yaml}")
@@ -3495,6 +3495,9 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Setup lsp-mode for yaml files
 (add-hook 'yaml-ts-mode-hook #'lsp)
   
+;; Enable logging for debugging
+(setq lsp-log-io t)
+
 #+end_src
 
 * Org Mode
