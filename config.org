@@ -76,6 +76,7 @@
   - [[#flymake][Flymake]]
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
+  - [[#eglot][Eglot]]
   - [[#lsp-mode][Lsp Mode]]
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
@@ -3039,8 +3040,8 @@ If an eshell buffer for the directory already exists, switch to it."
         '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
-          "*Flymake diagnostics.*"
-          "*Flycheck errors.*"
+          ;; "*Flymake diagnostics.*"
+          ;; "*Flycheck errors.*"
           "*Python.*"
           "\\* docker container logs .*\\*"
           "\\* docker inspect .*\\*"
@@ -3141,8 +3142,6 @@ If an eshell buffer for the directory already exists, switch to it."
 (with-eval-after-load 'evil
   ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
   ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-  ;; (define-key evil-normal-state-map (kbd "M-t M-m") 'popper-flymake-diagnostics)
-  ;; (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
   (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
   (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
@@ -3154,9 +3153,11 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (use-package pyvenv
-    :config
-    (pyvenv-mode 1))  
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1))  
+
+(pyvenv-activate "/home/wurfkreuz/.projects/python-server/server-python/.venv")
 
 #+end_src
 
@@ -3214,6 +3215,7 @@ If an eshell buffer for the directory already exists, switch to it."
   (use-package terraform-mode)
   (use-package dockerfile-mode)
   (use-package haskell-mode)
+  (use-package yaml-mode)
 
   (when (require 'dockerfile-mode nil 'noerror)
     ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
@@ -3311,192 +3313,228 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+end_src
 
+** Eglot
+
+#+begin_src emacs-lisp
+
+(setq eglot-events-buffer-size 0)
+
+(add-hook 'python-ts-mode-hook 'eglot-ensure)
+(add-hook 'yaml-ts-mode-hook #'eglot-ensure)
+
+;; (setq eglot-workspace-configuration
+;;       '((:yaml . (:schemas
+;;                   (("https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json" . ".gitlab-ci.yml")
+;;                    ("kubernetes" . "k8s-*.yaml"))))))
+
+;; (setq eglot-workspace-configuration
+;;       '((:yaml (:schemas (:Kubernetes "k8s-*.yaml")
+;; 		      :schemaStore (:enable t)))))
+
+(require 'eglot)
+
+(setq enable-local-variables t)
+(setq enable-dir-local-variables t)
+
+;; (setq-default eglot-workspace-configuration
+;;               '((yaml-ts-mode
+;;                  . ((yaml . ((schemas . ((kubernetes . ["*.yaml"])))
+;;                              (schemaStore . ((enable . t)))))))))
+
+#+end_src
+
 ** Lsp Mode
 
 #+begin_src emacs-lisp
 
-(use-package lsp-mode
-  :commands lsp
-  :hook ((go-ts-mode . lsp)
-         (clojure-ts-mode . lsp)
-         (haskell-mode . lsp)
-         (python-ts-mode . lsp))
-  ;; (raku-mode . lsp))
-  :init
-  (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
-  (setq lsp-lens-enable nil)
-  :config
-  ;; Register Go LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-                    :major-modes '(go-ts-mode)
-                    :server-id 'gopls))
-  
-  ;; Register Terraform LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- terraform-ls")
-                    :major-modes '(terraform-mode)
-                    :server-id 'terraform-ls))
-  
-  ;; Register Haskell LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
-                    :major-modes '(haskell-mode)
-                    :server-id 'hls))
-
-;; Register Python LSP client
-;; (setq lsp-pylsp-plugins-flake8-enabled t)
-;; (lsp-register-client
-;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
-;;                   :major-modes '(python-ts-mode)
-;;                   :server-id 'pylsp))
-
-;; (add-hook 'sql-mode-hook 'lsp)
-;; (setq lsp-sqls-workspace-config-path nil)
-;; (setq lsp-sqls-connections
-;;       `(((driver . "mysql") (dataSourceName . "yyoncho:local@tcp(localhost:3306)/foo"))
-;;         ((driver . "mssql") (dataSourceName . "Server=localhost;Database=sammy;User Id=yyoncho;Password=hunter2;"))
-;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz dbname=wurfkreuz sslmode=disable")))
-;;         ((driver . "postgresql")
-;;          (dataSourceName . (concat "host=127.0.0.1 "
-;;                                    "port=5432 "
-;;                                    "user=wurfkreuz "
-;;                                    "password=" (getenv "POSTGRES_PASSWORD") " "
-;;                                    "dbname=server "
-;;                                    "sslmode=disable")))
-;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz password=%s dbname=shelf sslmode=disable"
-;;                                                             (getenv "SHELF_DB_PASS"))))))
-  
-  ;; Register Clojure LSP client
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
-                    :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
-                    :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
-
-  ;; ;; Register Raku Navigator LSP client
-  ;; (lsp-register-client
-  ;;  (make-lsp-client :new-connection (lsp-stdio-connection
-  ;;                                    (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
-  ;;                   :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
-  ;;                   :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
-
-  ;; General LSP settings
-  (lsp-signature-mode nil)
-  (setq lsp-idle-delay 0.1
-        lsp-diagnostics-provider :flymake
-        lsp-headerline-breadcrumb-enable nil
-        gc-cons-threshold (* 100 1024 1024)
-        read-process-output-max (* 1024 1024)
-        lsp-log-max 0
-        lsp-log-io nil
-        lsp-enable-symbol-highlighting nil
-        lsp-signature-render-documentation nil
-        lsp--last-signature nil
-        lsp--last-signature-index nil
-        lsp--last-signature-buffer nil
-        lsp-signature-auto-activate nil
-        lsp-signature-cycle nil
-        lsp-signature-doc-lines nil
-        lsp-signature-face nil
-        lsp-signature-function nil
-        lsp-signature-posframe nil
-        lsp-eldoc-enable-hover nil
-        lsp-eldoc-render-all nil
-        lsp-signature-render-documentation nil))
-
-(setq lsp-pyright-multi-root nil)
-
-(use-package lsp-pyright
-  :ensure t
-  :hook (python-ts-mode . (lambda ()
-                            (require 'lsp-pyright)
-                            (lsp-deferred)))  ; Use lsp-deferred to start the server after the buffer is loaded
-  :init
-  ;; Modify the command to start the server
-  (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
-
-(defun set-lsp-pyright-venv-path ()
-  "Interactively set the `lsp-pyright-venv-path` to a selected directory."
-  (interactive)
-  (let ((selected-dir (read-directory-name "Select Python virtual environment directory: ")))
-    (if (file-directory-p selected-dir)
-        (progn
-          (setq lsp-pyright-venv-path selected-dir)
-          (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-path))
-          ;; (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-directory))
-      (message "Invalid directory or operation cancelled."))))
-
-(defun my/disable-python-flymake ()
-  "Disable default Python Flymake checker."
-  (setq-local flymake-diagnostic-functions
-              (remove 'python-flymake flymake-diagnostic-functions)))
-
-(add-hook 'python-ts-mode-hook #'my/disable-python-flymake) ;
-
-(use-package lsp-ui
-  :after lsp-mode
-  :init
-  (setq lsp-ui-doc-allow-mouse t)
-  :hook (lsp-mode . lsp-ui-mode))
-
-;; (define-key evil-normal-state-map (kbd "K") 'lsp-describe-thing-at-point)
-(defun my/lsp-describe-thing-at-point ()
-  "Call `lsp-describe-thing-at-point` and switch to the documentation window."
-  (interactive)
-  (let ((orig-window (selected-window)))
-    (lsp-describe-thing-at-point)
-    (select-window (get-buffer-window "*lsp-help*"))))
-
-;; Bind the custom function to 'K' in Evil's normal mode
-(define-key evil-normal-state-map (kbd "K") 'my/lsp-describe-thing-at-point)
-
-;; (use-package lsp-haskell
-;;   :ensure t
+;; (use-package lsp-mode
+;;   :commands lsp
+;;   :hook ((go-ts-mode . lsp)
+;;          (clojure-ts-mode . lsp)
+;;          (haskell-mode . lsp)
+;;          (python-ts-mode . lsp))
+;;   ;; (raku-mode . lsp))
 ;;   :init
-;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-;;   :after lsp
+;;   (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
+;;   (setq lsp-lens-enable nil)
 ;;   :config
-;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-;;   )
-
-(defun remove-from-lsp-file-watch-ignored ()
-  "Interactively remove a pattern from `lsp-file-watch-ignored`."
-  (interactive)
-  (let ((pattern (completing-read "Remove pattern: " lsp-file-watch-ignored)))
-    (setq lsp-file-watch-ignored (remove pattern lsp-file-watch-ignored))
-    (message "Removed pattern: %s" pattern)))
-
-(defun add-lsp-workspace-folder ()
-  "Add the current directory to LSP workspace folders."
-  (interactive)
-  (lsp-workspace-folders-add (expand-file-name default-directory)))
-
-(setq lsp-yaml-schemas
-      `((kubernetes . "k8s-*.yaml")
-        ;; (gitlab-ci . ".gitlab-ci.yml") ;; For some reason it stops working if it's uncommented, but it works if the line is commented.
-        ;; (github-workflow . ".github/workflows/*")
-        ;; (github-action . ".github/action.{yml,yaml}")
-        ;; (ansible-tasks . "roles/tasks/**/*.{yml,yaml}")
-        ;; (prettierrc . ".prettierrc.{yml,yaml}")
-        ;; (kustomization . "kustomization.{yml,yaml}")
-        ;; (chart . "Chart.{yml,yaml}")
-        ;; (circleciconfig . ".circleci/**/*.{yml,yaml}")
-        ))
-
-;; Add this line to associate the schema URI with the symbol
-(setq lsp-yaml-schema-store-mappings
-      `(("gitlab-ci" . "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json")
-        ("ansible-tasks" . "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks")))
-
-(setq lsp-yaml-schema-store-enable t)
-(setq lsp-yaml-schema-store-local-db "~/.emacs.d/.cache/lsp/lsp-yaml-schemas.json")
-(setq lsp-yaml-schema-store-uri "https://www.schemastore.org/api/json/catalog.json")
-
-;; Setup lsp-mode for yaml files
-(add-hook 'yaml-ts-mode-hook #'lsp)
+;;   ;; Register Go LSP client
+;;   (lsp-register-client
+;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
+;;                     :major-modes '(go-ts-mode)
+;;                     :server-id 'gopls))
   
-;; Enable logging for debugging
-(setq lsp-log-io t)
+;;   ;; Register YAML LSP client
+;;   (lsp-register-client
+;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- yamlls")
+;;                     :major-modes '(yaml-ts-mode)
+;;                     :server-id 'yamlls))
+  
+;;   ;; Register Terraform LSP client
+;;   (lsp-register-client
+;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- terraform-ls")
+;;                     :major-modes '(terraform-mode)
+;;                     :server-id 'terraform-ls))
+  
+;;   ;; Register Haskell LSP client
+;;   (lsp-register-client
+;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
+;;                     :major-modes '(haskell-mode)
+;;                     :server-id 'hls))
+
+;; ;; Register Python LSP client
+;; ;; (setq lsp-pylsp-plugins-flake8-enabled t)
+;; ;; (lsp-register-client
+;; ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
+;; ;;                   :major-modes '(python-ts-mode)
+;; ;;                   :server-id 'pylsp))
+
+;; ;; (add-hook 'sql-mode-hook 'lsp)
+;; ;; (setq lsp-sqls-workspace-config-path nil)
+;; ;; (setq lsp-sqls-connections
+;; ;;       `(((driver . "mysql") (dataSourceName . "yyoncho:local@tcp(localhost:3306)/foo"))
+;; ;;         ((driver . "mssql") (dataSourceName . "Server=localhost;Database=sammy;User Id=yyoncho;Password=hunter2;"))
+;; ;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz dbname=wurfkreuz sslmode=disable")))
+;; ;;         ((driver . "postgresql")
+;; ;;          (dataSourceName . (concat "host=127.0.0.1 "
+;; ;;                                    "port=5432 "
+;; ;;                                    "user=wurfkreuz "
+;; ;;                                    "password=" (getenv "POSTGRES_PASSWORD") " "
+;; ;;                                    "dbname=server "
+;; ;;                                    "sslmode=disable")))
+;; ;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz password=%s dbname=shelf sslmode=disable"
+;; ;;                                                             (getenv "SHELF_DB_PASS"))))))
+  
+;;   ;; Register Clojure LSP client
+;;   (lsp-register-client
+;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
+;;                     :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
+;;                     :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
+
+;;   ;; ;; Register Raku Navigator LSP client
+;;   ;; (lsp-register-client
+;;   ;;  (make-lsp-client :new-connection (lsp-stdio-connection
+;;   ;;                                    (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
+;;   ;;                   :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
+;;   ;;                   :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
+
+;;   ;; General LSP settings
+;;   (lsp-signature-mode nil)
+;;   (setq lsp-idle-delay 0.1
+;;         lsp-diagnostics-provider :flymake
+;;         lsp-headerline-breadcrumb-enable nil
+;;         gc-cons-threshold (* 100 1024 1024)
+;;         read-process-output-max (* 1024 1024)
+;;         lsp-log-max 0
+;;         lsp-log-io nil
+;;         lsp-enable-symbol-highlighting nil
+;;         lsp-signature-render-documentation nil
+;;         lsp--last-signature nil
+;;         lsp--last-signature-index nil
+;;         lsp--last-signature-buffer nil
+;;         lsp-signature-auto-activate nil
+;;         lsp-signature-cycle nil
+;;         lsp-signature-doc-lines nil
+;;         lsp-signature-face nil
+;;         lsp-signature-function nil
+;;         lsp-signature-posframe nil
+;;         lsp-eldoc-enable-hover nil
+;;         lsp-eldoc-render-all nil
+;;         lsp-signature-render-documentation nil))
+
+;; (setq lsp-pyright-multi-root nil)
+
+;; (use-package lsp-pyright
+;;   :ensure t
+;;   :hook (python-ts-mode . (lambda ()
+;;                             (require 'lsp-pyright)
+;;                             (lsp-deferred)))  ; Use lsp-deferred to start the server after the buffer is loaded
+;;   :init
+;;   ;; Modify the command to start the server
+;;   (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
+
+;; (defun set-lsp-pyright-venv-path ()
+;;   "Interactively set the `lsp-pyright-venv-path` to a selected directory."
+;;   (interactive)
+;;   (let ((selected-dir (read-directory-name "Select Python virtual environment directory: ")))
+;;     (if (file-directory-p selected-dir)
+;;         (progn
+;;           (setq lsp-pyright-venv-path selected-dir)
+;;           (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-path))
+;;           ;; (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-directory))
+;;       (message "Invalid directory or operation cancelled."))))
+
+;; (defun my/disable-python-flymake ()
+;;   "Disable default Python Flymake checker."
+;;   (setq-local flymake-diagnostic-functions
+;;               (remove 'python-flymake flymake-diagnostic-functions)))
+
+;; (add-hook 'python-ts-mode-hook #'my/disable-python-flymake) ;
+
+;; (use-package lsp-ui
+;;   :after lsp-mode
+;;   :init
+;;   (setq lsp-ui-doc-allow-mouse t)
+;;   :hook (lsp-mode . lsp-ui-mode))
+
+;; ;; (define-key evil-normal-state-map (kbd "K") 'lsp-describe-thing-at-point)
+;; (defun my/lsp-describe-thing-at-point ()
+;;   "Call `lsp-describe-thing-at-point` and switch to the documentation window."
+;;   (interactive)
+;;   (let ((orig-window (selected-window)))
+;;     (lsp-describe-thing-at-point)
+;;     (select-window (get-buffer-window "*lsp-help*"))))
+
+;; ;; Bind the custom function to 'K' in Evil's normal mode
+;; (define-key evil-normal-state-map (kbd "K") 'my/lsp-describe-thing-at-point)
+
+;; ;; (use-package lsp-haskell
+;; ;;   :ensure t
+;; ;;   :init
+;; ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
+;; ;;   :after lsp
+;; ;;   :config
+;; ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
+;; ;;   )
+
+;; (defun remove-from-lsp-file-watch-ignored ()
+;;   "Interactively remove a pattern from `lsp-file-watch-ignored`."
+;;   (interactive)
+;;   (let ((pattern (completing-read "Remove pattern: " lsp-file-watch-ignored)))
+;;     (setq lsp-file-watch-ignored (remove pattern lsp-file-watch-ignored))
+;;     (message "Removed pattern: %s" pattern)))
+
+;; (defun add-lsp-workspace-folder ()
+;;   "Add the current directory to LSP workspace folders."
+;;   (interactive)
+;;   (lsp-workspace-folders-add (expand-file-name default-directory)))
+
+;; (setq lsp-yaml-schemas
+;;       `((kubernetes . "k8s-*.yaml")
+;;         ;; (gitlab-ci . ".gitlab-ci.yml") ;; For some reason it stops working if it's uncommented, but it works if the line is commented.
+;;         ;; (github-workflow . ".github/workflows/*")
+;;         ;; (github-action . ".github/action.{yml,yaml}")
+;;         ;; (ansible-tasks . "roles/tasks/**/*.{yml,yaml}")
+;;         ;; (prettierrc . ".prettierrc.{yml,yaml}")
+;;         ;; (kustomization . "kustomization.{yml,yaml}")
+;;         ;; (chart . "Chart.{yml,yaml}")
+;;         ;; (circleciconfig . ".circleci/**/*.{yml,yaml}")
+;;         ))
+
+;; ;; Add this line to associate the schema URI with the symbol
+;; (setq lsp-yaml-schema-store-mappings
+;;       `(("gitlab-ci" . "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json")
+;;         ("ansible-tasks" . "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks")))
+
+;; (setq lsp-yaml-schema-store-enable t)
+;; (setq lsp-yaml-schema-store-local-db "~/.emacs.d/.cache/lsp/lsp-yaml-schemas.json")
+;; (setq lsp-yaml-schema-store-uri "https://www.schemastore.org/api/json/catalog.json")
+
+;; ;; Setup lsp-mode for yaml files
+;; (add-hook 'yaml-ts-mode-hook #'lsp)
+  
+;; ;; Enable logging for debugging
+;; (setq lsp-log-io t)
 
 #+end_src
 
