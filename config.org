@@ -62,7 +62,6 @@
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
-  - [[#pgmacs][Pgmacs]]
 - [[#sessions][Sessions]]
   - [[#restoration-by-tab-names][Restoration by Tab names]]
   - [[#easysession][Easysession]]
@@ -276,6 +275,9 @@
 (global-auto-revert-mode 1)
 
 (setq-default truncate-lines t)
+
+(setq enable-local-variables t)
+(setq enable-dir-local-variables t)
 
 (setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
 (setenv "PATH" (concat (getenv "PATH") ":/usr/bin"))
@@ -1454,8 +1456,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (straight-use-package
-   '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
+(straight-use-package
+ '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
 
 #+end_src
 
@@ -1463,45 +1465,45 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package cider
-    :config
-    (setq cider-eldoc-display-for-symbol-at-point nil)
-    (setq cider-show-error-buffer nil)
-    (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
+(use-package cider
+  :config
+  (setq cider-eldoc-display-for-symbol-at-point nil)
+  (setq cider-show-error-buffer nil)
+  (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
 
-  (setq eldoc-documentation-function (lambda () nil))
+(setq eldoc-documentation-function (lambda () nil))
 
-  ;; (with-eval-after-load 'evil
-  ;;   (with-eval-after-load 'cider
-  ;;     ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
-  ;;     (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-  ;;     (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+;; (with-eval-after-load 'evil
+;;   (with-eval-after-load 'cider
+;;     ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
+;;     (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+;;     (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
 
-  ;;     ;; Define C-M-x for visual state to evaluate the selected region
-  ;;     (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
-  ;;     (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region)))
+;;     ;; Define C-M-x for visual state to evaluate the selected region
+;;     (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
+;;     (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region)))
 
-  (with-eval-after-load 'evil
-  ;; CIDER
-  (with-eval-after-load 'cider
-    ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
-    (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-    (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-    ;; Define C-M-x for visual state to evaluate the selected region
-    (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
-    (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region))
+(with-eval-after-load 'evil
+;; CIDER
+(with-eval-after-load 'cider
+  ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
+  (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+  (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
+  ;; Define C-M-x for visual state to evaluate the selected region
+  (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
+  (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region))
 
-  ;; Emacs Lisp
-  (with-eval-after-load 'elisp-mode
-    (evil-define-key 'normal emacs-lisp-mode-map (kbd "C-M-x") 'eval-defun)
-    (evil-define-key 'visual emacs-lisp-mode-map (kbd "C-M-x") 'eval-region))
+;; Emacs Lisp
+(with-eval-after-load 'elisp-mode
+  (evil-define-key 'normal emacs-lisp-mode-map (kbd "C-M-x") 'eval-defun)
+  (evil-define-key 'visual emacs-lisp-mode-map (kbd "C-M-x") 'eval-region))
 
-  ;; Org Mode
-  (with-eval-after-load 'org
-    (evil-define-key 'normal org-mode-map (kbd "C-M-x") 'org-babel-execute-src-block)
-    ;; For visual state in org-mode, you might want to keep the default behavior
-    ;; or define a custom function to evaluate a region if needed.
-    ))
+;; Org Mode
+(with-eval-after-load 'org
+  (evil-define-key 'normal org-mode-map (kbd "C-M-x") 'org-babel-execute-src-block)
+  ;; For visual state in org-mode, you might want to keep the default behavior
+  ;; or define a custom function to evaluate a region if needed.
+  ))
 
 #+end_src
 
@@ -2111,7 +2113,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (dired current-dir)))
 
 (defun OpenDiredBufferInCurrentWindow ()
-  "Open a Dired buffer in the current window, showing the directory of the current buffer."
+
   (interactive)
   (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
     (dired current-dir)))
@@ -2152,10 +2154,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;;       (format "%s\\|%s"
   ;;               vc-ignore-dir-regexp
   ;;               tramp-file-name-regexp))
-
-  ;; ;; projectile has the fun side-effect of wanting to calculate the
-  ;; ;; project name, which makes tramp oh-so-much-slower.
-  ;; (setq projectile-mode-line "Projectile")
 
   (defun my/disable-lockfiles-for-tramp ()
     "Disable lockfiles for tramp."
@@ -2659,19 +2657,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;             (sql-database "shelf"))))
 
 #+end_src
-
-** Pgmacs
-
-#+begin_src emacs-lisp
-
-;; (straight-use-package
-;;  '(pg-el :type git :host github :repo "emarsden/pg-el"))
-
-;; (straight-use-package
-;;  '(pgmacs :type git :host github :repo "emarsden/pgmacs"))
-
-#+end_src
-
 * Sessions
 
 #+begin_src emacs-lisp
@@ -3040,7 +3025,7 @@ If an eshell buffer for the directory already exists, switch to it."
         '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
-          ;; "*Flymake diagnostics.*"
+          "*Flymake diagnostics.*"
           ;; "*Flycheck errors.*"
           "*Python.*"
           "\\* docker container logs .*\\*"
@@ -3060,7 +3045,7 @@ If an eshell buffer for the directory already exists, switch to it."
           "\\*Warnings\\*"
           ;; "\\*xref\\*"
           ;; "\\*Backtrace\\*"
-          "\\*eldoc\\*"
+          ;; "\\*eldoc\\*"
           ;; "\\*Ement Notifications\\*"
           ;; "Output\\*$"
           ;; "\\*Dtache Shell Command\\*"
@@ -3317,29 +3302,34 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-(setq eglot-events-buffer-size 0)
+(require 'eglot)
+;; (setq eglot-events-buffer-size 0)
 
 (add-hook 'python-ts-mode-hook 'eglot-ensure)
 (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
 
-;; (setq eglot-workspace-configuration
-;;       '((:yaml . (:schemas
-;;                   (("https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json" . ".gitlab-ci.yml")
-;;                    ("kubernetes" . "k8s-*.yaml"))))))
+(define-key evil-normal-state-map (kbd "K") 'eldoc)
 
-;; (setq eglot-workspace-configuration
-;;       '((:yaml (:schemas (:Kubernetes "k8s-*.yaml")
-;; 		      :schemaStore (:enable t)))))
+(add-hook 'eglot-managed-mode-hook (lambda () (eldoc-mode -1)))
 
-(require 'eglot)
+(set-face-attribute 'eldoc-highlight-function-argument nil
+                    :inherit nil :foreground nil :weight 'medium)
 
-(setq enable-local-variables t)
-(setq enable-dir-local-variables t)
+(set-face-attribute 'eglot-highlight-symbol-face nil
+                    :inherit nil :foreground nil :weight 'medium)
 
-;; (setq-default eglot-workspace-configuration
-;;               '((yaml-ts-mode
-;;                  . ((yaml . ((schemas . ((kubernetes . ["*.yaml"])))
-;;                              (schemaStore . ((enable . t)))))))))
+
+
+;; Example for dir-locals:
+
+;; ((yaml-ts-mode . ((eglot-workspace-configuration . ((yaml schemas . ((
+;;     https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json ".gitlab-ci.yml"
+;;     ./argocd-application.schema.json [
+;;         "/Apps/*"
+;;         "/apps.yaml"
+;;     ]
+;;     Kubernetes ["k8s-*.yaml"]
+;; ))))))))
 
 #+end_src
 
