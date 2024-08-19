@@ -17,9 +17,7 @@
 - [[#packages][Packages]]
   - [[#general][General]]
   - [[#daemons][Daemons]]
-  - [[#pdf][PDF]]
   - [[#kubernetes][Kubernetes]]
-  - [[#axe-aws][Axe (AWS)]]
   - [[#proced][Proced]]
   - [[#avy][Avy]]
   - [[#async][Async]]
@@ -32,13 +30,11 @@
   - [[#docker][Docker]]
   - [[#folds][Folds]]
   - [[#ispell][Ispell]]
-  - [[#jinx][Jinx]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#sudo-edit][Sudo Edit]]
   - [[#symex][Symex]]
   - [[#paredit][Paredit]]
-  - [[#hyperbole][Hyperbole]]
   - [[#zoxide][Zoxide]]
   - [[#cider][Cider]]
   - [[#projectprojectile][Project/Projectile]]
@@ -49,8 +45,6 @@
   - [[#ivycounsel][Ivy/Counsel]]
   - [[#with-editor][With-editor]]
   - [[#cron][Cron]]
-  - [[#prescient][Prescient]]
-  - [[#fzf][Fzf]]
   - [[#helpful][Helpful]]
   - [[#hydra][Hydra]]
 - [[#dired][Dired]]
@@ -64,7 +58,6 @@
 - [[#database][Database]]
 - [[#sessions][Sessions]]
   - [[#restoration-by-tab-names][Restoration by Tab names]]
-  - [[#easysession][Easysession]]
 - [[#buffers][Buffers]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
@@ -76,7 +69,6 @@
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
   - [[#eglot][Eglot]]
-  - [[#lsp-mode][Lsp Mode]]
 - [[#org-mode][Org Mode]]
   - [[#general-1][General]]
   - [[#org-capture][Org capture]]
@@ -584,65 +576,10 @@
 (use-package treesit-auto
   :ensure t
   :config
-  ;; (treesit-auto-add-to-auto-mode-alist
-  ;; '(("\\.py$" . python-ts-mode)
-  ;;   ("\\.rb$" . ruby-ts-mode)
-  ;;   ("\\.go$" . go-ts-mode)
-  ;;   ("\\.bashrc\\'" . shell-mode)
-  ;;   ("\\.zshrc\\'" . shell-mode))) ; Removed the extra parentheses here
   (global-treesit-auto-mode))
-
-;; (use-package dockerfile-ts-mode
-;;   :straight (:type built-in)
-;;   :defer t
-;;   :mode (("\\Dockerfile\\'" . dockerfile-ts-mode)
-;;          ("\\.dockerignore\\'" . dockerfile-ts-mode)))
 
 (use-package clojure-ts-mode
   :ensure t)
-
-;; (straight-use-package
-;;  '(terraform-ts-mode :host github :repo "kgrotel/terraform-ts-mode"))
-
-;; (use-package terraform-ts-mode)
-
-;; (add-to-list
-;;  'treesit-language-source-alist
-;;  '(sql "https://github.com/DerekStride/tree-sitter-sql"))
-
-;; (setq treesit-language-source-alist
-;;       '((templ "https://github.com/vrischmann/tree-sitter-templ")
-;;         (bash "https://github.com/tree-sitter/tree-sitter-bash")
-;;         (cmake "https://github.com/uyha/tree-sitter-cmake")
-;;         (css "https://github.com/tree-sitter/tree-sitter-css")
-;;         ;; (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-;;         (go "https://github.com/tree-sitter/tree-sitter-go")
-;;         (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
-;;         (html "https://github.com/tree-sitter/tree-sitter-html")
-;;         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
-;;         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-;;         (json "https://github.com/tree-sitter/tree-sitter-json")
-;;         (make "https://github.com/alemuller/tree-sitter-make")
-;;         (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-;;         (python "https://github.com/tree-sitter/tree-sitter-python")
-;;         (toml "https://github.com/tree-sitter/tree-sitter-toml")
-;;         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-;;         (typescript "https://github.com/tree-sitter/tree-sitter-typescript"
-;;                     "master" "typescript/src")
-;;         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-;;         (clojure "https://github.com/sogaiu/tree-sitter-clojure")
-;;         (haskell "https://github.com/tree-sitter/tree-sitter-haskell")
-;;         (typst "https://github.com/uben0/tree-sitter-typst")
-;;         (java "https://github.com/tree-sitter/tree-sitter-java")
-;;         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
-;;         (rust "https://github.com/tree-sitter/tree-sitter-rust")))
-
-;;   (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
-;;   (add-to-list 'auto-mode-alist '("\\.clj\\'" . clojure-ts-mode))
-;;   (add-to-list 'auto-mode-alist '("\\.sh\\'" . bash-ts-mode))
-;;   (add-to-list 'auto-mode-alist '("\\.toml\\'" . toml-ts-mode))
-;;   (add-to-list 'auto-mode-alist '("\\.json\\'" . json-ts-mode))
-;;   (add-to-list 'auto-mode-alist '("\\.py\\'" . python-ts-mode))
 
 (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
@@ -840,61 +777,6 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+end_src
 
-** PDF
-
-#+begin_src emacs-lisp
-
-;; (use-package pdf-tools
-;;   :commands (pdf-view-mode pdf-tools-install)
-;;   ;; :bind (:map pdf-view-mode-map
-;;   ;;             ("j" . pdf-view-next-line-or-next-page)
-;;   ;;             ("k" . pdf-view-previous-line-or-previous-page)
-;;   ;;             ("C-=" . pdf-view-enlarge)
-;;   ;;             ("C--" . pdf-view-shrink))
-;;   :config
-;;   (pdf-tools-install)
-;;   ;; (define-pdf-cache-function pagelabels)
-;;   :hook ((pdf-view-mode . (lambda () (display-line-numbers-mode -1)))
-;;          (pdf-view-mode . pdf-tools-enable-minor-modes)))
-
-;; ;; (use-package pdf-tools
-;; ;;   :defer t
-;; ;;   :commands (pdf-loader-install)
-;; ;;   :mode "\\.pdf\\'"
-;; ;;   :bind (:map pdf-view-mode-map
-;; ;;               ("j" . pdf-view-next-line-or-next-page)
-;; ;;               ("k" . pdf-view-previous-line-or-previous-page)
-;; ;;               ("C-=" . pdf-view-enlarge)
-;; ;;               ("C--" . pdf-view-shrink))
-;; ;;   :init (pdf-loader-install)
-;; ;;   :config (add-to-list 'revert-without-query ".pdf")
-;; ;;   :hook ((pdf-view-mode . (lambda () (display-line-numbers-mode -1)))
-;; ;;          (pdf-view-mode . pdf-tools-enable-minor-modes)))
-
-
-;; (use-package saveplace-pdf-view
-;;   :hook (pdf-view-mode . save-place-mode))
-
-;; (defun my/pdf-view-save-current-page ()
-;;   "Save the current page number of the PDF in the buffer-local variable."
-;;   (interactive)
-;;   (when (eq major-mode 'pdf-view-mode)
-;;     (set (make-local-variable 'my/pdf-view-last-viewed-page)
-;;          (pdf-view-current-page))))
-
-;; (defun my/pdf-view-restore-last-page ()
-;;   "Restore the last viewed page of the PDF."
-;;   (interactive)
-;;   (when (and (eq major-mode 'pdf-view-mode)
-;;              (boundp 'my/pdf-view-last-viewed-page)
-;;              my/pdf-view-last-viewed-page)
-;;     (pdf-view-goto-page my/pdf-view-last-viewed-page)))
-
-;; (add-hook 'kill-buffer-hook 'my/pdf-view-save-current-page)
-;; (add-hook 'pdf-view-mode-hook 'my/pdf-view-restore-last-page)
-
-#+end_src
-
 ** Kubernetes
 
 #+begin_src emacs-lisp
@@ -933,14 +815,6 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 ;;   :after kubernetes)
 
 (fset 'k8s 'kubernetes-overview)
-
-#+end_src
-
-** Axe (AWS)
-
-#+begin_src emacs-lisp
-
-;; (use-package axe)
 
 #+end_src
 
@@ -1216,19 +1090,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-** Jinx
-
-#+begin_src emacs-lisp
-
-  ;; (use-package jinx
-  ;;   ;; :hook
-  ;;   ;; (dolist (hook '(text-mode-hook prog-mode-hook conf-mode-hook))
-  ;;   ;; (add-hook hook #'jinx-mode))
-  ;;   :bind (("M-$" . jinx-correct)
-  ;;          ("C-M-$" . jinx-languages)))
-
-#+end_src
-
 ** Completion
 
 *** Snippets
@@ -1359,54 +1220,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-*** Company
-
-#+begin_src emacs-lisp
-
-    ;; (use-package company
-    ;;   :init
-    ;;   (add-hook 'after-init-hook 'global-company-mode)
-    ;;   :config
-    ;;   (add-to-list 'company-backends 'company-files)
-    ;;   (setq company-require-match nil)
-    ;;   (setq company-minimum-prefix-length 1)
-    ;;   (setq company-idle-delay nil))
-
-  ;; (use-package company
-  ;;   :init
-  ;;   (add-hook 'after-init-hook 'global-company-mode)
-  ;;   :config
-  ;;   (setq company-require-match nil)
-  ;;   ;; Set default company-mode settings
-  ;;   (setq company-minimum-prefix-length 3
-  ;;         company-idle-delay nil) ;; Disable automatic suggestions globally
-
-  ;;   ;; Add company-files to the list of backends
-  ;;   (add-to-list 'company-backends 'company-files)
-
-  ;;   ;; Function to enable automatic suggestions in eshell
-  ;;   (defun my-company-mode-setup-eshell ()
-  ;;     (setq-local company-idle-delay 0.1)) ;; Enable automatic suggestions in eshell
-
-  ;;   ;; Add the setup function to eshell-mode-hook
-  ;;   (add-hook 'eshell-mode-hook 'my-company-mode-setup-eshell))
-
-  ;; (defun my/company-manual-complete ()
-  ;;   "Enable company-mode and call company-complete."
-  ;;   (interactive)
-  ;;   (unless company-mode
-  ;;     (company-mode 1))
-  ;;   (company-complete))
-
-  ;; (with-eval-after-load 'evil
-  ;;   (defun my-evil-insert-state-setup ()
-  ;;     (unless (minibufferp)
-  ;;       (define-key evil-insert-state-local-map (kbd "TAB") 'my/company-manual-complete)))
-
-  ;;   (add-hook 'evil-insert-state-entry-hook 'my-evil-insert-state-setup))
-
-#+end_src
-
 ** Acess to ENV variables
 
 #+begin_src emacs-lisp
@@ -1461,31 +1274,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+end_src
 
-** Hyperbole
-
-#+begin_src emacs-lisp
-
-  ;; (defun my/hyperbole-disable-key-bindings-after-init-hook ()
-  ;;   ;; Undefine conflicting keys in the hyperbole mode map.
-  ;;   (define-key hyperbole-mode-map (kbd "M-RET") nil)
-  ;;   ;; Add more key unbindings as needed.
-  ;; )
-
-  ;; (use-package hyperbole
-  ;;   :ensure t
-  ;;   :config
-  ;;   ;; Add a custom after-init-hook to adjust Hyperbole's keybindings
-  ;;   ;; after its own initialization process has completed.
-  ;;   (add-hook 'after-init-hook #'my/hyperbole-disable-key-bindings-after-init-hook t))
-
-  ;;   (with-eval-after-load 'hyperbole
-  ;;     (define-key hyperbole-mode-map (kbd "M-o") nil))
-
-  ;; (defal notes "/home/wurfkreuz/.secret_dotfiles/org/%s")
-  ;; (defal clj_scr_Comments "/home/wurfkreuz/.secret_dotfiles/org/clojure/scripts/%s")
-
-#+end_src
-
 ** Zoxide
 
 #+begin_src emacs-lisp
@@ -1511,16 +1299,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
 
 (setq eldoc-documentation-function (lambda () nil))
-
-;; (with-eval-after-load 'evil
-;;   (with-eval-after-load 'cider
-;;     ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
-;;     (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-;;     (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-
-;;     ;; Define C-M-x for visual state to evaluate the selected region
-;;     (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
-;;     (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region)))
 
 (with-eval-after-load 'evil
 ;; CIDER
@@ -1549,28 +1327,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ** Project/Projectile
 
 #+begin_src emacs-lisp
-
-;; (defun my/projectile-project-root-advice (original-projectile-root &rest args)
-;;   "Advice to make Projectile recognize custom project roots."
-;;   (or
-;;    ;; First, check if the specific directory should be treated as a project root.
-;;    (when (string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name default-directory))
-;;      "/home/wurfkreuz/.secret_dotfiles/org/")
-;;    ;; Next, look for 'bb.edn' up the directory tree to identify a project root.
-;;    (let ((current-dir (expand-file-name default-directory))
-;;          (project-root nil))
-;;      (while (and (not project-root) (not (string= current-dir "/")))
-;;        (when (file-exists-p (concat current-dir "bb.edn"))
-;;          (setq project-root current-dir))
-;;        (setq current-dir (file-name-directory (directory-file-name current-dir))))
-;;      project-root)
-;;    ;; Fallback to the original projectile root detection if none of the above conditions are met.
-;;    (apply original-projectile-root args)))
-
-;; (use-package projectile
-;;   :config
-;;   (projectile-mode 1)
-;;   (advice-add 'projectile-project-root :around #'my/projectile-project-root-advice))
 
 (require 'project)
 
@@ -1718,46 +1474,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (global-set-key (kbd "M-!") 'my-shell-command)
 (global-set-key (kbd "M-&") 'my-async-shell-command)
 
-;; (use-package ivy-posframe
-;;   :ensure t
-;;   :after ivy
-;;   :config
-;;   (ivy-posframe-mode 1))
-;; (setq ivy-posframe-width 50)
-;; (setq ivy-posframe-display-functions-alist
-;;       '((counsel-esh-history . ivy-posframe-display-at-window-center)))
-
-;; ;; To display icons correctly, you should run M-x all-the-icons-install-fonts to install the necessary fonts.
-;; (use-package all-the-icons-ivy-rich
-;;   :init
-;;   (all-the-icons-ivy-rich-mode 1))
-
-;; (use-package ivy-rich
-;;   :after ivy
-;;   :ensure t
-;;   :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-;;   :custom
-;;   (ivy-virtual-abbreviate 'full
-;;                           ivy-rich-switch-buffer-align-virtual-buffer t
-;;                           ivy-rich-path-style 'abbrev))
-
-;; (defun counsel-find-file-check-dir ()
-;;   "Like `counsel-find-file', but use `find-file-check-dir' instead of `find-file'."
-;;   (interactive)
-;;   (let* ((current-dir (if (eq major-mode 'dired-mode)
-;;                           "."
-;;                         (buffer-file-name))))
-;;     (ivy-read "Find file: " #'read-file-name-internal
-;;               :matcher #'counsel--find-file-matcher
-;;               :action #'find-file-check-dir
-;;               :preselect current-dir
-;;               :require-match 'confirm-after-completion
-;;               :history 'file-name-history
-;;               :keymap counsel-find-file-map
-;;               :caller 'counsel-find-file)))
-
-;; (global-set-key (kbd "C-x f") 'counsel-find-file-check-dir)
-
 (defun ivy-fzf-project ()
   "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
   (interactive)
@@ -1856,96 +1572,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; (use-package crontab-mode)
-
-;; (straight-use-package
-;;  '(emacs-crontab-mode :host gitlab :repo "Bacaliu/emacs-crontab-mode"))
-
 ;; ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
 ;; (use-package emacs-crontab-mode
 ;;   :vc (:url "https://gitlab.com/Bacaliu/emacs-crontab-mode"
 ;;        :rev :newest))
 
 (add-to-list 'load-path (expand-file-name "emacs-crontab-mode" user-emacs-directory))
-
-;;
-;;  (require emacs-crontab-mode)
-
-#+end_src
-
-** Prescient
-
-#+begin_src emacs-lisp
-
-;; (use-package ivy-prescient
-;;   :after counsel
-;;   :config
-;;   (ivy-prescient-mode 1))
-
-#+end_src
-
-** Fzf
-
-#+begin_src emacs-lisp
-
-;; (use-package fzf)
-
-;; (defun fzf-from-home-with-fd ()
-;;   "Starts fzf from the user's home directory using fd to include hidden files
-;;       and exclude certain directories but with an ability to interactively change
-;;       the searching directory."
-;;   (interactive)
-;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-;;   (let ((default-directory "~/"))
-;;     (fzf-directory)))
-
-;; (defun fzf-from-root-with-fd ()
-;;   "Starts fzf from the user's home directory using fd to include hidden files
-;;       and exclude certain directories but with an ability to interactively change
-;;       the searching directory."
-;;   (interactive)
-;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-;;   (let ((default-directory "/"))
-;;     (fzf-directory)))
-
-;; (defun fzf-notes ()
-;;   "Start fzf in the notes directory."
-;;   (interactive)
-;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-;;   (let ((default-directory "~/.secret_dotfiles/org"))
-;;     (fzf-directory)))
-
-;; ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-
-;; (defun fzf-from-root-no-prompt ()
-;;   "Starts fzf from the user's root directory using fd to include hidden files
-;;   and exclude certain directories without prompting for a directory."
-;;   (interactive)
-;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-;;   (fzf))
-
-;; (defun fzf-from-home-no-prompt ()
-;;   "Starts fzf from the user's home directory using fd to include hidden files
-;;     and exclude certain directories without prompting for a directory."
-;;   (interactive)
-;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
-;;   (fzf))
-
-;; (defun fzf-from-current-with-fd ()
-;;   "Starts fzf from the current directory using fd to include hidden files
-;;    and exclude certain directories. Works both locally and on remote servers."
-;;   (interactive)
-;;   ;; Set the FZF_DEFAULT_COMMAND environment variable
-;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-;;   ;; Check if the current directory is a TRAMP directory
-;;   (let ((tramp-address (file-remote-p default-directory)))
-;;     (if tramp-address
-;;         ;; If we're in a TRAMP directory, use the extracted address
-;;         (fzf-directory tramp-address)
-;;       ;; If not in a TRAMP directory, use the local home directory
-;;       (fzf-directory "~/"))))
-
-;; (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
 
 #+end_src
 
@@ -2039,47 +1671,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'dired-mode-hook 'my-dired-setup)
 
-;; (defun my-dired-do-delete-with-sudo ()
-;;   "Attempt to move the marked files to trash, using sudo if necessary."
-;;   (interactive)
-;;   (let ((files (dired-get-marked-files)))
-;;     (dolist (file files)
-;;       (if (yes-or-no-p (format "Move %s to trash? " (file-name-nondirectory file)))
-;;           (if (file-writable-p (file-name-directory file))
-;;               (dired-delete-file file 'trash)
-;;             (let ((sudo-file (concat "/sudo::" file)))
-;;               (when (yes-or-no-p (format "Insufficient permissions to move %s to trash. Retry with sudo? " (file-name-nondirectory file)))
-;;                 (with-temp-buffer
-;;                   (cd (file-name-directory sudo-file))
-;;                   (dired-delete-file sudo-file 'trash))))))))
-;;   (revert-buffer))
-
-;; (evil-define-key 'normal dired-mode-map (kbd "D") 'my-dired-do-delete-with-sudo)
-
-;; (defun dired-run-bak-on-marked-files (beg end)
-;; "Run the 'bak' script on marked files or visually selected files in Dired."
-;; (interactive
-;;  (if (use-region-p)
-;;      (list (region-beginning) (region-end)) ; If there's an active region, use it
-;;    (list nil nil))) ; Otherwise, process marked files
-;; (if (and beg end)
-;;     ;; If beg and end are provided, process files in the region
-;;     (save-excursion
-;;       (goto-char beg)
-;;       (let ((end-marker (copy-marker end)))
-;;         (while (< (point) end-marker)
-;;           (when (dired-move-to-filename)
-;;             (let ((file (dired-get-filename nil t)))
-;;               (start-process "bak-process" nil "bak" file)))
-;;           (dired-next-line 1))))
-;;   ;; If no region is active, process marked files
-;;   (let ((files (dired-get-marked-files)))
-;;     (dolist (file files)
-;;       (start-process "bak-process" nil "bak" file))))
-;; ;; Exit visual mode if in Evil mode
-;; (when (bound-and-true-p evil-local-mode)
-;;   (evil-normal-state)))
-
 (defun dired-run-bak-on-marked-files (beg end)
   "Run the 'bak' script on marked files or visually selected files in Dired, with an option to copy."
   (interactive
@@ -2140,25 +1731,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (evil-define-key 'normal dired-mode-map
     "j" 'dired-next-line-preserve-column
     "k" 'dired-previous-line-preserve-column))
-
-
-;; (defun my-create-path-and-view-dir ()
-;;   "Prompt for a file path, create directories and file as needed, then view the parent directory."
-;;   (interactive)
-;;   (let* ((path (read-file-name "Enter path: "))
-;;         (dir (file-name-directory path))
-;;         (file (file-name-nondirectory path)))
-;;     ;; Create directories as needed
-;;     (when dir
-;;       (make-directory dir t))
-;;     ;; Create the file if it doesn't already exist
-;;     (unless (file-exists-p path)
-;;       (with-temp-buffer
-;;         (write-file path)))
-;;     ;; Switch to viewing the parent directory in Dired mode
-;;     (dired dir)))
-
-;; (global-set-key (kbd "C-x C-f") 'my-create-path-and-view-dir)
 
 (defun OpenDiredBufferInSplit ()
   "Open a Dired buffer in a vertical split on the right, showing the directory of the current buffer."
@@ -2239,27 +1811,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (kill-current-buffer)
     ;; Attempt to reopen the file with the extracted local path
     (find-file local-part)))
-
-;; (defun revert-all-tramp-buffers-to-local-permissions ()
-;;   "Attempt to revert all TRAMP buffers to local permissions."
-;;   (interactive)
-;;   (let ((reverted-buffers 0))
-;;     (dolist (buffer (buffer-list))
-;;       (with-current-buffer buffer
-;;         (let ((buffer-name (buffer-name buffer))
-;;               (file-name (buffer-file-name buffer)))
-;;           (when (or (and buffer-name
-;;                         (or (string-match-p "\\`\\*tramp/" buffer-name)
-;;                             (string-match-p "\\`\\*eshell:/" buffer-name)
-;;                             (string-match-p "\\`/sudo:" buffer-name)))
-;;                       (and file-name
-;;                           (file-remote-p file-name)))
-;;             (message "Attempting to revert TRAMP buffer: %s, File: %s" buffer-name (or file-name "No file"))
-;;             (tramp-revert-to-local-permissions)
-;;             (setq reverted-buffers (1+ reverted-buffers))))))
-;;     (message "Attempted to revert %d TRAMP-related buffer(s) to local permissions" reverted-buffers)))
-
-;; (add-hook 'kill-emacs-hook #'revert-all-tramp-buffers-to-local-permissions)
 
 #+end_src
 
@@ -2691,30 +2242,6 @@ If called from eshell, display in eshell. Otherwise, use a separate buffer."
         (switch-to-buffer psql-buffer)
         (balance-windows)))))
 
-;; (defun show-table (table-name)
-;;   "Describe the specified table by selecting a few rows."
-;;   (interactive "sTable name: ")
-;;   (let ((query (format "SELECT * FROM %s LIMIT 5;" table-name)))
-;;     (with-current-buffer sql-buffer
-;;       (goto-char (point-max))
-;;       (insert query)
-;;       (sql-send-paragraph))))
-
-;;     ;; Define the connection details for PostgreSQL, including two databases
-;;     (setq sql-connection-alist
-;;           '((postgres-wurfkreuz
-;;             (sql-product 'postgres)
-;;             (sql-user "wurfkreuz")
-;;             (sql-server "localhost")
-;;             (sql-port 5432)
-;;             (sql-database "wurfkreuz"))
-;;             (postgres-shelf
-;;             (sql-product 'postgres)
-;;             (sql-user "wurfkreuz") ; Assuming the same user for simplicity
-;;             (sql-server "localhost")
-;;             (sql-port 5432)
-;;             (sql-database "shelf"))))
-
 #+end_src
 * Sessions
 
@@ -2880,26 +2407,6 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 
 ;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-kubernetes-tab)
 ;; (add-hook 'desktop-after-read-hook #'check-and-switch-to-docker-tab)
-
-#+end_src
-
-** Easysession
-
-#+begin_src emacs-lisp
-
-
-;; (straight-use-package
-;;  '(easysession :host github :repo "jamescherti/easysession.el"))
-
-;; ;; (easysession-save-mode 1)
-
-;; (use-package easysession
-;;   :ensure t
-;;   :custom
-;;   (easysession-save-interval (* 10 60))
-;;   :init
-;;   (add-hook 'emacs-startup-hook #'easysession-load-including-geometry 98)
-;;   (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
 
 #+end_src
 
@@ -3329,45 +2836,6 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (add-hook 'after-init-hook 'my/set-flycheck-faces)
 
-;; (use-package flycheck
-;;   :init
-;;   (add-hook 'after-init-hook #'global-flycheck-mode)
-;;   :config
-;;   (my/set-flycheck-faces))
-
-;; (defun my/disable-flycheck-in-emacs-lisp-mode ()
-;;   "Disable flycheck in emacs-lisp-mode."
-;;   (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
-
-;; (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
-
-;; (defun my/disable-flycheck-for-specific-languages ()
-;;   "Disable specific Flycheck checkers based on the major mode."
-;;   (cond
-;;   ((derived-mode-p 'emacs-lisp-mode)
-;;     (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
-;;   ((derived-mode-p 'python-mode)
-;;     (setq-local flycheck-disabled-checkers '(python-pylint python-pycompile)))
-;;   ((derived-mode-p 'go-mode)
-;;     (setq-local flycheck-disabled-checkers '(go-gofmt go-golint go-vet go-build go-test go-errcheck)))))
-
-;; (use-package flycheck-clj-kondo)
-
-;; (with-eval-after-load 'flycheck
-;;   (flycheck-add-mode 'clj-kondo-clj 'clojure-ts-mode)
-;;   (flycheck-add-mode 'clj-kondo-cljs 'clojure-ts-mode)
-;;   (flycheck-add-mode 'clj-kondo-cljc 'clojure-ts-mode)
-;;   (flycheck-add-mode 'clj-kondo-edn 'clojure-ts-mode))
-
-;; (use-package flycheck-raku)
-
-;; (use-package flymake-flycheck
-;;   :after flymake
-;;   ;; :init
-;;   ;; (setopt flycheck-disabled-checkers '(python-mypy flymake-flycheck:python-mypy))
-;;   :config
-;;   (add-hook 'flymake-mode-hook 'flymake-flycheck-auto))
-
 #+end_src
 
 ** Eglot
@@ -3402,201 +2870,6 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;     ]
 ;;     Kubernetes ["k8s-*.yaml"]
 ;; ))))))))
-
-#+end_src
-
-** Lsp Mode
-
-#+begin_src emacs-lisp
-
-;; (use-package lsp-mode
-;;   :commands lsp
-;;   :hook ((go-ts-mode . lsp)
-;;          (clojure-ts-mode . lsp)
-;;          (haskell-mode . lsp)
-;;          (python-ts-mode . lsp))
-;;   ;; (raku-mode . lsp))
-;;   :init
-;;   (setq lsp-session-file "~/.emacs.d/.lsp-session-v1")
-;;   (setq lsp-lens-enable nil)
-;;   :config
-;;   ;; Register Go LSP client
-;;   (lsp-register-client
-;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- gopls")
-;;                     :major-modes '(go-ts-mode)
-;;                     :server-id 'gopls))
-  
-;;   ;; Register YAML LSP client
-;;   (lsp-register-client
-;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- yamlls")
-;;                     :major-modes '(yaml-ts-mode)
-;;                     :server-id 'yamlls))
-  
-;;   ;; Register Terraform LSP client
-;;   (lsp-register-client
-;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- terraform-ls")
-;;                     :major-modes '(terraform-mode)
-;;                     :server-id 'terraform-ls))
-  
-;;   ;; Register Haskell LSP client
-;;   (lsp-register-client
-;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- hls")
-;;                     :major-modes '(haskell-mode)
-;;                     :server-id 'hls))
-
-;; ;; Register Python LSP client
-;; ;; (setq lsp-pylsp-plugins-flake8-enabled t)
-;; ;; (lsp-register-client
-;; ;;  (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- pylsp")
-;; ;;                   :major-modes '(python-ts-mode)
-;; ;;                   :server-id 'pylsp))
-
-;; ;; (add-hook 'sql-mode-hook 'lsp)
-;; ;; (setq lsp-sqls-workspace-config-path nil)
-;; ;; (setq lsp-sqls-connections
-;; ;;       `(((driver . "mysql") (dataSourceName . "yyoncho:local@tcp(localhost:3306)/foo"))
-;; ;;         ((driver . "mssql") (dataSourceName . "Server=localhost;Database=sammy;User Id=yyoncho;Password=hunter2;"))
-;; ;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz dbname=wurfkreuz sslmode=disable")))
-;; ;;         ((driver . "postgresql")
-;; ;;          (dataSourceName . (concat "host=127.0.0.1 "
-;; ;;                                    "port=5432 "
-;; ;;                                    "user=wurfkreuz "
-;; ;;                                    "password=" (getenv "POSTGRES_PASSWORD") " "
-;; ;;                                    "dbname=server "
-;; ;;                                    "sslmode=disable")))
-;; ;;         ((driver . "postgresql") (dataSourceName . ,(format "host=127.0.0.1 port=5432 user=wurfkreuz password=%s dbname=shelf sslmode=disable"
-;; ;;                                                             (getenv "SHELF_DB_PASS"))))))
-  
-;;   ;; Register Clojure LSP client
-;;   (lsp-register-client
-;;    (make-lsp-client :new-connection (lsp-stdio-connection "emacs-lsp-booster -- clojure-lsp")
-;;                     :major-modes '(clojure-ts-mode) ; Corrected to clojure-mode
-;;                     :server-id 'clojure-lsp)) ; Correct and unique server-id for Clojure
-
-;;   ;; ;; Register Raku Navigator LSP client
-;;   ;; (lsp-register-client
-;;   ;;  (make-lsp-client :new-connection (lsp-stdio-connection
-;;   ;;                                    (list "node" "/home/wurfkreuz/.source/RakuNavigator/server/out/server.js" "--stdio"))
-;;   ;;                   :major-modes '(raku-mode) ; Ensure this is the correct major mode for Raku
-;;   ;;                   :server-id 'raku-navigator)) ; Unique server-id for Raku Navigator
-
-;;   ;; General LSP settings
-;;   (lsp-signature-mode nil)
-;;   (setq lsp-idle-delay 0.1
-;;         lsp-diagnostics-provider :flymake
-;;         lsp-headerline-breadcrumb-enable nil
-;;         gc-cons-threshold (* 100 1024 1024)
-;;         read-process-output-max (* 1024 1024)
-;;         lsp-log-max 0
-;;         lsp-log-io nil
-;;         lsp-enable-symbol-highlighting nil
-;;         lsp-signature-render-documentation nil
-;;         lsp--last-signature nil
-;;         lsp--last-signature-index nil
-;;         lsp--last-signature-buffer nil
-;;         lsp-signature-auto-activate nil
-;;         lsp-signature-cycle nil
-;;         lsp-signature-doc-lines nil
-;;         lsp-signature-face nil
-;;         lsp-signature-function nil
-;;         lsp-signature-posframe nil
-;;         lsp-eldoc-enable-hover nil
-;;         lsp-eldoc-render-all nil
-;;         lsp-signature-render-documentation nil))
-
-;; (setq lsp-pyright-multi-root nil)
-
-;; (use-package lsp-pyright
-;;   :ensure t
-;;   :hook (python-ts-mode . (lambda ()
-;;                             (require 'lsp-pyright)
-;;                             (lsp-deferred)))  ; Use lsp-deferred to start the server after the buffer is loaded
-;;   :init
-;;   ;; Modify the command to start the server
-;;   (setq lsp-pyright-server-command '("emacs-lsp-booster -- pyright")))
-
-;; (defun set-lsp-pyright-venv-path ()
-;;   "Interactively set the `lsp-pyright-venv-path` to a selected directory."
-;;   (interactive)
-;;   (let ((selected-dir (read-directory-name "Select Python virtual environment directory: ")))
-;;     (if (file-directory-p selected-dir)
-;;         (progn
-;;           (setq lsp-pyright-venv-path selected-dir)
-;;           (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-path))
-;;           ;; (message "Set `lsp-pyright-venv-path` to %s" lsp-pyright-venv-directory))
-;;       (message "Invalid directory or operation cancelled."))))
-
-;; (defun my/disable-python-flymake ()
-;;   "Disable default Python Flymake checker."
-;;   (setq-local flymake-diagnostic-functions
-;;               (remove 'python-flymake flymake-diagnostic-functions)))
-
-;; (add-hook 'python-ts-mode-hook #'my/disable-python-flymake) ;
-
-;; (use-package lsp-ui
-;;   :after lsp-mode
-;;   :init
-;;   (setq lsp-ui-doc-allow-mouse t)
-;;   :hook (lsp-mode . lsp-ui-mode))
-
-;; ;; (define-key evil-normal-state-map (kbd "K") 'lsp-describe-thing-at-point)
-;; (defun my/lsp-describe-thing-at-point ()
-;;   "Call `lsp-describe-thing-at-point` and switch to the documentation window."
-;;   (interactive)
-;;   (let ((orig-window (selected-window)))
-;;     (lsp-describe-thing-at-point)
-;;     (select-window (get-buffer-window "*lsp-help*"))))
-
-;; ;; Bind the custom function to 'K' in Evil's normal mode
-;; (define-key evil-normal-state-map (kbd "K") 'my/lsp-describe-thing-at-point)
-
-;; ;; (use-package lsp-haskell
-;; ;;   :ensure t
-;; ;;   :init
-;; ;;   (setq lsp-haskell-server-path "haskell-language-server-wrapper")
-;; ;;   :after lsp
-;; ;;   :config
-;; ;;   ;; (setq lsp-haskell-check-parents 'AlwaysCheck)
-;; ;;   )
-
-;; (defun remove-from-lsp-file-watch-ignored ()
-;;   "Interactively remove a pattern from `lsp-file-watch-ignored`."
-;;   (interactive)
-;;   (let ((pattern (completing-read "Remove pattern: " lsp-file-watch-ignored)))
-;;     (setq lsp-file-watch-ignored (remove pattern lsp-file-watch-ignored))
-;;     (message "Removed pattern: %s" pattern)))
-
-;; (defun add-lsp-workspace-folder ()
-;;   "Add the current directory to LSP workspace folders."
-;;   (interactive)
-;;   (lsp-workspace-folders-add (expand-file-name default-directory)))
-
-;; (setq lsp-yaml-schemas
-;;       `((kubernetes . "k8s-*.yaml")
-;;         ;; (gitlab-ci . ".gitlab-ci.yml") ;; For some reason it stops working if it's uncommented, but it works if the line is commented.
-;;         ;; (github-workflow . ".github/workflows/*")
-;;         ;; (github-action . ".github/action.{yml,yaml}")
-;;         ;; (ansible-tasks . "roles/tasks/**/*.{yml,yaml}")
-;;         ;; (prettierrc . ".prettierrc.{yml,yaml}")
-;;         ;; (kustomization . "kustomization.{yml,yaml}")
-;;         ;; (chart . "Chart.{yml,yaml}")
-;;         ;; (circleciconfig . ".circleci/**/*.{yml,yaml}")
-;;         ))
-
-;; ;; Add this line to associate the schema URI with the symbol
-;; (setq lsp-yaml-schema-store-mappings
-;;       `(("gitlab-ci" . "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json")
-;;         ("ansible-tasks" . "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks")))
-
-;; (setq lsp-yaml-schema-store-enable t)
-;; (setq lsp-yaml-schema-store-local-db "~/.emacs.d/.cache/lsp/lsp-yaml-schemas.json")
-;; (setq lsp-yaml-schema-store-uri "https://www.schemastore.org/api/json/catalog.json")
-
-;; ;; Setup lsp-mode for yaml files
-;; (add-hook 'yaml-ts-mode-hook #'lsp)
-  
-;; ;; Enable logging for debugging
-;; (setq lsp-log-io t)
 
 #+end_src
 
