@@ -2535,28 +2535,60 @@ If an eshell buffer for the directory already exists, switch to it."
     (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
       (kill-buffer buffer))))
 
-(defvar-local my-previous-window-configuration nil
-  "Stores the window configuration before switching to eshell.")
 
-(defvar-local my-eshell-buffer nil
-  "Stores the eshell buffer for each frame.")
+;; (defvar my-saved-window-configuration nil
+;;   "Variable to store the saved window configuration.")
 
-(defun my-toggle-fullscreen-eshell ()
-  "Toggle between current window configuration and fullscreen eshell."
+;; (defun my-eshell-fullscreen ()
+;;   "Replace the current window layout with a fullscreen Eshell."
+;;   (interactive)
+;;   (setq my-saved-window-configuration (current-window-configuration))
+;;   (delete-other-windows)
+;;   (eshell))
+
+;; (defun my-restore-window-configuration ()
+;;   "Restore the previously saved window configuration."
+;;   (interactive)
+;;   (when my-saved-window-configuration
+;;     (set-window-configuration my-saved-window-configuration)))
+
+
+(defvar my-saved-tab-configurations (make-hash-table :test 'equal)
+  "Hash table to store the saved window configurations per tab.")
+
+(defun my-current-tab-index ()
+  "Get the current tab's index."
+  (tab-bar--current-tab-index))
+
+(defun my-eshell-fullscreen ()
+  "Replace the current window layout with a fullscreen Eshell for the current tab."
   (interactive)
-  (if (eq major-mode 'eshell-mode)
-      ;; If we're in eshell, restore the previous window configuration
-      (when my-previous-window-configuration
-        (set-window-configuration my-previous-window-configuration)
-        (setq my-previous-window-configuration nil))
-    ;; If we're not in eshell, switch to fullscreen eshell
-    (setq my-previous-window-configuration (current-window-configuration))
-    (delete-other-windows)
-    (let ((eshell-buffer (or (frame-parameter nil 'my-eshell-buffer)
-                             (let ((new-eshell (eshell t)))
-                               (set-frame-parameter nil 'my-eshell-buffer new-eshell)
-                               new-eshell))))
-      (switch-to-buffer eshell-buffer))))
+  (let* ((tab-index (my-current-tab-index))
+         (eshell-buffer-name (format "*eshell<%d>*" tab-index)))
+    (if tab-index
+        (progn
+          (puthash tab-index (current-window-configuration) my-saved-tab-configurations)
+          (message "Saved window configuration for tab index: %d" tab-index)
+          (delete-other-windows)
+          ;; Switch to or create the Eshell buffer
+          (if (get-buffer eshell-buffer-name)
+              (switch-to-buffer eshell-buffer-name)
+            (progn
+              (switch-to-buffer (get-buffer-create eshell-buffer-name))
+              (eshell)))
+          )
+      (message "Failed to get tab index. Is the tab-bar-mode enabled?"))))
+
+(defun my-restore-window-configuration ()
+  "Restore the previously saved window configuration for the current tab."
+  (interactive)
+  (let* ((tab-index (my-current-tab-index))
+         (config (gethash tab-index my-saved-tab-configurations)))
+    (if config
+        (progn
+          (set-window-configuration config)
+          (message "Restored window configuration for tab index: %d" tab-index))
+      (message "No saved window configuration for this tab index: %d" tab-index))))
 
 #+end_src
 
