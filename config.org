@@ -83,7 +83,6 @@
   - [[#org-download][Org download]]
   - [[#org-drill][Org-drill]]
   - [[#org-agenda][Org Agenda]]
-  - [[#org-roam][Org-roam]]
   - [[#templates][Templates]]
   - [[#visuals-1][Visuals]]
   - [[#enabling-table-of-contents][Enabling Table of Contents]]
@@ -129,35 +128,35 @@
 
 #+begin_src emacs-lisp
 
-  (setq tab-bar-tab-name-format-function #'my-tab-bar-vim-name-format-function)
-  (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator))
-  (setq tab-bar-separator "\u200B")  ;; Zero width space to fix color bleeding
-  (setq tab-bar-tab-hints nil)  ;; Tab numbers of the left of the label
-  (setq tab-bar-new-button-show nil)
-  (setq tab-bar-close-button-show nil)
-  (setq tab-bar-auto-width nil)
+(setq tab-bar-tab-name-format-function #'my-tab-bar-vim-name-format-function)
+(setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator))
+(setq tab-bar-separator "\u200B")  ;; Zero width space to fix color bleeding
+(setq tab-bar-tab-hints nil)  ;; Tab numbers of the left of the label
+(setq tab-bar-new-button-show nil)
+(setq tab-bar-close-button-show nil)
+(setq tab-bar-auto-width nil)
 
-  (defun my-tab-name-format-function (tab i)
-    (defface my-active-tab-face
-      '((t :background "#2e2c3d" :foreground "#e0def4"))
-      "Face for the active tab.")
-    (defface my-inactive-tab-face
-      '((t :background "#1d1f21" :foreground "#6e6a86"))
-      "Face for the inactive tab.")
-    (let ((current-p (eq (car tab) 'current-tab))
-          (tab-name (format "%d %s" i (alist-get 'name (cdr tab)))))
-      ;; Add padding around the tab name
-      (setq tab-name (format " %s " tab-name))  ;; Add a space before and after the tab name
-      (if current-p
-          (propertize tab-name 'face 'my-active-tab-face)
-        (propertize tab-name 'face 'my-inactive-tab-face))))
+(defun my-tab-name-format-function (tab i)
+  (defface my-active-tab-face
+    '((t :background "#2e2c3d" :foreground "#e0def4"))
+    "Face for the active tab.")
+  (defface my-inactive-tab-face
+    '((t :background "#1d1f21" :foreground "#6e6a86"))
+    "Face for the inactive tab.")
+  (let ((current-p (eq (car tab) 'current-tab))
+        (tab-name (format "%d %s" i (alist-get 'name (cdr tab)))))
+    ;; Add padding around the tab name
+    (setq tab-name (format " %s " tab-name))  ;; Add a space before and after the tab name
+    (if current-p
+        (propertize tab-name 'face 'my-active-tab-face)
+      (propertize tab-name 'face 'my-inactive-tab-face))))
 
-  (setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
+(setq tab-bar-tab-name-format-function #'my-tab-name-format-function)
 
-  (dotimes (i 9)
-    (let ((n (1+ i)))  ; Tab numbers start from 1
-      (global-set-key (kbd (format "M-%d" n))
-                      `(lambda () (interactive) (tab-bar-select-tab ,n)))))
+(dotimes (i 9)
+  (let ((n (1+ i)))  ; Tab numbers start from 1
+    (global-set-key (kbd (format "M-%d" n))
+                    `(lambda () (interactive) (tab-bar-select-tab ,n)))))
 
 #+end_src
 
@@ -301,9 +300,9 @@
 
 #+begin_src emacs-lisp
 
-  (blink-cursor-mode 0)
-  (setq show-paren-delay 0)
-  (show-paren-mode 1)
+(blink-cursor-mode 0)
+(setq show-paren-delay 0)
+(show-paren-mode 1)
 
 #+end_src
 
@@ -311,108 +310,115 @@
 
 #+begin_src emacs-lisp
 
-  (defun find-file-check-dir (filename &optional wildcards)
-    "Edit file FILENAME.
-     Switch to a buffer visiting file FILENAME,
-     creating one if none already exists.
-     If the directory path does not exist, create it."
-     (interactive
-      (find-file-read-args "Find file: " nil))
-     (let ((dir (file-name-directory filename)))
-       (when (not (file-exists-p dir))
-        (make-directory dir t)))
-     (find-file filename wildcards))
+(defun find-file-check-dir (filename &optional wildcards)
+  "Edit file FILENAME.
+   Switch to a buffer visiting file FILENAME,
+   creating one if none already exists.
+   If the directory path does not exist, create it."
+   (interactive
+    (find-file-read-args "Find file: " nil))
+   (let ((dir (file-name-directory filename)))
+     (when (not (file-exists-p dir))
+      (make-directory dir t)))
+   (find-file filename wildcards))
+  
 #+end_src
 
 ** Evil Mode
 
 #+begin_src emacs-lisp
 
-  (use-package undo-tree
-    :config
-    (global-undo-tree-mode))
+(use-package undo-tree
+  :ensure t
+  :config
+  (global-undo-tree-mode))
 
-  (use-package evil
-    :init
-    (setq evil-want-C-u-scroll t
-          evil-want-C-i-jump nil
-          evil-want-integration t
-          evil-want-minibuffer t
-          evil-undo-system 'undo-tree)
-    :config
-    (evil-mode 1)
-    (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-    (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-    (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-    (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-    (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-    (setq evil-shift-width 2))
-
-  (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
-  (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
-
-
-  (setq evil-undo-system 'undo-tree)
-
-  (use-package evil-surround
-    :config
-    (global-evil-surround-mode 1)
-    ;; Add custom surround pairs
-    (setq-default evil-surround-pairs-alist
-                  (append evil-surround-pairs-alist
-                          '((?/ . ("/" . "/"))
-                            (?~ . ("~" . "~"))
-                            (?* . ("*" . "*"))
-                            (?= . ("=" . "="))
-                            (?+ . ("+" . "+"))))))
-
-;; (use-package evil-commentary
-;;   :config
-;;   (evil-commentary-mode))
-
- (use-package evil-org
-   :after org
+(use-package evil
+   :ensure t
+   :init
+   (setq evil-want-C-u-scroll t
+         evil-want-C-i-jump nil
+         evil-want-integration t
+         evil-want-minibuffer t
+         evil-undo-system 'undo-tree)
    :config
-   (require 'evil-org-agenda)
-   (evil-org-agenda-set-keys)
-   (add-hook 'org-mode-hook 'evil-org-mode)
-   (add-hook 'evil-org-mode-hook
-             (lambda ()
-               (evil-org-set-key-theme)))
-   )
+   (evil-mode 1)
+   (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+   (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+   (setq evil-shift-width 2))
 
-  (use-package evil-collection
-    :after evil
-    :init ;;    (setq evil-want-keybinding nil)
-    :config
-    (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker magit))
-    (evil-collection-init))
+ (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
+ (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
+ (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
+ (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
 
-  (defun my-evil-yank-to-end-of-line ()
-    "Yank text from the current point to the end of the line."
-    (interactive)
-    (evil-yank (point) (line-end-position)))
 
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
+(setq evil-undo-system 'undo-tree)
 
-  (defun my-evil-insert-state-minibuffer-setup ()
-    (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-    (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+(use-package evil-surround
+   :ensure t
+   :config
+   (global-evil-surround-mode 1)
+   ;; Add custom surround pairs
+   (setq-default evil-surround-pairs-alist
+                 (append evil-surround-pairs-alist
+                         '((?/ . ("/" . "/"))
+                           (?~ . ("~" . "~"))
+                           (?* . ("*" . "*"))
+                           (?= . ("=" . "="))
+                           (?+ . ("+" . "+"))))))
 
-  (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+(use-package evil-commentary
+   :ensure t
+   :config
+   (evil-commentary-mode))
 
-  (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
-  (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
+(use-package evil-org
+  :ensure t
+  :after org
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys)
+  (add-hook 'org-mode-hook 'evil-org-mode)
+  (add-hook 'evil-org-mode-hook
+            (lambda ()
+              (evil-org-set-key-theme)))
+  )
+
+(use-package evil-collection
+  :ensure t
+  :after evil
+  ;; :init ;;    (setq evil-want-keybinding nil)
+  :config
+  (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker magit))
+  (evil-collection-init))               ;
+
+(defun my-evil-yank-to-end-of-line ()
+  "Yank text from the current point to the end of the line."
+  (interactive)
+  (evil-yank (point) (line-end-position)))
+
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
+
+(defun my-evil-insert-state-minibuffer-setup ()
+  (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+  (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+
+(add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+
+(evil-global-set-key 'insert (kbd "C-l") 'forward-char)
+(evil-global-set-key 'insert (kbd "C-h") 'backward-char)
 
 (with-eval-after-load 'evil
   (define-key evil-ex-completion-map (kbd "<insert-state> C-n") nil))
 
 (with-eval-after-load 'evil
   (define-key evil-ex-completion-map (kbd "<insert-state> C-p") nil))
-  
+
 (with-eval-after-load 'evil
   (define-key evil-ex-completion-map (kbd "<insert-state> <up>") 'previous-complete-history-element)
   (define-key evil-ex-completion-map (kbd "<insert-state> <down>") 'next-complete-history-element))
@@ -423,7 +429,7 @@
   (evil-local-set-key 'motion (kbd "RET") 'daemons-status-at-point))
 
 (add-hook 'daemons-output-mode-hook 'my/setup-daemons-output-keymap)
-
+ 
 (defun my/setup-docker-mark-keymap ()
   "Set up custom keybindings for daemons-output-mode."
   (evil-local-set-key 'normal (kbd "m") 'tablist-mark-forward)
@@ -459,6 +465,11 @@
 ;; Bind the custom fill operator to "gw"
 (define-key evil-normal-state-map (kbd "gw") 'my-evil-fill)
 (define-key evil-visual-state-map (kbd "gw") 'my-evil-fill)
+
+(define-key evil-normal-state-map (kbd "C-w C-l") 'evil-window-right)
+(define-key evil-normal-state-map (kbd "C-w C-h") 'evil-window-left)
+(define-key evil-normal-state-map (kbd "C-w C-k") 'evil-window-up)
+(define-key evil-normal-state-map (kbd "C-w C-j") 'evil-window-down)
 
 #+end_src
 
@@ -550,6 +561,7 @@
   :if (display-graphic-p))
 
 (use-package all-the-icons-dired
+  :ensure t
   :hook (dired-mode . (lambda ()
                         (when (not (file-remote-p default-directory))
                           (all-the-icons-dired-mode t)))))
@@ -570,6 +582,7 @@
 #+begin_src emacs-lisp
 
 (use-package treesit-auto
+  :ensure t
   :config
   ;; (treesit-auto-add-to-auto-mode-alist
   ;; '(("\\.py$" . python-ts-mode)
@@ -585,7 +598,8 @@
 ;;   :mode (("\\Dockerfile\\'" . dockerfile-ts-mode)
 ;;          ("\\.dockerignore\\'" . dockerfile-ts-mode)))
 
-(use-package clojure-ts-mode)
+(use-package clojure-ts-mode
+  :ensure t)
 
 ;; (straight-use-package
 ;;  '(terraform-ts-mode :host github :repo "kgrotel/terraform-ts-mode"))
@@ -644,116 +658,117 @@
 #+begin_src emacs-lisp
 
 (use-package general
+  :ensure t
   :config
   (general-evil-setup)
   
-  (general-create-definer w/leader-keys
+(general-create-definer w/leader-keys
     :states '(normal insert visual emacs)
     :keymaps 'override
     :prefix "SPC" ;; set leader
     :global-prefix "M-SPC") ;; access leader in insert mode
 
-  (w/leader-keys
+(w/leader-keys
 
-    ;; Fuzzy finder
-    ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
-    "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
-    "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-    "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
-    ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
-    "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
-    "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
-    "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
-    ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
+  ;; Fuzzy finder
+  ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
+  "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
+  "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
+  "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
+  ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
+  "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
+  "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
+  "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
+  ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
 
-    ;; Session management
-    "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
-    "sd" '(delete-desktop-session :wk "Delete selected session")
-    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
-    "sr" '(rename-desktop-session :wk "Rename a desktop session")
+  ;; Session management
+  "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
+  "sd" '(delete-desktop-session :wk "Delete selected session")
+  "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
+  "sr" '(rename-desktop-session :wk "Rename a desktop session")
 
-    ;; Git
-    "gs" '(vc-switch-branch :wk "Switch to another branch")
-    "gc" '(vc-create-branch :wk "Create branch")
-    
-    ;; Org
-    "ot" '(todo :wk "Opens the org todo file")
+  ;; Git
+  "gs" '(vc-switch-branch :wk "Switch to another branch")
+  "gc" '(vc-create-branch :wk "Create branch")
+  
+  ;; Org
+  "ot" '(todo :wk "Opens the org todo file")
 
-    ;; Paredit
-    "pfs" '(paredit-forward-slurp-sexp)
+  ;; Paredit
+  "pfs" '(paredit-forward-slurp-sexp)
 
-    ;; Hyperbole
-    "he" '(hkey-either :wk "Opens the org todo file")
+  ;; Hyperbole
+  "he" '(hkey-either :wk "Opens the org todo file")
 
-    ;; Tab management
-    "tn" '(tab-bar-new-tab :wk "Create a new tab")
-    "tx" '(tab-bar-close-tab :wk "Close a tab")
-    "tr" '(tab-bar-rename-tab :wk "Rename a tab")
+  ;; Tab management
+  "tn" '(tab-bar-new-tab :wk "Create a new tab")
+  "tx" '(tab-bar-close-tab :wk "Close a tab")
+  "tr" '(tab-bar-rename-tab :wk "Rename a tab")
 
-    ;; Org capture
-    "n" '(org-capture :wk "Create a quick note")
+  ;; Org capture
+  "n" '(org-capture :wk "Create a quick note")
 
-    ;; Docker
-    "D" '(docker-template :wk "Spawn docker template")
+  ;; Docker
+  "D" '(docker-template :wk "Spawn docker template")
 
-    ;; Daemons
-    "do" '(daemons-stop :wk "Stop daemon")
-    "ds" '(daemons-start :wk "Start daemon")
-    "de" '(daemons-enable :wk "Enable daemon")
-    "dd" '(daemons-disable :wk "Disable daemon")
-    "du" '(daemons-status :wk "Status daemon")
-    "dr" '(daemons-restart :wk "Restart daemon")
+  ;; Daemons
+  "do" '(daemons-stop :wk "Stop daemon")
+  "ds" '(daemons-start :wk "Start daemon")
+  "de" '(daemons-enable :wk "Enable daemon")
+  "dd" '(daemons-disable :wk "Disable daemon")
+  "du" '(daemons-status :wk "Status daemon")
+  "dr" '(daemons-restart :wk "Restart daemon")
 
-    ;; Windows
-    "w"  'hydra-window-size/body
+  ;; Windows
+  "w"  'hydra-window-size/body
 
-    ;; Buffers
-    "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
-    "bx" '(kill-current-buffer :wk "Close selecetd buffer")
+  ;; Buffers
+  "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
+  "bx" '(kill-current-buffer :wk "Close selecetd buffer")
 
-    ;; "rr" '(revert-buffer :wk "Refresh a current buffer")
+  ;; "rr" '(revert-buffer :wk "Refresh a current buffer")
 
-    ;; Popper
-    "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
-    "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
-    "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
+  ;; Popper
+  "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
+  "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
+  "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
 
-    "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
+  "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
 
-    "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
+  "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
 
-    "zz" '(z :wk "Call zoxide prompt")
+  "zz" '(z :wk "Call zoxide prompt")
 
-    ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-    ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
+  ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
+  ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
 
-    "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
-    "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
+  "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
+  "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
 
-    ;; Tramp
-    "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
-    "ur" '(tramp-revert :wk "Edit file with sudo privileges")
+  ;; Tramp
+  "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
+  "ur" '(tramp-revert :wk "Edit file with sudo privileges")
 
-    ;; Evaluation
-    "e" '(:ignore t :wk "Evaluate/Eshell")
-    ;; "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-    ;; "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-    ;; "ex" '(eval-expression :wk "Evaluate and elisp expression")
-    ;; "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-    "er" '(eval-region :wk "Evaluate elisp in region")
+  ;; Evaluation
+  "e" '(:ignore t :wk "Evaluate/Eshell")
+  ;; "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+  ;; "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+  ;; "ex" '(eval-expression :wk "Evaluate and elisp expression")
+  ;; "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+  "er" '(eval-region :wk "Evaluate elisp in region")
 
-    ;; Eshell
-    "E" '(eshell :wk "Eshell")
-    "en" '(eshell-new :wk "Spawn a new eshell buffer")
-    ;; "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
-    "ep" '(eshell-pop :wk "'eshell' command in popper mode")
+  ;; Eshell
+  "E" '(eshell :wk "Eshell")
+  "en" '(eshell-new :wk "Spawn a new eshell buffer")
+  ;; "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
+  "ep" '(eshell-pop :wk "'eshell' command in popper mode")
 
-    )
-
-    (w/leader-keys
-      :keymaps 'help-mode-map
-      "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
   )
+
+  (w/leader-keys
+    :keymaps 'help-mode-map
+    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
+)
 
 #+end_src
 
@@ -761,7 +776,9 @@
 
 #+begin_src emacs-lisp
 
-(use-package daemons)
+(use-package daemons
+  :ensure t)
+
 (setq daemons-always-sudo t)
 
 (defun daemons--completing-read (&optional action)
@@ -883,7 +900,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
 (use-package kubernetes
-;;   ;; :straight (:no-byte-compile t))
+  :ensure t
   :config
   (setq kubernetes-poll-frequency 3600
         kubernetes-redraw-frequency 3600))
@@ -932,7 +949,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
 (use-package proced
-  :ensure nil
+  :ensure t
   :commands proced
   ;; :bind (("C-M-p" . proced))
   :custom
@@ -982,6 +999,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
 (use-package async
+  :ensure t
   :config
   (autoload 'dired-async-mode "dired-async.el" nil t)
   (dired-async-mode 1))
@@ -1002,6 +1020,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
 (use-package transient
+  :ensure t
   :config
   ;; Define a simple transient for the cp command
   (transient-define-prefix my-eshell-cp-transient ()
@@ -1030,6 +1049,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 #+begin_src emacs-lisp
 
 (use-package rg
+  :ensure t
   :config
   (rg-enable-default-bindings))
 
@@ -1039,7 +1059,8 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-(use-package xterm-color)
+(use-package xterm-color
+  :ensure t)
 
 (setq docker-vterm-support t)
 (setq docker-container-shell-file-name "vterm")
@@ -1081,7 +1102,8 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-  (use-package circe)
+(use-package circe
+  :ensure t)
 
 #+end_src
 
@@ -1089,7 +1111,8 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-(use-package vterm)
+(use-package vterm
+  :ensure t)
 
 (defun my/customize-vterm-mode-map ()
   "Customize the `vterm-mode-map` to remove unwanted keybindings."
@@ -1105,7 +1128,8 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-(use-package docker)
+(use-package docker
+  :ensure t)
 
 (defun container-map-id (container-name)
   "Display the UID and GID maps of a Docker container.
@@ -1211,14 +1235,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package yasnippet
-    :config
-    (yas-global-mode 1)
-    ;; Add your snippets directory to `yas-snippet-dirs`
-    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
-    ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
-    ;; Load the snippets
-    (yas-reload-all))
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-global-mode 1)
+  ;; Add your snippets directory to `yas-snippet-dirs`
+  ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+  ;; (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets/org-mode/")
+  ;; Load the snippets
+  (yas-reload-all))
 
 #+end_src
 
@@ -1226,14 +1251,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package orderless
-    :init
-    ;; ;; Configure a custom style dispatcher (see the Consult wiki)
-    ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
-    ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-    (setq completion-styles '(orderless basic)
-          completion-category-defaults nil
-          completion-category-overrides '((file (styles partial-completion)))))
+(use-package orderless
+  :ensure t
+  :init
+  ;; ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
+  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
 
 #+end_src
 
@@ -1274,6 +1300,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
   ;; Corfu setup
 (use-package corfu
+  :ensure t
   :init
   (global-corfu-mode)
   ;; :custom
@@ -1319,8 +1346,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
               #'cape-elisp-block)))
 
 
-(straight-use-package
- '(fish-completion :host github :repo "LemonBreezes/emacs-fish-completion"))
+;; (straight-use-package
+;;  '(fish-completion :host github :repo "LemonBreezes/emacs-fish-completion"))
+
+(use-package fish-completion
+  :vc (:url "https://github.com/LemonBreezes/emacs-fish-completion.git"
+       :rev :newest))
 
 (when (and (executable-find "fish")
          (require 'fish-completion nil t))
@@ -1380,18 +1411,19 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-    (use-package exec-path-from-shell
-      :config
-      (exec-path-from-shell-initialize)
-      (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
-      (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
-      (exec-path-from-shell-copy-env "NOTIFY_TOKEN")
-      (exec-path-from-shell-copy-env "SHELF_TOKEN")
-      (exec-path-from-shell-copy-env "SHELF_DB_USER")
-      (exec-path-from-shell-copy-env "SHELF_DB_NAME")
-      (exec-path-from-shell-copy-env "SHELF_DB_PASS")
-      (exec-path-from-shell-copy-env "SHELF_DB_PORT")
-      )
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
+  (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+  (exec-path-from-shell-copy-env "NOTIFY_TOKEN")
+  (exec-path-from-shell-copy-env "SHELF_TOKEN")
+  (exec-path-from-shell-copy-env "SHELF_DB_USER")
+  (exec-path-from-shell-copy-env "SHELF_DB_NAME")
+  (exec-path-from-shell-copy-env "SHELF_DB_PASS")
+  (exec-path-from-shell-copy-env "SHELF_DB_PORT")
+  )
 
 #+end_src
 
@@ -1399,11 +1431,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package sudo-edit
-    :config
-      (w/leader-keys
-        "sf" '(sudo-edit-find-file :wk "Sudo find file")))
-        ;; "se" '(sudo-edit :wk "Sudo edit file")))
+(use-package sudo-edit
+  :ensure t
+  :config
+    (w/leader-keys
+      "sf" '(sudo-edit-find-file :wk "Sudo find file")))
+      ;; "se" '(sudo-edit :wk "Sudo edit file")))
 
 #+end_src
 
@@ -1423,7 +1456,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package paredit)
+(use-package paredit
+  :ensure t)
 
 #+end_src
 
@@ -1456,8 +1490,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-(straight-use-package
- '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
+;; (straight-use-package
+;;  '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
+
+(use-package zoxide
+  :vc (:url "https://gitlab.com/Vonfry/zoxide.el"
+       :rev :newest))
 
 #+end_src
 
@@ -1466,6 +1504,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 #+begin_src emacs-lisp
 
 (use-package cider
+  :ensure t
   :config
   (setq cider-eldoc-display-for-symbol-at-point nil)
   (setq cider-show-error-buffer nil)
@@ -1566,7 +1605,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package mentor)
+(use-package mentor
+  :ensure t)
 
 #+end_src
 
@@ -1574,7 +1614,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package wgrep)
+(use-package wgrep
+  :ensure t)
 
 #+end_src
 
@@ -1582,9 +1623,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package embark
-    :bind
-    ("C-M-;" . embark-act))
+(use-package embark
+  :ensure t
+  :bind
+  ("C-M-;" . embark-act))
 
 #+end_src
 
@@ -1602,6 +1644,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;   (vertico-mode))
 
 (use-package marginalia
+  :ensure t
   :init
   (marginalia-mode))
 
@@ -1616,6 +1659,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 #+begin_src emacs-lisp
 
 (use-package ivy
+  :ensure t
   :bind
   ;; ivy-resume resumes the last Ivy-based completion.
   (("C-c C-r" . ivy-resume)
@@ -1635,6 +1679,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (ivy-mode))
 
 (use-package counsel
+  :ensure t
   :after ivy
   :config
   (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history))
@@ -1791,18 +1836,19 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package with-editor
-    :init
-    (add-hook 'shell-mode-hook  'with-editor-export-editor)
-    (add-hook 'eshell-mode-hook 'with-editor-export-editor)
-    (add-hook 'term-exec-hook   'with-editor-export-editor))
+(use-package with-editor
+  :ensure t
+  :init
+  (add-hook 'shell-mode-hook  'with-editor-export-editor)
+  (add-hook 'eshell-mode-hook 'with-editor-export-editor)
+  (add-hook 'term-exec-hook   'with-editor-export-editor))
 
-  (defun suppress-with-editor-export-message (orig-fun &rest args)
-    (let ((inhibit-message t))
-      (apply orig-fun args)))
+(defun suppress-with-editor-export-message (orig-fun &rest args)
+  (let ((inhibit-message t))
+    (apply orig-fun args)))
 
-  (with-eval-after-load 'with-editor
-    (advice-add 'with-editor-export-editor :around #'suppress-with-editor-export-message))
+(with-eval-after-load 'with-editor
+  (advice-add 'with-editor-export-editor :around #'suppress-with-editor-export-message))
 
 #+end_src
 
@@ -1810,10 +1856,18 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  ;; (use-package crontab-mode)
+;; (use-package crontab-mode)
 
-  (straight-use-package
-   '(emacs-crontab-mode :host gitlab :repo "Bacaliu/emacs-crontab-mode"))
+;; (straight-use-package
+;;  '(emacs-crontab-mode :host gitlab :repo "Bacaliu/emacs-crontab-mode"))
+
+;; ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
+;; (use-package emacs-crontab-mode
+;;   :vc (:url "https://gitlab.com/Bacaliu/emacs-crontab-mode"
+;;        :rev :newest))
+
+(add-to-list 'load-path (expand-file-name "emacs-crontab-mode" user-emacs-directory))
+
 ;;
 ;;  (require emacs-crontab-mode)
 
@@ -1834,64 +1888,64 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package fzf)
+;; (use-package fzf)
 
-  (defun fzf-from-home-with-fd ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-        and exclude certain directories but with an ability to interactively change
-        the searching directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    (let ((default-directory "~/"))
-      (fzf-directory)))
+;; (defun fzf-from-home-with-fd ()
+;;   "Starts fzf from the user's home directory using fd to include hidden files
+;;       and exclude certain directories but with an ability to interactively change
+;;       the searching directory."
+;;   (interactive)
+;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+;;   (let ((default-directory "~/"))
+;;     (fzf-directory)))
 
-  (defun fzf-from-root-with-fd ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-        and exclude certain directories but with an ability to interactively change
-        the searching directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (let ((default-directory "/"))
-      (fzf-directory)))
+;; (defun fzf-from-root-with-fd ()
+;;   "Starts fzf from the user's home directory using fd to include hidden files
+;;       and exclude certain directories but with an ability to interactively change
+;;       the searching directory."
+;;   (interactive)
+;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+;;   (let ((default-directory "/"))
+;;     (fzf-directory)))
 
-  (defun fzf-notes ()
-    "Start fzf in the notes directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    (let ((default-directory "~/.secret_dotfiles/org"))
-      (fzf-directory)))
+;; (defun fzf-notes ()
+;;   "Start fzf in the notes directory."
+;;   (interactive)
+;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+;;   (let ((default-directory "~/.secret_dotfiles/org"))
+;;     (fzf-directory)))
 
-  ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+;; ;; (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
 
-  (defun fzf-from-root-no-prompt ()
-    "Starts fzf from the user's root directory using fd to include hidden files
-    and exclude certain directories without prompting for a directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
-    (fzf))
+;; (defun fzf-from-root-no-prompt ()
+;;   "Starts fzf from the user's root directory using fd to include hidden files
+;;   and exclude certain directories without prompting for a directory."
+;;   (interactive)
+;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git --exclude .snapshots --exclude opt --exclude lib --exclude lib64 --exclude mnt --exclude proc --exclude run --exclude sbin --exclude srv --exclude sys --exclude tmp . /")
+;;   (fzf))
 
-  (defun fzf-from-home-no-prompt ()
-    "Starts fzf from the user's home directory using fd to include hidden files
-      and exclude certain directories without prompting for a directory."
-    (interactive)
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
-    (fzf))
+;; (defun fzf-from-home-no-prompt ()
+;;   "Starts fzf from the user's home directory using fd to include hidden files
+;;     and exclude certain directories without prompting for a directory."
+;;   (interactive)
+;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git . /home/wurfkreuz")
+;;   (fzf))
 
-  (defun fzf-from-current-with-fd ()
-    "Starts fzf from the current directory using fd to include hidden files
-     and exclude certain directories. Works both locally and on remote servers."
-    (interactive)
-    ;; Set the FZF_DEFAULT_COMMAND environment variable
-    (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
-    ;; Check if the current directory is a TRAMP directory
-    (let ((tramp-address (file-remote-p default-directory)))
-      (if tramp-address
-          ;; If we're in a TRAMP directory, use the extracted address
-          (fzf-directory tramp-address)
-        ;; If not in a TRAMP directory, use the local home directory
-        (fzf-directory "~/"))))
+;; (defun fzf-from-current-with-fd ()
+;;   "Starts fzf from the current directory using fd to include hidden files
+;;    and exclude certain directories. Works both locally and on remote servers."
+;;   (interactive)
+;;   ;; Set the FZF_DEFAULT_COMMAND environment variable
+;;   (setenv "FZF_DEFAULT_COMMAND" "fd --hidden --follow --exclude .git .")
+;;   ;; Check if the current directory is a TRAMP directory
+;;   (let ((tramp-address (file-remote-p default-directory)))
+;;     (if tramp-address
+;;         ;; If we're in a TRAMP directory, use the extracted address
+;;         (fzf-directory tramp-address)
+;;       ;; If not in a TRAMP directory, use the local home directory
+;;       (fzf-directory "~/"))))
 
-  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
+;; (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll --inline-info --bind ctrl-n:down,ctrl-p:up")
 
 #+end_src
 
@@ -1899,14 +1953,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package helpful
-    :config
-    (global-set-key (kbd "C-h f") #'helpful-callable)
-    (global-set-key (kbd "C-h v") #'helpful-variable)
-    (global-set-key (kbd "C-h k") #'helpful-key)
-    (global-set-key (kbd "C-h x") #'helpful-command)
-    (setq counsel-describe-function-function #'helpful-callable)
-    (setq counsel-describe-variable-function #'helpful-variable))
+(use-package helpful
+  :ensure t
+  :config
+  (global-set-key (kbd "C-h f") #'helpful-callable)
+  (global-set-key (kbd "C-h v") #'helpful-variable)
+  (global-set-key (kbd "C-h k") #'helpful-key)
+  (global-set-key (kbd "C-h x") #'helpful-command)
+  (setq counsel-describe-function-function #'helpful-callable)
+  (setq counsel-describe-variable-function #'helpful-variable))
 
 #+end_src
 
@@ -1914,30 +1969,31 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (defun my-enlarge-window-horizontally ()
-    "Enlarge the current window horizontally in a more intuitive way."
-    (interactive)
-    (if (window-at-side-p (selected-window) 'right)
-        (shrink-window-horizontally 5)
-      (enlarge-window-horizontally 5)))
+(defun my-enlarge-window-horizontally ()
+  "Enlarge the current window horizontally in a more intuitive way."
+  (interactive)
+  (if (window-at-side-p (selected-window) 'right)
+      (shrink-window-horizontally 5)
+    (enlarge-window-horizontally 5)))
 
-  (defun my-shrink-window-horizontally ()
-    "Shrink the current window horizontally in a more intuitive way."
-    (interactive)
-    (if (window-at-side-p (selected-window) 'right)
-        (enlarge-window-horizontally 5)
-      (shrink-window-horizontally 5)))
+(defun my-shrink-window-horizontally ()
+  "Shrink the current window horizontally in a more intuitive way."
+  (interactive)
+  (if (window-at-side-p (selected-window) 'right)
+      (enlarge-window-horizontally 5)
+    (shrink-window-horizontally 5)))
 
-  (use-package hydra
-    :config
-    (defhydra hydra-window-size (:color red)
-      "window size"
-      ("h" my-shrink-window-horizontally "shrink horizontally")
-      ("l" my-enlarge-window-horizontally "enlarge horizontally")
-      ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
-      ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
-      ("t" transpose-frame "transpose windows")
-      ("q" nil "quit")))
+(use-package hydra
+  :ensure t
+  :config
+  (defhydra hydra-window-size (:color red)
+    "window size"
+    ("h" my-shrink-window-horizontally "shrink horizontally")
+    ("l" my-enlarge-window-horizontally "enlarge horizontally")
+    ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
+    ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
+    ("t" transpose-frame "transpose windows")
+    ("q" nil "quit")))
 
 #+end_src
 
@@ -1945,60 +2001,60 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-      ;; (add-hook 'dired-mode-hook
-      ;;         (lambda ()
-      ;;           (wdired-change-to-wdired-mode)))
+;; (add-hook 'dired-mode-hook
+;;         (lambda ()
+;;           (wdired-change-to-wdired-mode)))
 
-      (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/etc/")
-      (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
+(add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/etc/")
+(add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
 
-  ;;    ;; For some reason enbling trashing not only breaks deletion, but also
-  ;;    ;; copying and probably moving both in eshell and dired.
-    (setq delete-by-moving-to-trash t
-          trash-directory "~/.local/share/trash/")
+;;    ;; For some reason enbling trashing not only breaks deletion, but also
+;;    ;; copying and probably moving both in eshell and dired.
+(setq delete-by-moving-to-trash t
+        trash-directory "~/.local/share/trash/")
 
-      (setq wdired-allow-to-create-files t)
-      (setq wdired-allow-to-change-permissions t)
+(setq wdired-allow-to-create-files t)
+(setq wdired-allow-to-change-permissions t)
 
-      (setq evil-move-cursor-back nil)
-      (add-hook 'wdired-mode-hook #'evil-normal-state)
+(setq evil-move-cursor-back nil)
+(add-hook 'wdired-mode-hook #'evil-normal-state)
 
-      (defun my-dired-do-symlink-with-sudo ()
-        "Create a symlink, using sudo if necessary."
-        (interactive)
-        (let* ((files (dired-get-marked-files))
-              (default-directory (if (file-remote-p default-directory)
-                                      (tramp-file-name-localname (tramp-dissect-file-name default-directory))
-                                    default-directory))
-              (target (read-file-name "Symlink to: " default-directory))
-              (sudo-target (if (file-writable-p (file-name-directory target))
-                                target
-                              (concat "/sudo::" target))))
-          (dolist (file files)
-            (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
-              (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
+(defun my-dired-do-symlink-with-sudo ()
+  "Create a symlink, using sudo if necessary."
+  (interactive)
+  (let* ((files (dired-get-marked-files))
+        (default-directory (if (file-remote-p default-directory)
+                                (tramp-file-name-localname (tramp-dissect-file-name default-directory))
+                              default-directory))
+        (target (read-file-name "Symlink to: " default-directory))
+        (sudo-target (if (file-writable-p (file-name-directory target))
+                          target
+                        (concat "/sudo::" target))))
+    (dolist (file files)
+      (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
+        (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
 
-      (defun my-dired-setup ()
-        (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
+(defun my-dired-setup ()
+  (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
 
-      (add-hook 'dired-mode-hook 'my-dired-setup)
+(add-hook 'dired-mode-hook 'my-dired-setup)
 
-      ;; (defun my-dired-do-delete-with-sudo ()
-      ;;   "Attempt to move the marked files to trash, using sudo if necessary."
-      ;;   (interactive)
-      ;;   (let ((files (dired-get-marked-files)))
-      ;;     (dolist (file files)
-      ;;       (if (yes-or-no-p (format "Move %s to trash? " (file-name-nondirectory file)))
-      ;;           (if (file-writable-p (file-name-directory file))
-      ;;               (dired-delete-file file 'trash)
-      ;;             (let ((sudo-file (concat "/sudo::" file)))
-      ;;               (when (yes-or-no-p (format "Insufficient permissions to move %s to trash. Retry with sudo? " (file-name-nondirectory file)))
-      ;;                 (with-temp-buffer
-      ;;                   (cd (file-name-directory sudo-file))
-      ;;                   (dired-delete-file sudo-file 'trash))))))))
-      ;;   (revert-buffer))
+;; (defun my-dired-do-delete-with-sudo ()
+;;   "Attempt to move the marked files to trash, using sudo if necessary."
+;;   (interactive)
+;;   (let ((files (dired-get-marked-files)))
+;;     (dolist (file files)
+;;       (if (yes-or-no-p (format "Move %s to trash? " (file-name-nondirectory file)))
+;;           (if (file-writable-p (file-name-directory file))
+;;               (dired-delete-file file 'trash)
+;;             (let ((sudo-file (concat "/sudo::" file)))
+;;               (when (yes-or-no-p (format "Insufficient permissions to move %s to trash. Retry with sudo? " (file-name-nondirectory file)))
+;;                 (with-temp-buffer
+;;                   (cd (file-name-directory sudo-file))
+;;                   (dired-delete-file sudo-file 'trash))))))))
+;;   (revert-buffer))
 
-      ;; (evil-define-key 'normal dired-mode-map (kbd "D") 'my-dired-do-delete-with-sudo)
+;; (evil-define-key 'normal dired-mode-map (kbd "D") 'my-dired-do-delete-with-sudo)
 
 ;; (defun dired-run-bak-on-marked-files (beg end)
 ;; "Run the 'bak' script on marked files or visually selected files in Dired."
@@ -2125,6 +2181,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 #+begin_src emacs-lisp
 
 (use-package magit
+  :ensure t
   :config
   (define-key magit-mode-map (kbd "M-1") nil)
   (define-key magit-mode-map (kbd "M-2") nil)
@@ -2139,70 +2196,70 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (require 'tramp)
+(require 'tramp)
 
-  ;; (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
-  ;; (add-to-list 'tramp-connection-properties
-  ;;              (list (regexp-quote "/ssh:")
-  ;;                    "direct-async-process" t))
+;; (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
+;; (add-to-list 'tramp-connection-properties
+;;              (list (regexp-quote "/ssh:")
+;;                    "direct-async-process" t))
 
-  ;; ;; cache file-name forever
-  ;; (setq remote-file-name-inhibit-cache nil)
+;; ;; cache file-name forever
+;; (setq remote-file-name-inhibit-cache nil)
 
-  ;; ;; make sure vc stuff is not making tramp slower
-  ;; (setq vc-ignore-dir-regexp
-  ;;       (format "%s\\|%s"
-  ;;               vc-ignore-dir-regexp
-  ;;               tramp-file-name-regexp))
+;; ;; make sure vc stuff is not making tramp slower
+;; (setq vc-ignore-dir-regexp
+;;       (format "%s\\|%s"
+;;               vc-ignore-dir-regexp
+;;               tramp-file-name-regexp))
 
-  (defun my/disable-lockfiles-for-tramp ()
-    "Disable lockfiles for tramp."
-    (when (and buffer-file-name
-              (file-remote-p buffer-file-name))
-      (setq-local create-lockfiles nil)))
+(defun my/disable-lockfiles-for-tramp ()
+  "Disable lockfiles for tramp."
+  (when (and buffer-file-name
+            (file-remote-p buffer-file-name))
+    (setq-local create-lockfiles nil)))
 
-  (add-hook 'find-file-hook #'my/disable-lockfiles-for-tramp)
-  (add-hook 'before-save-hook #'my/disable-lockfiles-for-tramp)
+(add-hook 'find-file-hook #'my/disable-lockfiles-for-tramp)
+(add-hook 'before-save-hook #'my/disable-lockfiles-for-tramp)
 
-  (defun extract-local-path-from-tramp-buffer-and-display ()
-    (interactive)
-    "Extract the local part of the path from a TRAMP buffer and display it."
-    (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
-          (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
-          (local-part (tramp-file-name-localname path-components))) ; Extract the local part
-      (message "%s" local-part))) ; Display the local part as a message
+(defun extract-local-path-from-tramp-buffer-and-display ()
+  (interactive)
+  "Extract the local part of the path from a TRAMP buffer and display it."
+  (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
+        (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
+        (local-part (tramp-file-name-localname path-components))) ; Extract the local part
+    (message "%s" local-part))) ; Display the local part as a message
 
-  (defun tramp-revert ()
-    "Extract the local part of the path from a TRAMP buffer and attempt to reopen the file."
-    (interactive)
-    (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
-          (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
-          (local-part (tramp-file-name-localname path-components))) ; Extract the local part
-      ;; Kill the current buffer before attempting to reopen the file
-      (kill-current-buffer)
-      ;; Attempt to reopen the file with the extracted local path
-      (find-file local-part)))
+(defun tramp-revert ()
+  "Extract the local part of the path from a TRAMP buffer and attempt to reopen the file."
+  (interactive)
+  (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
+        (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
+        (local-part (tramp-file-name-localname path-components))) ; Extract the local part
+    ;; Kill the current buffer before attempting to reopen the file
+    (kill-current-buffer)
+    ;; Attempt to reopen the file with the extracted local path
+    (find-file local-part)))
 
-  ;; (defun revert-all-tramp-buffers-to-local-permissions ()
-  ;;   "Attempt to revert all TRAMP buffers to local permissions."
-  ;;   (interactive)
-  ;;   (let ((reverted-buffers 0))
-  ;;     (dolist (buffer (buffer-list))
-  ;;       (with-current-buffer buffer
-  ;;         (let ((buffer-name (buffer-name buffer))
-  ;;               (file-name (buffer-file-name buffer)))
-  ;;           (when (or (and buffer-name
-  ;;                         (or (string-match-p "\\`\\*tramp/" buffer-name)
-  ;;                             (string-match-p "\\`\\*eshell:/" buffer-name)
-  ;;                             (string-match-p "\\`/sudo:" buffer-name)))
-  ;;                       (and file-name
-  ;;                           (file-remote-p file-name)))
-  ;;             (message "Attempting to revert TRAMP buffer: %s, File: %s" buffer-name (or file-name "No file"))
-  ;;             (tramp-revert-to-local-permissions)
-  ;;             (setq reverted-buffers (1+ reverted-buffers))))))
-  ;;     (message "Attempted to revert %d TRAMP-related buffer(s) to local permissions" reverted-buffers)))
+;; (defun revert-all-tramp-buffers-to-local-permissions ()
+;;   "Attempt to revert all TRAMP buffers to local permissions."
+;;   (interactive)
+;;   (let ((reverted-buffers 0))
+;;     (dolist (buffer (buffer-list))
+;;       (with-current-buffer buffer
+;;         (let ((buffer-name (buffer-name buffer))
+;;               (file-name (buffer-file-name buffer)))
+;;           (when (or (and buffer-name
+;;                         (or (string-match-p "\\`\\*tramp/" buffer-name)
+;;                             (string-match-p "\\`\\*eshell:/" buffer-name)
+;;                             (string-match-p "\\`/sudo:" buffer-name)))
+;;                       (and file-name
+;;                           (file-remote-p file-name)))
+;;             (message "Attempting to revert TRAMP buffer: %s, File: %s" buffer-name (or file-name "No file"))
+;;             (tramp-revert-to-local-permissions)
+;;             (setq reverted-buffers (1+ reverted-buffers))))))
+;;     (message "Attempted to revert %d TRAMP-related buffer(s) to local permissions" reverted-buffers)))
 
-  ;; (add-hook 'kill-emacs-hook #'revert-all-tramp-buffers-to-local-permissions)
+;; (add-hook 'kill-emacs-hook #'revert-all-tramp-buffers-to-local-permissions)
 
 #+end_src
 
@@ -2212,7 +2269,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 #+begin_src emacs-lisp
 
 (use-package eshell
-  :ensure nil
+  ;; :ensure nil
   :hook ((eshell-mode . eshell-specific-outline-regexp))
           ;; (eshell-directory-change . sync-dir-in-buffer-name)
   :custom
@@ -2223,6 +2280,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (setq eshell-destroy-buffer-when-process-dies t)
 
 (use-package eshell-syntax-highlighting
+  :ensure t
   :after esh-mode  ;; don't change to 'eshell-mode'
   :config
   (eshell-syntax-highlighting-global-mode +1))
@@ -2484,20 +2542,20 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (defun FD ()
-    "Display open files for the current Emacs process.
-  If called from eshell, display in eshell. Otherwise, use a separate buffer."
-    (interactive)
-    (let* ((pid (number-to-string (emacs-pid)))
-          (command (concat "ls -l /proc/" pid "/fd"))
-          (output (shell-command-to-string command)))
-      (if (eq major-mode 'eshell-mode)
-          ;; In eshell, print directly to the eshell buffer
-          (eshell-printn output)
-        ;; Outside eshell, use the original behavior
-        (with-output-to-temp-buffer "*FD Output*"
-          (princ output))
-        (switch-to-buffer-other-window "*FD Output*"))))
+(defun FD ()
+  "Display open files for the current Emacs process.
+If called from eshell, display in eshell. Otherwise, use a separate buffer."
+  (interactive)
+  (let* ((pid (number-to-string (emacs-pid)))
+        (command (concat "ls -l /proc/" pid "/fd"))
+        (output (shell-command-to-string command)))
+    (if (eq major-mode 'eshell-mode)
+        ;; In eshell, print directly to the eshell buffer
+        (eshell-printn output)
+      ;; Outside eshell, use the original behavior
+      (with-output-to-temp-buffer "*FD Output*"
+        (princ output))
+      (switch-to-buffer-other-window "*FD Output*"))))
 
 #+end_src
 
@@ -2505,28 +2563,28 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  ;; Execute async shell command on a current file
-  (defun async-shell-command-on-file (command)
-    "Execute COMMAND asynchronously on the current file."
-    (interactive (list (read-shell-command
-                        (concat "Async shell command on " (buffer-name) ": "))))
-    (let ((filename (if (equal major-mode 'dired-mode)
-                        default-directory
-                      (buffer-file-name))))
-      (async-shell-command (concat command " " filename))))
+;; Execute async shell command on a current file
+(defun async-shell-command-on-file (command)
+  "Execute COMMAND asynchronously on the current file."
+  (interactive (list (read-shell-command
+                      (concat "Async shell command on " (buffer-name) ": "))))
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (async-shell-command (concat command " " filename))))
 
 
-  (defun async-shell-command-filter-hook ()
-  "Filter async shell command output via `comint-output-filter'."
-  (when (equal (buffer-name (current-buffer)) "*Async Shell Command*")
-    ;; When `comint-output-filter' is non-nil, the carriage return characters ^M
-    ;; are displayed
-    (setq-local comint-inhibit-carriage-motion nil)
-    (when-let ((proc (get-buffer-process (current-buffer))))
-      (set-process-filter proc 'comint-output-filter))))
+(defun async-shell-command-filter-hook ()
+"Filter async shell command output via `comint-output-filter'."
+(when (equal (buffer-name (current-buffer)) "*Async Shell Command*")
+  ;; When `comint-output-filter' is non-nil, the carriage return characters ^M
+  ;; are displayed
+  (setq-local comint-inhibit-carriage-motion nil)
+  (when-let ((proc (get-buffer-process (current-buffer))))
+    (set-process-filter proc 'comint-output-filter))))
 
-  (with-eval-after-load 'shell
-    (add-hook 'shell-mode-hook 'async-shell-command-filter-hook))
+(with-eval-after-load 'shell
+  (add-hook 'shell-mode-hook 'async-shell-command-filter-hook))
 
 #+end_src
 
@@ -2534,10 +2592,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (defun my-hoogle-search (query)
-    "Search Hoogle for QUERY."
-    (interactive "sHoogle search: ") ; Prompt for the search term
-    (shell-command (concat "hoogle search " (shell-quote-argument query))))
+(defun my-hoogle-search (query)
+  "Search Hoogle for QUERY."
+  (interactive "sHoogle search: ") ; Prompt for the search term
+  (shell-command (concat "hoogle search " (shell-quote-argument query))))
 
 #+end_src
 
@@ -2545,13 +2603,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  (use-package evil-terminal-cursor-changer
-    :config
-    (unless (display-graphic-p)
-      (require 'evil-terminal-cursor-changer)
-      (evil-terminal-cursor-changer-activate) ; or (etcc-on)
-      )
+(use-package evil-terminal-cursor-changer
+  :ensure t
+  :config
+  (unless (display-graphic-p)
+    (require 'evil-terminal-cursor-changer)
+    (evil-terminal-cursor-changer-activate) ; or (etcc-on)
     )
+  )
 
 #+end_src
 
@@ -2661,123 +2720,123 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-  ;; (setq desktop-restore-eager 10)
+;; (setq desktop-restore-eager 10)
 
-  (defvar current-desktop-session-name nil
-    "The name of the currently loaded desktop session.")
+(defvar current-desktop-session-name nil
+  "The name of the currently loaded desktop session.")
 
-  (defvar desktop-autosave-timer nil
-    "Timer object for desktop autosave, to avoid multiple timers running.")
+(defvar desktop-autosave-timer nil
+  "Timer object for desktop autosave, to avoid multiple timers running.")
 
-  (defun save-eshell-buffer (desktop-dirname)
-    ;; Save the current working directory.
-    default-directory)
+(defun save-eshell-buffer (desktop-dirname)
+  ;; Save the current working directory.
+  default-directory)
 
-  (defun restore-eshell-buffer (_file-name buffer-name misc)
-    "MISC is the value returned by `save-eshell-buffer'.
-                  _FILE-NAME is nil."
-    (let ((default-directory misc))
-      ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
-      (eshell buffer-name)))
+(defun restore-eshell-buffer (_file-name buffer-name misc)
+  "MISC is the value returned by `save-eshell-buffer'.
+                _FILE-NAME is nil."
+  (let ((default-directory misc))
+    ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
+    (eshell buffer-name)))
 
-  ;; Save all eshell-mode buffers.
-  (add-hook 'eshell-mode-hook
-            (lambda ()
-              (setq-local desktop-save-buffer #'save-eshell-buffer)))
+;; Save all eshell-mode buffers.
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (setq-local desktop-save-buffer #'save-eshell-buffer)))
 
-  ;; Restore all eshell-mode buffers.
-  (add-to-list 'desktop-buffer-mode-handlers '(eshell-mode . restore-eshell-buffer))
+;; Restore all eshell-mode buffers.
+(add-to-list 'desktop-buffer-mode-handlers '(eshell-mode . restore-eshell-buffer))
 
-  (defun save-current-desktop-session (&optional show-message)
-    "Save the current desktop session using the current session name.
-  If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls whether a save message is displayed."
-    (interactive "p") ; "p" passes a prefix argument, which is non-nil when called interactively
-    (if (and current-desktop-session-name (not (string-empty-p current-desktop-session-name)))
-        (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
-          (unless (file-exists-p desktop-dir)
-            (make-directory desktop-dir t))
-          (desktop-save desktop-dir)
-          (when (and show-message (or (called-interactively-p 'any) (eq show-message 1)))
-            (message "Session '%s' saved." current-desktop-session-name)))
-      ;; No session is loaded or the session name is empty, prompt to create a new one (only when called interactively)
-      (when (called-interactively-p 'any)
-        (let ((new-session-name (read-string "Enter new session name: ")))
-          (if (string-empty-p new-session-name)
-              (message "Session name cannot be empty.")
+(defun save-current-desktop-session (&optional show-message)
+  "Save the current desktop session using the current session name.
+If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls whether a save message is displayed."
+  (interactive "p") ; "p" passes a prefix argument, which is non-nil when called interactively
+  (if (and current-desktop-session-name (not (string-empty-p current-desktop-session-name)))
+      (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
+        (unless (file-exists-p desktop-dir)
+          (make-directory desktop-dir t))
+        (desktop-save desktop-dir)
+        (when (and show-message (or (called-interactively-p 'any) (eq show-message 1)))
+          (message "Session '%s' saved." current-desktop-session-name)))
+    ;; No session is loaded or the session name is empty, prompt to create a new one (only when called interactively)
+    (when (called-interactively-p 'any)
+      (let ((new-session-name (read-string "Enter new session name: ")))
+        (if (string-empty-p new-session-name)
+            (message "Session name cannot be empty.")
+          (progn
+            (setq current-desktop-session-name new-session-name)
+            (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
+              (make-directory new-desktop-dir t)
+              (desktop-save new-desktop-dir)
+              (message "Session '%s' created and saved." new-session-name))))))))
+
+(defun setup-desktop-autosave-timer ()
+  "Set up or reset the desktop autosave timer."
+  (when desktop-autosave-timer
+    (cancel-timer desktop-autosave-timer))
+  ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
+  (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
+
+(defun load-desktop-session (session-name)
+  "Load a desktop session by name."
+  (let ((desktop-dir (concat user-emacs-directory "desktop/")))
+    (setq current-desktop-session-name session-name)
+    (desktop-change-dir (concat desktop-dir session-name "/"))
+    (setup-desktop-autosave-timer)))
+
+(defun load-desktop-with-name ()
+  "Load a desktop session by name, chosen from available sessions."
+  (interactive)
+  (when current-desktop-session-name
+    ;; Save the current session before loading a new one, but only if a session is already loaded.
+    (save-current-desktop-session))
+  (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+         (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
+    (setq current-desktop-session-name session-name)  ; Save the session name globally
+    (desktop-change-dir (concat desktop-dir session-name "/"))
+    (setup-desktop-autosave-timer)))
+
+;; Disable the default desktop save mode
+(desktop-save-mode 0)
+
+(setq desktop-files-not-to-save
+    (concat "\\(^/[^/:]*:\\|(ftp)$\\)\\|" desktop-files-not-to-save))
+
+(defun delete-desktop-session ()
+  "Delete a desktop session by name, chosen from available sessions."
+  (interactive)
+  (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
+         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
+         (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
+    (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
+      (let ((session-path (concat desktop-dir session-name)))
+        (if (file-directory-p session-path)
             (progn
-              (setq current-desktop-session-name new-session-name)
-              (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
-                (make-directory new-desktop-dir t)
-                (desktop-save new-desktop-dir)
-                (message "Session '%s' created and saved." new-session-name))))))))
+              (delete-directory session-path t)  ; 't' for recursive delete
+              (message "Deleted desktop session '%s'." session-name))
+          (message "No such desktop session '%s'." session-name))))))
 
-  (defun setup-desktop-autosave-timer ()
-    "Set up or reset the desktop autosave timer."
-    (when desktop-autosave-timer
-      (cancel-timer desktop-autosave-timer))
-    ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
-    (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
+(defun rename-desktop-session ()
+  "Renames the currently loaded desktop session."
+  (interactive)
+  ;; Check if there's a session loaded.
+  (if (not current-desktop-session-name)
+      (message "No desktop session is currently loaded.")
+    (let* ((new-name (read-string "New session name: "))
+           (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
+           (new-dir (concat user-emacs-directory "desktop/" new-name)))
+      ;; Check if the new session name is empty or the session already exists.
+      (if (or (string-empty-p new-name)
+              (file-exists-p new-dir))
+          (message "Invalid new session name or session already exists.")
+        ;; Rename the directory and update the session name.
+        (rename-file old-dir new-dir)
+        (setq current-desktop-session-name new-name)
+        (message "Session renamed to '%s'." new-name)))))
 
-  (defun load-desktop-session (session-name)
-    "Load a desktop session by name."
-    (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-      (setq current-desktop-session-name session-name)
-      (desktop-change-dir (concat desktop-dir session-name "/"))
-      (setup-desktop-autosave-timer)))
-
-  (defun load-desktop-with-name ()
-    "Load a desktop session by name, chosen from available sessions."
-    (interactive)
-    (when current-desktop-session-name
-      ;; Save the current session before loading a new one, but only if a session is already loaded.
-      (save-current-desktop-session))
-    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-           (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
-      (setq current-desktop-session-name session-name)  ; Save the session name globally
-      (desktop-change-dir (concat desktop-dir session-name "/"))
-      (setup-desktop-autosave-timer)))
-
-  ;; Disable the default desktop save mode
-  (desktop-save-mode 0)
-
-  (setq desktop-files-not-to-save
-      (concat "\\(^/[^/:]*:\\|(ftp)$\\)\\|" desktop-files-not-to-save))
-
-  (defun delete-desktop-session ()
-    "Delete a desktop session by name, chosen from available sessions."
-    (interactive)
-    (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-           (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-           (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
-      (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
-        (let ((session-path (concat desktop-dir session-name)))
-          (if (file-directory-p session-path)
-              (progn
-                (delete-directory session-path t)  ; 't' for recursive delete
-                (message "Deleted desktop session '%s'." session-name))
-            (message "No such desktop session '%s'." session-name))))))
-
-  (defun rename-desktop-session ()
-    "Renames the currently loaded desktop session."
-    (interactive)
-    ;; Check if there's a session loaded.
-    (if (not current-desktop-session-name)
-        (message "No desktop session is currently loaded.")
-      (let* ((new-name (read-string "New session name: "))
-             (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
-             (new-dir (concat user-emacs-directory "desktop/" new-name)))
-        ;; Check if the new session name is empty or the session already exists.
-        (if (or (string-empty-p new-name)
-                (file-exists-p new-dir))
-            (message "Invalid new session name or session already exists.")
-          ;; Rename the directory and update the session name.
-          (rename-file old-dir new-dir)
-          (setq current-desktop-session-name new-name)
-          (message "Session renamed to '%s'." new-name)))))
-
-  (add-hook 'kill-emacs-hook 'clean-buffer-list)
-  (add-hook 'kill-emacs-hook 'save-current-desktop-session)
+(add-hook 'kill-emacs-hook 'clean-buffer-list)
+(add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
   #+end_src
 
@@ -2998,7 +3057,8 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (use-package transpose-frame)
+(use-package transpose-frame
+  :ensure t)
 
 #+end_src
 
@@ -3016,6 +3076,7 @@ If an eshell buffer for the directory already exists, switch to it."
     (popper-toggle-latest)))
 
 (use-package popper
+  :ensure t
   :bind (("M-`" . my/show-popper-echo-line))
          ;; ("M-f"   . popper-toggle))
          ;; ("M-~"   . popper-cycle))
@@ -3139,6 +3200,7 @@ If an eshell buffer for the directory already exists, switch to it."
 #+begin_src emacs-lisp
 
 (use-package pyvenv
+  :ensure t
   :config
   (pyvenv-mode 1))  
 
@@ -3150,24 +3212,26 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  ;; (use-package flymake
-  ;;   :ensure t
-  ;;   :config
-  ;;   ;; Define a function to enable flymake-mode in dockerfile-mode
-  ;;   (defun enable-flymake-mode ()
-  ;;     "Enable flymake-mode in dockerfile-mode."
-  ;;     (if (string-equal major-mode "dockerfile-mode")
-  ;;         (flymake-mode 1)))
+;; (use-package flymake
+;;   :ensure t
+;;   :config
+;;   ;; Define a function to enable flymake-mode in dockerfile-mode
+;;   (defun enable-flymake-mode ()
+;;     "Enable flymake-mode in dockerfile-mode."
+;;     (if (string-equal major-mode "dockerfile-mode")
+;;         (flymake-mode 1)))
 
-  (defun enable-flymake-mode ()
-    "Enable flymake-mode in dockerfile-mode."
-    (if (string-equal major-mode "dockerfile-mode")
-        (flymake-mode 1)))
+(defun enable-flymake-mode ()
+  "Enable flymake-mode in dockerfile-mode."
+  (if (string-equal major-mode "dockerfile-mode")
+      (flymake-mode 1)))
 
-  ;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
-  (add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
+;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
+(add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
 
-(use-package flymake-hadolint)
+(use-package flymake-hadolint
+  :ensure t)
+
 (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
 
 ;; If i need to run hadolint with dockerfile-ts-mode
@@ -3184,6 +3248,7 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; (add-hook 'dockerfile-ts-mode-hook 'flymake-mode)
 
 (use-package flymake-shellcheck
+  :ensure t
   :commands flymake-shellcheck-load
   :init
   (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
@@ -3194,48 +3259,55 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (use-package raku-mode)
-  (use-package go-mode)
-  (use-package lua-mode)
-  (use-package terraform-mode)
-  (use-package dockerfile-mode)
-  (use-package haskell-mode)
-  (use-package yaml-mode)
+(use-package raku-mode
+  :ensure t)
+(use-package go-mode
+  :ensure t)
+(use-package lua-mode
+  :ensure t)
+(use-package terraform-mode
+  :ensure t)
+(use-package dockerfile-mode
+  :ensure t)
+(use-package haskell-mode
+  :ensure t)
+(use-package yaml-mode
+  :ensure t)
 
-  (when (require 'dockerfile-mode nil 'noerror)
-    ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
-    (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
+(when (require 'dockerfile-mode nil 'noerror)
+  ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
+  (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
 
 ;; yaml-ts doesn't work because of this hook?
 ;; (use-package ansible
 ;;   :config
 ;;   (add-hook 'yaml-ts-mode-hook '(lambda () (ansible 1))))
 
-  (require 'compile)
-  (add-to-list 'compilation-error-regexp-alist
-               'yaml)
-  (add-to-list 'compilation-error-regexp-alist-alist
-               '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
-               )
+(require 'compile)
+(add-to-list 'compilation-error-regexp-alist
+             'yaml)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
+             )
 
-                                          ; Replace make -k with ansible-lint, with an UTF-8 locale to avoid crashes
-  (defun ansible-lint-errors ()
-    (make-local-variable 'compile-command)
-    (let ((ansiblelint_command "ansible-lint ") (loc "LANG=C.UTF-8 "))
-      (setq compile-command (concat loc ansiblelint_command buffer-file-name)))
-    )
-  (add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
+                                        ; Replace make -k with ansible-lint, with an UTF-8 locale to avoid crashes
+(defun ansible-lint-errors ()
+  (make-local-variable 'compile-command)
+  (let ((ansiblelint_command "ansible-lint ") (loc "LANG=C.UTF-8 "))
+    (setq compile-command (concat loc ansiblelint_command buffer-file-name)))
+  )
+(add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
 
-  ;; (use-package markdown-mode
-  ;;   :ensure t
-  ;;   :mode ("README\\.md\\'" . gfm-mode)
-  ;;   :init (setq markdown-command "multimarkdown")
-  ;;   :bind (:map markdown-mode-map
-  ;;         ("C-c C-e" . markdown-do)))
+;; (use-package markdown-mode
+;;   :ensure t
+;;   :mode ("README\\.md\\'" . gfm-mode)
+;;   :init (setq markdown-command "multimarkdown")
+;;   :bind (:map markdown-mode-map
+;;         ("C-c C-e" . markdown-do)))
 
-  (add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
-  (add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
-  (add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
+(add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
+(add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
+(add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
 
 #+end_src
 
@@ -3243,58 +3315,58 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (defun my/set-flycheck-faces ()
-    (with-eval-after-load 'flycheck
-      ;; Customize Flycheck error face
-      (set-face-attribute 'flycheck-error nil
-                          :underline `(:style line :color "#e0def4")) ; rose-pine-gold
-      ;; Customize Flycheck warning face
-      (set-face-attribute 'flycheck-warning nil
-                          :underline `(:style line :color "#f6c177")) ; rose-pine-gold
-      ;; Customize Flycheck info (note) face
-      (set-face-attribute 'flycheck-info nil
-                          :underline `(:style line :color "#c4a7e7")))) ; rose-pine-iris
+(defun my/set-flycheck-faces ()
+  (with-eval-after-load 'flycheck
+    ;; Customize Flycheck error face
+    (set-face-attribute 'flycheck-error nil
+                        :underline `(:style line :color "#e0def4")) ; rose-pine-gold
+    ;; Customize Flycheck warning face
+    (set-face-attribute 'flycheck-warning nil
+                        :underline `(:style line :color "#f6c177")) ; rose-pine-gold
+    ;; Customize Flycheck info (note) face
+    (set-face-attribute 'flycheck-info nil
+                        :underline `(:style line :color "#c4a7e7")))) ; rose-pine-iris
 
-  (add-hook 'after-init-hook 'my/set-flycheck-faces)
+(add-hook 'after-init-hook 'my/set-flycheck-faces)
 
-  ;; (use-package flycheck
-  ;;   :init
-  ;;   (add-hook 'after-init-hook #'global-flycheck-mode)
-  ;;   :config
-  ;;   (my/set-flycheck-faces))
+;; (use-package flycheck
+;;   :init
+;;   (add-hook 'after-init-hook #'global-flycheck-mode)
+;;   :config
+;;   (my/set-flycheck-faces))
 
-  ;; (defun my/disable-flycheck-in-emacs-lisp-mode ()
-  ;;   "Disable flycheck in emacs-lisp-mode."
-  ;;   (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
+;; (defun my/disable-flycheck-in-emacs-lisp-mode ()
+;;   "Disable flycheck in emacs-lisp-mode."
+;;   (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
 
-  ;; (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
+;; (add-hook 'emacs-lisp-mode-hook #'my/disable-flycheck-in-emacs-lisp-mode)
 
-  ;; (defun my/disable-flycheck-for-specific-languages ()
-  ;;   "Disable specific Flycheck checkers based on the major mode."
-  ;;   (cond
-  ;;   ((derived-mode-p 'emacs-lisp-mode)
-  ;;     (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
-  ;;   ((derived-mode-p 'python-mode)
-  ;;     (setq-local flycheck-disabled-checkers '(python-pylint python-pycompile)))
-  ;;   ((derived-mode-p 'go-mode)
-  ;;     (setq-local flycheck-disabled-checkers '(go-gofmt go-golint go-vet go-build go-test go-errcheck)))))
+;; (defun my/disable-flycheck-for-specific-languages ()
+;;   "Disable specific Flycheck checkers based on the major mode."
+;;   (cond
+;;   ((derived-mode-p 'emacs-lisp-mode)
+;;     (setq-local flycheck-disabled-checkers '(emacs-lisp emacs-lisp-checkdoc)))
+;;   ((derived-mode-p 'python-mode)
+;;     (setq-local flycheck-disabled-checkers '(python-pylint python-pycompile)))
+;;   ((derived-mode-p 'go-mode)
+;;     (setq-local flycheck-disabled-checkers '(go-gofmt go-golint go-vet go-build go-test go-errcheck)))))
 
-  ;; (use-package flycheck-clj-kondo)
+;; (use-package flycheck-clj-kondo)
 
-  ;; (with-eval-after-load 'flycheck
-  ;;   (flycheck-add-mode 'clj-kondo-clj 'clojure-ts-mode)
-  ;;   (flycheck-add-mode 'clj-kondo-cljs 'clojure-ts-mode)
-  ;;   (flycheck-add-mode 'clj-kondo-cljc 'clojure-ts-mode)
-  ;;   (flycheck-add-mode 'clj-kondo-edn 'clojure-ts-mode))
+;; (with-eval-after-load 'flycheck
+;;   (flycheck-add-mode 'clj-kondo-clj 'clojure-ts-mode)
+;;   (flycheck-add-mode 'clj-kondo-cljs 'clojure-ts-mode)
+;;   (flycheck-add-mode 'clj-kondo-cljc 'clojure-ts-mode)
+;;   (flycheck-add-mode 'clj-kondo-edn 'clojure-ts-mode))
 
-  ;; (use-package flycheck-raku)
+;; (use-package flycheck-raku)
 
-  ;; (use-package flymake-flycheck
-  ;;   :after flymake
-  ;;   ;; :init
-  ;;   ;; (setopt flycheck-disabled-checkers '(python-mypy flymake-flycheck:python-mypy))
-  ;;   :config
-  ;;   (add-hook 'flymake-mode-hook 'flymake-flycheck-auto))
+;; (use-package flymake-flycheck
+;;   :after flymake
+;;   ;; :init
+;;   ;; (setopt flycheck-disabled-checkers '(python-mypy flymake-flycheck:python-mypy))
+;;   :config
+;;   (add-hook 'flymake-mode-hook 'flymake-flycheck-auto))
 
 #+end_src
 
@@ -3307,16 +3379,16 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (add-hook 'python-ts-mode-hook 'eglot-ensure)
 (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
+(add-hook 'terraform-mode-hook #'eglot-ensure)
 
 (define-key evil-normal-state-map (kbd "K") 'eldoc)
 
 (add-hook 'eglot-managed-mode-hook (lambda () (eldoc-mode -1)))
 
 (set-face-attribute 'eldoc-highlight-function-argument nil
-                    :inherit nil :foreground nil :weight 'medium)
-
+                    :inherit 'unspecified' :foreground 'unspecified' :weight 'medium)
 (set-face-attribute 'eglot-highlight-symbol-face nil
-                    :inherit nil :foreground nil :weight 'medium)
+                    :inherit 'unspecified' :foreground 'unspecified' :weight 'medium)
 
 
 
@@ -3585,12 +3657,12 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  ;; Set the path to your Org notes file
-  (setq org-default-notes-file "/home/wurfkreuz/.secret_dotfiles/org/notes/quick_notes.org")
+;; Set the path to your Org notes file
+(setq org-default-notes-file "/home/wurfkreuz/.secret_dotfiles/org/notes/quick_notes.org")
 
-  (setq org-capture-templates
-        '(("n" "Note" plain (file org-default-notes-file)
-          "%?\nEntered on %U\n" :append t :empty-lines-before 1)))
+(setq org-capture-templates
+      '(("n" "Note" plain (file org-default-notes-file)
+        "%?\nEntered on %U\n" :append t :empty-lines-before 1)))
 
 #+end_src
 
@@ -3599,6 +3671,7 @@ If an eshell buffer for the directory already exists, switch to it."
 #+begin_src emacs-lisp
 
 (use-package org-download
+  :ensure t
   :init
   (setq org-download-image-dir "~/.secret_dotfiles/org/images")
   :config
@@ -3614,6 +3687,7 @@ If an eshell buffer for the directory already exists, switch to it."
 #+begin_src emacs-lisp
 
 (use-package org-drill
+  :ensure t
   :config
   (setq org-drill-maximum-items-per-session 100))
 
@@ -3647,32 +3721,27 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (setq org-agenda-files
-        '("~/.secret_dotfiles/org/todo_list.org"))
+(setq org-agenda-files
+      '("~/.secret_dotfiles/org/todo_list.org"))
 
-#+end_src
-
-** Org-roam
-
-#+begin_src emacs-lisp
 #+end_src
 
 ** Templates
 
 #+begin_src emacs-lisp
 
-  (require 'org-tempo)
-  (add-to-list 'org-structure-template-alist '("sb" . "src bash-ts"))
-  (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("sr" . "src raku"))
-  (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
-  (add-to-list 'org-structure-template-alist '("st" . "src text"))
-  (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
-  (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
-  (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
+(require 'org-tempo)
+(add-to-list 'org-structure-template-alist '("sb" . "src bash-ts"))
+(add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("sr" . "src raku"))
+(add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
+(add-to-list 'org-structure-template-alist '("st" . "src text"))
+(add-to-list 'org-structure-template-alist '("ss" . "src sql"))
+(add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
+(add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
 
-  (add-to-list 'org-structure-template-alist
-             '("t" . "src TODO\n\n* TODO \n\n?"))
+(add-to-list 'org-structure-template-alist
+           '("t" . "src TODO\n\n* TODO \n\n?"))
 
 #+end_src
 
@@ -3680,24 +3749,24 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (setq org-hide-emphasis-markers t)
+(setq org-hide-emphasis-markers t)
 
-  (defun toggle-org-emphasis-markers ()
-    "Toggle the visibility of Org emphasis markers."
-    (interactive)
-    (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
-    (org-mode-restart))
+(defun toggle-org-emphasis-markers ()
+  "Toggle the visibility of Org emphasis markers."
+  (interactive)
+  (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
+  (org-mode-restart))
 
-  (define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
-  (define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
+(define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
+(define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
 
-  (add-hook 'org-mode-hook 'prettify-symbols-mode)
-    (defun my-org-prettify-symbols ()
-    (push '("#+begin_src" . ">") prettify-symbols-alist)
-      (push '("#+end_src" . ">") prettify-symbols-alist))
+(add-hook 'org-mode-hook 'prettify-symbols-mode)
+  (defun my-org-prettify-symbols ()
+  (push '("#+begin_src" . ">") prettify-symbols-alist)
+    (push '("#+end_src" . ">") prettify-symbols-alist))
 
-  (eval-after-load 'org
-    '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
+(eval-after-load 'org
+  '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
 
 #+end_src
 
@@ -3705,9 +3774,11 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (add-hook 'org-mode-hook 'org-indent-mode)
-  (use-package org-bullets)
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+(use-package org-bullets
+  :ensure t)
+
+(add-hook 'org-mode-hook 'org-indent-mode)
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 #+end_src
 
@@ -3715,9 +3786,10 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (use-package toc-org
-      :commands toc-org-enable
-      :init (add-hook 'org-mode-hook 'toc-org-enable))
+(use-package toc-org
+  :ensure t
+  :commands toc-org-enable
+  :init (add-hook 'org-mode-hook 'toc-org-enable))
 
 #+end_src
 
@@ -3725,56 +3797,56 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-  (defun org-insert-row-with-floor ()
-    "Insert a new row with a 'floor' above in an Org mode table."
-    (interactive)
-    (org-table-next-field)
-    (beginning-of-line)
-    (insert "|-")
-    (org-table-align)
-    (org-return))
+(defun org-insert-row-with-floor ()
+  "Insert a new row with a 'floor' above in an Org mode table."
+  (interactive)
+  (org-table-next-field)
+  (beginning-of-line)
+  (insert "|-")
+  (org-table-align)
+  (org-return))
 
-  (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
+(define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
 
-  (defun FormatToThreshold (char-threshold)
-    "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
-    (interactive "nCharacter Threshold: ")
-    (let ((start (region-beginning))
-          (end (region-end))
-          all-text words formatted-text)
-      (save-excursion
-        (setq all-text (buffer-substring start end))
-        (setq words (split-string all-text))
-        (let ((current-line "")
-              (current-length 0))
-          (dolist (word words)
-            (if (> (+ current-length (length word) 1) char-threshold)
-                (progn
-                  (setq formatted-text (concat formatted-text current-line "\n"))
-                  (setq current-line word)
-                  (setq current-length (length word)))
+(defun FormatToThreshold (char-threshold)
+  "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
+  (interactive "nCharacter Threshold: ")
+  (let ((start (region-beginning))
+        (end (region-end))
+        all-text words formatted-text)
+    (save-excursion
+      (setq all-text (buffer-substring start end))
+      (setq words (split-string all-text))
+      (let ((current-line "")
+            (current-length 0))
+        (dolist (word words)
+          (if (> (+ current-length (length word) 1) char-threshold)
               (progn
-                (setq current-line (if (string= "" current-line)
-                                      word
-                                    (concat current-line " " word)))
-                (setq current-length (+ current-length (length word) 1)))))
-          (setq formatted-text (concat formatted-text current-line)))
-        (delete-region start end)
-        (goto-char start)
-        (insert formatted-text))))
+                (setq formatted-text (concat formatted-text current-line "\n"))
+                (setq current-line word)
+                (setq current-length (length word)))
+            (progn
+              (setq current-line (if (string= "" current-line)
+                                    word
+                                  (concat current-line " " word)))
+              (setq current-length (+ current-length (length word) 1)))))
+        (setq formatted-text (concat formatted-text current-line)))
+      (delete-region start end)
+      (goto-char start)
+      (insert formatted-text))))
 
-  (defun my/evil-org-open-below (count)
-    "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
-    (interactive "p")
-    (if (org-in-item-p)
-        (progn
-          (end-of-line)
-          (org-insert-item))
-      (evil-open-below count)))
+(defun my/evil-org-open-below (count)
+  "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
+  (interactive "p")
+  (if (org-in-item-p)
+      (progn
+        (end-of-line)
+        (org-insert-item))
+    (evil-open-below count)))
 
-  (with-eval-after-load 'evil
-    (evil-define-key 'normal org-mode-map
-      "o" 'my/evil-org-open-below))
+(with-eval-after-load 'evil
+  (evil-define-key 'normal org-mode-map
+    "o" 'my/evil-org-open-below))
 
 #+end_src
 
@@ -3910,7 +3982,7 @@ If an eshell buffer for the directory already exists, switch to it."
         (progn
           (kill-new path-to-copy)
           (message "Copied path '%s' to the clipboard." path-to-copy))
-      (message "Current buffer has no associated path to copy."))))
+      (message "Current buffer has no associated path to copy.")))) ;
 
 (defun sway ()
   "Open sway config file."

@@ -108,6 +108,9 @@
     ;; Docker
     `(docker-face-dangling ((,class (:foreground ,rose-pine-subtext))))
 
+    ;; Eglot
+    `(eglot-diagnostic-tag-unnecessary-face ((,class (:foreground ,rose-pine-subtext))))
+    
     ;; Ansi
     `(ansi-color-black ((,class (:foreground ,nord-black :background ,nord-black))))
     `(ansi-color-bright-black ((,class (:foreground ,nord-bright-black :background ,nord-bright-black))))
