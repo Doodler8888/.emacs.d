@@ -1,3 +1,7 @@
+# 'P' doesn't work
+# g; doesn't work
+# Unbind M-j and M-k coming from evil-org
+
 #+TITLE: Wurfkreuz's GNU Emacs Config
 #+AUTHOR: Alex Gud
 #+DESCRIPTION: Empty.
@@ -157,6 +161,7 @@
 #+begin_src emacs-lisp
 
 ;; (server-start)
+(setq erc-nick "wurfkreuz")
 (global-set-key (kbd "C-x u") 'windmove-up)
 (setq evil-want-keybinding nil)
 
@@ -320,53 +325,62 @@
 
 #+begin_src emacs-lisp
 
-(use-package undo-tree
-  :ensure t
-  :config
-  (global-undo-tree-mode))
+(require 'undo-tree)
+(global-undo-tree-mode)
+
+;; (use-package undo-fu
+;;   :ensure t)
+
+;; (use-package emacs-undo-fu-session
+;;   :vc (:url "https://codeberg.org/ideasman42/emacs-undo-fu-session"
+;;        :rev :newest))
+
+;; (add-to-list 'load-path (expand-file-name "emacs-undo-fu-session" user-emacs-directory))
+;; (undo-fu-session-global-mode)
+;; (setq undo-fu-session-directory (expand-file-name "undo-fu-session" user-emacs-directory))
 
 (use-package evil
-   :ensure t
-   :init
-   (setq evil-want-C-u-scroll t
-         evil-want-C-i-jump nil
-         evil-want-integration t
-         evil-want-minibuffer t
-         evil-undo-system 'undo-tree)
-   :config
-   (evil-mode 1)
-   (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-   (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-   (setq evil-shift-width 2))
+  :ensure t
+  :init
+  (setq evil-want-C-u-scroll t
+        evil-want-C-i-jump nil
+        evil-want-integration t
+        evil-want-minibuffer t
+        evil-undo-system 'undo-fu)
+  ;; evil-undo-system 'undo-tree)
+  :config
+  (evil-mode 1)
+  (evil-set-initial-state 'custom-theme-choose-mode 'normal)
+  (define-key evil-normal-state-map (kbd "C-n") 'next-line)
+  (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
+  (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+  (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+  (setq evil-shift-width 2))
 
- (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
- (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
- (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
- (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
+;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
+;; (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
+;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
+;; (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
 
-
-(setq evil-undo-system 'undo-tree)
+;; (setq evil-undo-system 'undo-tree)
 
 (use-package evil-surround
-   :ensure t
-   :config
-   (global-evil-surround-mode 1)
-   ;; Add custom surround pairs
-   (setq-default evil-surround-pairs-alist
-                 (append evil-surround-pairs-alist
-                         '((?/ . ("/" . "/"))
-                           (?~ . ("~" . "~"))
-                           (?* . ("*" . "*"))
-                           (?= . ("=" . "="))
-                           (?+ . ("+" . "+"))))))
+  :ensure t
+  :config
+  (global-evil-surround-mode 1)
+  ;; Add custom surround pairs
+  (setq-default evil-surround-pairs-alist
+                (append evil-surround-pairs-alist
+                        '((?/ . ("/" . "/"))
+                          (?~ . ("~" . "~"))
+                          (?* . ("*" . "*"))
+                          (?= . ("=" . "="))
+                          (?+ . ("+" . "+"))))))
 
 (use-package evil-commentary
-   :ensure t
-   :config
-   (evil-commentary-mode))
+  :ensure t
+  :config
+  (evil-commentary-mode))
 
 (use-package evil-org
   :ensure t
@@ -379,6 +393,15 @@
             (lambda ()
               (evil-org-set-key-theme)))
   )
+(with-eval-after-load 'evil-org
+  ;; Remove the default Evil Org bindings for M-j and M-k
+  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-j") nil)
+  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-k") nil)
+
+  ;; Set your custom bindings
+  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-j") 'my-restore-window-configuration)
+  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-k") 'my-eshell-fullscreen))
+
 
 (use-package evil-collection
   :ensure t
@@ -421,7 +444,7 @@
   (evil-local-set-key 'motion (kbd "RET") 'daemons-status-at-point))
 
 (add-hook 'daemons-output-mode-hook 'my/setup-daemons-output-keymap)
- 
+
 (defun my/setup-docker-mark-keymap ()
   "Set up custom keybindings for daemons-output-mode."
   (evil-local-set-key 'normal (kbd "m") 'tablist-mark-forward)
@@ -458,10 +481,17 @@
 (define-key evil-normal-state-map (kbd "gw") 'my-evil-fill)
 (define-key evil-visual-state-map (kbd "gw") 'my-evil-fill)
 
-(define-key evil-normal-state-map (kbd "C-w C-l") 'evil-window-right)
-(define-key evil-normal-state-map (kbd "C-w C-h") 'evil-window-left)
-(define-key evil-normal-state-map (kbd "C-w C-k") 'evil-window-up)
-(define-key evil-normal-state-map (kbd "C-w C-j") 'evil-window-down)
+(defun my-evil-paste-before ()
+  "Paste before cursor without overwriting kill ring."
+  (interactive)
+  (let ((text (current-kill 0 t)))
+    (evil-insert-state)
+    (insert text)
+    (evil-normal-state)
+    (backward-char)))
+
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map "P" 'my-evil-paste-before))
 
 #+end_src
 
@@ -598,7 +628,7 @@
   :ensure t
   :config
   (general-evil-setup)
-  
+
 (general-create-definer w/leader-keys
     :states '(normal insert visual emacs)
     :keymaps 'override
@@ -627,7 +657,7 @@
   ;; Git
   "gs" '(vc-switch-branch :wk "Switch to another branch")
   "gc" '(vc-create-branch :wk "Create branch")
-  
+
   ;; Org
   "ot" '(todo :wk "Opens the org todo file")
 
@@ -1350,7 +1380,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
    ;; Check if the path is within the specific directory
    ((string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name path))
     (cons 'transient "/home/wurfkreuz/.secret_dotfiles/org/"))
-   
+ 
    ;; Fall back to the original project root detection
    (t (when-let ((root (locate-dominating-file path #'project-root-p)))
         (cons 'transient (expand-file-name root))))))
@@ -2536,59 +2566,52 @@ If an eshell buffer for the directory already exists, switch to it."
       (kill-buffer buffer))))
 
 
-;; (defvar my-saved-window-configuration nil
-;;   "Variable to store the saved window configuration.")
-
-;; (defun my-eshell-fullscreen ()
-;;   "Replace the current window layout with a fullscreen Eshell."
-;;   (interactive)
-;;   (setq my-saved-window-configuration (current-window-configuration))
-;;   (delete-other-windows)
-;;   (eshell))
-
-;; (defun my-restore-window-configuration ()
-;;   "Restore the previously saved window configuration."
-;;   (interactive)
-;;   (when my-saved-window-configuration
-;;     (set-window-configuration my-saved-window-configuration)))
-
-
 (defvar my-saved-tab-configurations (make-hash-table :test 'equal)
-  "Hash table to store the saved window configurations per tab.")
+  "Hash table to store the saved window configurations per tab name.")
 
-(defun my-current-tab-index ()
-  "Get the current tab's index."
-  (tab-bar--current-tab-index))
+(defun my-current-tab-name ()
+  "Get the current tab's name."
+  (alist-get 'name (tab-bar--current-tab)))
 
 (defun my-eshell-fullscreen ()
   "Replace the current window layout with a fullscreen Eshell for the current tab."
   (interactive)
-  (let* ((tab-index (my-current-tab-index))
-         (eshell-buffer-name (format "*eshell<%d>*" tab-index)))
-    (if tab-index
+  (let* ((tab-name (my-current-tab-name))
+         (eshell-buffer-name (format "*eshell<%s>*" tab-name)))
+    (if tab-name
         (progn
-          (puthash tab-index (current-window-configuration) my-saved-tab-configurations)
-          (message "Saved window configuration for tab index: %d" tab-index)
+          (puthash tab-name (current-window-configuration) my-saved-tab-configurations)
+          (message "Saved window configuration for tab: %s" tab-name)
           (delete-other-windows)
           ;; Switch to or create the Eshell buffer
           (if (get-buffer eshell-buffer-name)
               (switch-to-buffer eshell-buffer-name)
             (progn
               (switch-to-buffer (get-buffer-create eshell-buffer-name))
-              (eshell)))
-          )
-      (message "Failed to get tab index. Is the tab-bar-mode enabled?"))))
+              (eshell))))
+      (message "Failed to get tab name. Is the tab-bar-mode enabled?"))))
 
 (defun my-restore-window-configuration ()
   "Restore the previously saved window configuration for the current tab."
   (interactive)
-  (let* ((tab-index (my-current-tab-index))
-         (config (gethash tab-index my-saved-tab-configurations)))
+  (let* ((tab-name (my-current-tab-name))
+         (config (gethash tab-name my-saved-tab-configurations)))
     (if config
         (progn
           (set-window-configuration config)
-          (message "Restored window configuration for tab index: %d" tab-index))
-      (message "No saved window configuration for this tab index: %d" tab-index))))
+          (message "Restored window configuration for tab: %s" tab-name))
+      (message "No saved window configuration for this tab: %s" tab-name))))
+
+;; (org-defkey org-mode-map "\M-j"    'org-metadown)
+;; (org-defkey org-mode-map "\M-k"    'org-metaup)  
+
+(defun display-current-tab-name ()
+  "Display the name of the current tab in tab-bar-mode."
+  (interactive)
+  (let ((tab-name (alist-get 'name (tab-bar--current-tab))))
+    (if tab-name
+        (message "Current tab name: %s" tab-name)
+      (message "Current tab has no name"))))
 
 #+end_src
 
@@ -2914,12 +2937,6 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package org
   :config
   (setq org-edit-src-content-indentation 0))
-  ;;   (setq org-src-preserve-indentation t)
-  ;;   (setq org-src-tab-acts-natively t)
-  ;;   ;; Other org-mode configurations...
-  ;;   )
-
-    ;; (org-link-minor-mode 1)
 
 (defun org-insert-top-level-heading ()
     "Insert a new top-level heading with two empty lines before it."
@@ -3228,6 +3245,17 @@ If an eshell buffer for the directory already exists, switch to it."
   ;; Add more keybindings as needed
   )
 
+(define-prefix-command 'my-window-map)
+(global-set-key (kbd "C-w") 'my-window-map)
+
+(global-set-key (kbd "C-w C-l") 'windmove-right)
+(global-set-key (kbd "C-w C-h") 'windmove-left)
+(global-set-key (kbd "C-w C-k") 'windmove-up)
+(global-set-key (kbd "C-w C-j") 'windmove-down)
+
+(global-set-key (kbd "C-w C-s") 'split-window-below) 
+(global-set-key (kbd "C-w C-v") 'split-window-right)  
+(global-set-key (kbd "C-w C-c") 'delete-window)        
 
 #+end_src
 
