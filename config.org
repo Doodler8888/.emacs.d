@@ -1,7 +1,3 @@
-# 'P' doesn't work
-# g; doesn't work
-# Unbind M-j and M-k coming from evil-org
-
 #+TITLE: Wurfkreuz's GNU Emacs Config
 #+AUTHOR: Alex Gud
 #+DESCRIPTION: Empty.
@@ -328,17 +324,6 @@
 (require 'undo-tree)
 (global-undo-tree-mode)
 
-;; (use-package undo-fu
-;;   :ensure t)
-
-;; (use-package emacs-undo-fu-session
-;;   :vc (:url "https://codeberg.org/ideasman42/emacs-undo-fu-session"
-;;        :rev :newest))
-
-;; (add-to-list 'load-path (expand-file-name "emacs-undo-fu-session" user-emacs-directory))
-;; (undo-fu-session-global-mode)
-;; (setq undo-fu-session-directory (expand-file-name "undo-fu-session" user-emacs-directory))
-
 (use-package evil
   :ensure t
   :init
@@ -346,8 +331,7 @@
         evil-want-C-i-jump nil
         evil-want-integration t
         evil-want-minibuffer t
-        evil-undo-system 'undo-fu)
-  ;; evil-undo-system 'undo-tree)
+  evil-undo-system 'undo-tree)
   :config
   (evil-mode 1)
   (evil-set-initial-state 'custom-theme-choose-mode 'normal)
@@ -3574,3 +3558,111 @@ If an eshell buffer for the directory already exists, switch to it."
       (message "No file associated with this buffer"))))
 
 #+end_src
+
+# 'P' doesn't work
+# g; doesn't work
+# Unbind M-j and M-k coming from evil-org
+# Try to change colors for fringes
+
+# https://raw.githubusercontent.com/emacs-mirror/emacs/emacs-30/etc/NEWS
+
+# ** New user option 'uniquify-dirname-transform'.
+# This can be used to customize how buffer names are uniquified, by
+# making arbitrary transforms on the buffer's directory name (whose
+# components are used to uniquify buffer names when they clash).  You
+# can use this to distinguish between buffers visiting files with the
+# same base name that belong to different projects by using the provided
+# transform function 'project-uniquify-dirname-transform'.
+
+# ---
+# *** New user option 'dired-movement-style'.
+# When non-nil, make 'dired-next-line', 'dired-previous-line',
+# 'dired-next-dirline', 'dired-prev-dirline' skip empty lines.
+# It also controls how to move point when encountering a boundary
+# (e.g., if every line is visible, invoking 'dired-next-line' at
+# the last line will move to the first line).  The default is nil.
+
+# *** New user option 'shell-command-guess-functions'.
+# It defines how to populate a list of commands available
+# for 'M-!', 'M-&', '!', '&' and the context menu "Open With"
+# based on marked files in Dired.  Possible backends are
+# 'dired-guess-default', MIME types, XDG configuration
+# and a universal command such as "open" or "start"
+# that delegates to the OS.
+
+# +++
+# *** You can now run Eshell scripts in batch mode.
+# By adding the following interpreter directive to an Eshell script, you
+# can make it executable like other shell scripts:
+
+#     #!/usr/bin/env -S emacs --batch -f eshell-batch-file
+
+# +++
+# *** Eshell's 'env' command now supports running commands.
+# Like in many other shells, Eshell's 'env' command now lets you run a
+# command passed as arguments to 'env'.  If you pass any initial
+# arguments of the form 'VAR=VALUE', 'env' will first set 'VAR' to
+# 'VALUE' before running the command.
+
+# +++
+# *** New splice operator for Eshell dollar expansions.
+# Dollar expansions in Eshell now let you splice the elements of the
+# expansion in-place using '$@expr'.  This makes it easier to fill lists
+# of arguments into a command, such as when defining aliases.  For more
+# information, see the "(eshell) Dollars Expansion" node in the Eshell
+# manual.
+
+# +++
+# *** You can now splice Eshell globs in-place into argument lists.
+# By setting 'eshell-glob-splice-results' to a non-nil value, Eshell
+# will expand glob results in-place as if you had typed each matching
+# file name individually.  For more information, see the "(eshell)
+# Globbing" node in the Eshell manual.
+
+# *** Eshell commands can now be explicitly-remote (or local).
+# By prefixing a command name in Eshell with a remote identifier, like
+# "/ssh:user@remote:whoami", you can now run commands on a particular
+# host no matter your current directory.  Likewise, you can run a
+# command on your local system no matter your current directory via
+# "/local:whoami".  For more information, see the "(eshell) Remote Access"
+# node in the Eshell manual.
+
+# +++
+# *** 'eshell-read-aliases-list' is now an interactive command.
+# After manually editing 'eshell-aliases-file', you can use this command
+# to load the edited aliases.
+
+# +++
+# *** New user option 'eshell-history-append'.
+# If non-nil, each Eshell session will save history by appending new
+# entries of that session to the history file rather than overwriting
+# the file with the whole history of the session.  The default is nil.
+
+# *** Tramp methods can be optional.
+# An optional connection method is not enabled by default.  The user must
+# enable it explicitly by the 'tramp-enable-method' command.  The existing
+# methods "fcp", "krlogin", " ksu" and "nc" are optional now.
+
+# *** New command 'tramp-cleanup-some-buffers'.
+# It kills only a subset of opened remote buffers, subject to the user
+# option 'tramp-cleanup-some-buffers-hook'.
+
+# *** New command 'tramp-revert-buffer-with-sudo'.
+# It reverts the current buffer to visit with "sudo" permissions.  The
+# buffer must either visit a file, or it must run 'dired-mode'.  Another
+# method but "sudo" can be configured with user option
+# 'tramp-file-name-with-method'.
+
+# +++
+# *** New user option 'flymake-show-diagnostics-at-end-of-line'.
+# When non-nil, Flymake shows summarized descriptions of diagnostics at
+# the end of the line.  Depending on your preference, this can either be
+# distracting and easily confused with actual code, or a significant
+# early aid that relieves you from moving the buffer or reaching for the
+# mouse to consult an error message.
+
+# ** New major mode 'shell-command-mode'.
+# This mode is used by default for the output of asynchronous 'shell-command'.
+# To revert to the previous behavior, set the (also new) variable
+# 'async-shell-command-mode' to 'shell-mode'.  Any hooks or mode-specific
+# variables used should be adapted appropriately.
