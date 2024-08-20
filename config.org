@@ -52,7 +52,7 @@
 - [[#tramp][Tramp]]
 - [[#shells-and-terminals][Shells and Terminals]]
   - [[#eshell][Eshell]]
-  - [[#async-shell][Async shell]]
+  - [[#async-shell-command][Async shell command]]
   - [[#cmd][Cmd]]
   - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
@@ -227,7 +227,6 @@
 
 (add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
 
-
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
   (make-directory desktop-dirname))
@@ -287,6 +286,8 @@
 
 (setq auto-revert-verbose nil)
 
+(setq display-buffer-base-action '(nil . ((some-window . mru))))
+
 #+end_src
 
 ** Cursor
@@ -321,8 +322,11 @@
 
 #+begin_src emacs-lisp
 
-(require 'undo-tree)
-(global-undo-tree-mode)
+(use-package undo-tree
+  :ensure t
+  :init
+  (global-undo-tree-mode))
+
 
 (use-package evil
   :ensure t
@@ -361,30 +365,22 @@
                           (?= . ("=" . "="))
                           (?+ . ("+" . "+"))))))
 
-(use-package evil-commentary
-  :ensure t
-  :config
-  (evil-commentary-mode))
+;; (use-package evil-commentary
+;;   :ensure t
+;;   :config
+;;   (evil-commentary-mode))
 
-(use-package evil-org
-  :ensure t
-  :after org
-  :config
-  (require 'evil-org-agenda)
-  (evil-org-agenda-set-keys)
-  (add-hook 'org-mode-hook 'evil-org-mode)
-  (add-hook 'evil-org-mode-hook
-            (lambda ()
-              (evil-org-set-key-theme)))
-  )
-(with-eval-after-load 'evil-org
-  ;; Remove the default Evil Org bindings for M-j and M-k
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-j") nil)
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-k") nil)
-
-  ;; Set your custom bindings
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-j") 'my-restore-window-configuration)
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-k") 'my-eshell-fullscreen))
+;; (use-package evil-org
+;;   :ensure t
+;;   :after org
+;;   :config
+;;   ;; (require 'evil-org-agenda)
+;;   ;; (evil-org-agenda-set-keys)
+;;   (add-hook 'org-mode-hook 'evil-org-mode)
+;;   (add-hook 'evil-org-mode-hook
+;;             (lambda ()
+;;               (evil-org-set-key-theme)))
+;; )
 
 
 (use-package evil-collection
@@ -1592,7 +1588,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
+ ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
 ;; (use-package emacs-crontab-mode
 ;;   :vc (:url "https://gitlab.com/Bacaliu/emacs-crontab-mode"
 ;;        :rev :newest))
@@ -1847,6 +1843,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (eshell-input-filter 'my-eshell-input-filter)
   :config
   (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
+
+(setq eshell-history-append t)
 
 (setq eshell-destroy-buffer-when-process-dies t)
 
@@ -2130,7 +2128,7 @@ If called from eshell, display in eshell. Otherwise, use a separate buffer."
 
 #+end_src
 
-** Async shell
+** Async shell command
 
 #+begin_src emacs-lisp
 
@@ -2147,12 +2145,12 @@ If called from eshell, display in eshell. Otherwise, use a separate buffer."
 
 (defun async-shell-command-filter-hook ()
 "Filter async shell command output via `comint-output-filter'."
-(when (equal (buffer-name (current-buffer)) "*Async Shell Command*")
-  ;; When `comint-output-filter' is non-nil, the carriage return characters ^M
-  ;; are displayed
-  (setq-local comint-inhibit-carriage-motion nil)
-  (when-let ((proc (get-buffer-process (current-buffer))))
-    (set-process-filter proc 'comint-output-filter))))
+  (when (equal (buffer-name (current-buffer)) "*Async Shell Command*")
+    ;; When `comint-output-filter' is non-nil, the carriage return characters ^M
+    ;; are displayed
+    (setq-local comint-inhibit-carriage-motion nil)
+    (when-let ((proc (get-buffer-process (current-buffer))))
+      (set-process-filter proc 'comint-output-filter))))
 
 (with-eval-after-load 'shell
   (add-hook 'shell-mode-hook 'async-shell-command-filter-hook))
@@ -2592,8 +2590,8 @@ If an eshell buffer for the directory already exists, switch to it."
           (message "Restored window configuration for tab: %s" tab-name))
       (message "No saved window configuration for this tab: %s" tab-name))))
 
-;; (org-defkey org-mode-map "\M-j"    'org-metadown)
-;; (org-defkey org-mode-map "\M-k"    'org-metaup)  
+(global-set-key (kbd "M-k") 'my-eshell-fullscreen)
+(global-set-key (kbd "M-j") 'my-restore-window-configuration)
 
 (defun display-current-tab-name ()
   "Display the name of the current tab in tab-bar-mode."
@@ -2772,6 +2770,8 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;     "Enable flymake-mode in dockerfile-mode."
 ;;     (if (string-equal major-mode "dockerfile-mode")
 ;;         (flymake-mode 1)))
+
+;; (setq flymake-show-diagnostics-at-end-of-line t)
 
 (defun enable-flymake-mode ()
   "Enable flymake-mode in dockerfile-mode."
@@ -3564,110 +3564,3 @@ If an eshell buffer for the directory already exists, switch to it."
       (message "No file associated with this buffer"))))
 
 #+end_src
-
-# g; doesn't work
-# Unbind M-j and M-k coming from evil-org
-# Try to change colors for fringes
-
-# https://raw.githubusercontent.com/emacs-mirror/emacs/emacs-30/etc/NEWS
-
-# ** New user option 'uniquify-dirname-transform'.
-# This can be used to customize how buffer names are uniquified, by
-# making arbitrary transforms on the buffer's directory name (whose
-# components are used to uniquify buffer names when they clash).  You
-# can use this to distinguish between buffers visiting files with the
-# same base name that belong to different projects by using the provided
-# transform function 'project-uniquify-dirname-transform'.
-
-# ---
-# *** New user option 'dired-movement-style'.
-# When non-nil, make 'dired-next-line', 'dired-previous-line',
-# 'dired-next-dirline', 'dired-prev-dirline' skip empty lines.
-# It also controls how to move point when encountering a boundary
-# (e.g., if every line is visible, invoking 'dired-next-line' at
-# the last line will move to the first line).  The default is nil.
-
-# *** New user option 'shell-command-guess-functions'.
-# It defines how to populate a list of commands available
-# for 'M-!', 'M-&', '!', '&' and the context menu "Open With"
-# based on marked files in Dired.  Possible backends are
-# 'dired-guess-default', MIME types, XDG configuration
-# and a universal command such as "open" or "start"
-# that delegates to the OS.
-
-# +++
-# *** You can now run Eshell scripts in batch mode.
-# By adding the following interpreter directive to an Eshell script, you
-# can make it executable like other shell scripts:
-
-#     #!/usr/bin/env -S emacs --batch -f eshell-batch-file
-
-# +++
-# *** Eshell's 'env' command now supports running commands.
-# Like in many other shells, Eshell's 'env' command now lets you run a
-# command passed as arguments to 'env'.  If you pass any initial
-# arguments of the form 'VAR=VALUE', 'env' will first set 'VAR' to
-# 'VALUE' before running the command.
-
-# +++
-# *** New splice operator for Eshell dollar expansions.
-# Dollar expansions in Eshell now let you splice the elements of the
-# expansion in-place using '$@expr'.  This makes it easier to fill lists
-# of arguments into a command, such as when defining aliases.  For more
-# information, see the "(eshell) Dollars Expansion" node in the Eshell
-# manual.
-
-# +++
-# *** You can now splice Eshell globs in-place into argument lists.
-# By setting 'eshell-glob-splice-results' to a non-nil value, Eshell
-# will expand glob results in-place as if you had typed each matching
-# file name individually.  For more information, see the "(eshell)
-# Globbing" node in the Eshell manual.
-
-# *** Eshell commands can now be explicitly-remote (or local).
-# By prefixing a command name in Eshell with a remote identifier, like
-# "/ssh:user@remote:whoami", you can now run commands on a particular
-# host no matter your current directory.  Likewise, you can run a
-# command on your local system no matter your current directory via
-# "/local:whoami".  For more information, see the "(eshell) Remote Access"
-# node in the Eshell manual.
-
-# +++
-# *** 'eshell-read-aliases-list' is now an interactive command.
-# After manually editing 'eshell-aliases-file', you can use this command
-# to load the edited aliases.
-
-# +++
-# *** New user option 'eshell-history-append'.
-# If non-nil, each Eshell session will save history by appending new
-# entries of that session to the history file rather than overwriting
-# the file with the whole history of the session.  The default is nil.
-
-# *** Tramp methods can be optional.
-# An optional connection method is not enabled by default.  The user must
-# enable it explicitly by the 'tramp-enable-method' command.  The existing
-# methods "fcp", "krlogin", " ksu" and "nc" are optional now.
-
-# *** New command 'tramp-cleanup-some-buffers'.
-# It kills only a subset of opened remote buffers, subject to the user
-# option 'tramp-cleanup-some-buffers-hook'.
-
-# *** New command 'tramp-revert-buffer-with-sudo'.
-# It reverts the current buffer to visit with "sudo" permissions.  The
-# buffer must either visit a file, or it must run 'dired-mode'.  Another
-# method but "sudo" can be configured with user option
-# 'tramp-file-name-with-method'.
-
-# +++
-# *** New user option 'flymake-show-diagnostics-at-end-of-line'.
-# When non-nil, Flymake shows summarized descriptions of diagnostics at
-# the end of the line.  Depending on your preference, this can either be
-# distracting and easily confused with actual code, or a significant
-# early aid that relieves you from moving the buffer or reaching for the
-# mouse to consult an error message.
-
-# ** New major mode 'shell-command-mode'.
-# This mode is used by default for the output of asynchronous 'shell-command'.
-# To revert to the previous behavior, set the (also new) variable
-# 'async-shell-command-mode' to 'shell-mode'.  Any hooks or mode-specific
-# variables used should be adapted appropriately.

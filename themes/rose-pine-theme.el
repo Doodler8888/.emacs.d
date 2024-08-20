@@ -45,6 +45,9 @@
    ;; Line highlight
    ;; `(hl-line ((,class (:background ,rose-pine-highlight))))
 
+   ;; Fringe
+   `(fringe ((,class (:foreground ,rose-pine-blendedbg :foreground ,rose-pine-blendedbg))))
+
    ;; Font lock
    `(font-lock-builtin-face ((,class (:foreground ,rose-pine-love))))
    ;; `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
