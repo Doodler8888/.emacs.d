@@ -1229,8 +1229,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
         (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
 
-(add-hook 'dired-mode-hook 'my-dired-setup)
-
 (defun dired-next-line-preserve-column (arg)
   "Move to the next line in Dired, preserving the current column position."
   (interactive "p")
@@ -2161,7 +2159,7 @@ If an eshell buffer for the directory already exists, switch to it."
     (ad-activate 'popper-raise-popup)))
 
 ;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
-(global-set-key (kbd "M-f") 'popper-toggle)
+;; (global-set-key (kbd "M-f") 'popper-toggle)
 
 (defun popper-flymake-diagnostics ()
   "Popper window specifically for Flymake diagnostics buffer."
@@ -2367,6 +2365,11 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package org
   :config
   (setq org-edit-src-content-indentation 0))
+
+(setq org-support-shift-select t)
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "M-h") 'org-mark-paragraph))
 
 (defun org-insert-top-level-heading ()
     "Insert a new top-level heading with two empty lines before it."
@@ -2594,6 +2597,24 @@ If an eshell buffer for the directory already exists, switch to it."
 #+begin_src emacs-lisp
 
 ;; (global-unset-key (kbd "M-;"))
+
+(global-set-key (kbd "M-y") 'yank)
+;; (global-set-key (kbd "C-c d") 'kill-whole-line)
+(defun yank-whole-line ()
+  "Yank (copy) the whole current line."
+  (interactive)
+  (save-excursion
+    (move-beginning-of-line 1)
+    (kill-line)
+    (yank)))
+(global-set-key (kbd "C-c y") 'yank-whole-line)
+
+(defun select-whole-line ()
+  "Select the entire current line."
+  (interactive)
+  (beginning-of-line)
+  (end-of-line)
+  (set-mark-command nil))
 
 (defun my-noop ()
 "A no-op function that does nothing."
