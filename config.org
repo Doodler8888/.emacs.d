@@ -469,13 +469,19 @@
   "Paste before cursor without overwriting kill ring."
   (interactive)
   (let ((text (current-kill 0 t)))
-    (evil-insert-state)
-    (insert text)
-    (evil-normal-state)
-    (backward-char)))
+    (if (region-active-p)
+        (progn
+          (delete-region (region-beginning) (region-end))
+          (insert text))
+      (progn
+        (evil-insert-state)
+        (insert text)
+        (evil-normal-state)
+        (backward-char)))))
 
 (with-eval-after-load 'evil
-  (define-key evil-normal-state-map "P" 'my-evil-paste-before))
+  (define-key evil-normal-state-map "P" 'my-evil-paste-before)
+  (define-key evil-visual-state-map "P" 'my-evil-paste-before))
 
 #+end_src
 
@@ -3559,7 +3565,6 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+end_src
 
-# 'P' doesn't work
 # g; doesn't work
 # Unbind M-j and M-k coming from evil-org
 # Try to change colors for fringes
