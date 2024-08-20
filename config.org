@@ -1,7 +1,3 @@
-# 'P' doesn't work
-# g; doesn't work
-# Unbind M-j and M-k coming from evil-org
-
 #+TITLE: Wurfkreuz's GNU Emacs Config
 #+AUTHOR: Alex Gud
 #+DESCRIPTION: Empty.
@@ -14,12 +10,10 @@
   - [[#system][System]]
   - [[#cursor][Cursor]]
   - [[#find-file][Find-file]]
-  - [[#evil-mode][Evil Mode]]
   - [[#theme-and-font][Theme and Font]]
 - [[#highlighting][Highlighting]]
   - [[#treesitter][Treesitter]]
 - [[#packages][Packages]]
-  - [[#general][General]]
   - [[#daemons][Daemons]]
   - [[#kubernetes][Kubernetes]]
   - [[#proced][Proced]]
@@ -32,12 +26,10 @@
   - [[#circe][Circe]]
   - [[#vterm][Vterm]]
   - [[#docker][Docker]]
-  - [[#folds][Folds]]
   - [[#ispell][Ispell]]
   - [[#completion][Completion]]
   - [[#acess-to-env-variables][Acess to ENV variables]]
   - [[#sudo-edit][Sudo Edit]]
-  - [[#symex][Symex]]
   - [[#paredit][Paredit]]
   - [[#zoxide][Zoxide]]
   - [[#cider][Cider]]
@@ -58,7 +50,6 @@
   - [[#eshell][Eshell]]
   - [[#async-shell][Async shell]]
   - [[#cmd][Cmd]]
-  - [[#cursor-changer][Cursor changer]]
 - [[#database][Database]]
 - [[#sessions][Sessions]]
   - [[#restoration-by-tab-names][Restoration by Tab names]]
@@ -74,7 +65,7 @@
   - [[#flycheck][Flycheck]]
   - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
-  - [[#general-1][General]]
+  - [[#general][General]]
   - [[#org-capture][Org capture]]
   - [[#org-download][Org download]]
   - [[#org-drill][Org-drill]]
@@ -162,8 +153,6 @@
 
 ;; (server-start)
 (setq erc-nick "wurfkreuz")
-(global-set-key (kbd "C-x u") 'windmove-up)
-(setq evil-want-keybinding nil)
 
 (setq vc-follow-symlinks t)
 
@@ -321,216 +310,6 @@
   
 #+end_src
 
-** Evil Mode
-
-#+begin_src emacs-lisp
-
-(require 'undo-tree)
-(global-undo-tree-mode)
-
-;; (use-package undo-fu
-;;   :ensure t)
-
-;; (use-package emacs-undo-fu-session
-;;   :vc (:url "https://codeberg.org/ideasman42/emacs-undo-fu-session"
-;;        :rev :newest))
-
-;; (add-to-list 'load-path (expand-file-name "emacs-undo-fu-session" user-emacs-directory))
-;; (undo-fu-session-global-mode)
-;; (setq undo-fu-session-directory (expand-file-name "undo-fu-session" user-emacs-directory))
-
-(use-package evil
-  :ensure t
-  :init
-  (setq evil-want-C-u-scroll t
-        evil-want-C-i-jump nil
-        evil-want-integration t
-        evil-want-minibuffer t
-        evil-undo-system 'undo-fu)
-  ;; evil-undo-system 'undo-tree)
-  :config
-  (evil-mode 1)
-  (evil-set-initial-state 'custom-theme-choose-mode 'normal)
-  (define-key evil-normal-state-map (kbd "C-n") 'next-line)
-  (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
-  (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-  (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-  (setq evil-shift-width 2))
-
-;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
-;; (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
-;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
-;; (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
-
-;; (setq evil-undo-system 'undo-tree)
-
-(use-package evil-surround
-  :ensure t
-  :config
-  (global-evil-surround-mode 1)
-  ;; Add custom surround pairs
-  (setq-default evil-surround-pairs-alist
-                (append evil-surround-pairs-alist
-                        '((?/ . ("/" . "/"))
-                          (?~ . ("~" . "~"))
-                          (?* . ("*" . "*"))
-                          (?= . ("=" . "="))
-                          (?+ . ("+" . "+"))))))
-
-(use-package evil-commentary
-  :ensure t
-  :config
-  (evil-commentary-mode))
-
-(use-package evil-org
-  :ensure t
-  :after org
-  :config
-  (require 'evil-org-agenda)
-  (evil-org-agenda-set-keys)
-  (add-hook 'org-mode-hook 'evil-org-mode)
-  (add-hook 'evil-org-mode-hook
-            (lambda ()
-              (evil-org-set-key-theme)))
-  )
-(with-eval-after-load 'evil-org
-  ;; Remove the default Evil Org bindings for M-j and M-k
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-j") nil)
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-k") nil)
-
-  ;; Set your custom bindings
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-j") 'my-restore-window-configuration)
-  (evil-define-key '(normal insert) evil-org-mode-map (kbd "M-k") 'my-eshell-fullscreen))
-
-
-(use-package evil-collection
-  :ensure t
-  :after evil
-  ;; :init ;;    (setq evil-want-keybinding nil)
-  :config
-  (setq evil-collection-mode-list '(dashboard eshell dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker magit))
-  (evil-collection-init))               ;
-
-(defun my-evil-yank-to-end-of-line ()
-  "Yank text from the current point to the end of the line."
-  (interactive)
-  (evil-yank (point) (line-end-position)))
-
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
-
-(defun my-evil-insert-state-minibuffer-setup ()
-  (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-  (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
-
-(add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
-
-(evil-global-set-key 'insert (kbd "C-l") 'forward-char)
-(evil-global-set-key 'insert (kbd "C-h") 'backward-char)
-
-(with-eval-after-load 'evil
-  (define-key evil-ex-completion-map (kbd "<insert-state> C-n") nil))
-
-(with-eval-after-load 'evil
-  (define-key evil-ex-completion-map (kbd "<insert-state> C-p") nil))
-
-(with-eval-after-load 'evil
-  (define-key evil-ex-completion-map (kbd "<insert-state> <up>") 'previous-complete-history-element)
-  (define-key evil-ex-completion-map (kbd "<insert-state> <down>") 'next-complete-history-element))
-
-(defun my/setup-daemons-output-keymap ()
-  "Set up custom keybindings for daemons-output-mode."
-  (evil-local-set-key 'normal (kbd "RET") 'daemons-status-at-point)
-  (evil-local-set-key 'motion (kbd "RET") 'daemons-status-at-point))
-
-(add-hook 'daemons-output-mode-hook 'my/setup-daemons-output-keymap)
-
-(defun my/setup-docker-mark-keymap ()
-  "Set up custom keybindings for daemons-output-mode."
-  (evil-local-set-key 'normal (kbd "m") 'tablist-mark-forward)
-  (evil-local-set-key 'normal (kbd "M") 'tablist-mark-backward))
-
-(add-hook 'docker-container-mode-hook 'my/setup-docker-mark-keymap)
-(add-hook 'docker-image-mode-hook 'my/setup-docker-mark-keymap)
-
-(defun my-comment-on-region (beg end)
-  "Comment or uncomment the region between BEG and END."
-  (interactive "r")
-  (comment-or-uncomment-region beg end))
-
-(evil-define-operator my-evil-comment (beg end type)
-  "Comment or uncomment the text from BEG to END."
-  (interactive "<R>")
-  (my-comment-on-region beg end))
-
-;; Bind the custom comment operator to "gc"
-(define-key evil-normal-state-map (kbd "gc") 'my-evil-comment)
-(define-key evil-visual-state-map (kbd "gc") 'my-evil-comment)
-
-(defun my-fill-region (beg end)
-  "Fill the region between BEG and END."
-  (interactive "r")
-  (fill-region beg end))
-
-(evil-define-operator my-evil-fill (beg end type)
-  "Fill the text from BEG to END."
-  (interactive "<R>")
-  (my-fill-region beg end))
-
-;; Bind the custom fill operator to "gw"
-(define-key evil-normal-state-map (kbd "gw") 'my-evil-fill)
-(define-key evil-visual-state-map (kbd "gw") 'my-evil-fill)
-
-(defun my-evil-paste-before ()
-  "Paste before cursor without overwriting kill ring."
-  (interactive)
-  (let ((text (current-kill 0 t)))
-    (evil-insert-state)
-    (insert text)
-    (evil-normal-state)
-    (backward-char)))
-
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map "P" 'my-evil-paste-before))
-
-#+end_src
-
-*** Custom keybindings
-
-#+begin_src emacs-lisp
-
-(with-eval-after-load 'evil
-  (define-key evil-insert-state-map (kbd "C-S-v") 'yank)
-  (define-key evil-visual-state-map (kbd "{") 'evil-backward-paragraph)
-  (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
-  (define-key evil-insert-state-map (kbd "M-w") 'evil-forward-word-begin)
-  (define-key evil-insert-state-map (kbd "M-b") 'evil-backward-word-begin)
-  (define-key evil-insert-state-map (kbd "M-W") 'evil-forward-WORD-begin)
-  (define-key evil-insert-state-map (kbd "M-B") 'evil-backward-WORD-begin)
-
-  (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
-  (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
-
-(defun my-move-beginning-of-line ()
-  "Move point to the first non-whitespace character of the line and enter insert mode."
-  (interactive)
-  (evil-first-non-blank)
-  (evil-insert-state))
-
-(defun my-move-end-of-line ()
-  "Move point to the very end of the line and enter insert mode."
-  (interactive)
-  (evil-end-of-line)
-  (evil-insert-state)
-  (unless (eolp)
-    (evil-append-line 1)))
-
-(with-eval-after-load 'evil
-  (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
-  (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
-
-#+end_src
-
 ** Theme and Font
 
 #+begin_src emacs-lisp
@@ -620,125 +399,6 @@
 #+end_src
 
 * Packages
-** General
-
-#+begin_src emacs-lisp
-
-(use-package general
-  :ensure t
-  :config
-  (general-evil-setup)
-
-(general-create-definer w/leader-keys
-    :states '(normal insert visual emacs)
-    :keymaps 'override
-    :prefix "SPC" ;; set leader
-    :global-prefix "M-SPC") ;; access leader in insert mode
-
-(w/leader-keys
-
-  ;; Fuzzy finder
-  ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
-  "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
-  "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-  "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
-  ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
-  "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
-  "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
-  "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
-  ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
-
-  ;; Session management
-  "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
-  "sd" '(delete-desktop-session :wk "Delete selected session")
-  "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
-  "sr" '(rename-desktop-session :wk "Rename a desktop session")
-
-  ;; Git
-  "gs" '(vc-switch-branch :wk "Switch to another branch")
-  "gc" '(vc-create-branch :wk "Create branch")
-
-  ;; Org
-  "ot" '(todo :wk "Opens the org todo file")
-
-  ;; Paredit
-  "pfs" '(paredit-forward-slurp-sexp)
-
-  ;; Hyperbole
-  "he" '(hkey-either :wk "Opens the org todo file")
-
-  ;; Tab management
-  "tn" '(tab-bar-new-tab :wk "Create a new tab")
-  "tx" '(tab-bar-close-tab :wk "Close a tab")
-  "tr" '(tab-bar-rename-tab :wk "Rename a tab")
-
-  ;; Org capture
-  "n" '(org-capture :wk "Create a quick note")
-
-  ;; Docker
-  "D" '(docker-template :wk "Spawn docker template")
-
-  ;; Daemons
-  "do" '(daemons-stop :wk "Stop daemon")
-  "ds" '(daemons-start :wk "Start daemon")
-  "de" '(daemons-enable :wk "Enable daemon")
-  "dd" '(daemons-disable :wk "Disable daemon")
-  "du" '(daemons-status :wk "Status daemon")
-  "dr" '(daemons-restart :wk "Restart daemon")
-
-  ;; Windows
-  "w"  'hydra-window-size/body
-
-  ;; Buffers
-  "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
-  "bx" '(kill-current-buffer :wk "Close selecetd buffer")
-
-  ;; "rr" '(revert-buffer :wk "Refresh a current buffer")
-
-  ;; Popper
-  "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
-  "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
-  "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
-
-  "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
-
-  "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
-
-  "zz" '(z :wk "Call zoxide prompt")
-
-  ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-  ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
-
-  "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
-  "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
-
-  ;; Tramp
-  "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
-  "ur" '(tramp-revert :wk "Edit file with sudo privileges")
-
-  ;; Evaluation
-  "e" '(:ignore t :wk "Evaluate/Eshell")
-  ;; "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-  ;; "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-  ;; "ex" '(eval-expression :wk "Evaluate and elisp expression")
-  ;; "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-  "er" '(eval-region :wk "Evaluate elisp in region")
-
-  ;; Eshell
-  "E" '(eshell :wk "Eshell")
-  "en" '(eshell-new :wk "Spawn a new eshell buffer")
-  ;; "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
-  "ep" '(eshell-pop :wk "'eshell' command in popper mode")
-
-  )
-
-  (w/leader-keys
-    :keymaps 'help-mode-map
-    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
-)
-
-#+end_src
-
 ** Daemons
 
 #+begin_src emacs-lisp
@@ -817,33 +477,6 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
   (setq kubernetes-poll-frequency 3600
         kubernetes-redraw-frequency 3600))
 
-(with-eval-after-load 'kubernetes-overview
-  (evil-define-key 'normal kubernetes-overview-mode-map
-    (kbd "?") 'kubernetes-overview-popup
-    (kbd "c") 'kubernetes-config-view
-    (kbd "d") 'kubernetes-describe-pod
-    (kbd "D") 'kubernetes-mark-pod-for-delete
-    (kbd "E") 'kubernetes-exec-into
-    (kbd "f") 'kubernetes-file-from-pod
-    (kbd "g") 'kubernetes-overview-refresh
-    (kbd "H") 'kubernetes-overview-set-sections
-    (kbd "i") 'kubernetes-navigate
-    (kbd "K") 'kubernetes-kill-pod
-    (kbd "L") 'kubernetes-logs
-    (kbd "m") 'kubernetes-mark-for-delete
-    (kbd "M") 'kubernetes-unmark
-    (kbd "n") 'kubernetes-overview-next-line
-    (kbd "p") 'kubernetes-overview-previous-line
-    (kbd "r") 'kubernetes-rollout-history
-    (kbd "u") 'kubernetes-unmark-all
-    (kbd "U") 'kubernetes-rollout-undo
-    (kbd "V") 'kubernetes-view-pod
-    (kbd "x") 'kubernetes-delete-marked-objects
-    (kbd "y") 'kubernetes-copy-pod-name))
-
-;; (use-package kubernetes-evil
-;;   :after kubernetes)
-
 (fset 'k8s 'kubernetes-overview)
 
 #+end_src
@@ -873,28 +506,7 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-(use-package avy
-  :ensure t
-  :config
-  ;; Custom command to invoke avy-goto-char-2 across all windows except in Dired buffers
-  (defun avy-goto-char-2-all-windows ()
-    "Invoke `avy-goto-char-2` across all windows in the current frame, except in Dired buffers."
-    (interactive)
-    (let ((avy-all-windows t))
-      (unless (derived-mode-p 'dired-mode)
-        (call-interactively 'evil-avy-goto-char-2))))
-
-  ;; Custom command to switch behavior based on whether the buffer is Dired
-  (defun my/conditional-search-or-avy ()
-    "Use `evil-search-forward` in Dired buffers, otherwise use `avy-goto-char-2-all-windows`."
-    (interactive)
-    (if (derived-mode-p 'dired-mode)
-        (evil-search-forward)
-      (avy-goto-char-2-all-windows)))
-
-  ;; Override `/` keybinding globally in Evil normal state map
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy)))
+(use-package avy)
 
 #+end_src
 
@@ -1067,40 +679,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;   (docker-volumes)
 ;; )
 
-(defun docker-template ()
-  "Create docker.el windows with a specific layout"
-  (interactive)
-  (delete-other-windows)
-  (evil-window-split)
-  (evil-window-split)
-  (docker-volumes)
-  (docker-containers)
-  (docker-images)
-  (delete-window (nth 1 (window-list)))
-  (delete-window (nth 2 (window-list)))
-  (delete-window (nth 3 (window-list)))
-)
 
 (defun my-docker-shell ()
   (interactive)
   (let ((container-id (read-string "Enter container ID: ")))
     (comint-run (format "docker exec -it %s /bin/sh" container-id))))
-
-#+end_src
-
-** Folds
-
-#+begin_src emacs-lisp
-
-;; (use-package vimish-fold
-;;   :config
-;;   (vimish-fold-global-mode 1))
-
-;; (with-eval-after-load 'evil
-;;   (define-key evil-normal-state-map (kbd "zf") 'vimish-fold)
-;;   (define-key evil-visual-state-map (kbd "zf") 'vimish-fold)
-;;   (define-key evil-normal-state-map (kbd "zt") 'vimish-fold-toggle)
-;;   (define-key evil-normal-state-map (kbd "zd") 'vimish-fold-delete))
 
 #+end_src
 
@@ -1210,9 +793,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
 
-(with-eval-after-load 'evil
-  (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
-
 (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
 
@@ -1276,22 +856,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package sudo-edit
   :ensure t
-  :config
-    (w/leader-keys
-      "sf" '(sudo-edit-find-file :wk "Sudo find file")))
-      ;; "se" '(sudo-edit :wk "Sudo edit file")))
-
-#+end_src
-
-** Symex
-
-#+begin_src emacs-lisp
-
-  ;; Initializing symex causing troubles with pressing parenthesis in the insert mode
-  ;; (use-package symex
-  ;;   :config
-  ;;   (symex-initialize)
-  ;;   (global-set-key (kbd "C-;") 'symex-mode-interface))  ; or whatever keybinding you like
+  )
 
 #+end_src
 
@@ -1329,28 +894,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-hook 'cider-mode-hook (lambda () (eldoc-mode -1))))
 
 (setq eldoc-documentation-function (lambda () nil))
-
-(with-eval-after-load 'evil
-;; CIDER
-(with-eval-after-load 'cider
-  ;; Define C-M-x for normal state to evaluate the top-level form around point (function)
-  (evil-define-key 'normal cider-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-  (evil-define-key 'normal cider-repl-mode-map (kbd "C-M-x") 'cider-eval-defun-at-point)
-  ;; Define C-M-x for visual state to evaluate the selected region
-  (evil-define-key 'visual cider-mode-map (kbd "C-M-x") 'cider-eval-region)
-  (evil-define-key 'visual cider-repl-mode-map (kbd "C-M-x") 'cider-eval-region))
-
-;; Emacs Lisp
-(with-eval-after-load 'elisp-mode
-  (evil-define-key 'normal emacs-lisp-mode-map (kbd "C-M-x") 'eval-defun)
-  (evil-define-key 'visual emacs-lisp-mode-map (kbd "C-M-x") 'eval-region))
-
-;; Org Mode
-(with-eval-after-load 'org
-  (evil-define-key 'normal org-mode-map (kbd "C-M-x") 'org-babel-execute-src-block)
-  ;; For visual state in org-mode, you might want to keep the default behavior
-  ;; or define a custom function to evaluate a region if needed.
-  ))
 
 #+end_src
 
@@ -1454,13 +997,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (setq ivy-use-virtual-buffers t)
   (setq ivy-count-format "(%d/%d) ")
   (setq enable-recursive-minibuffers t)
-  :config
-  (defun my/ivy-evil-delete-line ()
-    "Delete the current line in Ivy minibuffer without affecting the newline."
-    (interactive)
-    (let ((inhibit-read-only t))
-      (evil-delete-line (line-beginning-position) (line-end-position))))
-  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line)
   :init
   (ivy-mode))
 
@@ -1678,9 +1214,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (setq wdired-allow-to-create-files t)
 (setq wdired-allow-to-change-permissions t)
 
-(setq evil-move-cursor-back nil)
-(add-hook 'wdired-mode-hook #'evil-normal-state)
-
 (defun my-dired-do-symlink-with-sudo ()
   "Create a symlink, using sudo if necessary."
   (interactive)
@@ -1696,52 +1229,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       (let ((link-name (read-string (format "Link name for %s: " (file-name-nondirectory file)) (file-name-nondirectory file))))
         (make-symbolic-link file (expand-file-name link-name (file-name-directory sudo-target)) t)))))
 
-(defun my-dired-setup ()
-  (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
-
 (add-hook 'dired-mode-hook 'my-dired-setup)
-
-(defun dired-run-bak-on-marked-files (beg end)
-  "Run the 'bak' script on marked files or visually selected files in Dired, with an option to copy."
-  (interactive
-  (if (use-region-p)
-      (list (region-beginning) (region-end)) ; If there's an active region, use it
-    (list nil nil))) ; Otherwise, process marked files
-  ;; Prompt the user to ask if they want to copy the files.
-  (let ((copy-flag (if (yes-or-no-p "Copy files? ") "-c" nil)))
-    (if (and beg end)
-        ;; If beg and end are provided, process files in the region
-        (save-excursion
-          (goto-char beg)
-          (let ((end-marker (copy-marker end)))
-            (while (< (point) end-marker)
-              (when (dired-move-to-filename)
-                (let ((file (dired-get-filename nil t)))
-                  ;; Conditionally include the -c flag based on user input
-                  (if copy-flag
-                      (start-process "bak-process" nil "bak" copy-flag file)
-                    (start-process "bak-process" nil "bak" file))))
-              (dired-next-line 1))))
-      ;; If no region is active, process marked files
-      (let ((files (dired-get-marked-files)))
-        (dolist (file files)
-          ;; Conditionally include the -c flag based on user input
-          (if copy-flag
-              (start-process "bak-process" nil "bak" copy-flag file)
-            (start-process "bak-process" nil "bak" file))))))
-  ;; Exit visual mode if in Evil mode
-  (when (bound-and-true-p evil-local-mode)
-    (evil-normal-state)))
-
-    (defun my-dired-setup ()
-      (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files)
-      (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files))
-
-    (add-hook 'dired-mode-hook 'my-dired-setup)
-
-      ;; (defun my-dired-setup ()
-      ;;   (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-toggle-bak-extension)
-      ;;   (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-toggle-bak-extension))
 
 (defun dired-next-line-preserve-column (arg)
   "Move to the next line in Dired, preserving the current column position."
@@ -1756,11 +1244,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (let ((col (current-column)))
     (dired-previous-line arg)
     (move-to-column col)))
-
-(with-eval-after-load 'dired
-  (evil-define-key 'normal dired-mode-map
-    "j" 'dired-next-line-preserve-column
-    "k" 'dired-previous-line-preserve-column))
 
 (defun OpenDiredBufferInSplit ()
   "Open a Dired buffer in a vertical split on the right, showing the directory of the current buffer."
@@ -1914,10 +1397,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
-(with-eval-after-load 'evil
-  (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-  (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
-
 (defun eshell/edit (filename)
   "Open FILENAME in the current buffer, using the current TRAMP address."
   (interactive "sEnter the filename to edit: ")
@@ -1949,11 +1428,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (goto-char (point-min))
     ;; Reinsert the prompt at the correct position
     (eshell-reset)))
-
-(with-eval-after-load 'eshell
-  (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
-    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
 
 (defun eshell-new ()
   "Create a new Eshell buffer with a unique name and open it in the current window."
@@ -1996,19 +1470,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (connection-local-set-profiles
  `(:application tramp :protocol "sudo" :machine ,system-name)
  'remote-trash-directory)
-
-(with-eval-after-load 'eshell
-  (evil-define-key 'normal eshell-mode-map
-    "j" 'next-line
-    "k" 'previous-line)
-  (evil-define-key 'visual eshell-mode-map
-    "j" 'next-line
-    "k" 'previous-line))
-
-(defun my-eshell-evil-setup ()
-  (evil-define-key 'normal eshell-mode-map (kbd "0") 'beginning-of-line))
-
-(add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
 
 (defun my/select-man-window (&rest _)
   "Select the window displaying the man page."
@@ -2177,21 +1638,6 @@ If called from eshell, display in eshell. Otherwise, use a separate buffer."
   "Search Hoogle for QUERY."
   (interactive "sHoogle search: ") ; Prompt for the search term
   (shell-command (concat "hoogle search " (shell-quote-argument query))))
-
-#+end_src
-
-** Cursor changer
-
-#+begin_src emacs-lisp
-
-(use-package evil-terminal-cursor-changer
-  :ensure t
-  :config
-  (unless (display-graphic-p)
-    (require 'evil-terminal-cursor-changer)
-    (evil-terminal-cursor-changer-activate) ; or (etcc-on)
-    )
-  )
 
 #+end_src
 
@@ -2515,11 +1961,6 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
           (rename-buffer eshell-buffer-name)
           (eshell/cd buffer-dir))))))
 
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "M-e") 'SpawnEshellSplitBelow)
-  (define-key evil-insert-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
-;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
-
 (defun SpawnEshellInProjectRoot ()
   "Open eshell in the project's root directory or toggle it if already open."
   (interactive)
@@ -2554,9 +1995,6 @@ If an eshell buffer for the directory already exists, switch to it."
         (with-current-buffer eshell-buffer
           (rename-buffer eshell-buffer-name)
           (eshell/cd dir))))))
-
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
 
 (defun kill-all-eshell-buffers ()
   "Kill all Eshell buffers."
@@ -2747,12 +2185,6 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;   (interactive)
 ;;   (popper-cycle-backwards -1))
 
-(with-eval-after-load 'evil
-  ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
-  ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-  (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
-  (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
-
 #+end_src
 
 * Language Support
@@ -2903,8 +2335,6 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-hook 'python-ts-mode-hook 'eglot-ensure)
 (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
 (add-hook 'terraform-mode-hook #'eglot-ensure)
-
-(define-key evil-normal-state-map (kbd "K") 'eldoc)
 
 (add-hook 'eglot-managed-mode-hook (lambda () (eldoc-mode -1)))
 
@@ -3157,19 +2587,6 @@ If an eshell buffer for the directory already exists, switch to it."
       (goto-char start)
       (insert formatted-text))))
 
-(defun my/evil-org-open-below (count)
-  "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
-  (interactive "p")
-  (if (org-in-item-p)
-      (progn
-        (end-of-line)
-        (org-insert-item))
-    (evil-open-below count)))
-
-(with-eval-after-load 'evil
-  (evil-define-key 'normal org-mode-map
-    "o" 'my/evil-org-open-below))
-
 #+end_src
 
 * Keybindings
@@ -3198,15 +2615,6 @@ If an eshell buffer for the directory already exists, switch to it."
 (global-unset-key (kbd "C-t"))
 (global-unset-key (kbd "C-y"))
 
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "C-t") nil)
-  (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-  (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-  (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point)
-  (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
-  (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
-  (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
-
 (defun my-org-cycle-or-yasnippet-expand ()
   "Expand Yasnippet or perform org-cycle based on the context."
   (interactive)
@@ -3217,14 +2625,6 @@ If an eshell buffer for the directory already exists, switch to it."
     ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
     (when (eq major-mode 'org-mode)
       (org-cycle))))
-
-(with-eval-after-load 'evil
-  (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
-
-(with-eval-after-load 'org
-  ;; Override the keybinding in org-mode specifically
-  (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-  (define-key evil-normal-state-map (kbd "C-t C-s") 'flyspell-mode))
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
@@ -3245,17 +2645,17 @@ If an eshell buffer for the directory already exists, switch to it."
   ;; Add more keybindings as needed
   )
 
-(define-prefix-command 'my-window-map)
-(global-set-key (kbd "C-w") 'my-window-map)
+;; (define-prefix-command 'my-window-map)
+;; (global-set-key (kbd "C-w") 'my-window-map)
 
-(global-set-key (kbd "C-w C-l") 'windmove-right)
-(global-set-key (kbd "C-w C-h") 'windmove-left)
-(global-set-key (kbd "C-w C-k") 'windmove-up)
-(global-set-key (kbd "C-w C-j") 'windmove-down)
+;; (global-set-key (kbd "C-w C-l") 'windmove-right)
+;; (global-set-key (kbd "C-w C-h") 'windmove-left)
+;; (global-set-key (kbd "C-w C-k") 'windmove-up)
+;; (global-set-key (kbd "C-w C-j") 'windmove-down)
 
-(global-set-key (kbd "C-w C-s") 'split-window-below) 
-(global-set-key (kbd "C-w C-v") 'split-window-right)  
-(global-set-key (kbd "C-w C-c") 'delete-window)        
+;; (global-set-key (kbd "C-w C-s") 'split-window-below) 
+;; (global-set-key (kbd "C-w C-v") 'split-window-right)  
+;; (global-set-key (kbd "C-w C-c") 'delete-window)        
 
 #+end_src
 
@@ -3403,9 +2803,6 @@ If an eshell buffer for the directory already exists, switch to it."
   (interactive)
   (load-file "~/.emacs.d/init.el")
   (load-file "~/.emacs.d/init.el"))
-
-(with-eval-after-load 'evil
-  (evil-ex-define-cmd "so" 'so))
 
 (defun z (q)
   "Query zoxide and launch dired or change directory in Eshell."
