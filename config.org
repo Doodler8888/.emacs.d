@@ -353,6 +353,8 @@
   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+  ;; (define-key evil-insert-state-map (kbd "M-p") 'previous-history-element)
+  ;; (define-key evil-insert-state-map (kbd "M-n") 'next-history-element)
   (setq evil-shift-width 2))
 
 ;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
@@ -504,6 +506,31 @@
   (evil-define-key 'visual global-map "}" 'evil-backward-paragraph)
   (evil-define-key 'motion global-map "{" 'evil-forward-paragraph)
   (evil-define-key 'motion global-map "}" 'evil-backward-paragraph))
+
+;; Always use blank lines as paragraph delimiters in motions/text objects
+(define-advice forward-evil-paragraph (:around (orig-fun &rest args))
+  (let ((paragraph-start (default-value 'paragraph-start))
+        (paragraph-separate (default-value 'paragraph-separate))
+        (paragraph-ignore-fill-prefix t))
+    (apply orig-fun args)))
+
+;; Function to rebind for minibuffer mode
+(defun my-minibuffer-keybindings ()
+  (define-key evil-insert-state-map (kbd "M-p") 'previous-history-element)
+  (define-key evil-insert-state-map (kbd "M-n") 'next-history-element)
+  (define-key evil-normal-state-map (kbd "M-p") 'previous-history-element)
+  (define-key evil-normal-state-map (kbd "M-n") 'next-history-element))
+
+;; Function to rebind for eshell mode
+(defun my-eshell-keybindings ()
+  (define-key evil-insert-state-map (kbd "M-p") 'eshell-previous-input)
+  (define-key evil-insert-state-map (kbd "M-n") 'eshell-next-input)
+  (define-key evil-normal-state-map (kbd "M-p") 'eshell-previous-input)
+  (define-key evil-normal-state-map (kbd "M-n") 'eshell-next-input))
+
+;; Add hooks to call the functions when entering/leaving the modes
+(add-hook 'minibuffer-setup-hook 'my-minibuffer-keybindings)
+(add-hook 'eshell-mode-hook 'my-eshell-keybindings)
 
 #+end_src
 
@@ -1297,8 +1324,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-(use-package paredit
-  :ensure t)
+;; (use-package paredit
+;;   :ensure t)
 
 #+end_src
 
@@ -1474,14 +1501,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (unless (string= command "")
     (add-to-history 'shell-command-history command))
   (async-shell-command command output-buffer error-buffer))
-
-(defun my-add-space-to-M-x ()
-  "Add a space when invoking M-x."
-  (when (and (minibufferp)
-             (eq this-command 'execute-extended-command))
-    (insert " ")))
-
-(advice-add 'minibuffer-setup-hook :after 'my-add-space-to-M-x)
 
 #+end_src
 
@@ -2623,8 +2642,9 @@ If an eshell buffer for the directory already exists, switch to it."
           (rename-buffer eshell-buffer-name)
           (eshell/cd dir))))))
 
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
+;; Don't set on 'M-p'
+;; (with-eval-after-load 'evil
+;;   (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
 
 (defun kill-all-eshell-buffers ()
   "Kill all Eshell buffers."
