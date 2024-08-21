@@ -15,7 +15,6 @@
 - [[#highlighting][Highlighting]]
   - [[#treesitter][Treesitter]]
 - [[#packages][Packages]]
-  - [[#general][General]]
   - [[#daemons][Daemons]]
   - [[#kubernetes][Kubernetes]]
   - [[#proced][Proced]]
@@ -23,7 +22,6 @@
   - [[#async][Async]]
   - [[#which-key][Which-key]]
   - [[#transient][Transient]]
-  - [[#search][Search]]
   - [[#xterm-color][Xterm-color]]
   - [[#circe][Circe]]
   - [[#vterm][Vterm]]
@@ -71,7 +69,7 @@
   - [[#flycheck][Flycheck]]
   - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
-  - [[#general-1][General]]
+  - [[#general][General]]
   - [[#org-capture][Org capture]]
   - [[#org-download][Org download]]
   - [[#org-drill][Org-drill]]
@@ -82,6 +80,8 @@
   - [[#custom-key-bindings][Custom key bindings]]
 - [[#keybindings][Keybindings]]
 - [[#custom-functions][Custom functions]]
+  - [[#wrap-edit][Wrap edit]]
+  - [[#custom-commands][Custom commands]]
 
 * GENERAL EMACS SETTING
 ** Visuals
@@ -161,6 +161,8 @@
 (setq erc-nick "wurfkreuz")
 (global-set-key (kbd "C-x u") 'windmove-up)
 (setq evil-want-keybinding nil)
+
+(recentf-mode)
 
 (setq vc-follow-symlinks t)
 
@@ -337,7 +339,6 @@
   :init
   (global-undo-tree-mode))
 
-
 (use-package evil
   :ensure t
   :init
@@ -353,8 +354,7 @@
   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-  ;; (define-key evil-insert-state-map (kbd "M-p") 'previous-history-element)
-  ;; (define-key evil-insert-state-map (kbd "M-n") 'next-history-element)
+  (define-key evil-normal-state-map (kbd "gd") 'OpenDiredBufferInCurrentWindow)
   (setq evil-shift-width 2))
 
 ;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
@@ -459,19 +459,10 @@
 (define-key evil-normal-state-map (kbd "gc") 'my-evil-comment)
 (define-key evil-visual-state-map (kbd "gc") 'my-evil-comment)
 
-(defun my-fill-region (beg end)
-  "Fill the region between BEG and END."
-  (interactive "r")
-  (fill-region beg end))
-
 (evil-define-operator my-evil-fill (beg end type)
   "Fill the text from BEG to END."
   (interactive "<R>")
   (my-fill-region beg end))
-
-;; Bind the custom fill operator to "gw"
-(define-key evil-normal-state-map (kbd "gw") 'my-evil-fill)
-(define-key evil-visual-state-map (kbd "gw") 'my-evil-fill)
 
 (defun my-evil-paste-before ()
   "Paste before cursor without overwriting kill ring."
@@ -516,10 +507,10 @@
 
 ;; Function to rebind for minibuffer mode
 (defun my-minibuffer-keybindings ()
-  (define-key evil-insert-state-map (kbd "M-p") 'previous-history-element)
-  (define-key evil-insert-state-map (kbd "M-n") 'next-history-element)
-  (define-key evil-normal-state-map (kbd "M-p") 'previous-history-element)
-  (define-key evil-normal-state-map (kbd "M-n") 'next-history-element))
+  (define-key evil-insert-state-map (kbd "M-p") 'my-previous-history-element)
+  (define-key evil-insert-state-map (kbd "M-n") 'my-next-history-element)
+  (define-key evil-normal-state-map (kbd "M-p") 'my-previous-history-element)
+  (define-key evil-normal-state-map (kbd "M-n") 'my-next-history-element))
 
 ;; Function to rebind for eshell mode
 (defun my-eshell-keybindings ()
@@ -659,125 +650,6 @@
 #+end_src
 
 * Packages
-** General
-
-#+begin_src emacs-lisp
-
-(use-package general
-  :ensure t
-  :config
-  (general-evil-setup)
-
-(general-create-definer w/leader-keys
-    :states '(normal insert visual emacs)
-    :keymaps 'override
-    :prefix "SPC" ;; set leader
-    :global-prefix "M-SPC") ;; access leader in insert mode
-
-(w/leader-keys
-
-  ;; Fuzzy finder
-  ;; "fb" '(ido-switch-buffer-without-popper :wk "Choose and switch to an active buffer")
-  "fb" '(ido-switch-buffer :wk "Choose and switch to an active buffer")
-  "fe" '(OpenDiredBufferInCurrentWindow :wk "Open a full screen dired buffer in a current window")
-  "ff" '(ivy-fzf-project :wk "Find file fuzzy finder with a git directory as an anchor")
-  ;; "fd" '(projectile-find-divy-fzf-currentir :wk "Find file modified")
-  "fh" '(ivy-fzf-home :wk "counsel-fzf from home")
-  "fc" '(ivy-fzf-current-directory :wk "counsel-fzf from home")
-  "fr" '(ivy-fzf-root :wk "counsel-fzf from root")
-  ;; "fc" '(ivy-fzf-current :wk "counsel-fzf from root")
-
-  ;; Session management
-  "ss" '(save-current-desktop-session :wk "Save the current desktop session into its corresponding directory")
-  "sd" '(delete-desktop-session :wk "Delete selected session")
-  "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions")
-  "sr" '(rename-desktop-session :wk "Rename a desktop session")
-
-  ;; Git
-  "gs" '(vc-switch-branch :wk "Switch to another branch")
-  "gc" '(vc-create-branch :wk "Create branch")
-
-  ;; Org
-  "ot" '(todo :wk "Opens the org todo file")
-
-  ;; Paredit
-  "pfs" '(paredit-forward-slurp-sexp)
-
-  ;; Hyperbole
-  "he" '(hkey-either :wk "Opens the org todo file")
-
-  ;; Tab management
-  "tn" '(tab-bar-new-tab :wk "Create a new tab")
-  "tx" '(tab-bar-close-tab :wk "Close a tab")
-  "tr" '(tab-bar-rename-tab :wk "Rename a tab")
-
-  ;; Org capture
-  "n" '(org-capture :wk "Create a quick note")
-
-  ;; Docker
-  "D" '(docker-template :wk "Spawn docker template")
-
-  ;; Daemons
-  "do" '(daemons-stop :wk "Stop daemon")
-  "ds" '(daemons-start :wk "Start daemon")
-  "de" '(daemons-enable :wk "Enable daemon")
-  "dd" '(daemons-disable :wk "Disable daemon")
-  "du" '(daemons-status :wk "Status daemon")
-  "dr" '(daemons-restart :wk "Restart daemon")
-
-  ;; Windows
-  "w"  'hydra-window-size/body
-
-  ;; Buffers
-  "bc" '(ido-kill-buffer :wk "Close selecetd buffer")
-  "bx" '(kill-current-buffer :wk "Close selecetd buffer")
-
-  ;; "rr" '(revert-buffer :wk "Refresh a current buffer")
-
-  ;; Popper
-  "pt" '(popper-toggle-type :wk "Expand/contract a buffer")
-  "pe" '(popper-toggle-type-original :wk "Expand/contract a buffer")
-  "pr" '(my-remove-popper-status-from-frame-buffers :wk "Expand/contract a buffer")
-
-  "xx" '(add-execute-permissions-to-current-file :wk "Close buffer with its window")
-
-  "ch" '(my-hoogle-search :wk "Hoogle search prompt in the shell cmd")
-
-  "zz" '(z :wk "Call zoxide prompt")
-
-  ;; "dd" '(OpenDiredBufferInSplit :wk "Open Dired buffer in split")
-  ;; "dt" '(dired-create-empty-file :wk "Create an empty file")
-
-  "ld" '(lsp-find-definition :wk "Open diagnostic list in a separate split")
-  "lk" '(lsp-ui-doc-show :wk "Show hover documentation")
-
-  ;; Tramp
-  "uu" '(tramp-revert-buffer-with-sudo :wk "Edit file with sudo privileges")
-  "ur" '(tramp-revert :wk "Edit file with sudo privileges")
-
-  ;; Evaluation
-  "e" '(:ignore t :wk "Evaluate/Eshell")
-  ;; "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
-  ;; "ed" '(eval-defun :wk "Evaluate defun containing or after point")
-  ;; "ex" '(eval-expression :wk "Evaluate and elisp expression")
-  ;; "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
-  "er" '(eval-region :wk "Evaluate elisp in region")
-
-  ;; Eshell
-  "E" '(eshell :wk "Eshell")
-  "en" '(eshell-new :wk "Spawn a new eshell buffer")
-  ;; "ee" '(eshell-new-pop :wk "Spawn a new eshell buffer in a popper window")
-  "ep" '(eshell-pop :wk "'eshell' command in popper mode")
-
-  )
-
-  (w/leader-keys
-    :keymaps 'help-mode-map
-    "sl" '(load-desktop-with-name :wk "Load a desktop session by name, chosen from available sessions"))
-)
-
-#+end_src
-
 ** Daemons
 
 #+begin_src emacs-lisp
@@ -984,17 +856,6 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
       ;; Optionally, you can also execute the command immediately
       ;; (eshell-send-input)
       )))
-
-#+end_src
-
-** Search
-
-#+begin_src emacs-lisp
-
-(use-package rg
-  :ensure t
-  :config
-  (rg-enable-default-bindings))
 
 #+end_src
 
@@ -1249,8 +1110,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (corfu-history-mode)
   (corfu-popupinfo-mode))
 
-(with-eval-after-load 'evil
-  (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
 
 (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
@@ -1299,12 +1160,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-(use-package sudo-edit
-  :ensure t
-  :config
-    (w/leader-keys
-      "sf" '(sudo-edit-find-file :wk "Sudo find file")))
-      ;; "se" '(sudo-edit :wk "Sudo edit file")))
+;; (use-package sudo-edit
+;;   :ensure t
+;;   :config
+;;     (w/leader-keys
+;;       "sf" '(sudo-edit-find-file :wk "Sudo find file")))
+;;       ;; "se" '(sudo-edit :wk "Sudo edit file")))
 
 #+end_src
 
@@ -1501,6 +1362,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (unless (string= command "")
     (add-to-history 'shell-command-history command))
   (async-shell-command command output-buffer error-buffer))
+
+(global-set-key (kbd "M-!") 'my-shell-command)
+(global-set-key (kbd "M-&") 'my-async-shell-command)
 
 #+end_src
 
@@ -2203,6 +2067,18 @@ If called from eshell, display in eshell. Otherwise, use a separate buffer."
       (with-output-to-temp-buffer "*FD Output*"
         (princ output))
       (switch-to-buffer-other-window "*FD Output*"))))
+
+(defun my-previous-history-element (arg)
+  "Insert the previous history element, moving the cursor to the end."
+  (interactive "p")
+  (previous-history-element arg)
+  (move-end-of-line 1))
+
+(defun my-next-history-element (arg)
+  "Insert the next history element, moving the cursor to the end."
+  (interactive "p")
+  (next-history-element arg)
+  (move-end-of-line 1))
 
 #+end_src
 
@@ -3218,7 +3094,7 @@ If an eshell buffer for the directory already exists, switch to it."
   (org-table-align)
   (org-return))
 
-(define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
+;; (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
 
 (defun FormatToThreshold (char-threshold)
   "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
@@ -3266,6 +3142,56 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
+(defun my-bind-keys (keymap-prefix bindings)
+  "Bind keys in KEYMAP-PREFIX.
+BINDINGS is an alist of (KEY . COMMAND) pairs."
+  (dolist (binding bindings)
+    (global-set-key (kbd (concat keymap-prefix (car binding))) (cdr binding))))
+
+(my-bind-keys "C-c "
+  '(
+    ("ff" . ivy-fzf-project)
+    ("fb" . ido-switch-buffer)
+    ("fh" . ivy-fzf-home)
+    ("fc" . ivy-fzf-current-directory)
+    ("fr" . ivy-fzf-root)
+
+    ("ss" . save-current-desktop-session)
+    ("sd" . delete-desktop-session)
+    ("sl" . load-desktop-with-name)
+    ("sr" . rename-desktop-session)
+
+    ("k"  . kill-buffer)
+    ("w"  . write-file)
+    ("bc" . ido-kill-buffer)
+    ("bx" . kill-current-buffer)
+
+    ("tn" . tab-bar-new-tab)
+    ("tx" . tab-bar-close-tab)
+    ("tr" . tab-bar-rename-tab)
+    
+    ("D"  . docker-template)
+    
+    ("do" . daemons-stop)
+    ("ds" . daemons-start)
+    ("de" . daemons-enable)
+    ("dd" . daemons-disable)
+    ("du" . daemons-status)
+    ("dr" . daemons-restart)
+    
+    ("w"  . hydra-window-size/body)
+    
+    ("pt" . popper-toggle-type)
+    ("pe" . popper-toggle-type-original)
+    ("pr" . my-remove-popper-status-from-frame-buffers)
+
+    ("er" . eval-region)
+
+    ("E"  . eshell)
+    ("en" . eshell-new)
+    ("ep" . eshell-pop) 
+    ))
+
 ;; (global-unset-key (kbd "M-;"))
 
 (defun my-noop ()
@@ -3276,7 +3202,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (global-unset-key (kbd "C-s"))
 (global-unset-key (kbd "M-TAB"))
-(global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
+;; (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 (global-set-key (kbd "C-s C-s") 'swiper-isearch)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
@@ -3297,19 +3223,38 @@ If an eshell buffer for the directory already exists, switch to it."
   (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
   (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
-(defun my-org-cycle-or-yasnippet-expand ()
-  "Expand Yasnippet or perform org-cycle based on the context."
+;; (defun my-org-cycle-or-yasnippet-expand ()
+;;   "Expand Yasnippet or perform org-cycle based on the context."
+;;   (interactive)
+;;   ;; First, try to expand a Yasnippet if possible.
+;;   (unless (and (bound-and-true-p yas-minor-mode) ; Check if YASnippet mode is active
+;;               (fboundp 'yas-expand)            ; Check if yas-expand is callable
+;;               (yas-expand))                     ; Try to expand a snippet
+;;     ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
+;;     (when (eq major-mode 'org-mode)
+;;       (org-cycle))))
+
+(defun my-yas-complete-or-expand ()
+  "Expand Yasnippet if possible, otherwise trigger completion-at-point."
   (interactive)
-  ;; First, try to expand a Yasnippet if possible.
-  (unless (and (bound-and-true-p yas-minor-mode) ; Check if YASnippet mode is active
-              (fboundp 'yas-expand)            ; Check if yas-expand is callable
-              (yas-expand))                     ; Try to expand a snippet
-    ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
-    (when (eq major-mode 'org-mode)
-      (org-cycle))))
+  (if (and (bound-and-true-p yas-minor-mode)
+           (fboundp 'yas-expand)
+           (yas-expand))
+      t  ; Yasnippet expanded successfully
+    (completion-at-point)))
+
+(defun my-org-cycle-or-preview ()
+  "Cycle in Org mode or show the next completion preview candidate."
+  (interactive)
+  (if (eq major-mode 'org-mode)
+      (org-cycle)
+    (completion-preview-insert)))
 
 (with-eval-after-load 'evil
-  (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-yasnippet-expand))
+  (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-preview))
 
 (with-eval-after-load 'org
   ;; Override the keybinding in org-mode specifically
@@ -3353,6 +3298,8 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
+(require 'cl-lib)
+
 (defun copy-buffer-to-new-buffer ()
   "Create a copy of the current buffer, placing the contents in a new named buffer."
   (interactive)
@@ -3388,6 +3335,98 @@ If an eshell buffer for the directory already exists, switch to it."
   (interactive "p")
   (my/change-number-at-point '- (or increment 1)))
 
+(defun run-ansible-check-and-lint ()
+  "Run ansible-lint and ansible-playbook --check on the current file."
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (if filename
+        (progn
+          (async-shell-command (format "ansible-lint %s" filename))
+          (async-shell-command (format "ansible-playbook --check %s" filename)))
+      (message "No file associated with this buffer"))))
+
+(defun my-eshell-snippet-files ()
+  (interactive)
+  "Return a list of file names (not directories) in '~/.emacs.d/snippets/eshell-mode/eshell' and print it."
+  (let* ((snippet-dir (expand-file-name "~/.emacs.d/snippets/eshell-mode/eshell"))
+         (snippet-files (directory-files snippet-dir t nil nil)))
+    (setq snippet-files (mapcar 'file-name-nondirectory snippet-files))
+    (setq snippet-files (remove-if (lambda (file) (member file '("." ".."))) snippet-files))  ; Remove "." and ".."
+    (message "Snippet files: %s" snippet-files)
+    snippet-files))
+
+(defun my-eshell-current-input ()
+  (interactive)
+  "Return the current characters written before the cursor in Eshell and print it."
+  (let ((input (if (eq major-mode 'eshell-mode)
+                   (buffer-substring-no-properties (line-beginning-position) (point))
+                 "")))
+    (message "Current input: %s" input)
+    input))  ; Still return the input for programmatic use if needed
+
+#+end_src
+
+** Wrap edit
+
+#+begin_src emacs-lisp
+
+(defvar-local my-edit-long-lines-region nil
+  "Stores the region (beg . end) that was filled when `my-edit-long-lines-mode` was activated.")
+
+(defun my-fill-region (beg end)
+  "Fill the region between BEG and END."
+  (interactive "r")
+  (fill-region beg end))
+
+(defun unfill-region (start end)
+  "Unfill the region, joining text paragraphs into a single line."
+  (interactive "r")
+  (let ((fill-column (point-max)))
+    (fill-region start end nil)))
+
+(evil-define-operator my-evil-fill (beg end type)
+  "Fill the text from BEG to END."
+  (interactive "<R>")
+  (my-fill-region beg end))
+
+(define-minor-mode wrap-edit-mode
+  "Minor mode to conveniently edit long lines with automatic filling and unfilling."
+  :init-value nil
+  :lighter " Wrap-edit"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-c C-c") 'wrap-edit-exit)
+            map)
+  (if wrap-edit-mode
+      (progn
+        ;; Store the current region or line
+        (setq wrap-edit-region
+              (if (evil-visual-state-p)
+                  (cons (region-beginning) (region-end))
+                (cons (line-beginning-position) (line-end-position))))
+        ;; Fill the current region or line
+        (my-evil-fill (car wrap-edit-region) (cdr wrap-edit-region) 'line))
+    ;; When the mode is deactivated, clear the stored region
+    (setq wrap-edit-region nil)))
+
+(defun wrap-edit-exit ()
+  "Exit `wrap-edit-mode`, unfill the region, and save the buffer."
+  (interactive)
+  (when wrap-edit-region
+    (unfill-region (car wrap-edit-region) (cdr wrap-edit-region)))
+  (save-buffer)
+  (wrap-edit-mode -1))
+
+(global-set-key (kbd "C-c g e") 'wrap-edit-mode)
+
+(define-key evil-normal-state-map (kbd "gw") 'my-evil-fill)
+(define-key evil-visual-state-map (kbd "gw") 'my-evil-fill)
+
+#+end_src
+
+** Custom commands
+
+#+begin_src emacs-lisp
+
 (defun Cp ()
   "Copy the full path of the current buffer's file to the clipboard (or appropriate path)."
   (interactive)
@@ -3406,96 +3445,6 @@ If an eshell buffer for the directory already exists, switch to it."
           (kill-new path-to-copy)
           (message "Copied path '%s' to the clipboard." path-to-copy))
       (message "Current buffer has no associated path to copy.")))) ;
-
-(defun sway ()
-  "Open sway config file."
-  (interactive)
-  (find-file (expand-file-name "~/.dotfiles/sway/config")))
-
-(defun date ()
-  "Display the current date and time in the minibuffer using the shell's 'date' command."
-  (interactive)
-  (let ((date-output (shell-command-to-string "date")))
-    (message (string-trim date-output))))
-
-(defun off ()
-  "Shutdown the system."
-  (interactive)
-  (call-process "poweroff"))
-
-(defun reboot ()
-  "Reboot the system."
-  (interactive)
-  (call-process "reboot"))
-
-(defun notes ()
-  "Open org notes directory."
-  (interactive)
-  (find-file (expand-file-name "~/.secret_dotfiles/org")))
-
-(defun org ()
-  "Open org notes directory."
-  (interactive)
-  (find-file (expand-file-name "~/.secret_dotfiles/org")))
-
-(defun drill ()
-  "Open org notes directory."
-  (interactive)
-  (find-file (expand-file-name "~/.secret_dotfiles/org/drill")))
-
-(defun cards ()
-  "Open org notes directory."
-  (interactive)
-  (find-file (expand-file-name "~/.secret_dotfiles/org/drill/general.org")))
-
-(defun nvm ()
-  "Open org notes directory."
-  (interactive)
-  (find-file (expand-file-name "~/.dotfiles/nvim/lua/user/")))
-
-(defun emc ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.emacs.d/config.org"))
-
-(defun alc ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.dotfiles/zellij/config.kdl"))
-
-(defun zsh ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.dotfiles/zsh/.zshrc"))
-
-(defun bsh ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.dotfiles/bash/.bashrc"))
-
-(defun scr ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.secret_dotfiles"))
-
-(defun szsh ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.secret_dotfiles/zsh/.zshrc"))
-
-(defun scripts ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.dotfiles/scripts/"))
-
-(defun so ()
-  "Reload the Emacs configuration."
-  (interactive)
-  (load-file "~/.emacs.d/init.el")
-  (load-file "~/.emacs.d/init.el"))
-
-(with-eval-after-load 'evil
-  (evil-ex-define-cmd "so" 'so))
 
 (defun z (q)
   "Query zoxide and launch dired or change directory in Eshell."
@@ -3653,14 +3602,94 @@ If an eshell buffer for the directory already exists, switch to it."
   (interactive)
   (with-editor-async-shell-command "crontab -e"))
 
-(defun run-ansible-check-and-lint ()
-  "Run ansible-lint and ansible-playbook --check on the current file."
+(defun sway ()
+  "Open sway config file."
   (interactive)
-  (let ((filename (buffer-file-name)))
-    (if filename
-        (progn
-          (async-shell-command (format "ansible-lint %s" filename))
-          (async-shell-command (format "ansible-playbook --check %s" filename)))
-      (message "No file associated with this buffer"))))
+  (find-file (expand-file-name "~/.dotfiles/sway/config")))
+
+(defun date ()
+  "Display the current date and time in the minibuffer using the shell's 'date' command."
+  (interactive)
+  (let ((date-output (shell-command-to-string "date")))
+    (message (string-trim date-output))))
+
+(defun off ()
+  "Shutdown the system."
+  (interactive)
+  (call-process "poweroff"))
+
+(defun reboot ()
+  "Reboot the system."
+  (interactive)
+  (call-process "reboot"))
+
+(defun notes ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.secret_dotfiles/org")))
+
+(defun org ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.secret_dotfiles/org")))
+
+(defun drill ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.secret_dotfiles/org/drill")))
+
+(defun cards ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.secret_dotfiles/org/drill/general.org")))
+
+(defun nvm ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.dotfiles/nvim/lua/user/")))
+
+(defun emc ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.emacs.d/config.org"))
+
+(defun alc ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/zellij/config.kdl"))
+
+(defun zsh ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/zsh/.zshrc"))
+
+(defun bsh ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/bash/.bashrc"))
+
+(defun scr ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles"))
+
+(defun szsh ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/zsh/.zshrc"))
+
+(defun scripts ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/scripts/"))
+
+(defun so ()
+  "Reload the Emacs configuration."
+  (interactive)
+  (load-file "~/.emacs.d/init.el")
+  (load-file "~/.emacs.d/init.el"))
+
+(with-eval-after-load 'evil
+  (evil-ex-define-cmd "so" 'so))
 
 #+end_src

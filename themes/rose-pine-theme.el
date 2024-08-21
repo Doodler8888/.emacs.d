@@ -87,6 +87,16 @@
     `(all-the-icons-ivy-rich-off-face ((,class (:foreground ,rose-pine-subtext))))
     `(all-the-icons-ivy-rich-file-priv-no ((,class (:foreground ,rose-pine-subtext))))
 
+    ;; Evil
+    `(evil-ex-info ((,class (:foreground ,rose-pine-love))))
+    `(evil-ex-substitute-replacement ((,class (:foreground ,rose-pine-love))))
+    `(shadow ((,class (:foreground ,rose-pine-subtext))))
+
+    ;; Preview mode
+    `(completion-preview ((,class (:foreground ,rose-pine-subtext))))
+    `(completion-preview-common ((,class (:foreground ,rose-pine-subtext))))
+    `(completion-preview-exact ((,class (:foreground ,rose-pine-subtext :underline ,rose-pine-subtext))))
+
     ;; Vterm
     `(all-the-icons-ivy-rich-file-priv-no ((,class (:foreground ,rose-pine-subtext))))
     
