@@ -1438,7 +1438,50 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (use-package consult
   :ensure t)
 
-;; (use-package embark-consult)
+(use-package embark-consult
+  :ensure t)
+
+(defun my-vertico-shell-command-history ()
+  "Use `completing-read` to search through shell command history."
+  (interactive)
+  (let ((history shell-command-history))
+    (completing-read "Shell command history: " history nil nil nil 'shell-command-history)))
+
+(defun my-shell-command (command &optional output-buffer error-buffer)
+  "Run shell command with custom history and minibuffer completion."
+  (interactive
+   (list (minibuffer-with-setup-hook
+             (lambda ()
+               (add-hook 'completion-at-point-functions 'comint-dynamic-complete-filename nil t))
+           (my-vertico-shell-command-history))
+         current-prefix-arg
+         shell-command-default-error-buffer))
+  ;; Add the command to the history
+  (unless (string= command "")
+    (add-to-history 'shell-command-history command))
+  (shell-command command output-buffer error-buffer))
+
+(defun my-async-shell-command (command &optional output-buffer error-buffer)
+  "Run async shell command with custom history and minibuffer completion."
+  (interactive
+   (list (minibuffer-with-setup-hook
+             (lambda ()
+               (add-hook 'completion-at-point-functions 'comint-dynamic-complete-filename nil t))
+           (my-vertico-shell-command-history))
+         current-prefix-arg
+         shell-command-default-error-buffer))
+  ;; Add the command to the history
+  (unless (string= command "")
+    (add-to-history 'shell-command-history command))
+  (async-shell-command command output-buffer error-buffer))
+
+(defun my-add-space-to-M-x ()
+  "Add a space when invoking M-x."
+  (when (and (minibufferp)
+             (eq this-command 'execute-extended-command))
+    (insert " ")))
+
+(advice-add 'minibuffer-setup-hook :after 'my-add-space-to-M-x)
 
 #+end_src
 
