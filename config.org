@@ -1170,27 +1170,36 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
+(defun my-eshell-has-argument-p ()
+  "Check if the current Eshell input has an argument."
+  (let* ((input (eshell-get-old-input))
+         (trimmed-input (string-trim-right input))
+         (args (split-string trimmed-input " " t)))
+    (or (> (length args) 1)
+        (not (string-equal input trimmed-input)))))
+
 (defun my-eshell-directory-completions ()
   "Generate a list of all directories in the current working directory, including hidden ones."
   (let ((current-dir (eshell/pwd)))
     (cl-remove-if-not
-    #'file-directory-p
-    (directory-files current-dir t nil t))))
+     #'file-directory-p
+     (directory-files current-dir t nil t))))
 
 (defun my-eshell-completion-at-point ()
   "Provide completion for Eshell using custom directory completions."
-  (let ((bounds (bounds-of-thing-at-point 'filename)))
-    (when bounds
-      (let* ((start (car bounds))
-            (end (cdr bounds))
-            (input (buffer-substring-no-properties start end))
-            (completions (my-eshell-directory-completions))
-            (matches (cl-remove-if-not
-                      (lambda (dir)
-                        (string-prefix-p input (file-name-nondirectory dir)))
-                      completions)))
-        (when matches
-          (list start end (mapcar #'file-name-nondirectory matches) :exclusive 'no))))))
+  (unless (my-eshell-has-argument-p)
+    (let ((bounds (bounds-of-thing-at-point 'filename)))
+      (when bounds
+        (let* ((start (car bounds))
+               (end (cdr bounds))
+               (input (buffer-substring-no-properties start end))
+               (completions (my-eshell-directory-completions))
+               (matches (cl-remove-if-not
+                         (lambda (dir)
+                           (string-prefix-p input (file-name-nondirectory dir)))
+                         completions)))
+          (when matches
+            (list start end (mapcar #'file-name-nondirectory matches) :exclusive 'no)))))))
 
 (defun my-eshell-setup ()
   "Set up custom completions and key bindings for Eshell."
