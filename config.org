@@ -409,11 +409,11 @@
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map (kbd "Y") 'my-evil-yank-to-end-of-line))
 
-(defun my-evil-insert-state-minibuffer-setup ()
-  (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
-  (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
+;; (defun my-evil-insert-state-minibuffer-setup ()
+;;   (define-key evil-insert-state-local-map (kbd "<backspace>") 'ivy-backward-delete-char)
+;;   (define-key evil-insert-state-local-map (kbd "TAB") 'ivy-partial-or-done))
 
-(add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
+;; (add-hook 'minibuffer-setup-hook 'my-evil-insert-state-minibuffer-setup)
 
 (evil-global-set-key 'insert (kbd "C-l") 'forward-char)
 (evil-global-set-key 'insert (kbd "C-h") 'backward-char)
@@ -1198,10 +1198,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-mode-hook 'my-eshell-setup)
 
-;; (with-eval-after-load 'esh-mode
-;;   (define-key eshell-mode-map (kbd "TAB") 'completion-at-point))
-
-  ;; Corfu setup
+;; Corfu setup
 (use-package corfu
   :ensure t
   :init
@@ -1216,27 +1213,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (corfu-history-mode)
   (corfu-popupinfo-mode))
 
-;; (defun my-enable-corfu-in-eshell ()
-;;   "Enable Corfu auto-completion in Eshell and set up completion functions."
-;;   (setq-local corfu-auto t))
-
-;; (add-hook 'eshell-mode-hook #'my-enable-corfu-in-eshell)
-
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
 
 (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
-
-(defun corfu-enable-in-minibuffer ()
-  "Enable Corfu in the minibuffer."
-  (when (local-variable-p 'completion-at-point-functions)
-    ;; (setq-local corfu-auto nil) ;; Enable/disable auto completion
-    (setq-local corfu-echo-delay nil ;; Disable automatic echo and popup
-                corfu-popupinfo-delay nil)
-    (corfu-mode 1)))
-
-(add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 
 ;; Cape setup
 (use-package cape
@@ -1247,10 +1228,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         (list #'cape-file
               #'cape-dabbrev
               #'cape-elisp-block)))
-
-
-;; (straight-use-package
-;;  '(fish-completion :host github :repo "LemonBreezes/emacs-fish-completion"))
 
 (use-package fish-completion
   :vc (:url "https://github.com/LemonBreezes/emacs-fish-completion.git"
@@ -1434,21 +1411,23 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; (use-package vertico
-;;   :custom
-;;   (vertico-scroll-margin 0) ;; Different scroll margin
-;;   ;; (vertico-count 20) ;; Show more candidates
-;;   ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
-;;   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
-;;   :init
-;;   (vertico-mode))
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-scroll-margin 0) ;; Different scroll margin
+  ;; (vertico-count 20) ;; Show more candidates
+  ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+  (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  :init
+  (vertico-mode))
 
 (use-package marginalia
   :ensure t
   :init
   (marginalia-mode))
 
-;; (use-package consult)
+(use-package consult
+  :ensure t)
 
 ;; (use-package embark-consult)
 
@@ -1474,49 +1453,49 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (interactive)
     (let ((inhibit-read-only t))
       (evil-delete-line (line-beginning-position) (line-end-position))))
-  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line)
-  :init
-  (ivy-mode))
+  (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line))
+  ;; :init
+  ;; (ivy-mode))
 
-(use-package counsel
-  :ensure t
-  :after ivy
-  :config
-  (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history))
+;; (use-package counsel
+;;   :ensure t
+;;   :after ivy
+;;   :config
+;;   (define-key shell-mode-map (kbd "M-r") 'counsel-shell-history))
   ;; :init
   ;; (counsel-mode))
 ;; (global-set-key (kbd "C-c C-y") 'cousel-yank-pop)
 
-(defun my-ivy-shell-command-history ()
-  "Use `ivy-read` to search through shell command history."
-  (interactive)
-  (let ((history (if (eq this-command 'my-async-shell-command)
-                     shell-command-history
-                   shell-command-history)))
-    (ivy-read "Shell command history: " history)))
+;; (defun my-ivy-shell-command-history ()
+;;   "Use `ivy-read` to search through shell command history."
+;;   (interactive)
+;;   (let ((history (if (eq this-command 'my-async-shell-command)
+;;                      shell-command-history
+;;                    shell-command-history)))
+;;     (ivy-read "Shell command history: " history)))
 
-(defun my-shell-command (command &optional output-buffer error-buffer)
-  "Run shell command with custom history."
-  (interactive (list (my-ivy-shell-command-history)
-                     current-prefix-arg
-                     shell-command-default-error-buffer))
-  ;; Add the command to the history
-  (unless (string= command "")
-    (add-to-history 'shell-command-history command))
-  (shell-command command output-buffer error-buffer))
+;; (defun my-shell-command (command &optional output-buffer error-buffer)
+;;   "Run shell command with custom history."
+;;   (interactive (list (my-ivy-shell-command-history)
+;;                      current-prefix-arg
+;;                      shell-command-default-error-buffer))
+;;   ;; Add the command to the history
+;;   (unless (string= command "")
+;;     (add-to-history 'shell-command-history command))
+;;   (shell-command command output-buffer error-buffer))
 
-(defun my-async-shell-command (command &optional output-buffer error-buffer)
-  "Run async shell command with custom history."
-  (interactive (list (my-ivy-shell-command-history)
-                     current-prefix-arg
-                     shell-command-default-error-buffer))
-  ;; Add the command to the history
-  (unless (string= command "")
-    (add-to-history 'shell-command-history command))
-  (async-shell-command command output-buffer error-buffer))
+;; (defun my-async-shell-command (command &optional output-buffer error-buffer)
+;;   "Run async shell command with custom history."
+;;   (interactive (list (my-ivy-shell-command-history)
+;;                      current-prefix-arg
+;;                      shell-command-default-error-buffer))
+;;   ;; Add the command to the history
+;;   (unless (string= command "")
+;;     (add-to-history 'shell-command-history command))
+;;   (async-shell-command command output-buffer error-buffer))
 
-(global-set-key (kbd "M-!") 'my-shell-command)
-(global-set-key (kbd "M-&") 'my-async-shell-command)
+;; (global-set-key (kbd "M-!") 'my-shell-command)
+;; (global-set-key (kbd "M-&") 'my-async-shell-command)
 
 (defun ivy-fzf-project ()
   "Run a customized `ivy-fzf`-like file selection using `fd` from the current project directory."
