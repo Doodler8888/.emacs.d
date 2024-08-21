@@ -59,6 +59,7 @@
 - [[#sessions][Sessions]]
   - [[#restoration-by-tab-names][Restoration by Tab names]]
 - [[#buffers][Buffers]]
+  - [[#pointer][Pointer]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
@@ -248,19 +249,20 @@
   (make-directory (concat user-emacs-directory "saveplace/")))
 (save-place-mode 1)
 
-(if (version< emacs-version "29.0")
-    (pixel-scroll-mode)
-  (pixel-scroll-precision-mode 1)
-  (setq pixel-scroll-precision-large-scroll-height 35.0))
+;; (if (version< emacs-version "29.0")
+;;     (pixel-scroll-mode)
+;;   (pixel-scroll-precision-mode 1)
+;;   (setq pixel-scroll-precision-large-scroll-height 35.0))
+
+(setq scroll-conservatively 101)
+(setq scroll-margin 5)
+(setq scroll-step 1)
 
 (scroll-bar-mode -1)
 (setq-default display-line-numbers-width 3)
-(setq-default scroll-margin 8)
+
 (setq use-dialog-box nil)
-;; (set-fringe-mode 0)
 (fringe-mode '(1 . 1))
-;; (set-display-table-slot standard-display-table 'truncation ?\ )
-;; (set-display-table-slot standard-display-table 'truncation ?\N{ZERO WIDTH SPACE})
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
@@ -274,10 +276,6 @@
 (setenv "PATH" (concat (getenv "PATH") ":/usr/bin"))
 (setq exec-path (append exec-path '("/usr/bin")))
 
-(setq scroll-conservatively 101)
-(setq scroll-margin 5)
-(setq scroll-step 1)
-
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "10:00pm")
 
@@ -287,6 +285,18 @@
 (setq auto-revert-verbose nil)
 
 (setq display-buffer-base-action '(nil . ((some-window . mru))))
+
+(with-eval-after-load 'comint
+  (add-hook 'comint-mode-hook #'completion-preview-mode))
+(add-hook 'eshell-mode-hook #'completion-preview-mode)
+
+(with-eval-after-load 'completion-preview
+  ;; Show the preview already after two symbol characters
+  (setq completion-preview-minimum-symbol-length 2))
+  
+(minibuffer-regexp-mode 1)
+
+(setq ielm-history-file-name "~/.emacs.d/.ielm_history")
 
 #+end_src
 
@@ -478,6 +488,22 @@
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map "P" 'my-evil-paste-before)
   (define-key evil-visual-state-map "P" 'my-evil-paste-before))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'normal org-mode-map "{" 'org-forward-paragraph)
+  (evil-define-key 'normal org-mode-map "}" 'org-backward-paragraph)
+  (evil-define-key 'visual org-mode-map "{" 'org-forward-paragraph)
+  (evil-define-key 'visual org-mode-map "}" 'org-backward-paragraph)
+  (evil-define-key 'motion org-mode-map "{" 'org-forward-paragraph)
+  (evil-define-key 'motion org-mode-map "}" 'org-backward-paragraph))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'normal global-map "{" 'evil-forward-paragraph)
+  (evil-define-key 'normal global-map "}" 'evil-backward-paragraph)
+  (evil-define-key 'visual global-map "{" 'evil-forward-paragraph)
+  (evil-define-key 'visual global-map "}" 'evil-backward-paragraph)
+  (evil-define-key 'motion global-map "{" 'evil-forward-paragraph)
+  (evil-define-key 'motion global-map "}" 'evil-backward-paragraph))
 
 #+end_src
 
@@ -1316,6 +1342,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (setq eldoc-documentation-function (lambda () nil))
 
+(setq cider-stacktrace-default-filters '(clojure user)) ;; Haven't actually tried. The idea of this parameter is to show more sane error messages.
+
 (with-eval-after-load 'evil
 ;; CIDER
 (with-eval-after-load 'cider
@@ -1998,15 +2026,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (add-hook 'eshell-mode-hook 'my-eshell-evil-setup)
 
-(defun my/select-man-window (&rest _)
-  "Select the window displaying the man page."
-  (let ((man-window (cl-find-if (lambda (window)
-                                  (string-match-p "^\\*Man " (buffer-name (window-buffer window))))
-                                (window-list))))
-    (when man-window
-      (select-window man-window))))
+;; (defun my/select-man-window (&rest _)
+;;   "Select the window displaying the man page."
+;;   (let ((man-window (cl-find-if (lambda (window)
+;;                                   (string-match-p "^\\*Man " (buffer-name (window-buffer window))))
+;;                                 (window-list))))
+;;     (when man-window
+;;       (select-window man-window))))
 
-(advice-add 'Man-getpage-in-background :after #'my/select-man-window)
+;; (advice-add 'Man-getpage-in-background :after #'my/select-man-window)
 
 (defvar my-eshell-aliases
   '(("mkdir" "/usr/bin/mkdir $*")
@@ -2430,6 +2458,27 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 
 * Buffers
 
+** Pointer
+
+#+begin_src emacs-lisp
+
+(add-to-list 'display-buffer-alist
+             '("^\\*\\(Man\\|Faces\\) "
+               (display-buffer-reuse-window display-buffer-pop-up-window)
+               (post-command-select-window . t)))
+
+;; (add-to-list 'display-buffer-alist
+;;              '("\\*Man "
+;;                (display-buffer-reuse-window display-buffer-pop-up-window)
+;;                (post-command-select-window . t)))
+
+;; (add-to-list 'display-buffer-alist
+;;              '("*Faces*"
+;;                (display-buffer-reuse-window display-buffer-pop-up-window)
+;;                (post-command-select-window . t)))
+
+#+end_src
+
 ** Shell buffer
 
 #+begin_src emacs-lisp
@@ -2649,7 +2698,7 @@ If an eshell buffer for the directory already exists, switch to it."
           "\\*cider-repl.*"
           "\\*cider-doc.*"
           "\\*cider-error.*"
-          "\\*helpful.*"
+          ;; "\\*helpful.*"
           ;; "\\*man.*"
           "\\*grep.*"
           ;; "\\*eshell:.*"
@@ -2661,7 +2710,7 @@ If an eshell buffer for the directory already exists, switch to it."
           ;; "Output\\*$"
           ;; "\\*Dtache Shell Command\\*"
           ;; "\\*mu4e-update\\*"
-          help-mode
+          ;; help-mode
           compilation-mode))
   (popper-mode +1)
   (popper-echo-mode +1))

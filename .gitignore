@@ -40,4 +40,6 @@ projects
 # Ignore the entire eshell directory
 /eshell/*
 !/eshell/aliases
+
 .config.org.~undo-tree~
+ielm-history.eld
