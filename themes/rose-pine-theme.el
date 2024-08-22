@@ -209,6 +209,11 @@
     ;; Vertico
     `(vertico-current ((,class (:background ,rose-pine-subtle))))
 
+    ;; Consult
+    `(consult-highlight-mark ((,class (:foreground nil :background ,rose-pine-subtle))))
+    `(consult-highlight-match ((,class (:foreground nil :background ,rose-pine-subtle))))
+    ;; `(consult-preview-match ((,class (:foreground nil :background ,rose-pine-iris))))
+
     ;; Orderless
     `(orderless-match-face-0 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtext))))
     `(orderless-match-face-1 ((,class (:foreground ,rose-pine-iris :background ,rose-pine-subtext))))
@@ -226,6 +231,18 @@
     ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
     ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
  
+    ;; Swiper
+    `(swiper-line-face ((,class (:background ,rose-pine-subtle))))
+    ;; `(swiper-background-match-face-1 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtle))))
+    ;; `(swiper-background-match-face-2 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtle))))
+    ;; `(swiper-background-match-face-3 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtle))))
+    ;; `(swiper-background-match-face-4 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtle))))
+    ;; `(swiper-match-face-1 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg2))))
+    ;; `(swiper-match-face-2 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg2))))
+    ;; `(swiper-match-face-2 ((,class (:foreground ,rose-pine-fg :background ,palevioletred2))))
+    ;; `(swiper-match-face-3 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg2))))
+    ;; `(swiper-match-face-4 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-bg2))))
+
     ;; Line numbers
     `(linum ((,class (:foreground ,rose-pine-subtext))))
     `(line-number ((,class (:foreground ,rose-pine-subtext))))

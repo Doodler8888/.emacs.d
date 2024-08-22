@@ -57,7 +57,7 @@
 - [[#sessions][Sessions]]
   - [[#restoration-by-tab-names][Restoration by Tab names]]
 - [[#buffers][Buffers]]
-  - [[#pointer][Pointer]]
+  - [[#spawn-and-pointer][Spawn and Pointer]]
   - [[#shell-buffer][Shell buffer]]
   - [[#eshell-buffer][Eshell buffer]]
   - [[#transpose-frame][Transpose frame]]
@@ -291,6 +291,7 @@
 (with-eval-after-load 'comint
   (add-hook 'comint-mode-hook #'completion-preview-mode))
 (add-hook 'eshell-mode-hook #'completion-preview-mode)
+(add-hook 'minibuffer-mode-hook #'completion-preview-mode)
 
 (with-eval-after-load 'completion-preview
   ;; Show the preview already after two symbol characters
@@ -479,24 +480,24 @@
         (backward-char)))))
 
 (with-eval-after-load 'evil
-  (define-key evil-normal-state-map "P" 'my-evil-paste-before)
   (define-key evil-visual-state-map "P" 'my-evil-paste-before))
 
-(with-eval-after-load 'evil
-  (evil-define-key 'normal org-mode-map "{" 'org-forward-paragraph)
-  (evil-define-key 'normal org-mode-map "}" 'org-backward-paragraph)
-  (evil-define-key 'visual org-mode-map "{" 'org-forward-paragraph)
-  (evil-define-key 'visual org-mode-map "}" 'org-backward-paragraph)
-  (evil-define-key 'motion org-mode-map "{" 'org-forward-paragraph)
-  (evil-define-key 'motion org-mode-map "}" 'org-backward-paragraph))
+;; ;; The remap doesn't work with visual line.
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'normal org-mode-map "{" 'org-forward-paragraph)
+;;   (evil-define-key 'normal org-mode-map "}" 'org-backward-paragraph)
+;;   (evil-define-key 'visual org-mode-map "{" 'org-forward-paragraph)
+;;   (evil-define-key 'visual org-mode-map "}" 'org-backward-paragraph)
+;;   (evil-define-key 'motion org-mode-map "{" 'org-forward-paragraph)
+;;   (evil-define-key 'motion org-mode-map "}" 'org-backward-paragraph))
 
-(with-eval-after-load 'evil
-  (evil-define-key 'normal global-map "{" 'evil-forward-paragraph)
-  (evil-define-key 'normal global-map "}" 'evil-backward-paragraph)
-  (evil-define-key 'visual global-map "{" 'evil-forward-paragraph)
-  (evil-define-key 'visual global-map "}" 'evil-backward-paragraph)
-  (evil-define-key 'motion global-map "{" 'evil-forward-paragraph)
-  (evil-define-key 'motion global-map "}" 'evil-backward-paragraph))
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'normal global-map "{" 'evil-forward-paragraph)
+;;   (evil-define-key 'normal global-map "}" 'evil-backward-paragraph)
+;;   (evil-define-key 'visual global-map "{" 'evil-forward-paragraph)
+;;   (evil-define-key 'visual global-map "}" 'evil-backward-paragraph)
+;;   (evil-define-key 'motion global-map "{" 'evil-forward-paragraph)
+;;   (evil-define-key 'motion global-map "}" 'evil-backward-paragraph))
 
 ;; Always use blank lines as paragraph delimiters in motions/text objects
 (define-advice forward-evil-paragraph (:around (orig-fun &rest args))
@@ -1786,7 +1787,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package eshell
   ;; :ensure nil
-  :hook ((eshell-mode . eshell-specific-outline-regexp))
+  ;; :hook ((eshell-mode . eshell-specific-outline-regexp))
           ;; (eshell-directory-change . sync-dir-in-buffer-name)
   :custom
   (eshell-input-filter 'my-eshell-input-filter)
@@ -2391,19 +2392,22 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 
 * Buffers
 
-** Pointer
+** Spawn and Pointer
 
 #+begin_src emacs-lisp
 
 (add-to-list 'display-buffer-alist
-             '("^\\*\\(Man\\|Faces\\) "
-               (display-buffer-reuse-window display-buffer-pop-up-window)
-               (post-command-select-window . t)))
+             '("*Faces*" display-buffer-same-window))
 
 ;; (add-to-list 'display-buffer-alist
-;;              '("\\*Man "
+;;              '("^\\*\\(Man\\|Faces\\) "
 ;;                (display-buffer-reuse-window display-buffer-pop-up-window)
 ;;                (post-command-select-window . t)))
+
+(add-to-list 'display-buffer-alist
+             '("\\*Man "
+               (display-buffer-reuse-window display-buffer-pop-up-window)
+               (post-command-select-window . t)))
 
 ;; (add-to-list 'display-buffer-alist
 ;;              '("*Faces*"
@@ -2907,9 +2911,11 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+begin_src emacs-lisp
 
-(use-package org
-  :config
-  (setq org-edit-src-content-indentation 0))
+(setq org-edit-src-content-indentation 0)
+
+;; (use-package org
+;;   :config
+;;   (setq org-edit-src-content-indentation 0))
 
 (defun org-insert-top-level-heading ()
     "Insert a new top-level heading with two empty lines before it."
@@ -3197,6 +3203,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("E"  . eshell)
     ("en" . eshell-new)
     ("ep" . eshell-pop) 
+
+    ("gm" . pop-global-mark) 
     ))
 
 ;; (global-unset-key (kbd "M-;"))
@@ -3211,6 +3219,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-unset-key (kbd "M-TAB"))
 ;; (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 (global-set-key (kbd "C-s C-s") 'swiper-isearch)
+;; (global-set-key (kbd "C-s C-s") 'consult-line)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
 ;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
