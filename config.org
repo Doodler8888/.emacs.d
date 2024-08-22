@@ -1308,6 +1308,31 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
+(use-package emacs
+  :custom
+  ;; Support opening new minibuffers from inside existing minibuffers.
+  (enable-recursive-minibuffers t)
+  ;; Emacs 28 and newer: Hide commands in M-x which do not work in the current
+  ;; mode.  Vertico commands are hidden in normal buffers. This setting is
+  ;; useful beyond Vertico.
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  :init
+  ;; Add prompt indicator to `completing-read-multiple'.
+  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
+
 (use-package vertico
   :ensure t
   :custom
@@ -1330,41 +1355,23 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :ensure t)
 
 (defun my-vertico-shell-command-history ()
-  "Use `completing-read` to search through shell command history."
-  (interactive)
+  "Use `completing-read` to search through shell command history and return the selected command."
   (let ((history shell-command-history))
     (completing-read "Shell command history: " history nil nil nil 'shell-command-history)))
 
-(defun my-shell-command (command &optional output-buffer error-buffer)
-  "Run shell command with custom history and minibuffer completion."
-  (interactive
-   (list (minibuffer-with-setup-hook
-             (lambda ()
-               (add-hook 'completion-at-point-functions 'comint-dynamic-complete-filename nil t))
-           (my-vertico-shell-command-history))
-         current-prefix-arg
-         shell-command-default-error-buffer))
-  ;; Add the command to the history
-  (unless (string= command "")
-    (add-to-history 'shell-command-history command))
-  (shell-command command output-buffer error-buffer))
+(defun my-insert-selected-command (selected-command)
+  "Insert the selected command into the minibuffer and print a message."
+  (when selected-command
+    (insert selected-command)))
 
-(defun my-async-shell-command (command &optional output-buffer error-buffer)
-  "Run async shell command with custom history and minibuffer completion."
-  (interactive
-   (list (minibuffer-with-setup-hook
-             (lambda ()
-               (add-hook 'completion-at-point-functions 'comint-dynamic-complete-filename nil t))
-           (my-vertico-shell-command-history))
-         current-prefix-arg
-         shell-command-default-error-buffer))
-  ;; Add the command to the history
-  (unless (string= command "")
-    (add-to-history 'shell-command-history command))
-  (async-shell-command command output-buffer error-buffer))
+(defun my-shell-command-history-and-insert ()
+  "Search shell command history and insert the selected command into the minibuffer."
+  (interactive)
+  (let ((selected-command (my-vertico-shell-command-history)))
+    (my-insert-selected-command selected-command)))
 
-(global-set-key (kbd "M-!") 'my-shell-command)
-(global-set-key (kbd "M-&") 'my-async-shell-command)
+(evil-define-key 'insert minibuffer-local-map (kbd "M-r") 'my-shell-command-history-and-insert)
+(evil-define-key 'normal minibuffer-local-map (kbd "M-r") 'my-shell-command-history-and-insert)
 
 #+end_src
 
@@ -3255,6 +3262,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-preview))
+
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'insert global-map (kbd "M-r") 'consult-line))
 
 (with-eval-after-load 'org
   ;; Override the keybinding in org-mode specifically
