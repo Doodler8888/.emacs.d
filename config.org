@@ -291,7 +291,18 @@
 (with-eval-after-load 'comint
   (add-hook 'comint-mode-hook #'completion-preview-mode))
 (add-hook 'eshell-mode-hook #'completion-preview-mode)
-(add-hook 'minibuffer-mode-hook #'completion-preview-mode)
+;; (add-hook 'minibuffer-mode-hook #'completion-preview-mode)
+
+(defun my-conditional-completion-preview ()
+  "Enable completion-preview-mode selectively."
+  (if (or (eq this-command 'eval-expression)
+          (eq this-command 'shell-command)
+          (eq this-command 'evil-ex))
+      (completion-preview-mode 1)
+    (completion-preview-mode -1)))
+
+(add-hook 'minibuffer-setup-hook #'my-conditional-completion-preview)
+
 
 (with-eval-after-load 'completion-preview
   ;; Show the preview already after two symbol characters
@@ -3239,17 +3250,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
   (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
-;; (defun my-org-cycle-or-yasnippet-expand ()
-;;   "Expand Yasnippet or perform org-cycle based on the context."
-;;   (interactive)
-;;   ;; First, try to expand a Yasnippet if possible.
-;;   (unless (and (bound-and-true-p yas-minor-mode) ; Check if YASnippet mode is active
-;;               (fboundp 'yas-expand)            ; Check if yas-expand is callable
-;;               (yas-expand))                     ; Try to expand a snippet
-;;     ;; If no snippet was expanded and we're in an Org buffer, call org-cycle.
-;;     (when (eq major-mode 'org-mode)
-;;       (org-cycle))))
-
 (defun my-yas-complete-or-expand ()
   "Expand Yasnippet if possible, otherwise trigger completion-at-point."
   (interactive)
@@ -3257,6 +3257,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
            (fboundp 'yas-expand)
            (yas-expand))
       t  ; Yasnippet expanded successfully
+    (vertico-insert)
     (completion-at-point)))
 
 (defun my-org-cycle-or-preview ()
@@ -3264,21 +3265,13 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (interactive)
   (if (eq major-mode 'org-mode)
       (org-cycle)
-    (completion-preview-insert)))
+    (completion-preview-complete)))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-preview))
-
-;; (with-eval-after-load 'evil
-;;   (evil-define-key 'insert global-map (kbd "M-r") 'consult-line))
-
-(with-eval-after-load 'org
-  ;; Override the keybinding in org-mode specifically
-  (define-key org-mode-map (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-  (define-key evil-normal-state-map (kbd "C-t C-s") 'flyspell-mode))
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
