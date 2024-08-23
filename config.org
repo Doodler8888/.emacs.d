@@ -78,9 +78,9 @@
   - [[#templates][Templates]]
   - [[#visuals-1][Visuals]]
   - [[#enabling-table-of-contents][Enabling Table of Contents]]
-  - [[#custom-key-bindings][Custom key bindings]]
+  - [[#custom-functions][Custom functions]]
 - [[#keybindings][Keybindings]]
-- [[#custom-functions][Custom functions]]
+- [[#custom-functions-1][Custom functions]]
   - [[#wrap-edit][Wrap edit]]
   - [[#custom-commands][Custom commands]]
 
@@ -502,9 +502,14 @@
     (apply orig-fun args)))
 
 (evil-define-key 'normal minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+(evil-define-key 'normal evil-command-line-map (kbd "M-p") 'my-previous-history-element)
 (evil-define-key 'normal minibuffer-local-map (kbd "M-n") 'my-next-history-element)
+(evil-define-key 'normal evil-command-line-map (kbd "M-n") 'my-next-history-element)
+
 (evil-define-key 'insert minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+(evil-define-key 'insert evil-command-line-map (kbd "M-p") 'my-previous-history-element)
 (evil-define-key 'insert minibuffer-local-map (kbd "M-n") 'my-next-history-element)
+(evil-define-key 'insert evil-command-line-map (kbd "M-n") 'my-next-history-element)
 
 #+end_src
 
@@ -769,7 +774,8 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 (use-package avy
   :ensure t
-  :config
+  )
+
   ;; Custom command to invoke avy-goto-char-2 across all windows except in Dired buffers
   (defun avy-goto-char-2-all-windows ()
     "Invoke `avy-goto-char-2` across all windows in the current frame, except in Dired buffers."
@@ -786,9 +792,10 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
         (evil-search-forward)
       (avy-goto-char-2-all-windows)))
 
-  ;; Override `/` keybinding globally in Evil normal state map
+
   (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy)))
+    (define-key evil-visual-state-map (kbd "/") 'my/conditional-search-or-avy)
+    (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy))
 
 #+end_src
 
@@ -2037,6 +2044,35 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                         (with-current-buffer buf
                           (goto-char (cdr candidate)))))))
 
+(defun echo-current-line ()
+  "Echo the entire current line to the echo area."
+  (interactive)
+  (message "%s" (buffer-substring-no-properties
+                   (line-beginning-position)
+                   (line-end-position))))
+
+(defun echo-last-word-of-current-line ()
+  "Echo the last word of the current line to the echo area and return it."
+  (interactive)
+  (let* ((line (buffer-substring-no-properties
+                (line-beginning-position)
+                (line-end-position)))
+         (words (split-string line "[ \t\n]+" t))
+         (last-word (car (last words))))
+    (message "%s" last-word)
+    last-word))  ; Return the last word
+
+(defun find-file-last-word-of-current-line ()
+  "Open the file named by the last word of the current line."
+  (interactive)
+  (let ((last-word (echo-last-word-of-current-line)))
+    (find-file last-word)))
+
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (evil-local-set-key 'insert (kbd "RET") 'eshell-send-input)
+            (evil-local-set-key 'normal (kbd "RET") 'find-file-last-word-of-current-line)))
+
 #+end_src
 
 *** Custom commands
@@ -2561,6 +2597,8 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (global-set-key (kbd "M-k") 'my-eshell-fullscreen)
 (global-set-key (kbd "M-j") 'my-restore-window-configuration)
+(evil-define-key 'normal diff-mode-map (kbd "M-k") 'my-eshell-fullscreen)
+(evil-define-key 'insert diff-mode-map (kbd "M-j") 'my-restore-window-configuration)
 
 (defun display-current-tab-name ()
   "Display the name of the current tab in tab-bar-mode."
@@ -3111,7 +3149,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+end_src
 
-** Custom key bindings
+** Custom functions
 
 #+begin_src emacs-lisp
 
@@ -3145,8 +3183,8 @@ If an eshell buffer for the directory already exists, switch to it."
                 (setq current-length (length word)))
             (progn
               (setq current-line (if (string= "" current-line)
-                                    word
-                                  (concat current-line " " word)))
+                                     word
+                                   (concat current-line " " word)))
               (setq current-length (+ current-length (length word) 1)))))
         (setq formatted-text (concat formatted-text current-line)))
       (delete-region start end)
@@ -3165,6 +3203,26 @@ If an eshell buffer for the directory already exists, switch to it."
 (with-eval-after-load 'evil
   (evil-define-key 'normal org-mode-map
     "o" 'my/evil-org-open-below))
+
+(defun my-org-beginning-of-block ()
+  "Move to the beginning of the current block and then one line down."
+  (interactive)
+  (let ((element (org-element-at-point)))
+    (when (memq (org-element-type element) '(src-block quote-block example-block center-block special-block))
+      (goto-char (org-element-property :begin element))
+      (forward-line))))  ; Added this line to move one line down
+
+(defun my-org-end-of-block ()
+  "Move to the end of the current block and then two lines up."
+  (interactive)
+  (let ((element (org-element-at-point)))
+    (when (memq (org-element-type element) '(src-block quote-block example-block center-block special-block))
+      (goto-char (org-element-property :end element))
+      (forward-line -3))))  ; Changed -1 to -3 to move two lines up
+
+(with-eval-after-load 'evil
+  (evil-define-key 'normal org-mode-map (kbd "[[") 'my-org-beginning-of-block)
+  (evil-define-key 'normal org-mode-map (kbd "]]") 'my-org-end-of-block))
 
 #+end_src
 
@@ -3185,6 +3243,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("fh" . ivy-fzf-home)
     ("fc" . ivy-fzf-current-directory)
     ("fr" . ivy-fzf-root)
+    ("fu" . consult-recent-file)
 
     ("ss" . save-current-desktop-session)
     ("sd" . delete-desktop-session)
@@ -3238,7 +3297,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (global-unset-key (kbd "C-s"))
 (global-unset-key (kbd "M-TAB"))
-;; (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
+(global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 (global-set-key (kbd "C-s C-s") 'swiper-isearch)
 ;; (global-set-key (kbd "C-s C-s") 'consult-line)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)

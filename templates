@@ -1,0 +1,10 @@
+org-mode
+
+(src "#+begin_src "
+     (p (completing-read "Language: "
+                         '("fundamental" "text" "emacs-lisp" "bash-ts" "clojure-ts" 
+                           "python-ts" "http :pretty" "js" "json-ts" "yaml-ts" 
+                           "markdown" "dockerfile" "sql")))
+     n
+     n
+     "#+end_src")
