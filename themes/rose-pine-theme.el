@@ -231,6 +231,13 @@
     ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
     ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
  
+    ;; Yassnippets
+    `(yas-field-highlight-face ((,class (:background nil))))
+
+    ;; Tempel
+    `(tempel-field ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
+    ;; `(tempel-form ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
+
     ;; Swiper
     `(swiper-line-face ((,class (:background ,rose-pine-subtle))))
     ;; `(swiper-background-match-face-1 ((,class (:foreground ,rose-pine-fg :background ,rose-pine-subtle))))

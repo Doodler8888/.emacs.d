@@ -68,6 +68,7 @@
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
   - [[#eglot][Eglot]]
+  - [[#temple][Temple]]
 - [[#org-mode][Org Mode]]
   - [[#general][General]]
   - [[#org-capture][Org capture]]
@@ -366,7 +367,7 @@
   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-  (define-key evil-normal-state-map (kbd "gd") 'OpenDiredBufferInCurrentWindow)
+  ;; (define-key evil-normal-state-map (kbd "gd") 'OpenDiredBufferInCurrentWindow)
   (setq evil-shift-width 2))
 
 ;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
@@ -493,23 +494,6 @@
 (with-eval-after-load 'evil
   (define-key evil-visual-state-map "P" 'my-evil-paste-before))
 
-;; ;; The remap doesn't work with visual line.
-;; (with-eval-after-load 'evil
-;;   (evil-define-key 'normal org-mode-map "{" 'org-forward-paragraph)
-;;   (evil-define-key 'normal org-mode-map "}" 'org-backward-paragraph)
-;;   (evil-define-key 'visual org-mode-map "{" 'org-forward-paragraph)
-;;   (evil-define-key 'visual org-mode-map "}" 'org-backward-paragraph)
-;;   (evil-define-key 'motion org-mode-map "{" 'org-forward-paragraph)
-;;   (evil-define-key 'motion org-mode-map "}" 'org-backward-paragraph))
-
-;; (with-eval-after-load 'evil
-;;   (evil-define-key 'normal global-map "{" 'evil-forward-paragraph)
-;;   (evil-define-key 'normal global-map "}" 'evil-backward-paragraph)
-;;   (evil-define-key 'visual global-map "{" 'evil-forward-paragraph)
-;;   (evil-define-key 'visual global-map "}" 'evil-backward-paragraph)
-;;   (evil-define-key 'motion global-map "{" 'evil-forward-paragraph)
-;;   (evil-define-key 'motion global-map "}" 'evil-backward-paragraph))
-
 ;; Always use blank lines as paragraph delimiters in motions/text objects
 (define-advice forward-evil-paragraph (:around (orig-fun &rest args))
   (let ((paragraph-start (default-value 'paragraph-start))
@@ -517,23 +501,10 @@
         (paragraph-ignore-fill-prefix t))
     (apply orig-fun args)))
 
-;; Function to rebind for minibuffer mode
-(defun my-minibuffer-keybindings ()
-  (define-key evil-insert-state-map (kbd "M-p") 'my-previous-history-element)
-  (define-key evil-insert-state-map (kbd "M-n") 'my-next-history-element)
-  (define-key evil-normal-state-map (kbd "M-p") 'my-previous-history-element)
-  (define-key evil-normal-state-map (kbd "M-n") 'my-next-history-element))
-
-;; Function to rebind for eshell mode
-(defun my-eshell-keybindings ()
-  (define-key evil-insert-state-map (kbd "M-p") 'eshell-previous-input)
-  (define-key evil-insert-state-map (kbd "M-n") 'eshell-next-input)
-  (define-key evil-normal-state-map (kbd "M-p") 'eshell-previous-input)
-  (define-key evil-normal-state-map (kbd "M-n") 'eshell-next-input))
-
-;; Add hooks to call the functions when entering/leaving the modes
-(add-hook 'minibuffer-setup-hook 'my-minibuffer-keybindings)
-(add-hook 'eshell-mode-hook 'my-eshell-keybindings)
+(evil-define-key 'normal minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+(evil-define-key 'normal minibuffer-local-map (kbd "M-n") 'my-next-history-element)
+(evil-define-key 'insert minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+(evil-define-key 'insert minibuffer-local-map (kbd "M-n") 'my-next-history-element)
 
 #+end_src
 
@@ -1798,7 +1769,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package eshell
   ;; :ensure nil
-  ;; :hook ((eshell-mode . eshell-specific-outline-regexp))
+  :hook ((eshell-mode . eshell-specific-outline-regexp))
           ;; (eshell-directory-change . sync-dir-in-buffer-name)
   :custom
   (eshell-input-filter 'my-eshell-input-filter)
@@ -2647,7 +2618,7 @@ If an eshell buffer for the directory already exists, switch to it."
           "\\*cider-repl.*"
           "\\*cider-doc.*"
           "\\*cider-error.*"
-          ;; "\\*helpful.*"
+          "\\*helpful.*"
           ;; "\\*man.*"
           "\\*grep.*"
           ;; "\\*eshell:.*"
@@ -2659,7 +2630,7 @@ If an eshell buffer for the directory already exists, switch to it."
           ;; "Output\\*$"
           ;; "\\*Dtache Shell Command\\*"
           ;; "\\*mu4e-update\\*"
-          ;; help-mode
+          help-mode
           compilation-mode))
   (popper-mode +1)
   (popper-echo-mode +1))
@@ -2913,6 +2884,41 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;     ]
 ;;     Kubernetes ["k8s-*.yaml"]
 ;; ))))))))
+
+#+end_src
+
+** Temple
+
+#+begin_src emacs-lisp
+
+;; (use-package tempel
+;;   :ensure t
+;;   :init
+;;   ;; Setup completion at point
+;;   (defun tempel-setup-capf ()
+;;     ;; Add the Tempel Capf to `completion-at-point-functions'.
+;;     ;; `tempel-expand' only triggers on exact matches. Alternatively use
+;;     ;; `tempel-complete' if you want to see all matches, but then you
+;;     ;; should also configure `tempel-trigger-prefix', such that Tempel
+;;     ;; does not trigger too often when you don't expect it. NOTE: We add
+;;     ;; `tempel-expand' *before* the main programming mode Capf, such
+;;     ;; that it will be tried first.
+;;     (setq-local completion-at-point-functions
+;;                 (cons #'tempel-expand
+;;                       completion-at-point-functions)))
+
+;;   (add-hook 'conf-mode-hook 'tempel-setup-capf)
+;;   (add-hook 'prog-mode-hook 'tempel-setup-capf)
+;;   (add-hook 'text-mode-hook 'tempel-setup-capf)
+
+;;   ;; Optionally make the Tempel templates available to Abbrev,
+;;   ;; either locally or globally. `expand-abbrev' is bound to C-x '.
+;;   ;; (add-hook 'prog-mode-hook #'tempel-abbrev-mode)
+;;   ;; (global-tempel-abbrev-mode)
+;;   )
+
+;; (use-package tempel-collection
+;;   :ensure t)
 
 #+end_src
 
@@ -3216,6 +3222,10 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("ep" . eshell-pop) 
 
     ("gm" . pop-global-mark) 
+
+    ("fe" . OpenDiredBufferInCurrentWindow)
+    
+    ("xx" . add-execute-permissions-to-current-file)
     ))
 
 ;; (global-unset-key (kbd "M-;"))
@@ -3265,7 +3275,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (interactive)
   (if (eq major-mode 'org-mode)
       (org-cycle)
-    (completion-preview-complete)))
+    (my-completion-preview-insert)))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
@@ -3310,7 +3320,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 #+begin_src emacs-lisp
 
-(require 'cl-lib)
+;; (require 'cl-lib)
 
 (defun copy-buffer-to-new-buffer ()
   "Create a copy of the current buffer, placing the contents in a new named buffer."
@@ -3375,6 +3385,12 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
                  "")))
     (message "Current input: %s" input)
     input))  ; Still return the input for programmatic use if needed
+
+(defun my-completion-preview-insert ()
+  "Completes the previewed suggestion and deletes the trailing whitespace."
+  (interactive)
+  (completion-preview-insert)
+  (delete-backward-char 1))
 
 #+end_src
 
@@ -3629,6 +3645,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Shutdown the system."
   (interactive)
   (call-process "poweroff"))
+
+(defun init ()
+  "Shutdown the system."
+  (interactive)
+  (find-file (expand-file-name "~/.emacs.d/init.el")))
 
 (defun reboot ()
   "Reboot the system."
