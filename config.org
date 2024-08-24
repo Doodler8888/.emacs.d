@@ -290,12 +290,13 @@
 
 (with-eval-after-load 'comint
   (add-hook 'comint-mode-hook #'completion-preview-mode))
-(add-hook 'eshell-mode-hook #'completion-preview-mode)
+;; (add-hook 'eshell-mode-hook #'completion-preview-mode)
 ;; (add-hook 'minibuffer-mode-hook #'completion-preview-mode)
 
 (defun my-conditional-completion-preview ()
   "Enable completion-preview-mode selectively."
   (if (or (eq this-command 'eval-expression)
+          (eq this-command 'async-shell-command)
           (eq this-command 'shell-command))
           ;; (eq this-command 'evil-ex))
       (completion-preview-mode 1)
@@ -573,8 +574,8 @@ ACTION is the specific action being performed (e.g., 'stop', 'start')."
 
 #+begin_src emacs-lisp
 
-(which-key-mode)
-(setq which-key-max-description-length 40)
+;; (which-key-mode)
+;; (setq which-key-max-description-length 40)
 
 #+end_src
 
@@ -1079,6 +1080,19 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive)
   (let ((selected-command (my-vertico-shell-command-history)))
     (my-insert-selected-command selected-command)))
+
+(defun my-eshell-history-choose ()
+  "Select an item from eshell history using Vertico and insert it into the eshell prompt."
+  (interactive)
+  (let* ((history (ring-elements eshell-history-ring))
+         (history (delete-dups history))
+         (command (consult--read history
+                                 :prompt "Eshell history: "
+                                 :sort nil
+                                 :require-match t)))
+    (when command
+      (eshell-kill-input)
+      (insert command))))
 
 #+end_src
 
@@ -2066,6 +2080,15 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 
 (add-to-list 'display-buffer-alist
              '("*Faces*" display-buffer-same-window))
+
+(add-to-list 'display-buffer-alist
+             '("*info*" display-buffer-same-window))
+
+(add-to-list 'display-buffer-alist
+             '("*helpful*" display-buffer-same-window))
+
+(add-to-list 'display-buffer-alist
+             '("*Help*" display-buffer-same-window))
 
 ;; (add-to-list 'display-buffer-alist
 ;;              '("^\\*\\(Man\\|Faces\\) "

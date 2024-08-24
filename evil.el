@@ -299,6 +299,9 @@
 (evil-define-key 'insert minibuffer-local-map (kbd "M-r") 'my-shell-command-history-and-insert)
 (evil-define-key 'normal minibuffer-local-map (kbd "M-r") 'my-shell-command-history-and-insert)
 
+(evil-define-key 'normal eshell-mode-map (kbd "M-r") 'my-eshell-history-choose)
+(evil-define-key 'insert eshell-mode-map (kbd "M-r") 'my-eshell-history-choose)
+
 ;; Ivy/Counsel
 
 (defun my/ivy-evil-delete-line ()
@@ -495,10 +498,12 @@
   (evil-scroll-down arg)
   (recenter))
 
-(defun my-simulate-C-c ()
-  "Simulate pressing C-c and then wait for the next key."
-  (interactive)
-  (setq prefix-arg current-prefix-arg)
-  (setq unread-command-events (listify-key-sequence (kbd "C-c"))))
+;; (defun my-simulate-C-c ()
+;;   "Simulate pressing C-c and then wait for the next key."
+;;   (interactive)
+;;   (setq prefix-arg current-prefix-arg)
+;;   (setq unread-command-events (listify-key-sequence (kbd "C-c"))))
 
-(evil-define-key 'normal 'global (kbd "SPC") 'my-simulate-C-c)
+;; (evil-define-key 'normal 'global (kbd "SPC") 'my-simulate-C-c)
+;; (evil-define-key 'normal 'dired-mode-map (kbd "SPC") 'my-simulate-C-c)
+;; (evil-define-key 'normal 'info-mode-map (kbd "SPC") 'my-simulate-C-c)
