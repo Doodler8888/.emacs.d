@@ -20,6 +20,7 @@
     user-emacs-directory))
 
 (load "~/.emacs.d/early-init.el")
+(load "~/.emacs.d/evil.el")
 (load "~/.secret_dotfiles/emacs/env.el")
 
 ;; (custom-set-variables
