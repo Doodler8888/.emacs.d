@@ -312,6 +312,8 @@
 
 (setq ielm-history-file-name "~/.emacs.d/.ielm_history")
 
+(delete-selection-mode 1)
+
 #+end_src
 
 ** Cursor
@@ -1096,6 +1098,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (setq enable-recursive-minibuffers t))
   ;; :init
   ;; (ivy-mode))
+
+(use-package swiper
+  :ensure t)
 
 ;; (use-package counsel
 ;;   :ensure t
@@ -2301,7 +2306,7 @@ If an eshell buffer for the directory already exists, switch to it."
           "\\*cider-repl.*"
           "\\*cider-doc.*"
           "\\*cider-error.*"
-          "\\*helpful.*"
+          ;; "\\*helpful.*"
           ;; "\\*man.*"
           "\\*grep.*"
           ;; "\\*eshell:.*"
@@ -2313,7 +2318,7 @@ If an eshell buffer for the directory already exists, switch to it."
           ;; "Output\\*$"
           ;; "\\*Dtache Shell Command\\*"
           ;; "\\*mu4e-update\\*"
-          help-mode
+          ;; help-mode
           compilation-mode))
   (popper-mode +1)
   (popper-echo-mode +1))
@@ -3056,6 +3061,18 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (completion-preview-insert)
   (delete-backward-char 1))
 
+(defun scroll-up-and-recenter (arg)
+  "Scroll up ARG lines and recenter."
+  (interactive "P")
+  (scroll-up-command arg)
+  (recenter))
+
+(defun scroll-down-and-recenter (arg)
+  "Scroll down ARG lines and recenter."
+  (interactive "P")
+  (scroll-down-command arg)
+  (recenter))
+
 #+end_src
 
 ** Wrap edit
@@ -3126,11 +3143,12 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     (unless zoxide (error "Install zoxide"))
     (unless target (error "No Match"))))
 
-(defun push ()
-  "Execute git add, commit, and push in sequence asynchronously."
-  (interactive)
-  ;; Execute 'push' asynchronously and display output in a separate buffer.
-  (async-shell-command "push"))
+;; Creats errors sometimes in emacs launch for some reason
+;;(defun push ()
+;;  "Execute git add, commit, and push in sequence asynchronously."
+;;  (interactive)
+;;  ;; Execute 'push' asynchronously and display output in a separate buffer.
+;;  (async-shell-command "push"))
 
 (defun push-all ()
   "Execute git add, commit, and push in sequence asynchronously."

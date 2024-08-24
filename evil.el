@@ -17,15 +17,16 @@
   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-  ;; (define-key evil-normal-state-map (kbd "gd") 'OpenDiredBufferInCurrentWindow)
+  (define-key evil-normal-state-map (kbd "C-f") 'scroll-up-and-recenter)
+  (define-key evil-normal-state-map (kbd "C-b") 'scroll-down-and-recenter)
+  (define-key evil-normal-state-map (kbd "C-u") 'evil-half-scroll-up-and-recenter)
+  (define-key evil-normal-state-map (kbd "C-d") 'evil-half-scroll-down-and-recenter)
   (setq evil-shift-width 2))
 
 ;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
 ;; (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
 ;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
 ;; (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
-
-;; (setq evil-undo-system 'undo-tree)
 
 (use-package evil-surround
   :ensure t
@@ -56,7 +57,6 @@
 ;;             (lambda ()
 ;;               (evil-org-set-key-theme)))
 ;; )
-
 
 (use-package evil-collection
   :ensure t
@@ -482,3 +482,23 @@
 
 (with-eval-after-load 'evil
   (evil-ex-define-cmd "so" 'so))
+
+(defun evil-half-scroll-up-and-recenter (arg)
+  "Scroll up ARG lines and recenter."
+  (interactive "P")
+  (evil-scroll-up arg)
+  (recenter))
+
+(defun evil-half-scroll-down-and-recenter (arg)
+  "Scroll down ARG lines and recenter."
+  (interactive "P")
+  (evil-scroll-down arg)
+  (recenter))
+
+(defun my-simulate-C-c ()
+  "Simulate pressing C-c and then wait for the next key."
+  (interactive)
+  (setq prefix-arg current-prefix-arg)
+  (setq unread-command-events (listify-key-sequence (kbd "C-c"))))
+
+(evil-define-key 'normal 'global (kbd "SPC") 'my-simulate-C-c)
