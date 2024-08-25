@@ -288,8 +288,8 @@
 
 (setq display-buffer-base-action '(nil . ((some-window . mru))))
 
-(with-eval-after-load 'comint
-  (add-hook 'comint-mode-hook #'completion-preview-mode))
+;; (with-eval-after-load 'comint
+;;   (add-hook 'comint-mode-hook #'completion-preview-mode))
 ;; (add-hook 'eshell-mode-hook #'completion-preview-mode)
 ;; (add-hook 'minibuffer-mode-hook #'completion-preview-mode)
 
@@ -3393,6 +3393,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Open a specific file."
   (interactive)
   (find-file "~/.dotfiles/scripts/"))
+
+(defun S ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/"))
 
 (defun so ()
   "Reload the Emacs configuration."

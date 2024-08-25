@@ -312,9 +312,9 @@
 
 (evil-define-key 'normal ivy-minibuffer-map (kbd "dd") 'my/ivy-evil-delete-line)
 
-(with-eval-after-load 'evil
-  (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
-  (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
+;;   (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
 ;; Dired
 

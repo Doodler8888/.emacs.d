@@ -199,6 +199,12 @@
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))
     `(font-lock-constant-face ((,class (:foreground ,rose-pine-foam))))
  
+    ;; Flymake
+    `(flymake-end-of-line-diagnostics-face ((,class (:box nil))))
+    `(flymake-error-echo-at-eol ((,class (:box nil))))
+    `(flymake-note-echo-at-eol ((,class (:box nil))))
+    `(flymake-warning-echo-at-eol ((,class (:box nil))))
+
     ;; Vimish mode
     `(vimish-fold-overlay ((,class (:background ,rose-pine-bg2))))
 
