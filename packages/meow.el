@@ -1,6 +1,19 @@
 (use-package meow
   :ensure t)
 
+
+(defun scroll-up-and-recenter (arg)
+  "Scroll up ARG lines and recenter."
+  (interactive "P")
+  (scroll-up-command arg)
+  (recenter))
+
+(defun scroll-down-and-recenter (arg)
+  "Scroll down ARG lines and recenter."
+  (interactive "P")
+  (scroll-down-command arg)
+  (recenter))
+
 (define-prefix-command 'my-window-map)
 (global-set-key (kbd "C-w") 'my-window-map)
 
@@ -34,7 +47,7 @@
 
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-  (setq meow--kbd-kill-region "C-w C-w")
+  ;(setq meow--kbd-kill-region "C-w C-w")
   (meow-motion-overwrite-define-key
    '("j" . meow-next)
    '("k" . meow-prev)
@@ -57,6 +70,8 @@
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet))
   (meow-normal-define-key
+   '("C-f" . scroll-up-and-recenter)
+   '("C-b" . scroll-down-and-recenter)
    '("0" . meow-expand-0)
    '("9" . meow-expand-9)
    '("8" . meow-expand-8)
