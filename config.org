@@ -2955,8 +2955,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 ;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
 (global-set-key (kbd "C-h M-f") 'describe-face)
 
-(global-unset-key (kbd "C-t"))
-(global-unset-key (kbd "C-y"))
+;; (global-unset-key (kbd "C-t"))
+;; (global-unset-key (kbd "C-y"))
 
 (defun my-yas-complete-or-expand ()
   "Expand Yasnippet if possible, otherwise trigger completion-at-point."
