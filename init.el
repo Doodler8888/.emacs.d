@@ -12,14 +12,13 @@
 (eval-when-compile
   (require 'use-package))
 
-;; (add-to-list 'load-path "~/.source/org-mode/lisp")
+(load "~/.emacs.d/packages/meow.el")
 
 (org-babel-load-file
   (expand-file-name
     "config.org"
     user-emacs-directory))
 
-(load "~/.emacs.d/early-init.el")
 (load "~/.emacs.d/evil.el")
 (load "~/.secret_dotfiles/emacs/env.el")
 
