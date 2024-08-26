@@ -1,11 +1,23 @@
+(use-package meow
+  :ensure t)
+
+(define-prefix-command 'my-window-map)
+(global-set-key (kbd "C-w") 'my-window-map)
+
+(global-set-key (kbd "C-w C-l") 'windmove-right)
+(global-set-key (kbd "C-w C-h") 'windmove-left)
+(global-set-key (kbd "C-w C-k") 'windmove-up)
+(global-set-key (kbd "C-w C-j") 'windmove-down)
+
+(global-set-key (kbd "C-w C-s") 'split-window-below) 
+(global-set-key (kbd "C-w C-v") 'split-window-right)  
+(global-set-key (kbd "C-w C-c") 'delete-window)        
+
 (global-set-key (kbd "C-w C-w") 'kill-region)
 (global-set-key (kbd "H-f") 'forward-char)
 (global-set-key (kbd "H-b") 'backward-char)
 (setq meow--kbd-forward-char "H-f")
 (setq meow--kbd-backward-char "H-b")
-
-(use-package meow
-  :ensure t)
 
 (defun my/meow-setup-extra ()
   ;; Don't ignore cursor shape changes in minibuffer
@@ -24,6 +36,8 @@
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
   (setq meow--kbd-kill-region "C-w C-w")
   (meow-motion-overwrite-define-key
+   '("j" . meow-next)
+   '("k" . meow-prev)
    '("<escape>" . ignore))
   (meow-leader-define-key
    ;; SPC j/k will run the original command in MOTION state.
@@ -43,8 +57,6 @@
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet))
   (meow-normal-define-key
-   '("C-f" . my-scroll-up)
-   '("C-b" . my-scroll-down)
    '("0" . meow-expand-0)
    '("9" . meow-expand-9)
    '("8" . meow-expand-8)
@@ -87,8 +99,7 @@
    '("n" . meow-search)
    '("o" . meow-block)
    '("O" . meow-to-block)
-;;   '("p" . meow-yank)
-   '("p" . yank)
+   '("p" . meow-yank)
    '("q" . meow-quit)
    '("Q" . meow-goto-line)
    '("r" . meow-replace)
@@ -106,10 +117,8 @@
    '("Y" . meow-sync-grab)
    '("z" . meow-pop-selection)
    '("'" . repeat)
-   '("/" . repeat)
    '("<escape>" . ignore)))
 
   (meow-setup)
 
   (meow-global-mode 1)
-
