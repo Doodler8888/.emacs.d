@@ -1,6 +1,18 @@
 (use-package meow
-  :ensure t)
+  :ensure t
+  :init
+  (setq meow-use-clipboard t))
 
+(defun vim-like-paste ()
+  "Paste (yank) replacing the selected region, similar to Vim's paste behavior."
+  (interactive)
+  (if (use-region-p)
+      (let ((start (region-beginning))
+            (end (region-end)))
+        (delete-region start end)
+        (goto-char start)
+        (yank))
+    (yank)))
 
 (defun scroll-up-and-recenter (arg)
   "Scroll up ARG lines and recenter."
@@ -29,6 +41,7 @@
 (global-set-key (kbd "C-w C-w") 'kill-region)
 (global-set-key (kbd "H-f") 'forward-char)
 (global-set-key (kbd "H-b") 'backward-char)
+(global-set-key (kbd "H-b") 'backward-char)
 (setq meow--kbd-forward-char "H-f")
 (setq meow--kbd-backward-char "H-b")
 
@@ -36,7 +49,7 @@
   ;; Don't ignore cursor shape changes in minibuffer
   (delete (cons 'minibufferp 'meow--update-cursor-default)
 	  meow-update-cursor-functions-alist)
-  ;; Remove default minibuffer setup
+  ;; Remove defalt minibuffer setup
   (remove-hook 'minibuffer-setup-hook 'meow--minibuffer-setup)
   ;; Use INSERT state in minibuffer by default,
   ;; then later we can switch to NORMAL with ESC
@@ -47,7 +60,7 @@
 
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-  ;(setq meow--kbd-kill-region "C-w C-w")
+  (setq meow--kbd-kill-region "C-w C-w")
   (meow-motion-overwrite-define-key
    '("j" . meow-next)
    '("k" . meow-prev)
@@ -114,7 +127,7 @@
    '("n" . meow-search)
    '("o" . meow-block)
    '("O" . meow-to-block)
-   '("p" . meow-yank)
+   '("p" . vim-like-paste)
    '("q" . meow-quit)
    '("Q" . meow-goto-line)
    '("r" . meow-replace)

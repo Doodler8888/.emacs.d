@@ -33,3 +33,4 @@ alias ula /usr/bin/ls -la $*
 alias u eshell/sudo $*
 alias activate-venv my-eshell-activate-venv
 alias md mkdir $*
+alias mk minikube $*
