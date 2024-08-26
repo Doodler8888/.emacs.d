@@ -3012,8 +3012,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 #+begin_src emacs-lisp
 
-;; (require 'cl-lib)
-
 (defun copy-buffer-to-new-buffer ()
   "Create a copy of the current buffer, placing the contents in a new named buffer."
   (interactive)
