@@ -17,8 +17,9 @@
     "config.org"
     user-emacs-directory))
 
-(load "~/.emacs.d/packages/meow.el")
-;; (load "~/.emacs.d/evil.el")
+;; (load "~/.emacs.d/packages/baremeow.el")
+;; (load "~/.emacs.d/packages/meow.el")
+(load "~/.emacs.d/evil.el")
 (load "~/.secret_dotfiles/emacs/env.el")
 
 ;; (custom-set-variables

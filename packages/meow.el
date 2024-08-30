@@ -50,6 +50,60 @@
 (define-key minibuffer-local-map (kbd "M-n") 'my-next-history-element)
 (define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
 
+(defun my/meow-find-backward (arg ch)
+  "Combine negative argument with meow-find to search backward in one keybinding."
+  (interactive "p\ncFind backward:")
+  (meow-find (- arg) ch))
+
+(defun my/meow-till-backward (arg ch)
+  "Combine negative argument with meow-till to search backward in one keybinding."
+  (interactive "p\ncTill backward:")
+  (meow-till (- arg) ch))
+
+(defun my/meow-find-backward-and-select-inner (arg ch)
+  "Find the previous occurrence of CH and select its inner content."
+  (interactive "p\ncFind backward and select inner:")
+  (let* ((case-fold-search nil)
+         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
+         (end (point))
+         beg
+         (thing-char (cond
+                      ((memq ch '(?\( ?\))) ?r)  ; 'r' for round brackets
+                      ((memq ch '(?\[ ?\])) ?s)  ; 's' for square brackets
+                      ((memq ch '(?\{ ?\})) ?c)  ; 'c' for curly braces
+                      ((memq ch '(?' ?\" ?`)) ?g)  ; 'g' for quotes (single, double, and backticks)
+                      (t nil))))
+    (save-mark-and-excursion
+      (setq beg (search-backward ch-str nil t arg)))
+    (if (not beg)
+        (message "char %s not found" ch-str)
+      (goto-char beg)
+      (if thing-char
+          (meow-inner-of-thing thing-char)
+        (message "No inner selection defined for this character")))))
+
+(defun meow-find-and-select-inner (n ch)
+  "Find the next N occurrence of CH and select its inner content."
+  (interactive "p\ncFind and select inner:")
+  (let* ((case-fold-search nil)
+         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
+         (beg (point))
+         end
+         (thing-char (cond
+                      ((memq ch '(?\( ?\))) ?r)  ; 'r' for round brackets
+                      ((memq ch '(?\[ ?\])) ?s)  ; 's' for square brackets
+                      ((memq ch '(?\{ ?\})) ?c)  ; 'c' for curly braces
+                      ((memq ch '(?' ?\" ?`)) ?g)  ; 'g' for quotes (single, double, and backticks)
+                      (t nil))))
+    (save-mark-and-excursion
+      (setq end (search-forward ch-str nil t n)))
+    (if (not end)
+        (message "char %s not found" ch-str)
+      (goto-char end)
+      (if thing-char
+          (meow-inner-of-thing thing-char)
+        (message "No inner selection defined for this character")))))
+
 (defun meow--parse-inside-whitespace (inner)
   "Parse the bounds for inside whitespace selection."
   (save-excursion
@@ -151,6 +205,7 @@
   (setq meow--kbd-kill-region "C-w C-w")
   (meow-motion-overwrite-define-key
    '("j" . meow-next)
+   '("x" . meow-line)
    '("k" . meow-prev)
    '("<escape>" . ignore))
   (meow-leader-define-key
@@ -180,6 +235,8 @@
    '("C" . my/meow-change-to-end-of-line)
    '("/" . avy-goto-char)
    '("X" . my/meow-revers-line)
+   '("T" . my/meow-till-backward)
+   '("F" . my/meow-find-backward)
    '("0" . meow-expand-0)
    '("9" . meow-expand-9)
    '("8" . meow-expand-8)
@@ -240,10 +297,16 @@
    '("y" . meow-save)
    ;; '("Y" . meow-sync-grab)
    '("Y" . my/copy-to-end-of-line)
-   '("z" . meow-pop-selection)
+   ;; '("z" . meow-pop-selection)
+   '("\"" . meow-pop-selection)
+   '("z" . meow-find-and-select-inner)
+   '("Z" . my/meow-find-backward-and-select-inner)
    '("'" . repeat)
    '("<escape>" . ignore)))
 
-  (meow-setup)
+(meow-setup)
 
-  (meow-global-mode 1)
+(setq meow-expand-exclude-mode-list
+      (remove 'org-mode meow-expand-exclude-mode-list))
+
+(meow-global-mode 1)
