@@ -293,16 +293,16 @@
 ;; (add-hook 'eshell-mode-hook #'completion-preview-mode)
 ;; (add-hook 'minibuffer-mode-hook #'completion-preview-mode)
 
-(defun my-conditional-completion-preview ()
-  "Enable completion-preview-mode selectively."
-  (if (or (eq this-command 'eval-expression)
-          (eq this-command 'async-shell-command)
-          (eq this-command 'shell-command))
-          ;; (eq this-command 'evil-ex))
-      (completion-preview-mode 1)
-    (completion-preview-mode -1)))
+;; (defun my-conditional-completion-preview ()
+;;   "Enable completion-preview-mode selectively."
+;;   (if (or (eq this-command 'eval-expression)
+;;           (eq this-command 'async-shell-command)
+;;           (eq this-command 'shell-command))
+;;           ;; (eq this-command 'evil-ex))
+;;       (completion-preview-mode 1)
+;;     (completion-preview-mode -1)))
 
-(add-hook 'minibuffer-setup-hook #'my-conditional-completion-preview)
+;; (add-hook 'minibuffer-setup-hook #'my-conditional-completion-preview)
 
 
 (with-eval-after-load 'completion-preview
@@ -897,8 +897,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; (use-package sudo-edit
-;;   :ensure t)
+(use-package sudo-edit
+  :ensure t)
 
 #+end_src
 
@@ -1398,49 +1398,56 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-(require 'tramp)
+;; (require 'tramp)
 
-;; (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/git"))
-;; (add-to-list 'tramp-connection-properties
-;;              (list (regexp-quote "/ssh:")
-;;                    "direct-async-process" t))
+;; ;; (setq tramp-direct-async-process t)
 
-;; ;; cache file-name forever
-;; (setq remote-file-name-inhibit-cache nil)
+;; ;; (add-to-list 'tramp-connection-properties
+;; ;;              (list (regexp-quote "/ssh:")
+;; ;;                    "tramp-direct-async-process" t))
 
-;; ;; make sure vc stuff is not making tramp slower
-;; (setq vc-ignore-dir-regexp
-;;       (format "%s\\|%s"
-;;               vc-ignore-dir-regexp
-;;               tramp-file-name-regexp))
+;; (setq tramp-ssh-controlmaster-options (format "-i %s" "~/.ssh/wireguard2.pem"))
 
-(defun my/disable-lockfiles-for-tramp ()
-  "Disable lockfiles for tramp."
-  (when (and buffer-file-name
-            (file-remote-p buffer-file-name))
-    (setq-local create-lockfiles nil)))
+;; (setq tramp-default-method "ssh")  ; Make sure SSH is the default method
 
-(add-hook 'find-file-hook #'my/disable-lockfiles-for-tramp)
-(add-hook 'before-save-hook #'my/disable-lockfiles-for-tramp)
+;; (add-to-list 'tramp-default-user-alist '("sudo" "3.71.6.56" "root"))
 
-(defun extract-local-path-from-tramp-buffer-and-display ()
-  (interactive)
-  "Extract the local part of the path from a TRAMP buffer and display it."
-  (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
-        (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
-        (local-part (tramp-file-name-localname path-components))) ; Extract the local part
-    (message "%s" local-part))) ; Display the local part as a message
+;; ;; ;; cache file-name forever
+;; ;; (setq remote-file-name-inhibit-cache nil)
 
-(defun tramp-revert ()
-  "Extract the local part of the path from a TRAMP buffer and attempt to reopen the file."
-  (interactive)
-  (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
-        (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
-        (local-part (tramp-file-name-localname path-components))) ; Extract the local part
-    ;; Kill the current buffer before attempting to reopen the file
-    (kill-current-buffer)
-    ;; Attempt to reopen the file with the extracted local path
-    (find-file local-part)))
+;; ;; ;; make sure vc stuff is not making tramp slower
+;; ;; (setq vc-ignore-dir-regexp
+;; ;;       (format "%s\\|%s"
+;; ;;               vc-ignore-dir-regexp
+;; ;;               tramp-file-name-regexp))
+
+;; (defun my/disable-lockfiles-for-tramp ()
+;;   "Disable lockfiles for tramp."
+;;   (when (and buffer-file-name
+;;             (file-remote-p buffer-file-name))
+;;     (setq-local create-lockfiles nil)))
+
+;; (add-hook 'find-file-hook #'my/disable-lockfiles-for-tramp)
+;; (add-hook 'before-save-hook #'my/disable-lockfiles-for-tramp)
+
+;; (defun extract-local-path-from-tramp-buffer-and-display ()
+;;   (interactive)
+;;   "Extract the local part of the path from a TRAMP buffer and display it."
+;;   (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
+;;         (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
+;;         (local-part (tramp-file-name-localname path-components))) ; Extract the local part
+;;     (message "%s" local-part))) ; Display the local part as a message
+
+;; (defun tramp-revert ()
+;;   "Extract the local part of the path from a TRAMP buffer and attempt to reopen the file."
+;;   (interactive)
+;;   (let* ((tramp-path (buffer-file-name)) ; Get the current buffer's file name
+;;         (path-components (tramp-dissect-file-name tramp-path)) ; Dissect the TRAMP path
+;;         (local-part (tramp-file-name-localname path-components))) ; Extract the local part
+;;     ;; Kill the current buffer before attempting to reopen the file
+;;     (kill-current-buffer)
+;;     ;; Attempt to reopen the file with the extracted local path
+;;     (find-file local-part)))
 
 #+end_src
 
@@ -1450,16 +1457,16 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 #+begin_src emacs-lisp
 
 (use-package eshell
-  ;; :ensure nil
+  :ensure nil
   :hook ((eshell-mode . eshell-specific-outline-regexp))
           ;; (eshell-directory-change . sync-dir-in-buffer-name)
-  :custom
-  (eshell-input-filter 'my-eshell-input-filter)
+  ;; :custom
+  ;; (eshell-input-filter 'my-eshell-input-filter)
   :config
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
   (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
 
-(setq eshell-history-append t)
+;; (setq eshell-history-append t)
 
 (setq eshell-destroy-buffer-when-process-dies t)
 
@@ -1470,15 +1477,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (eshell-syntax-highlighting-global-mode +1))
 
 (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
+;; ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
 
 (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
       eshell-history-size 100000
       eshell-buffer-maximum-lines 5000
-      ;; eshell-save-history-on-exit t
+      ;; ;; eshell-save-history-on-exit t
       eshell-history-file-name "~/.emacs.d/eshell_history"
-      eshell-hist-ignoredups t
-      eshell-scroll-to-bottom-on-input t
+      ;; eshell-hist-ignoredups t
+      ;; eshell-scroll-to-bottom-on-input t
       eshell-banner-message ""
       eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
@@ -1486,21 +1493,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           (lambda ()
             (setq-local scroll-margin 0)))
 
-(with-eval-after-load 'eshell
-  ;; Set eshell-save-history-on-exit to nil
-  (setq eshell-save-history-on-exit nil)
+;; (with-eval-after-load 'eshell
+;;   ;; Set eshell-save-history-on-exit to nil
+;;   (setq eshell-save-history-on-exit nil)
 
-  ;; Define eshell-append-history function
-  (defun eshell-append-history ()
-    "Call `eshell-write-history' with the `append' parameter set to `t'."
-    (when eshell-history-ring
-      (let ((newest-cmd-ring (make-ring 1)))
-        (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
-        (let ((eshell-history-ring newest-cmd-ring))
-          (eshell-write-history eshell-history-file-name t)))))
+;;   ;; Define eshell-append-history function
+;;   (defun eshell-append-history ()
+;;     "Call `eshell-write-history' with the `append' parameter set to `t'."
+;;     (when eshell-history-ring
+;;       (let ((newest-cmd-ring (make-ring 1)))
+;;         (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+;;         (let ((eshell-history-ring newest-cmd-ring))
+;;           (eshell-write-history eshell-history-file-name t)))))
 
-  ;; Add eshell-append-history to eshell-pre-command-hook
-  (add-hook 'eshell-pre-command-hook #'eshell-append-history))
+;;   ;; Add eshell-append-history to eshell-pre-command-hook
+;;   (add-hook 'eshell-pre-command-hook #'eshell-append-history))
 
 (defun eshell-insert-last-argument ()
   "Insert the last argument of the previous command."
@@ -1601,32 +1608,32 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; (advice-add 'Man-getpage-in-background :after #'my/select-man-window)
 
-(defvar my-eshell-aliases
-  '(("mkdir" "/usr/bin/mkdir $*")
-    ("kill" "/usr/bin/kill $*")
-    ("grep" "/usr/bin/grep $*"))
-  ;; ("ls" "/usr/bin/ls $*"))
-  "A list of Eshell aliases.")
+;; (defvar my-eshell-aliases
+;;   '(("mkdir" "/usr/bin/mkdir $*")
+;;     ("kill" "/usr/bin/kill $*")
+;;     ("grep" "/usr/bin/grep $*"))
+;;   ;; ("ls" "/usr/bin/ls $*"))
+;;   "A list of Eshell aliases.")
 
-(defun my-eshell-disable-aliases ()
-  "Disable Eshell aliases defined in `my-eshell-aliases`."
-  (dolist (alias my-eshell-aliases)
-    (setq eshell-command-aliases-list
-          (assq-delete-all (car alias) eshell-command-aliases-list))))
+;; (defun my-eshell-disable-aliases ()
+;;   "Disable Eshell aliases defined in `my-eshell-aliases`."
+;;   (dolist (alias my-eshell-aliases)
+;;     (setq eshell-command-aliases-list
+;;           (assq-delete-all (car alias) eshell-command-aliases-list))))
 
-(defun my-eshell-enable-aliases ()
-  "Enable Eshell aliases defined in `my-eshell-aliases`."
-  (dolist (alias my-eshell-aliases)
-    (add-to-list 'eshell-command-aliases-list alias)))
+;; (defun my-eshell-enable-aliases ()
+;;   "Enable Eshell aliases defined in `my-eshell-aliases`."
+;;   (dolist (alias my-eshell-aliases)
+;;     (add-to-list 'eshell-command-aliases-list alias)))
 
-(defun my-eshell-check-remote-directory ()
-  "Check if the current directory is remote and disable/enable aliases accordingly."
-  (if (file-remote-p default-directory)
-      (my-eshell-disable-aliases)
-    (my-eshell-enable-aliases)))
+;; (defun my-eshell-check-remote-directory ()
+;;   "Check if the current directory is remote and disable/enable aliases accordingly."
+;;   (if (file-remote-p default-directory)
+;;       (my-eshell-disable-aliases)
+;;     (my-eshell-enable-aliases)))
 
-(add-hook 'eshell-directory-change-hook 'my-eshell-check-remote-directory)
-(add-hook 'eshell-mode-hook 'my-eshell-enable-aliases)
+;; (add-hook 'eshell-directory-change-hook 'my-eshell-check-remote-directory)
+;; (add-hook 'eshell-mode-hook 'my-eshell-enable-aliases)
 
 (defun eshell/cat-with-syntax-highlighting (filename)
   "Like cat(1) but with syntax highlighting.
@@ -1664,16 +1671,17 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive (list (read-buffer "Redirect to buffer: ")))
   (insert (format " >>> #<%s>" buffer)))
 
-(defun my-eshell-input-filter (input)
-  "Do not save on the following:
-     - empty lines
-     - commands that start with a space, `cd`, `ls`/`l`"
-  (and
-   (eshell-input-filter-default input)
-   (eshell-input-filter-initial-space input)
-   (not (string-prefix-p "cd " input))
-   (not (string-prefix-p "ls " input))
-   (not (string-prefix-p "la " input))))
+;; ;; Useless
+;; (defun my-eshell-input-filter (input)
+;;   "Do not save on the following:
+;;      - empty lines
+;;      - commands that start with a space, `cd`, `ls`/`l`"
+;;   (and
+;;    (eshell-input-filter-default input)
+;;    (eshell-input-filter-initial-space input)
+;;    (not (string-prefix-p "cd " input))
+;;    (not (string-prefix-p "ls " input))
+;;    (not (string-prefix-p "la " input))))
 
 (defun eshell-outline-ivy ()
   "Show Eshell outline candidates using Ivy."
@@ -3381,6 +3389,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Open a specific file."
   (interactive)
   (find-file "~/.secret_dotfiles"))
+
+(defun ssh ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.ssh"))
 
 (defun szsh ()
   "Open a specific file."

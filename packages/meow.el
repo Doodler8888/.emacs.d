@@ -41,9 +41,40 @@
 (global-set-key (kbd "C-w C-w") 'kill-region)
 (global-set-key (kbd "H-f") 'forward-char)
 (global-set-key (kbd "H-b") 'backward-char)
-(global-set-key (kbd "H-b") 'backward-char)
 (setq meow--kbd-forward-char "H-f")
 (setq meow--kbd-backward-char "H-b")
+
+(define-key minibuffer-local-map (kbd "M-n") 'my-next-history-element)
+(define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+
+(defun save-and-paste ()
+  "Copy the current line to the kill ring."
+  (interactive)
+  (move-beginning-of-line 1)
+  (copy-whole-line)
+  (vim-like-paste))
+
+(defun copy-whole-line ()
+  "Copy the current line to the kill ring."
+  (interactive)
+  (kill-ring-save (line-beginning-position) (line-beginning-position 2)))
+
+(global-set-key (kbd "C-y") 'copy-whole-line)
+
+(defun my/copy-to-end-of-line ()
+  "Copy text from the current cursor position to the end of the line."
+  (interactive)
+  (kill-ring-save (point) (line-end-position)))
+
+(defun my/meow-change-to-end-of-line ()
+  "Highlight from the current cursor position to the end of the line and execute 'meow-change'."
+  (interactive)
+  (let ((start (point))
+        (end (line-end-position)))
+    (set-mark start)
+    (goto-char end)
+    (meow-reverse)
+    (meow-change)))
 
 (defun my/meow-setup-extra ()
   ;; Don't ignore cursor shape changes in minibuffer
@@ -85,6 +116,8 @@
   (meow-normal-define-key
    '("C-f" . scroll-up-and-recenter)
    '("C-b" . scroll-down-and-recenter)
+   '("P" . save-and-paste)
+   '("C" . my/meow-change-to-end-of-line)
    '("0" . meow-expand-0)
    '("9" . meow-expand-9)
    '("8" . meow-expand-8)
@@ -142,7 +175,8 @@
    '("x" . meow-line)
    '("X" . meow-goto-line)
    '("y" . meow-save)
-   '("Y" . meow-sync-grab)
+   ;; '("Y" . meow-sync-grab)
+   '("Y" . my/copy-to-end-of-line)
    '("z" . meow-pop-selection)
    '("'" . repeat)
    '("<escape>" . ignore)))

@@ -216,8 +216,8 @@
     `(vertico-current ((,class (:background ,rose-pine-subtle))))
 
     ;; Consult
-    `(consult-highlight-mark ((,class (:foreground nil :background ,rose-pine-subtle))))
-    `(consult-highlight-match ((,class (:foreground nil :background ,rose-pine-subtle))))
+    `(consult-highlight-mark ((,class (:foreground unspecified :background ,rose-pine-subtle))))
+    `(consult-highlight-match ((,class (:foreground unspecified :background ,rose-pine-subtle))))
     ;; `(consult-preview-match ((,class (:foreground nil :background ,rose-pine-iris))))
 
     ;; Orderless
@@ -238,7 +238,7 @@
     ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
  
     ;; Yassnippets
-    `(yas-field-highlight-face ((,class (:background nil))))
+    `(yas-field-highlight-face ((,class (:background unspecified))))
 
     ;; Tempel
     `(tempel-field ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
