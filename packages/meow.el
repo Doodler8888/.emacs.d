@@ -41,11 +41,64 @@
 (global-set-key (kbd "C-w C-w") 'kill-region)
 (global-set-key (kbd "H-f") 'forward-char)
 (global-set-key (kbd "H-b") 'backward-char)
+(global-set-key (kbd "H-h") 'mark-paragraph)
+(setq meow--kbd-mark-paragraph "H-h")
 (setq meow--kbd-forward-char "H-f")
+(setq meow--kbd-backward-char "H-b")
 (setq meow--kbd-backward-char "H-b")
 
 (define-key minibuffer-local-map (kbd "M-n") 'my-next-history-element)
 (define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+
+(defun meow--parse-inside-whitespace (inner)
+  "Parse the bounds for inside whitespace selection."
+  (save-excursion
+    (let* ((line-start (line-beginning-position))
+           (line-end (line-end-position))
+           (start (progn
+                    (skip-syntax-backward "^-" line-start)
+                    (point)))
+           (end (progn
+                  (skip-syntax-forward "^-" line-end)
+                  (point))))
+      (cons start end))))
+
+(add-to-list 'meow-char-thing-table '(?w . inside-whitespace))
+
+(advice-add 'meow--parse-inner-of-thing-char :around
+            (lambda (orig-fun ch)
+              (if (eq ch ?w)
+                  (meow--parse-inside-whitespace t)
+                (funcall orig-fun ch))))
+
+(defun select-inside-whitespace ()
+  "Select the current symbol without surrounding whitespace."
+  (interactive)
+  (let ((bounds (bounds-of-thing-at-point 'symbol)))
+    (when bounds
+      (goto-char (car bounds))
+      (set-mark (cdr bounds)))))
+
+(defun select-around-whitespace ()
+  "Select the current symbol and surrounding whitespace."
+  (interactive)
+  (let ((start (save-excursion
+                 (skip-syntax-backward "^-")
+                 (skip-syntax-backward "-")
+                 (point)))
+        (end (save-excursion
+               (skip-syntax-forward "^-")
+               (skip-syntax-forward "-")
+               (point))))
+    (goto-char start)
+    (set-mark end)))
+
+(defun my/smart-comment ()
+  "Comment or uncomment region if active, otherwise comment/uncomment current line."
+  (interactive)
+  (let ((start (if (region-active-p) (region-beginning) (line-beginning-position)))
+        (end (if (region-active-p) (region-end) (line-end-position))))
+    (comment-or-uncomment-region start end)))
 
 (defun save-and-paste ()
   "Copy the current line to the kill ring."
@@ -58,8 +111,6 @@
   "Copy the current line to the kill ring."
   (interactive)
   (kill-ring-save (line-beginning-position) (line-beginning-position 2)))
-
-(global-set-key (kbd "C-y") 'copy-whole-line)
 
 (defun my/copy-to-end-of-line ()
   "Copy text from the current cursor position to the end of the line."
@@ -75,6 +126,12 @@
     (goto-char end)
     (meow-reverse)
     (meow-change)))
+
+(defun my/meow-revers-line ()
+  "Reverse meow-line"
+  (interactive)
+  (meow-line 1)
+  (meow-reverse))
 
 (defun my/meow-setup-extra ()
   ;; Don't ignore cursor shape changes in minibuffer
@@ -116,8 +173,13 @@
   (meow-normal-define-key
    '("C-f" . scroll-up-and-recenter)
    '("C-b" . scroll-down-and-recenter)
+   '("C-y" . copy-whole-line)
+   ;; '("C-x c" . my/smart-comment)
+   '("gc" . my/smart-comment)
    '("P" . save-and-paste)
    '("C" . my/meow-change-to-end-of-line)
+   '("/" . avy-goto-char)
+   '("X" . my/meow-revers-line)
    '("0" . meow-expand-0)
    '("9" . meow-expand-9)
    '("8" . meow-expand-8)
@@ -144,7 +206,7 @@
    '("e" . meow-next-word)
    '("E" . meow-next-symbol)
    '("f" . meow-find)
-   '("g" . meow-cancel-selection)
+   ;; '("g" . meow-cancel-selection)
    '("G" . meow-grab)
    '("h" . meow-left)
    '("H" . meow-left-expand)
@@ -172,8 +234,9 @@
    '("v" . meow-visit)
    '("w" . meow-mark-word)
    '("W" . meow-mark-symbol)
+   ;; '("x" . meow-line)
    '("x" . meow-line)
-   '("X" . meow-goto-line)
+   ;; '("X" . meow-goto-line)
    '("y" . meow-save)
    ;; '("Y" . meow-sync-grab)
    '("Y" . my/copy-to-end-of-line)

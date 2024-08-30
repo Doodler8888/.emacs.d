@@ -11,10 +11,11 @@
   - [[#cursor][Cursor]]
   - [[#find-file][Find-file]]
   - [[#undo-tree][Undo tree]]
-  - [[#theme-and-font][Theme and Font]]
+  - [[#theme-and][Theme and]]
 - [[#highlighting][Highlighting]]
   - [[#treesitter][Treesitter]]
 - [[#packages][Packages]]
+  - [[#expand-region][Expand-region]]
   - [[#daemons][Daemons]]
   - [[#kubernetes][Kubernetes]]
   - [[#proced][Proced]]
@@ -356,7 +357,7 @@
 
 #+end_src
 
-** Theme and Font
+** Theme and 
 
 #+begin_src emacs-lisp
 
@@ -445,6 +446,15 @@
 #+end_src
 
 * Packages
+** Expand-region
+
+#+begin_src emacs-lisp
+
+(use-package expand-region
+  :ensure t)
+
+#+end_src
+
 ** Daemons
 
 #+begin_src emacs-lisp

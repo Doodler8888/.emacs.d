@@ -261,7 +261,7 @@
     `(line-number ((,class (:foreground ,rose-pine-subtext))))
  
     ;; Region
-    `(region ((,class (:background ,rose-pine-subtle))))
+    `(region ((,class (:background ,"#262431"))))
  
     ;; Mode line
     `(mode-line-buffer-id ((,class (:weight normal))))

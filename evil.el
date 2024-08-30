@@ -199,21 +199,21 @@
 
 ;; Avy
 
-;; Custom command to invoke avy-goto-char-2 across all windows except in Dired buffers
 (defun avy-goto-char-2-all-windows ()
   "Invoke `avy-goto-char-2` across all windows in the current frame, except in Dired buffers."
   (interactive)
   (let ((avy-all-windows t))
     (unless (derived-mode-p 'dired-mode)
-      (call-interactively 'evil-avy-goto-char-2))))
+      ;; (call-interactively 'evil-avy-goto-char-2))))
+      (call-interactively 'evil-avy-goto-char))))
 
-;; Custom command to switch behavior based on whether the buffer is Dired
 (defun my/conditional-search-or-avy ()
   "Use `evil-search-forward` in Dired buffers, otherwise use `avy-goto-char-2-all-windows`."
   (interactive)
   (if (derived-mode-p 'dired-mode)
       (evil-search-forward)
-    (avy-goto-char-2-all-windows)))
+    ;; (avy-goto-char-2-all-windows)))
+    (avy-goto-char-all-windows)))
 
 
 (with-eval-after-load 'evil
