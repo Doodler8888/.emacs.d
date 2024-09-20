@@ -15,7 +15,6 @@
 - [[#highlighting][Highlighting]]
   - [[#treesitter][Treesitter]]
 - [[#packages][Packages]]
-  - [[#expand-region][Expand-region]]
   - [[#daemons][Daemons]]
   - [[#kubernetes][Kubernetes]]
   - [[#proced][Proced]]
@@ -446,15 +445,6 @@
 #+end_src
 
 * Packages
-** Expand-region
-
-#+begin_src emacs-lisp
-
-(use-package expand-region
-  :ensure t)
-
-#+end_src
-
 ** Daemons
 
 #+begin_src emacs-lisp
@@ -989,7 +979,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
    ;; Check if the path is within the specific directory
    ((string-prefix-p "/home/wurfkreuz/.secret_dotfiles/org" (expand-file-name path))
     (cons 'transient "/home/wurfkreuz/.secret_dotfiles/org/"))
- 
+
    ;; Fall back to the original project root detection
    (t (when-let ((root (locate-dominating-file path #'project-root-p)))
         (cons 'transient (expand-file-name root))))))
@@ -2517,6 +2507,10 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 (use-package yaml-mode
   :ensure t)
+(use-package nix-mode
+  :ensure t)
+;; (use-package markdown-mode ;; can't be found by the package installer
+;;   :ensure t)
 
 (when (require 'dockerfile-mode nil 'noerror)
   ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
@@ -2924,18 +2918,18 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("tn" . tab-bar-new-tab)
     ("tx" . tab-bar-close-tab)
     ("tr" . tab-bar-rename-tab)
-    
+
     ("D"  . docker-template)
-    
+
     ("do" . daemons-stop)
     ("ds" . daemons-start)
     ("de" . daemons-enable)
     ("dd" . daemons-disable)
     ("du" . daemons-status)
     ("dr" . daemons-restart)
-    
+
     ("w"  . hydra-window-size/body)
-    
+
     ("pt" . popper-toggle-type)
     ("pe" . popper-toggle-type-original)
     ("pr" . my-remove-popper-status-from-frame-buffers)
@@ -2949,8 +2943,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("gm" . pop-global-mark) 
 
     ("fe" . OpenDiredBufferInCurrentWindow)
-    
+
     ("xx" . add-execute-permissions-to-current-file)
+    ("xr" . add-write-permissions-to-current-file)
     ))
 
 ;; (global-unset-key (kbd "M-;"))
@@ -3318,6 +3313,15 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     (let ((filename (file-truename buffer-file-name)))
       (shell-command (concat "chmod +x " (shell-quote-argument filename)))
       (message "Execute permissions added to %s" filename))))
+
+(defun add-write-permissions-to-current-file ()
+  "Add execute permissions to the file associated with the current buffer."
+  (interactive)
+  (when buffer-file-name
+    (let ((filename (file-truename buffer-file-name)))
+      (shell-command (concat "chmod +w " (shell-quote-argument filename)))
+      (revert-buffer)
+      (message "Write permissions added to %s" filename))))
 
 (defun crontab-edit ()
   "Run `crontab -e' in a emacs buffer."

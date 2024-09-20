@@ -46,17 +46,17 @@
 ;;   :config
 ;;   (evil-commentary-mode))
 
-;; (use-package evil-org
-;;   :ensure t
-;;   :after org
-;;   :config
-;;   ;; (require 'evil-org-agenda)
-;;   ;; (evil-org-agenda-set-keys)
-;;   (add-hook 'org-mode-hook 'evil-org-mode)
-;;   (add-hook 'evil-org-mode-hook
-;;             (lambda ()
-;;               (evil-org-set-key-theme)))
-;; )
+(use-package evil-org
+  :ensure t
+  :after org
+  :config
+  ;; (require 'evil-org-agenda)
+  ;; (evil-org-agenda-set-keys)
+  (add-hook 'org-mode-hook 'evil-org-mode)
+  (add-hook 'evil-org-mode-hook
+            (lambda ()
+              (evil-org-set-key-theme)))
+)
 
 (use-package evil-collection
   :ensure t
@@ -199,7 +199,7 @@
 
 ;; Avy
 
-(defun avy-goto-char-2-all-windows ()
+(defun avy-goto-char-all-windows ()
   "Invoke `avy-goto-char-2` across all windows in the current frame, except in Dired buffers."
   (interactive)
   (let ((avy-all-windows t))
@@ -212,7 +212,6 @@
   (interactive)
   (if (derived-mode-p 'dired-mode)
       (evil-search-forward)
-    ;; (avy-goto-char-2-all-windows)))
     (avy-goto-char-all-windows)))
 
 

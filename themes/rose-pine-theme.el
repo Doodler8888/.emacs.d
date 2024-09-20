@@ -59,6 +59,7 @@
    `(font-lock-comment-face ((,class (:foreground ,rose-pine-subtext))))
    `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-subtext))))
    `(sh-quoted-exec ((,class (:foreground ,rose-pine-iris))))
+   `(sh-heredoc ((,class (:foreground ,rose-pine-iris))))
 
    ;; `(font-lock-doc-face ((,class (:foreground ,rose-pine-fg))))
    ;; `(font-lock-preprocessor-face ((,class (:foreground ,rose-pine-fg))))
@@ -261,7 +262,8 @@
     `(line-number ((,class (:foreground ,rose-pine-subtext))))
  
     ;; Region
-    `(region ((,class (:background ,"#262431"))))
+    `(region ((,class (:background ,rose-pine-subtle))))
+    ;; `(region ((,class (:background ,"#262431"))))
  
     ;; Mode line
     `(mode-line-buffer-id ((,class (:weight normal))))

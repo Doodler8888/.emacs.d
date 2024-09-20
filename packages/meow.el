@@ -187,6 +187,12 @@
   (meow-line 1)
   (meow-reverse))
 
+(defun my/meow-revers-line ()
+  "Reverse meow-line"
+  (interactive)
+  (meow-line 1)
+  (meow-reverse))
+
 (defun my/meow-setup-extra ()
   ;; Don't ignore cursor shape changes in minibuffer
   (delete (cons 'minibufferp 'meow--update-cursor-default)
@@ -231,6 +237,7 @@
    '("C-y" . copy-whole-line)
    ;; '("C-x c" . my/smart-comment)
    '("gc" . my/smart-comment)
+   '("gw" . my-fill-region)
    '("P" . save-and-paste)
    '("C" . my/meow-change-to-end-of-line)
    '("/" . avy-goto-char)
