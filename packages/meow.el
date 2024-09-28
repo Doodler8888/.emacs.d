@@ -206,6 +206,11 @@
 ;; Apply the patch after meow is activated
 (add-hook 'meow-global-mode-hook 'my/meow-setup-extra)
 
+(defun meow-my-go-to-line ()
+  (interactive)
+  (meow-line 1)
+  (avy-goto-line))
+
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
   (setq meow--kbd-kill-region "C-w C-w")
@@ -309,6 +314,7 @@
    '("z" . meow-find-and-select-inner)
    '("Z" . my/meow-find-backward-and-select-inner)
    '("'" . repeat)
+   '("?" . meow-my-go-to-line)
    '("<escape>" . ignore)))
 
 (meow-setup)

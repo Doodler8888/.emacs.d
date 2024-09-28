@@ -3335,7 +3335,12 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (defun sway ()
   "Open sway config file."
   (interactive)
-  (find-file (expand-file-name "~/.dotfiles/sway/config")))
+  (find-file (expand-file-name "~/.dotfiles/sway")))
+
+(defun nix ()
+  "Open sway config file."
+  (interactive)
+  (find-file (expand-file-name "~/.dotfiles/nix")))
 
 (defun date ()
   "Display the current date and time in the minibuffer using the shell's 'date' command."
@@ -3396,7 +3401,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (defun zsh ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.dotfiles/zsh/not-nix/.zshrc"))
+  (find-file "~/.dotfiles/zsh/.zshrc"))
 
 (defun bsh ()
   "Open a specific file."
@@ -3427,6 +3432,17 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Open a specific file."
   (interactive)
   (find-file "~/.secret_dotfiles/"))
+
+(defun manager ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/nix/home.nix"))
+
+(defun nix ()
+  "Open a specific file."
+  (interactive)
+  (find-file "/etc/nixos/configuration.nix")
+  (tramp-revert-buffer-with-sudo))
 
 (defun so ()
   "Reload the Emacs configuration."
