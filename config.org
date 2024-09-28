@@ -1466,7 +1466,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
   (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
 
-;; (setq eshell-history-append t)
+(setq eshell-history-append t)
 
 (setq eshell-destroy-buffer-when-process-dies t)
 
@@ -1493,21 +1493,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
           (lambda ()
             (setq-local scroll-margin 0)))
 
-;; (with-eval-after-load 'eshell
-;;   ;; Set eshell-save-history-on-exit to nil
-;;   (setq eshell-save-history-on-exit nil)
+(with-eval-after-load 'eshell
+  ;; Set eshell-save-history-on-exit to nil
+  (setq eshell-save-history-on-exit nil)
 
-;;   ;; Define eshell-append-history function
-;;   (defun eshell-append-history ()
-;;     "Call `eshell-write-history' with the `append' parameter set to `t'."
-;;     (when eshell-history-ring
-;;       (let ((newest-cmd-ring (make-ring 1)))
-;;         (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
-;;         (let ((eshell-history-ring newest-cmd-ring))
-;;           (eshell-write-history eshell-history-file-name t)))))
+  ;; Define eshell-append-history function
+  (defun eshell-append-history ()
+    "Call `eshell-write-history' with the `append' parameter set to `t'."
+    (when eshell-history-ring
+      (let ((newest-cmd-ring (make-ring 1)))
+        (ring-insert newest-cmd-ring (car (ring-elements eshell-history-ring)))
+        (let ((eshell-history-ring newest-cmd-ring))
+          (eshell-write-history eshell-history-file-name t)))))
 
-;;   ;; Add eshell-append-history to eshell-pre-command-hook
-;;   (add-hook 'eshell-pre-command-hook #'eshell-append-history))
+  ;; Add eshell-append-history to eshell-pre-command-hook
+  (add-hook 'eshell-pre-command-hook #'eshell-append-history))
 
 (defun eshell-insert-last-argument ()
   "Insert the last argument of the previous command."
@@ -2984,9 +2984,13 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (defun my-org-cycle-or-preview ()
   "Cycle in Org mode or show the next completion preview candidate."
   (interactive)
-  (if (eq major-mode 'org-mode)
-      (org-cycle)
-    (my-completion-preview-insert)))
+  (yas-expand)
+  (org-cycle))
+
+  ;; (if (eq major-mode 'org-mode)
+  ;;     (org-cycle)
+  ;;   (yas-expand)))
+  ;;   ;; (my-completion-preview-insert)))
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
@@ -3392,7 +3396,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (defun zsh ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.dotfiles/zsh/.zshrc"))
+  (find-file "~/.dotfiles/zsh/not-nix/.zshrc"))
 
 (defun bsh ()
   "Open a specific file."
@@ -3419,7 +3423,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (interactive)
   (find-file "~/.dotfiles/scripts/"))
 
-(defun S ()
+(defun sdot ()
   "Open a specific file."
   (interactive)
   (find-file "~/.secret_dotfiles/"))

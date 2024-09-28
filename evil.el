@@ -446,7 +446,8 @@
   (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
 (with-eval-after-load 'evil
-  (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
+  ;; (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
+  (evil-define-key 'insert global-map (kbd "TAB") 'completion-at-point))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-preview))
