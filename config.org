@@ -95,25 +95,36 @@
 (setq display-line-numbers 'visual
       display-line-numbers-type 'relative)
 (add-hook 'conf-mode-hook 'display-line-numbers-mode)
-(add-hook 'conf-space-mode-hook 'display-line-numbers-mode) ;; it breaks tramp with pipes?
+(add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
 (add-hook 'text-mode-hook 'display-line-numbers-mode)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-  (defun my-mode-line-major-mode ()
-    "Returns a clean name of the current major mode."
-    (let ((mode (format "%s" major-mode)))
-      (replace-regexp-in-string "-mode$" "" mode)))
+(defun my-mode-line-major-mode ()
+  "Returns a clean name of the current major mode."
+  (let ((mode (format "%s" major-mode)))
+    (replace-regexp-in-string "-mode$" "" mode)))
 
-  (setq-default mode-line-format
-                '("%e"
-                  mode-line-front-space
-                  (:eval (if (buffer-file-name)
-                             (abbreviate-file-name (buffer-file-name))  ; Show abbreviated file path
-                           "%b"))  ; Show buffer name if not a file buffer
-                  " "
-                  (:eval (my-mode-line-major-mode))  ; Custom major mode display
-                  (:eval (propertize " " 'display '(space :align-to (- right 12))))
-                  (vc-mode vc-mode)))  ; Git branch information
+(defun my-vc-branch ()
+  "Get the current Git branch name, if any."
+  (let* ((git-cmd "git rev-parse --abbrev-ref HEAD 2>/dev/null")
+         (branch (string-trim (shell-command-to-string git-cmd))))
+    (unless (string-empty-p branch)
+      (if (> (length branch) 40)
+          (concat (substring branch 0 37) "...")
+        branch))))
+
+(setq-default mode-line-format
+              '("%e"
+                mode-line-front-space
+                (:eval (if (buffer-file-name)
+                           (abbreviate-file-name (buffer-file-name))
+                         "%b"))
+                " | "
+                (:eval (my-mode-line-major-mode))
+                " | "
+                (:eval (or (my-vc-branch) ""))
+                (:eval (propertize " " 'display '(space :align-to (- right 12))))
+                mode-line-end-spaces))
 
 #+end_src
 
@@ -281,8 +292,7 @@
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "10:00pm")
 
-(setq comint-process-echoes t)
-(setq comint-use-prompt-regexp nil)
+;; (setq comint-use-prompt-regexp nil)
 
 (setq auto-revert-verbose nil)
 
@@ -1390,7 +1400,25 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (define-key magit-mode-map (kbd "M-3") nil)
   (define-key magit-mode-map (kbd "M-4") nil)
   (define-key magit-mode-map (kbd "M-5") nil)
+  (define-key magit-mode-map (kbd "M-6") nil)
   )
+
+(defun my-git-commit-setup ()
+  "Set up the default commit message."
+  (insert "GG-1729 Add: Создание пайплайна и Dockerfile для выполнения задания.\n"))
+
+(add-hook 'git-commit-setup-hook 'my-git-commit-setup)
+
+(defvar my-default-branch-name "2409/agud/1730_pipeline_template"
+  "Default name for new branches.")
+
+(defun my-magit-read-branch-args (prompt &optional secondary-default)
+  "Read branch name with a default value.
+PROMPT and SECONDARY-DEFAULT are passed to `magit-branch-read-args'."
+  (let ((magit-branch-read-upstream-first nil))
+    (magit-branch-read-args prompt secondary-default my-default-branch-name)))
+
+(setq magit-branch-read-args-function #'my-magit-read-branch-args)
 
 #+end_src
 
@@ -2509,6 +2537,8 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 (use-package nix-mode
   :ensure t)
+(use-package systemd
+  :ensure t)
 ;; (use-package markdown-mode ;; can't be found by the package installer
 ;;   :ensure t)
 
@@ -2946,6 +2976,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
+    
+    ("mm" . messages)
+    
+    ("gb" . vc-switch-branch)
+    
     ))
 
 ;; (global-unset-key (kbd "M-;"))
@@ -2987,10 +3022,18 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (yas-expand)
   (org-cycle))
 
-  ;; (if (eq major-mode 'org-mode)
-  ;;     (org-cycle)
-  ;;   (yas-expand)))
-  ;;   ;; (my-completion-preview-insert)))
+(defun my-smart-tab ()
+  "Custom tab behavior based on context."
+  (interactive)
+  (cond
+   ;; In Vertico buffers, use the default Vertico behavior
+   ((and (boundp 'vertico-map)
+         (eq (current-local-map) vertico-map))
+    (call-interactively (lookup-key vertico-map (kbd "TAB"))))
+   
+   ;; In Eshell, minibuffers, or any other context, use completion-at-point
+   (t
+    (completion-at-point))))
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
@@ -3449,5 +3492,15 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (interactive)
   (load-file "~/.emacs.d/init.el")
   (load-file "~/.emacs.d/init.el"))
+
+(defun messages ()
+  "Switch to the *Messages* buffer."
+  (interactive)
+  (switch-to-buffer "*Messages*"))
+
+(defun config ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.config"))
 
 #+end_src
