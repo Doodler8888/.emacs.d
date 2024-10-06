@@ -1,3 +1,4 @@
+/ho
 #+TITLE: Wurfkreuz's GNU Emacs Config
 #+AUTHOR: Alex Gud
 #+DESCRIPTION: Empty.
@@ -2196,8 +2197,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("mm" . messages)
 
-    ("gbs" . vc-switch-branch)
-    ("gbc" . vc-create-branch)
+    ("gb" . vc-switch-branch)
 
     ))
 

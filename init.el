@@ -31,19 +31,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages
-   '(all-the-icons-dired avy cape cider circe clojure-ts-mode corfu daemons docker
-                         dockerfile-mode embark-consult
-                         eshell-syntax-highlighting evil-collection evil-org
-                         evil-surround exec-path-from-shell expand-region
-                         fish-completion flymake-hadolint flymake-shellcheck
-                         go-mode haskell-mode helpful hydra kubernetes lua-mode
-                         magit marginalia mentor meow nix-mode orderless
-                         org-bullets org-download org-drill popper pyvenv
-                         raku-mode shackle sudo-edit swiper systemd systemd-mode
-                         terraform-mode toc-org transpose-frame treesit-auto
-                         undo-tree vertico vterm wgrep yaml-mode yasnippet
-                         zoxide))
+ '(package-selected-packages nil)
  '(package-vc-selected-packages '((zoxide :url "https://gitlab.com/Vonfry/zoxide.el"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
