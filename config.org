@@ -16,6 +16,7 @@
   - [[#treesitter][Treesitter]]
 - [[#packages][Packages]]
   - [[#avy][Avy]]
+  - [[#docker][Docker]]
   - [[#which-key][Which-key]]
   - [[#xterm-color][Xterm-color]]
   - [[#completion][Completion]]
@@ -439,6 +440,58 @@
 
 #+end_src
 
+** Docker
+
+#+begin_src emacs-lisp
+
+(use-package docker
+  :ensure t
+  ;; :config
+  ;; It was defined in xterm block for some reason
+  ;; (with-eval-after-load 'vterm
+  ;;   (setq docker-vterm-support t)
+  ;;   (setq docker-container-shell-file-name "vterm"))
+  )
+
+(defun container-map-id (container-name)
+  "Display the UID and GID maps of a Docker container.
+Ask for the name of a Docker container, retrieve its PID, and display the UID and GID maps."
+  (interactive "sContainer name: ")
+  (let* ((pid (string-trim (shell-command-to-string (format "docker inspect --format '{{.State.Pid}}' %s" container-name))))
+         (uid-map-file (format "/proc/%s/uid_map" pid))
+         (gid-map-file (format "/proc/%s/gid_map" pid)))
+    (if (and (not (string-empty-p pid))
+             (file-exists-p uid-map-file)
+             (file-exists-p gid-map-file))
+        (with-output-to-temp-buffer "*Docker ID Maps*"
+          (princ (format "UID and GID maps for container '%s' (PID: %s):\n\n" container-name pid))
+          (princ "UID map:\n")
+          (princ (with-temp-buffer
+                   (insert-file-contents uid-map-file)
+                   (buffer-string)))
+          (princ "\nGID map:\n")
+          (princ (with-temp-buffer
+                   (insert-file-contents gid-map-file)
+                   (buffer-string))))
+      (message "Failed to retrieve UID and/or GID maps for container '%s'" container-name))))
+
+;; (defun docker-template ()
+;;   "Create docker.el windows with a specific layout"
+;;   (interactive)
+;;   (delete-other-windows)
+;;   (docker-images)
+;;   (docker-containers)
+;;   (transpose-frame)
+;;   (docker-volumes)
+;; )
+
+;; (defun my-docker-shell ()
+;;   (interactive)
+;;   (let ((container-id (read-string "Enter container ID: ")))
+;;     (comint-run (format "docker exec -it %s /bin/sh" container-id))))
+
+#+end_src
+
 ** Which-key
 
 #+begin_src emacs-lisp
@@ -452,27 +505,50 @@
 
 #+begin_src emacs-lisp
 
-;; Disabled it because it renders incorrect output in esheell when i do this:
-;; (setq mylist '(1 2 3))
-;; (1 2 3)
-;; echo 0 $mylist
-;; (0 "")
+(require 'ansi-color)
+(add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
 
-(use-package xterm-color
-  :ensure t)
+;; ;; Disabled it because it renders incorrect output in esheell when i do this:
+;; ;; (setq mylist '(1 2 3))
+;; ;; (1 2 3)
+;; ;; echo 0 $mylist
+;; ;; (0 "")
 
-;; ;; Breaks rendering inside docker shells entered using 'shell-command'.
-;; ;; (setq comint-output-filter-functions
-;; ;;       (remove 'ansi-color-process-output comint-output-filter-functions))
+;; (use-package xterm-color
+;;   :ensure t)
 
-;; ;; (defun my/setup-docker-buffer ()
-;; ;;   "Set up a buffer for Docker output."
-;; ;;   (setq-local ansi-color-for-comint-mode t)
-;; ;;   (setq-local xterm-color-preserve-properties t)
-;; ;;   (font-lock-mode -1)  ; Disable font-lock to improve performance
-;; ;;   )
+;; ;; ;; Breaks rendering inside docker shells entered using 'shell-command'.
+;; ;; ;; (setq comint-output-filter-functions
+;; ;; ;;       (remove 'ansi-color-process-output comint-output-filter-functions))
 
-;; ;; (add-hook 'docker-container-logs-mode-hook #'my/setup-docker-buffer)
+;; ;; ;; (defun my/setup-docker-buffer ()
+;; ;; ;;   "Set up a buffer for Docker output."
+;; ;; ;;   (setq-local ansi-color-for-comint-mode t)
+;; ;; ;;   (setq-local xterm-color-preserve-properties t)
+;; ;; ;;   (font-lock-mode -1)  ; Disable font-lock to improve performance
+;; ;; ;;   )
+
+;; ;; ;; (add-hook 'docker-container-logs-mode-hook #'my/setup-docker-buffer)
+
+;; ;; (add-hook 'shell-mode-hook
+;; ;;           (lambda ()
+;; ;;             ;; Disable font-locking in this buffer to improve performance
+;; ;;             (font-lock-mode -1)
+;; ;;             ;; Prevent font-locking from being re-enabled in this buffer
+;; ;;             (make-local-variable 'font-lock-function)
+;; ;;             (setq font-lock-function (lambda (_) nil))
+;; ;;             (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+;; ;; Compilation buffers
+;; (setq compilation-environment '("TERM=xterm-256color"))
+
+;; (defun my/advice-compilation-filter (f proc string)
+;;   (funcall f proc (xterm-color-filter string)))
+
+;; (advice-add 'compilation-filter :around #'my/advice-compilation-filter)
+
+;; (setq comint-output-filter-functions
+;;       (remove 'ansi-color-process-output comint-output-filter-functions))
 
 ;; (add-hook 'shell-mode-hook
 ;;           (lambda ()
@@ -483,18 +559,9 @@
 ;;             (setq font-lock-function (lambda (_) nil))
 ;;             (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
 
-;; Compilation buffers
-(setq compilation-environment '("TERM=xterm-256color"))
-
-(defun my/advice-compilation-filter (f proc string)
-  (funcall f proc (xterm-color-filter string)))
-
-(advice-add 'compilation-filter :around #'my/advice-compilation-filter)
-
 #+end_src
 
 ** Completion
-
 *** Snippets
 
 #+begin_src emacs-lisp
@@ -526,6 +593,25 @@
 *** Corfu/Cape
 
 #+begin_src emacs-lisp
+
+(use-package emacs
+  :custom
+  ;; TAB cycle if there are only few candidates
+  ;; (completion-cycle-threshold 3)
+
+  ;; Enable indentation+completion using the TAB key.
+  ;; `completion-at-point' is often bound to M-TAB.
+  (tab-always-indent 'complete)
+
+  ;; Emacs 30 and newer: Disable Ispell completion function. As an alternative,
+  ;; try `cape-dict'.
+  (text-mode-ispell-word-completion nil)
+
+  ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+  ;; commands are hidden, since they are not used via M-x. This setting is
+  ;; useful beyond Corfu.
+  (read-extended-command-predicate #'command-completion-default-include-p))
+
 
 (defun my-eshell-has-argument-p ()
   "Check if the current Eshell input has an argument."
@@ -583,9 +669,6 @@
   (corfu-history-mode)
   (corfu-popupinfo-mode))
 
-;; (with-eval-after-load 'evil
-;;   (evil-define-key 'insert global-map (kbd "TAB") #'completion-at-point))
-
 (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
 
@@ -616,16 +699,18 @@
 (use-package exec-path-from-shell
   :ensure t
   :config
-  (exec-path-from-shell-initialize)
-  (exec-path-from-shell-copy-env "FZF_DEFAULT_COMMAND")
-  (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
-  (exec-path-from-shell-copy-env "NOTIFY_TOKEN")
-  (exec-path-from-shell-copy-env "SHELF_TOKEN")
-  (exec-path-from-shell-copy-env "SHELF_DB_USER")
-  (exec-path-from-shell-copy-env "SHELF_DB_NAME")
-  (exec-path-from-shell-copy-env "SHELF_DB_PASS")
-  (exec-path-from-shell-copy-env "SHELF_DB_PORT")
-  )
+  (setq exec-path-from-shell-arguments nil) ; Remove -i for faster startup
+  (setq exec-path-from-shell-variables
+        '("PATH"
+          "FZF_DEFAULT_COMMAND"
+          "SSH_AUTH_SOCK"
+          "NOTIFY_TOKEN"
+          "SHELF_TOKEN"
+          "SHELF_DB_USER"
+          "SHELF_DB_NAME"
+          "SHELF_DB_PASS"
+          "SHELF_DB_PORT"))
+  (exec-path-from-shell-initialize))
 
 #+end_src
 
@@ -641,9 +726,6 @@
 ** Zoxide
 
 #+begin_src emacs-lisp
-
-;; (straight-use-package
-;;  '(zoxide :host gitlab :repo "Vonfry/zoxide.el"))
 
 (use-package zoxide
   :vc (:url "https://gitlab.com/Vonfry/zoxide.el"
@@ -1603,23 +1685,23 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
-          "\\*Async Shell Command\\*"
+          ;; "\\*Async Shell Command\\*"
           "*Flymake diagnostics.*"
           ;; "*Flycheck errors.*"
-          "*Python.*"
-          "\\* docker container logs .*\\*"
-          "\\* docker inspect .*\\*"
+          ;; "*Python.*"
+          ;; "\\* docker container logs .*\\*"
+          ;; "\\* docker inspect .*\\*"
           ;; "\\*daemons-output for .*\\*"
-          "\\*kubernetes logs.*\\*"
-          "\\*compilation\\*"
+          ;; "\\*kubernetes logs.*\\*"
+          ;; "\\*compilation\\*"
           ;; "\\*eshell\\*.*"
-          "\\*persistent-shell\\*.*"
+          ;; "\\*persistent-shell\\*.*"
           "\\*cider-repl.*"
           "\\*cider-doc.*"
           "\\*cider-error.*"
           ;; "\\*helpful.*"
           ;; "\\*man.*"
-          "\\*grep.*"
+          ;; "\\*grep.*"
           ;; "\\*eshell:.*"
           "\\*Warnings\\*"
           ;; "\\*xref\\*"
@@ -1630,7 +1712,8 @@ If an eshell buffer for the directory already exists, switch to it."
           ;; "\\*Dtache Shell Command\\*"
           ;; "\\*mu4e-update\\*"
           ;; help-mode
-          compilation-mode))
+          ;; compilation-mode
+          ))
   (popper-mode +1)
   (popper-echo-mode +1))
 
@@ -2151,6 +2234,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("fc" . ivy-fzf-current-directory)
     ("fr" . ivy-fzf-root)
     ("fu" . consult-recent-file)
+    ("fs" . consult-ripgrep)
 
     ("ss" . save-current-desktop-session)
     ("sd" . delete-desktop-session)
@@ -2228,8 +2312,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Expand Yasnippet if possible, otherwise trigger completion-at-point."
   (interactive)
   (if (and (bound-and-true-p yas-minor-mode)
-           (fboundp 'yas-expand)
-           (yas-expand))
+           (fboundp 'yas-expand) 
+          (yas-expand))
       t  ; Yasnippet expanded successfully
     (vertico-insert)
     (completion-at-point)))
@@ -2248,6 +2332,14 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
    ((and (boundp 'vertico-map)
          (eq (current-local-map) vertico-map))
     (call-interactively (lookup-key vertico-map (kbd "TAB"))))
+
+   ;; Check if Corfu is available and enabled
+   ((and (featurep 'corfu) corfu-mode)
+    (if (and (boundp 'corfu--frame) (frame-live-p corfu--frame))
+        ;; If Corfu popup is already active, insert the candidate
+        (corfu-insert)
+      ;; Otherwise, trigger completion-at-point, which Corfu will handle
+      (completion-at-point)))
 
    ;; In Eshell, minibuffers, or any other context, use completion-at-point
    (t

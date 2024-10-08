@@ -445,8 +445,8 @@
   (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
   (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
-(with-eval-after-load 'evil
-  (evil-define-key 'insert global-map (kbd "TAB") 'my-smart-tab))
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'insert global-map (kbd "TAB") 'my-smart-tab))
   ;; (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
   ;; (evil-define-key 'insert global-map (kbd "TAB") 'completion-at-point))
   ;; (evil-define-key 'insert global-map (kbd "TAB") 'vertico-insert))
@@ -499,13 +499,3 @@
   (interactive "P")
   (evil-scroll-down arg)
   (recenter))
-
-;; (defun my-simulate-C-c ()
-;;   "Simulate pressing C-c and then wait for the next key."
-;;   (interactive)
-;;   (setq prefix-arg current-prefix-arg)
-;;   (setq unread-command-events (listify-key-sequence (kbd "C-c"))))
-
-;; (evil-define-key 'normal 'global (kbd "SPC") 'my-simulate-C-c)
-;; (evil-define-key 'normal 'dired-mode-map (kbd "SPC") 'my-simulate-C-c)
-;; (evil-define-key 'normal 'info-mode-map (kbd "SPC") 'my-simulate-C-c)
