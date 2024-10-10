@@ -1941,6 +1941,9 @@ If an eshell buffer for the directory already exists, switch to it."
 (require 'eglot)
 ;; (setq eglot-events-buffer-size 0)
 
+(add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
+(add-hook 'nix-mode-hook 'eglot-ensure)
+
 (add-hook 'python-ts-mode-hook 'eglot-ensure)
 (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
 (add-hook 'terraform-mode-hook #'eglot-ensure)
