@@ -2288,7 +2288,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-unset-key (kbd "C-s"))
 (global-unset-key (kbd "M-TAB"))
 (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
-(global-set-key (kbd "C-s C-s") 'swiper-isearch)
+(global-set-key (kbd "C-s C-s") 'consult-line)
 ;; (global-set-key (kbd "C-s C-s") 'consult-line)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
