@@ -1033,20 +1033,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (defun my-git-commit-setup ()
   "Set up the default commit message."
-  (insert "GG-1729 Add: Создание пайплайна и Dockerfile для выполнения задания.\n"))
+  (insert "you default commit name"))
 
 (add-hook 'git-commit-setup-hook 'my-git-commit-setup)
-
-(defvar my-default-branch-name "2409/agud/1730_pipeline_template"
-  "Default name for new branches.")
-
-(defun my-magit-read-branch-args (prompt &optional secondary-default)
-  "Read branch name with a default value.
-PROMPT and SECONDARY-DEFAULT are passed to `magit-branch-read-args'."
-  (let ((magit-branch-read-upstream-first nil))
-    (magit-branch-read-args prompt secondary-default my-default-branch-name)))
-
-(setq magit-branch-read-args-function #'my-magit-read-branch-args)
 
 #+end_src
 
