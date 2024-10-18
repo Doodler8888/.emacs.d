@@ -86,7 +86,7 @@
 
 (defun my-vc-branch ()
   "Get the current Git branch name, if any."
-  (let* ((git-cmd "git rev-parse --abbrev-ref HEAD 2>/dev/null")
+  (let* ((git-cmd "/usr/bin/git branch --show-current 2>/dev/null")  ;; Use full path to git
          (branch (string-trim (shell-command-to-string git-cmd))))
     (unless (string-empty-p branch)
       (if (> (length branch) 40)
@@ -2028,7 +2028,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package org-download
   :ensure t
   :init
-  (setq org-download-image-dir "~/.secret_dotfiles/org/images")
+  (setq org-download-image-dir "/home/wurfkreuz/.local/share/images")
   :config
   (add-hook 'org-mode-hook 'org-download-enable)
   (add-hook 'org-mode-hook
