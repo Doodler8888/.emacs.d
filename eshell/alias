@@ -16,7 +16,7 @@ alias sss eshell/sudo systemctl status $*
 alias srt eshell/sudo systemctl restart $*
 alias ssp eshell/sudo systemctl stop $*
 alias sst eshell/sudo systemctl start $*
-alias tree exa -T
+alias tree eza -T
 alias denv deactivate
 alias menv python3 -m venv ./.venv
 alias E cd ~/.source
