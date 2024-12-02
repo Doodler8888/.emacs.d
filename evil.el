@@ -61,10 +61,21 @@
 (use-package evil-collection
   :ensure t
   :after evil
-  ;; :init ;;    (setq evil-want-keybinding nil)
   :config
-  (setq evil-collection-mode-list '(dashboard dired wdired ibuffer org term ansi lsp-ui-imenu elpaca minibuffer ivy proced docker magit))
-  (evil-collection-init))               ;
+  (setq evil-collection-mode-list '(dashboard dired wdired ibuffer org term ansi
+                                   lsp-ui-imenu elpaca minibuffer ivy proced docker magit package-menu))
+  
+  ;; Force normal state for package-menu-mode
+  (evil-set-initial-state 'package-menu-mode 'normal)
+  
+  ;; Debug hook to verify
+  (add-hook 'package-menu-mode-hook
+            (lambda ()
+              (message "Package menu mode hook running")
+              (message "Evil state: %s" evil-state)
+              (evil-normal-state))) ; Force normal state if needed
+  
+  (evil-collection-init))
 
 (defun my-evil-yank-to-end-of-line ()
   "Yank text from the current point to the end of the line."
@@ -499,3 +510,19 @@
   (interactive "P")
   (evil-scroll-down arg)
   (recenter))
+
+;; Function to reuse
+(defun my-space-as-ctrl-c ()
+  (interactive)
+  (setq prefix-arg current-prefix-arg)
+  (setq unread-command-events
+        (listify-key-sequence (kbd "C-c"))))
+
+;; Normal state binding
+(define-key evil-normal-state-map (kbd "SPC") #'my-space-as-ctrl-c)
+
+;; Motion state binding (for help-mode and similar)
+(define-key evil-motion-state-map (kbd "SPC") #'my-space-as-ctrl-c)
+
+;; Dired mode specific binding
+(evil-define-key 'normal dired-mode-map (kbd "SPC") #'my-space-as-ctrl-c)

@@ -47,6 +47,7 @@
   - [[#flymake][Flymake]]
   - [[#modes][Modes]]
   - [[#flycheck][Flycheck]]
+  - [[#eldoc][Eldoc]]
   - [[#eglot][Eglot]]
 - [[#org-mode][Org Mode]]
   - [[#general][General]]
@@ -265,9 +266,13 @@
 (setq enable-local-variables t)
 (setq enable-dir-local-variables t)
 
-(setenv "PATH" (concat "/home/wurfkreuz/.ghcup/bin:" (getenv "PATH")))
-(setenv "PATH" (concat (getenv "PATH") ":/usr/bin"))
-(setq exec-path (append exec-path '("/usr/bin")))
+(let ((paths '("/home/wurfkreuz/.nix-profile/bin"
+              "/home/wurfkreuz/.ghcup/bin"
+              "/usr/bin")))
+  (setq exec-path (append paths exec-path))
+  (setenv "PATH" (concat (string-join paths ":")
+                        ":"
+                        (getenv "PATH"))))
 
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "10:00pm")
@@ -368,6 +373,18 @@
                                   :height 130
                                   ;; :foreground "#8bc34a"  ; Adjust the color as desired
                                   :weight 'normal))))
+
+;; This code attempts to delete additional font-lock usage in lisp modes inside comment lines like when i put some word in single quotes.
+(defun force-comment-face ()
+  "Force everything after semicolon to use comment face, but only when semicolon is the first non-whitespace character."
+  (font-lock-add-keywords
+   nil
+   '(("^[[:space:]]*;.*$" 0 font-lock-comment-face prepend))
+   'append))
+
+;; Add to lisp mode hooks
+(add-hook 'emacs-lisp-mode-hook 'force-comment-face)
+(add-hook 'lisp-mode-hook 'force-comment-face)
 
 #+end_src
 
@@ -496,8 +513,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 #+begin_src emacs-lisp
 
-;; (which-key-mode)
-;; (setq which-key-max-description-length 40)
+(which-key-mode)
+(setq which-key-max-description-length 40)
 
 #+end_src
 
@@ -1031,11 +1048,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (define-key magit-mode-map (kbd "M-6") nil)
   )
 
-(defun my-git-commit-setup ()
-  "Set up the default commit message."
-  (insert "you default commit name"))
+;; (defun my-git-commit-setup ()
+;;   "Set up the default commit message."
+;;   (insert "n"))
 
-(add-hook 'git-commit-setup-hook 'my-git-commit-setup)
+;; (add-hook 'git-commit-setup-hook 'my-git-commit-setup)
 
 #+end_src
 
@@ -1923,6 +1940,19 @@ If an eshell buffer for the directory already exists, switch to it."
 
 #+end_src
 
+** Eldoc
+
+#+begin_src emacs-lisp
+
+;; Disable globally
+(global-eldoc-mode -1)
+
+;; Or if you want to be extra thorough:
+(setq global-eldoc-mode nil)
+(setq eldoc-mode nil)
+
+#+end_src
+
 ** Eglot
 
 #+begin_src emacs-lisp
@@ -2005,6 +2035,42 @@ If an eshell buffer for the directory already exists, switch to it."
           (dolist (line (cdr lines))
             (insert (concat "\n  " line)))))
     (message "No region active")))
+
+(defun install-org-from-source ()
+  "Install org-mode from source."
+  (interactive)
+  (let* ((current-org-path (locate-library "org"))
+         (emacs-path (expand-file-name invocation-name invocation-directory))
+         (source-dir (expand-file-name "~/.source")))
+    
+    (message "Using Emacs from: %s" emacs-path)
+    
+    (unless (file-exists-p source-dir)
+      (if (y-or-n-p "~/.source directory doesn't exist. Create it? ")
+          (make-directory source-dir t)
+        (error "Aborted: source directory is required")))
+    
+    (let ((org-dir (expand-file-name "org-mode" source-dir)))
+      (if (file-exists-p org-dir)
+          (when (y-or-n-p "org-mode directory exists. Update it? ")
+            (async-shell-command (format "cd %s && git pull" org-dir) "*org-update*"))
+        (when (y-or-n-p "Clone org-mode repository? ")
+          (async-shell-command 
+           (format "git clone https://git.savannah.gnu.org/git/emacs/org-mode.git %s" org-dir)
+           "*org-clone*")))
+      
+      (when (and (file-exists-p org-dir)
+                (y-or-n-p "Compile org-mode? "))
+        (let ((process (start-process-shell-command 
+                       "org-compile" "*org-compile*"
+                       (format "cd %s && make clean && make" org-dir))))
+          (set-process-sentinel 
+           process
+           (lambda (proc event)
+             (when (string= event "finished\n")
+               (let ((load-path-line (format "(add-to-list 'load-path \"%s/lisp\")" org-dir)))
+                 (message "Compilation finished. Add this line to your init.el to use the new org-mode:\n%s" 
+                         load-path-line))))))))))
 
 #+end_src
 
@@ -2445,16 +2511,20 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (delete-backward-char 1))
 
 (defun scroll-up-and-recenter (arg)
-  "Scroll up ARG lines and recenter."
+  "Scroll up ARG lines and recenter, preserving horizontal position."
   (interactive "P")
-  (scroll-up-command arg)
-  (recenter))
+  (let ((col (current-column)))    ; Save the column position
+    (scroll-up-command arg)
+    (recenter)
+    (move-to-column col)))         ; Restore the column position
 
 (defun scroll-down-and-recenter (arg)
-  "Scroll down ARG lines and recenter."
+  "Scroll down ARG lines and recenter, preserving horizontal position."
   (interactive "P")
-  (scroll-down-command arg)
-  (recenter))
+  (let ((col (current-column)))    ; Save the column position
+    (scroll-down-command arg)
+    (recenter)
+    (move-to-column col)))         ; Restore the column position
 
 #+end_src
 
