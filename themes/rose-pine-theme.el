@@ -185,8 +185,10 @@
     `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
     `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
     `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
-     (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
-     (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
+     ;; (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
+     ;; (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
+    `(org-level-2 ((,class (:foreground ,rose-pine-foam))))
+    `(org-level-3 ((,class (:foreground ,rose-pine-iris))))
     `(org-table ((,class (:foreground ,rose-pine-fg))))
     `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
     `(org-document-info ((,class (:foreground ,rose-pine-gold))))

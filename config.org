@@ -10,7 +10,7 @@
   - [[#system][System]]
   - [[#cursor][Cursor]]
   - [[#undo-tree][Undo tree]]
-  - [[#theme-and][Theme and]]
+  - [[#theme][Theme]]
 - [[#highlighting][Highlighting]]
   - [[#cron][Cron]]
   - [[#treesitter][Treesitter]]
@@ -333,7 +333,7 @@
 
 #+end_src
 
-** Theme and 
+** Theme
 
 #+begin_src emacs-lisp
 
@@ -374,16 +374,32 @@
                                   ;; :foreground "#8bc34a"  ; Adjust the color as desired
                                   :weight 'normal))))
 
-;; This code attempts to delete additional font-lock usage in lisp modes inside comment lines like when i put some word in single quotes.
+;; This is a code that tries to fix a sitaution where commented characters inside single quotes have their own face
+(defun in-string-or-sexp-p (pos)
+  "Return t if POS is inside a string or sexp."
+  (save-excursion
+    (goto-char pos)
+    (let ((ppss (syntax-ppss)))
+      (or (nth 3 ppss)  ; in string
+          (nth 1 ppss))))) ; in sexp
+
 (defun force-comment-face ()
-  "Force everything after semicolon to use comment face, but only when semicolon is the first non-whitespace character."
+  "Force comment face for comments, handling both line comments and inline comments."
   (font-lock-add-keywords
    nil
-   '(("^[[:space:]]*;.*$" 0 font-lock-comment-face prepend))
+   `((,(lambda (limit)
+         (let (found-pos)
+           (while (and (not found-pos)
+                      (re-search-forward ";.*$" limit t))
+             (let ((semi-pos (- (match-beginning 0) 1)))
+               (when (not (in-string-or-sexp-p (1+ semi-pos)))
+                 (setq found-pos (point)))))
+           found-pos))
+      (0 font-lock-comment-face prepend)))
    'append))
 
 ;; Add to lisp mode hooks
-(add-hook 'emacs-lisp-mode-hook 'force-comment-face)
+(add-hook 'emacs-lisp-mode-hook 'force-comment-face) ;; aorisetn 'aorisetn'
 (add-hook 'lisp-mode-hook 'force-comment-face)
 
 #+end_src
@@ -1010,7 +1026,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         trash-directory "~/.local/share/trash/")
 
 (setq wdired-allow-to-create-files t)
-(setq wdired-allow-to-change-permissions t)
+;; (setq wdired-allow-to-change-permissions t)
 
 (defun dired-next-line-preserve-column (arg)
   "Move to the next line in Dired, preserving the current column position."
@@ -1155,6 +1171,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (defalias 'e 'eshell/edit)
 
 (require 'em-tramp) ; to load eshell’s sudo
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (eshell/alias "sudo" "eshell/sudo $*")))
 ;; (setq eshell-prefer-lisp-functions t)
 ;; (setq eshell-prefer-lisp-variables t)
 ;; (setq password-cache t) ; enable password caching
@@ -1999,7 +2018,15 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; (use-package org
 ;;   :config
-;;   (setq org-edit-src-content-indentation 0))
+;;   (setq org-startup-with-inline-images t)
+;;   (advice-add 'yank-media :after
+;;             (lambda (&rest _)
+;;               (when (eq major-mode 'org-mode)
+;;                 (org-display-inline-images)))))
+
+
+;;   ;; Where to save images if using 'save method
+;;   (setq org-yank-image-dir "/home/wurfkreuz/.secret_dotfiles/org/images/")
 
 (defun org-insert-top-level-heading ()
     "Insert a new top-level heading with two empty lines before it."
@@ -2094,7 +2121,8 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package org-download
   :ensure t
   :init
-  (setq org-download-image-dir "/home/wurfkreuz/.local/share/images")
+  ;; (setq org-download-image-dir "/home/wurfkreuz/.local/share/images")
+  (setq org-download-image-dir "/home/wurfkreuz/.secret_dotfiles/org/images/")
   :config
   (add-hook 'org-mode-hook 'org-download-enable)
   (add-hook 'org-mode-hook
@@ -2558,7 +2586,10 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 #+end_src
 
-** Custom commands
+** Custom commands                                                  :ATTACH:
+:PROPERTIES:
+:ID:       b106feae-5e78-4ebd-8856-c54de35699d8
+:END:
 
 #+begin_src emacs-lisp
 
@@ -2888,3 +2919,4 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (move-end-of-line 1))
 
 #+end_src
+

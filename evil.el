@@ -326,6 +326,7 @@
 ;;   (evil-define-key 'insert eshell-mode-map (kbd "M-r") 'counsel-esh-history)
 ;;   (evil-define-key 'normal eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
+
 ;; Dired
 
 (setq evil-move-cursor-back nil)
@@ -451,10 +452,10 @@
   (define-key evil-normal-state-map (kbd "C-t") nil)
   (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
   (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
-  (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point)
-  (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
-  (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
-  (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
+  (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point))
+  ;; (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
+  ;; (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
+  ;; (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
 
 ;; (with-eval-after-load 'evil
 ;;   (evil-define-key 'insert global-map (kbd "TAB") 'my-smart-tab))
@@ -526,3 +527,5 @@
 
 ;; Dired mode specific binding
 (evil-define-key 'normal dired-mode-map (kbd "SPC") #'my-space-as-ctrl-c)
+
+
