@@ -5,7 +5,6 @@
 /desktop/
 /lisp/*
 !/lisp/
-/config.el
 /eln-cache/
 /elpa/
 /elpaca/
