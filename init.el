@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (add-to-list 'load-path "~/.source/org-mode/lisp")
 
 (require 'package)
@@ -21,7 +23,7 @@
 ;; (load "~/.emacs.d/packages/meow.el")
 (load "~/.emacs.d/config.el")
 (load "~/.emacs.d/evil.el")
-(load "~/.secret_dotfiles/emacs/env.el")
+(load "~/.emacs.d/eshell.el")
 
 ;; (custom-set-variables
 ;;  '(auth-source-save-behavior nil))
@@ -32,7 +34,17 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(all-the-icons-dired avy cape clojure-ts-mode corfu docker dockerfile-mode
+                         embark-consult envrc eshell-syntax-highlighting
+                         evil-collection evil-org evil-surround
+                         exec-path-from-shell fish-completion flymake-hadolint
+                         flymake-shellcheck go-mode haskell-mode hydra lua-mode
+                         magit marginalia meow nix-mode orderless org-bullets
+                         org-download org-drill popper pyvenv raku-mode shackle
+                         sudo-edit swiper systemd terraform-mode toc-org
+                         transpose-frame treesit-auto undo-tree vertico
+                         yaml-mode yasnippet zoxide))
  '(package-vc-selected-packages '((zoxide :url "https://gitlab.com/Vonfry/zoxide.el"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

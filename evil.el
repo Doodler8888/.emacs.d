@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (setq evil-want-keybinding nil)
 
 ;; Evil Mode
@@ -63,17 +65,15 @@
   :after evil
   :config
   (setq evil-collection-mode-list '(dashboard dired wdired ibuffer org term ansi
-                                   lsp-ui-imenu elpaca minibuffer ivy proced docker magit package-menu))
+                                   lsp-ui-imenu elpaca minibuffer ivy proced
+                                   docker magit package-menu debug))
   
   ;; Force normal state for package-menu-mode
   (evil-set-initial-state 'package-menu-mode 'normal)
   
   ;; Debug hook to verify
-  (add-hook 'package-menu-mode-hook
-            (lambda ()
-              (message "Package menu mode hook running")
-              (message "Evil state: %s" evil-state)
-              (evil-normal-state))) ; Force normal state if needed
+  (evil-set-initial-state 'package-menu-mode 'normal)
+  (evil-set-initial-state 'debugger-mode 'normal)
   
   (evil-collection-init))
 
@@ -532,3 +532,32 @@
 (evil-define-key 'normal dired-mode-map (kbd "SPC") #'my-space-as-ctrl-c)
 
 
+(with-eval-after-load 'evil
+  (evil-define-key '(normal visual) eshell-mode-map
+    "h" #'backward-char
+    "j" #'next-line
+    "k" #'previous-line
+    "l" #'forward-char))
+
+(with-eval-after-load 'evil
+  ;; For help-mode
+  (evil-define-key 'normal help-mode-map
+    "q" #'quit-window)
+  
+  ;; For some reason, if i try to merge these bindings together, then the
+  ;; binding for package just doesn't work.
+  (with-eval-after-load 'package
+    (evil-define-key 'normal package-menu-mode-map
+      "q" #'quit-window)))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'insert prog-mode-map
+    (kbd "TAB") #'completion-at-point))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'insert org-mode-map
+    (kbd "TAB") #'completion-at-point))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'insert text-mode-map
+    (kbd "TAB") #'completion-at-point))
