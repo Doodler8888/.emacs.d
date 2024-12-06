@@ -23,11 +23,15 @@
   (unless (or (eq major-mode 'eshell-mode)
               (eq major-mode 'special-mode)  ; for *scratch*, *Messages*, etc
               (string-prefix-p "*" (buffer-name)))  ; any special buffer
-    (let ((branch (car (process-lines "git" "branch" "--show-current"))))
-      (when branch
-        (if (> (length branch) 40)
-            (concat (substring branch 0 37) "...")
-          branch)))))
+    (with-temp-buffer
+      (condition-case nil
+          (when (zerop (call-process "git" nil t nil "branch" "--show-current"))
+            (let ((branch (string-trim (buffer-string))))
+              (unless (string-empty-p branch)
+                (if (> (length branch) 40)
+                    (concat (substring branch 0 37) "...")
+                  branch))))
+        (error nil)))))
 
 (setq-default mode-line-format
               '("%e"
@@ -946,17 +950,17 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Dired
 
-;; Basic trash settings
-(setq delete-by-moving-to-trash t)
+;; ;; Basic trash settings
+;; (setq delete-by-moving-to-trash t)
 
-;; Configure connection-local variables for sudo operations
-(connection-local-set-profile-variables
- 'remote-trash-directory
- '((trash-directory . "/sudo::~/.local/share/trash/")))
+;; ;; Configure connection-local variables for sudo operations
+;; (connection-local-set-profile-variables
+;;  'remote-trash-directory
+;;  '((trash-directory . "/sudo::~/.local/share/trash/")))
 
-(connection-local-set-profiles
- `(:application tramp :protocol "sudo" :machine ,(system-name))
- 'remote-trash-directory)
+;; (connection-local-set-profiles
+;;  `(:application tramp :protocol "sudo" :machine ,(system-name))
+;;  'remote-trash-directory)
 
 ;; Auto-revert for sudo files
 (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
@@ -1888,63 +1892,6 @@ If an eshell buffer for the directory already exists, switch to it."
   :init (add-hook 'org-mode-hook 'toc-org-enable))
 
 
-;; Custom functions
-
-(defun org-insert-row-with-floor ()
-  "Insert a new row with a 'floor' above in an Org mode table."
-  (interactive)
-  (org-table-next-field)
-  (beginning-of-line)
-  (insert "|-")
-  (org-table-align)
-  (org-return))
-
-;; (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
-
-(defun FormatToThreshold (char-threshold)
-  "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
-  (interactive "nCharacter Threshold: ")
-  (let ((start (region-beginning))
-        (end (region-end))
-        all-text words formatted-text)
-    (save-excursion
-      (setq all-text (buffer-substring start end))
-      (setq words (split-string all-text))
-      (let ((current-line "")
-            (current-length 0))
-        (dolist (word words)
-          (if (> (+ current-length (length word) 1) char-threshold)
-              (progn
-                (setq formatted-text (concat formatted-text current-line "\n"))
-                (setq current-line word)
-                (setq current-length (length word)))
-            (progn
-              (setq current-line (if (string= "" current-line)
-                                     word
-                                   (concat current-line " " word)))
-              (setq current-length (+ current-length (length word) 1)))))
-        (setq formatted-text (concat formatted-text current-line)))
-      (delete-region start end)
-      (goto-char start)
-      (insert formatted-text))))
-
-(defun my-org-beginning-of-block ()
-  "Move to the beginning of the current block and then one line down."
-  (interactive)
-  (let ((element (org-element-at-point)))
-    (when (memq (org-element-type element) '(src-block quote-block example-block center-block special-block))
-      (goto-char (org-element-property :begin element))
-      (forward-line))))  ; Added this line to move one line down
-
-(defun my-org-end-of-block ()
-  "Move to the end of the current block and then two lines up."
-  (interactive)
-  (let ((element (org-element-at-point)))
-    (when (memq (org-element-type element) '(src-block quote-block example-block center-block special-block))
-      (goto-char (org-element-property :end element))
-      (forward-line -3))))  ; Changed -1 to -3 to move two lines up
-
-
 ;; Keybindings
 
 (defun my-bind-keys (keymap-prefix bindings)
@@ -2107,6 +2054,76 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 
 ;; Custom functions
+
+(defun org-insert-row-with-floor ()
+  "Insert a new row with a 'floor' above in an Org mode table."
+  (interactive)
+  (org-table-next-field)
+  (beginning-of-line)
+  (insert "|-")
+  (org-table-align)
+  (org-return))
+
+;; (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
+
+(defun FormatToThreshold (char-threshold)
+  "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
+  (interactive "nCharacter Threshold: ")
+  (let ((start (region-beginning))
+        (end (region-end))
+        all-text words formatted-text)
+    (save-excursion
+      (setq all-text (buffer-substring start end))
+      (setq words (split-string all-text))
+      (let ((current-line "")
+            (current-length 0))
+        (dolist (word words)
+          (if (> (+ current-length (length word) 1) char-threshold)
+              (progn
+                (setq formatted-text (concat formatted-text current-line "\n"))
+                (setq current-line word)
+                (setq current-length (length word)))
+            (progn
+              (setq current-line (if (string= "" current-line)
+                                     word
+                                   (concat current-line " " word)))
+              (setq current-length (+ current-length (length word) 1)))))
+        (setq formatted-text (concat formatted-text current-line)))
+      (delete-region start end)
+      (goto-char start)
+      (insert formatted-text))))
+
+(defun my-org-beginning-of-block ()
+  "Move to the beginning of the current block and then one line down."
+  (interactive)
+  (let ((element (org-element-at-point)))
+    (when (memq (org-element-type element) '(src-block quote-block example-block center-block special-block))
+      (goto-char (org-element-property :begin element))
+      (forward-line))))  ; Added this line to move one line down
+
+(defun my-org-end-of-block ()
+  "Move to the end of the current block and then two lines up."
+  (interactive)
+  (let ((element (org-element-at-point)))
+    (when (memq (org-element-type element) '(src-block quote-block example-block center-block special-block))
+      (goto-char (org-element-property :end element))
+      (forward-line -3))))  ; Changed -1 to -3 to move two lines up
+
+
+(defvar my-selected-kill nil
+  "Stores the last kill-ring entry selected via `my-browse-kill-ring'.")
+
+(defun my-browse-kill-ring ()
+  "Browse kill ring without yanking. Selected text can be yanked later with regular yank command."
+  (interactive)
+  (let* ((candidates (cl-remove-duplicates kill-ring :test #'equal))
+         (selected (completing-read "Select text: " candidates)))
+    (when selected
+      ;; Remove the selected text from kill-ring if it's there
+      (setq kill-ring (delete selected kill-ring))
+      ;; Add it to the front of kill-ring
+      (kill-new selected)
+      (message "Selected text is now at the top of kill-ring. Use C-y to paste."))))
 
 (defun my-vc-switch-branch ()
   "Switch branch using repository root directory."

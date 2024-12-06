@@ -275,6 +275,6 @@ If the file doesn't exist, display an error message."
           (set-buffer-modified-p nil)
           (message "Updated buffer %s to %s" (buffer-name) new-path))))))
 
-(advice-add 'eshell/mv :around #'my/eshell-file-operation-advice)
-(advice-add 'eshell/cp :around #'my/eshell-file-operation-advice)
-(advice-add 'eshell/rm :around #'my/eshell-file-operation-advice)
+;; (advice-add 'eshell/mv :around #'my/eshell-file-operation-advice)
+;; (advice-add 'eshell/cp :around #'my/eshell-file-operation-advice)
+;; (advice-add 'eshell/rm :around #'my/eshell-file-operation-advice)
