@@ -32,5 +32,3 @@ alias grc git rm --cached $*
 alias grrc git rm -r --cached $*
 alias clear eshell-clear-buffer
 alias sdl systemd-analyze verify $*
-alias grep /usr/bin/grep $*
-alias kill /usr/bin/kill $*

@@ -2586,10 +2586,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 #+end_src
 
-** Custom commands                                                  :ATTACH:
-:PROPERTIES:
-:ID:       b106feae-5e78-4ebd-8856-c54de35699d8
-:END:
+** Custom commands                                             
 
 #+begin_src emacs-lisp
 
@@ -2919,3 +2916,4 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (move-end-of-line 1))
 
 #+end_src
+

@@ -92,11 +92,11 @@
     (cond
      ;; Handle rm command
      ((string= command "rm")
-      (eshell-command-result (concat "sudo rm " (string-join args " "))))
+      (eshell-command-result (concat "eshell/sudo /usr/bin/rm " (string-join args " "))))
      
      ;; Handle apt and its subcommands
      ((string= command "apt")
-      (eshell-command-result (concat "sudo apt " (string-join args " "))))
+      (eshell-command-result (concat "eshell/sudo apt " (string-join args " "))))
      
      ;; Handle other commands
      (t

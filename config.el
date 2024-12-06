@@ -507,6 +507,18 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (setq which-key-max-description-length 40)
 
 
+;; Wgrep
+
+(use-package wgrep
+  :ensure t)
+
+
+;; Commander
+
+(use-package commander
+  :ensure t)
+
+
 ;; Xterm-color
 
 (require 'ansi-color)
@@ -794,7 +806,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (cons 'transient "/home/wurfkreuz/.secret_dotfiles/org/"))
 
    ;; Fall back to the original project root detection
-   (t (when-let ((root (locate-dominating-file path #'project-root-p)))
+   (t (when-let* ((root (locate-dominating-file path #'project-root-p)))
         (cons 'transient (expand-file-name root))))))
 
 
@@ -849,7 +861,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Run consult-line and set up evil search pattern."
   (interactive)
   (let ((selected (consult-line)))
-    (when-let ((search-string (car consult--line-history)))
+    (when-let* ((search-string (car consult--line-history)))
       (message "Search string: %S" search-string)
       (let ((search-string-prop 
              (propertize search-string 
@@ -950,17 +962,17 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Dired
 
-;; ;; Basic trash settings
-;; (setq delete-by-moving-to-trash t)
+;; Basic trash settings
+(setq delete-by-moving-to-trash t)
 
-;; ;; Configure connection-local variables for sudo operations
-;; (connection-local-set-profile-variables
-;;  'remote-trash-directory
-;;  '((trash-directory . "/sudo::~/.local/share/trash/")))
+;; Configure connection-local variables for sudo operations
+(connection-local-set-profile-variables
+ 'remote-trash-directory
+ '((trash-directory . "/sudo::~/.local/share/trash/")))
 
-;; (connection-local-set-profiles
-;;  `(:application tramp :protocol "sudo" :machine ,(system-name))
-;;  'remote-trash-directory)
+(connection-local-set-profiles
+ `(:application tramp :protocol "sudo" :machine ,(system-name))
+ 'remote-trash-directory)
 
 ;; Auto-revert for sudo files
 (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
@@ -1033,7 +1045,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     ;; When `comint-output-filter' is non-nil, the carriage return characters ^M
     ;; are displayed
     (setq-local comint-inhibit-carriage-motion nil)
-    (when-let ((proc (get-buffer-process (current-buffer))))
+    (when-let* ((proc (get-buffer-process (current-buffer))))
       (set-process-filter proc 'comint-output-filter))))
 
 (with-eval-after-load 'shell
@@ -1441,7 +1453,7 @@ If an eshell buffer for the directory already exists, switch to it."
     (message "Current buffer is NOT a Popper popup.")))
 
 ;; (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
-;;   (when-let ((buf (get-buffer (or buffer (current-buffer)))))
+;;   (when-let* ((buf (get-buffer (or buffer (current-buffer)))))
 ;;     (with-current-buffer buf
 ;;       (if (popper-popup-p buf)
 ;;           (setq popper-popup-status 'raised)
@@ -1450,7 +1462,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (defadvice popper-raise-popup (around switch-and-stay (&optional buffer) activate)
   "Advice to modify popper-raise-popup behavior."
-  (when-let ((buf (get-buffer (or buffer (current-buffer)))))
+  (when-let* ((buf (get-buffer (or buffer (current-buffer)))))
     (with-current-buffer buf
       (if (popper-popup-p buf)
           (setq popper-popup-status 'raised)

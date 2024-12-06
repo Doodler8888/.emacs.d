@@ -30,7 +30,7 @@
 
 ;; (defun my/find-venv-in-project ()
 ;;   "Find .venv directory in project structure."
-;;   (when-let ((project-root (directory-file-name (project-root (project-current)))))
+;;   (when-let* ((project-root (directory-file-name (project-root (project-current)))))
 ;;     (message "Searching for .venv in: %s" project-root)
 ;;     (let* ((default-directory project-root)
 ;;            (venv-path (locate-dominating-file 
@@ -42,7 +42,7 @@
 
 ;; (defun my/activate-python-venv ()
 ;;   "Activate venv if found in project structure."
-;;   (when-let ((venv-path (my/find-venv-in-project)))
+;;   (when-let* ((venv-path (my/find-venv-in-project)))
 ;;     (message "Found venv at: %s" venv-path)
 ;;     (pyvenv-activate venv-path)))
 

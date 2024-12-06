@@ -23,7 +23,7 @@ bookmarks
 /test
 /persp-confs/
 %backup%~
-history
+/eshell/history
 eshell_history
 /lock-files/
 /.cache
@@ -35,10 +35,12 @@ projects
 /.lsp
 /mentor/
 #config.org#
+history
+lastdir
 
 # Ignore the entire eshell directory
-/eshell/*
-!/eshell/aliases
+# /eshell/*
+# !/eshell/aliases
 
 .config.org.~undo-tree~
 ielm-history.eld
