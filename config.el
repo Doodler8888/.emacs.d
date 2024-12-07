@@ -205,6 +205,7 @@
 
 (let ((paths '("/home/wurfkreuz/.nix-profile/bin"
               "/home/wurfkreuz/.ghcup/bin"
+              "/home/wurfkreuz/.local/bin"
               "/usr/bin")))
   (setq exec-path (append paths exec-path))
   (setenv "PATH" (concat (string-join paths ":")
@@ -243,7 +244,7 @@
   
 (minibuffer-regexp-mode 1)
 
-(setq ielm-history-file-name "~/.emacs.d/.ielm_history")
+(setq ielm-history-file-name "~/.emacs.d/.ielm-history")
 
 (delete-selection-mode 1)
 
@@ -367,49 +368,9 @@
       (0 'font-lock-string-face keep)))
    t))
 
-;; For some reason this code doesn't allow to handle the case with backtick + single quote.
-;; (defun fix-backtick-quotes-in-string-face ()
-;;   "Force string face for backtick-quoted text inside strings."
-;;   (font-lock-add-keywords
-;;    nil
-;;    `((,(lambda (limit)
-;;          (let (found-pos)
-;;            (message "Searching for backtick-quotes up to position: %s" limit)
-;;            (while (and (not found-pos)
-;;                       (re-search-forward "`'[^'`\n]*'`" limit t))
-;;              (let* ((quote-start (match-beginning 0))
-;;                     (quote-end (match-end 0))
-;;                     (matched-text (buffer-substring-no-properties quote-start quote-end))
-;;                     (in-double (in-double-quotes-p quote-start)))
-;;                (message "Found match: '%s' at %s-%s (in-double: %s)" 
-;;                        matched-text quote-start quote-end in-double)
-;;                (when in-double
-;;                  (setq found-pos (point))
-;;                  (message "Applying face to: %s" matched-text)
-;;                  (remove-text-properties quote-start quote-end '(face nil))
-;;                  (put-text-property quote-start quote-end 'face 'font-lock-string-face))))
-;;            found-pos))
-;;       (0 'font-lock-string-face keep)))
-;;    t))
-
-;; (add-hook 'emacs-lisp-mode-hook 'fix-backtick-quotes-in-string-face)
-
 (add-hook 'emacs-lisp-mode-hook 'fix-quotes-in-string-face)
 (add-hook 'emacs-lisp-mode-hook 'force-comment-face) ;; aorisetn 'aorisetn'
 (add-hook 'lisp-mode-hook 'force-comment-face)
-
-
-;; ;; Icons
-
-(use-package all-the-icons
-  :ensure t
-  :if (display-graphic-p))
-
-(use-package all-the-icons-dired
-  :ensure t
-  :hook (dired-mode . (lambda ()
-                        (when (not (file-remote-p default-directory))
-                          (all-the-icons-dired-mode t)))))
 
 
 ;; Highlighting
@@ -524,59 +485,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (require 'ansi-color)
 (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
 
-;; ;; Disabled it because it renders incorrect output in esheell when i do this:
-;; ;; (setq mylist '(1 2 3))
-;; ;; (1 2 3)
-;; ;; echo 0 $mylist
-;; ;; (0 "")
-
-;; (use-package xterm-color
-;;   :ensure t)
-
-;; ;; ;; Breaks rendering inside docker shells entered using 'shell-command'.
-;; ;; ;; (setq comint-output-filter-functions
-;; ;; ;;       (remove 'ansi-color-process-output comint-output-filter-functions))
-
-;; ;; ;; (defun my/setup-docker-buffer ()
-;; ;; ;;   "Set up a buffer for Docker output."
-;; ;; ;;   (setq-local ansi-color-for-comint-mode t)
-;; ;; ;;   (setq-local xterm-color-preserve-properties t)
-;; ;; ;;   (font-lock-mode -1)  ; Disable font-lock to improve performance
-;; ;; ;;   )
-
-;; ;; ;; (add-hook 'docker-container-logs-mode-hook #'my/setup-docker-buffer)
-
-;; ;; (add-hook 'shell-mode-hook
-;; ;;           (lambda ()
-;; ;;             ;; Disable font-locking in this buffer to improve performance
-;; ;;             (font-lock-mode -1)
-;; ;;             ;; Prevent font-locking from being re-enabled in this buffer
-;; ;;             (make-local-variable 'font-lock-function)
-;; ;;             (setq font-lock-function (lambda (_) nil))
-;; ;;             (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
-
-;; ;; Compilation buffers
-;; (setq compilation-environment '("TERM=xterm-256color"))
-
-;; (defun my/advice-compilation-filter (f proc string)
-;;   (funcall f proc (xterm-color-filter string)))
-
-;; (advice-add 'compilation-filter :around #'my/advice-compilation-filter)
-
-;; (setq comint-output-filter-functions
-;;       (remove 'ansi-color-process-output comint-output-filter-functions))
-
-;; (add-hook 'shell-mode-hook
-;;           (lambda ()
-;;             ;; Disable font-locking in this buffer to improve performance
-;;             (font-lock-mode -1)
-;;             ;; Prevent font-locking from being re-enabled in this buffer
-;;             (make-local-variable 'font-lock-function)
-;;             (setq font-lock-function (lambda (_) nil))
-;;             (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
-
 
 ;; Completion
+
 ;; Snippets
 
 (use-package yasnippet
@@ -902,16 +813,35 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive)
   (let* ((history (ring-elements eshell-history-ring))
          (history (delete-dups history))
-         (command (consult--read history
+         (initial-command (eshell-get-old-input))
+         (finale-command (consult--read history
                                  :prompt "Eshell history: "
+                                 :initial initial-command
                                  :sort nil
                                  :require-match t)))
-    (when command
+    (when finale-command
       (eshell-kill-input)
-      (insert command))))
+      (insert finale-command))))
 
 
-;; ;; Ivy
+;; Icons
+
+(use-package all-the-icons
+  :ensure t
+  :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :ensure t
+  :hook (dired-mode . (lambda ()
+                        (when (not (file-remote-p default-directory))
+                          (all-the-icons-dired-mode t)))))
+
+(use-package all-the-icons-completion
+  :ensure t
+  :after all-the-icons
+  :config
+  (all-the-icons-completion-mode)
+  (add-hook 'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup))
 
 
 ;; With-editor
@@ -954,8 +884,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     "window size"
     ("h" my-shrink-window-horizontally "shrink horizontally")
     ("l" my-enlarge-window-horizontally "enlarge horizontally")
-    ("k" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
-    ("j" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
+    ("j" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
+    ("k" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
     ("t" transpose-frame "transpose windows")
     ("q" nil "quit")))
 
@@ -1421,7 +1351,7 @@ If an eshell buffer for the directory already exists, switch to it."
           ;; "\\*man.*"
           ;; "\\*grep.*"
           ;; "\\*eshell:.*"
-          ;; "\\*Warnings\\*"
+          "\\*Warnings\\*" ;; It opens in a popper like window anyway.
           ;; "\\*xref\\*"
           ;; "\\*Backtrace\\*"
           ;; "\\*eldoc\\*"
@@ -1439,18 +1369,6 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t
   :config
   (shackle-mode 1))
-
-(defun my-buffer-is-popper-popup-p ()
-  "Check if the current buffer is considered a Popper popup."
-  (and (boundp 'popper-popup-status)
-      (buffer-local-value 'popper-popup-status (current-buffer))))
-
-(defun my-check-current-buffer-popper-status ()
-  "Print whether the current buffer is a Popper popup."
-  (interactive)
-  (if (my-buffer-is-popper-popup-p)
-      (message "Current buffer IS a Popper popup.")
-    (message "Current buffer is NOT a Popper popup.")))
 
 ;; (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
 ;;   (when-let* ((buf (get-buffer (or buffer (current-buffer)))))
@@ -1496,24 +1414,6 @@ If an eshell buffer for the directory already exists, switch to it."
       (popper-toggle)
     (flycheck-list-errors)))
 
-;; (defun fix-cycle ()
-;;   (interactive)
-;;   (popper-cycle 1))
-
-;; (defun fix-cycle-backwards ()
-;;   (interactive)
-;;   (popper-cycle-backwards -1))
-
-
-;; Language Support
-;; Pyvenv
-
-;; (use-package pyvenv
-;;   :ensure t
-;;   :config
-;;   (pyvenv-mode 1))
-  
-;; (pyvenv-activate "/home/wurfkreuz/.projects/python-server/server-python/.venv")
 
 (use-package envrc
   :ensure t
@@ -1532,6 +1432,12 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;         (flymake-mode 1)))
 
 ;; (setq flymake-show-diagnostics-at-end-of-line t)
+
+;; (use-package flymake-ansible-lint
+;;   :ensure t
+;;   :commands flymake-ansible-lint-setup
+;;   :hook (((yaml-ts-mode yaml-mode) . flymake-ansible-lint-setup)
+;;          ((yaml-ts-mode yaml-mode) . flymake-mode)))
 
 (defun enable-flymake-mode ()
   "Enable flymake-mode in dockerfile-mode."
@@ -1712,8 +1618,8 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;                 (org-display-inline-images)))))
 
 
-;;   ;; Where to save images if using 'save method
-;;   (setq org-yank-image-dir "/home/wurfkreuz/.secret_dotfiles/org/images/")
+;; Where to save images if using 'save method
+(setq org-yank-image-dir "/home/wurfkreuz/.secret_dotfiles/org/images/")
 
 (defun org-insert-top-level-heading ()
     "Insert a new top-level heading with two empty lines before it."
@@ -1878,22 +1784,33 @@ If an eshell buffer for the directory already exists, switch to it."
 (define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
 (define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
 
-(add-hook 'org-mode-hook 'prettify-symbols-mode)
-  (defun my-org-prettify-symbols ()
-  (push '("#+begin_src" . ">") prettify-symbols-alist)
-    (push '("#+end_src" . ">") prettify-symbols-alist))
+;; (add-hook 'org-mode-hook 'prettify-symbols-mode)
+;;   (defun my-org-prettify-symbols ()
+;;   (push '("#+begin_src" . ">") prettify-symbols-alist)
+;;     (push '("#+end_src" . ">") prettify-symbols-alist))
 
-(eval-after-load 'org
-  '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
+;; (eval-after-load 'org
+;;   '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
 
 
-;; Bullets
+;; Org Modern
 
-(use-package org-bullets
-  :ensure t)
-
-(add-hook 'org-mode-hook 'org-indent-mode)
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+(use-package org-modern
+  :ensure t
+  :init
+  (with-eval-after-load 'org (global-org-modern-mode))
+  ;; (setq org-modern-fold-stars
+  ;;     '(("▶" . "▼")
+  ;;       ("▷" . "▽")
+  ;;       (" ⯈" . " ⯆")
+  ;;       ("  ▹" . "  ▿")
+  ;;       ("   ▸" . "   ▾"))))
+(setq org-modern-fold-stars
+      '(("◉" . "○")            ; diamonds
+        (" ◆" . " ◇")          ; flowers
+        ("  ✦" . "  ✧")        ; stars
+        ("   ❂" . "   ☸")      ; wheels
+        ("    ✤" . "    ❃"))))  ; more flowers/stars
 
 
 ;; Enabling Table of Contents
@@ -1956,10 +1873,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("rr" . my-refresh-command)
 
     ("er" . eval-region)
+    ("eo" . eval-defun)
 
     ("E"  . eshell)
-    ("en" . eshell-new)
-    ("ep" . eshell-pop) 
+    ;; ("en" . eshell-new)
+    ;; ("ep" . eshell-pop) 
 
     ("gm" . pop-global-mark) 
 
@@ -1998,42 +1916,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 ;; (global-unset-key (kbd "C-t"))
 ;; (global-unset-key (kbd "C-y"))
 
-(defun my-yas-complete-or-expand ()
-  "Expand Yasnippet if possible, otherwise trigger completion-at-point."
-  (interactive)
-  (if (and (bound-and-true-p yas-minor-mode)
-           (fboundp 'yas-expand) 
-          (yas-expand))
-      t  ; Yasnippet expanded successfully
-    (vertico-insert)
-    (completion-at-point)))
-
 (defun my-org-cycle-or-preview ()
   "Cycle in Org mode or show the next completion preview candidate."
   (interactive)
   (yas-expand)
   (org-cycle))
-
-(defun my-smart-tab ()
-  "Custom tab behavior based on context."
-  (interactive)
-  (cond
-   ;; In Vertico buffers, use the default Vertico behavior
-   ((and (boundp 'vertico-map)
-         (eq (current-local-map) vertico-map))
-    (call-interactively (lookup-key vertico-map (kbd "TAB"))))
-
-   ;; Check if Corfu is available and enabled
-   ((and (featurep 'corfu) corfu-mode)
-    (if (and (boundp 'corfu--frame) (frame-live-p corfu--frame))
-        ;; If Corfu popup is already active, insert the candidate
-        (corfu-insert)
-      ;; Otherwise, trigger completion-at-point, which Corfu will handle
-      (completion-at-point)))
-
-   ;; In Eshell, minibuffers, or any other context, use completion-at-point
-   (t
-    (completion-at-point))))
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
@@ -2235,6 +2122,34 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     (recenter)
     (move-to-column col)))         ; Restore the column position
 
+(defun my-previous-history-element (arg)
+  "Insert the previous history element, moving the cursor to the end."
+  (interactive "p")
+  (previous-history-element arg)
+  (move-end-of-line 1))
+
+(defun my-next-history-element (arg)
+  "Insert the next history element, moving the cursor to the end."
+  (interactive "p")
+  (next-history-element arg)
+  (move-end-of-line 1))
+
+(defun add-execute-permissions-to-current-file ()
+  "Add execute permissions to the file associated with the current buffer."
+  (interactive)
+  (when buffer-file-name
+    (let ((filename (file-truename buffer-file-name)))
+      (shell-command (concat "chmod +x " (shell-quote-argument filename)))
+      (message "Execute permissions added to %s" filename))))
+
+(defun add-write-permissions-to-current-file ()
+  "Add execute permissions to the file associated with the current buffer."
+  (interactive)
+  (when buffer-file-name
+    (let ((filename (file-truename buffer-file-name)))
+      (shell-command (concat "chmod +w " (shell-quote-argument filename)))
+      (revert-buffer)
+      (message "Write permissions added to %s" filename))))
 
 ;; Wrap edit
 
@@ -2298,13 +2213,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
         (funcall-interactively #'dired target))
     (unless zoxide (error "Install zoxide"))
     (unless target (error "No Match"))))
-
-;; Creats errors sometimes in emacs launch for some reason
-;;(defun push ()
-;;  "Execute git add, commit, and push in sequence asynchronously."
-;;  (interactive)
-;;  ;; Execute 'push' asynchronously and display output in a separate buffer.
-;;  (async-shell-command "push"))
 
 (defun push-all ()
   "Execute git add, commit, and push in sequence asynchronously."
@@ -2422,23 +2330,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Open a specific file."
   (interactive)
   (find-file "/etc/systemd/system"))
-
-(defun add-execute-permissions-to-current-file ()
-  "Add execute permissions to the file associated with the current buffer."
-  (interactive)
-  (when buffer-file-name
-    (let ((filename (file-truename buffer-file-name)))
-      (shell-command (concat "chmod +x " (shell-quote-argument filename)))
-      (message "Execute permissions added to %s" filename))))
-
-(defun add-write-permissions-to-current-file ()
-  "Add execute permissions to the file associated with the current buffer."
-  (interactive)
-  (when buffer-file-name
-    (let ((filename (file-truename buffer-file-name)))
-      (shell-command (concat "chmod +w " (shell-quote-argument filename)))
-      (revert-buffer)
-      (message "Write permissions added to %s" filename))))
 
 (defun crontab-edit ()
   "Run `crontab -e' in a emacs buffer."
@@ -2579,14 +2470,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (interactive)
   (find-file "~/.emacs.d/evil.el"))
 
-(defun my-previous-history-element (arg)
-  "Insert the previous history element, moving the cursor to the end."
-  (interactive "p")
-  (previous-history-element arg)
-  (move-end-of-line 1))
-
-(defun my-next-history-element (arg)
-  "Insert the next history element, moving the cursor to the end."
-  (interactive "p")
-  (next-history-element arg)
-  (move-end-of-line 1))
+(defun todo ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/org/emacs/todo/todo.org"))

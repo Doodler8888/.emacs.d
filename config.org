@@ -63,6 +63,8 @@
 - [[#custom-functions-1][Custom functions]]
   - [[#wrap-edit][Wrap edit]]
   - [[#custom-commands][Custom commands]]
+- [[#aorisetnaorisetn][aorisetnaorisetn]]
+  - [[#oairsetnoairsetn][oairsetnoairsetn]]
 
 * GENERAL EMACS SETTING
 ** Visuals
@@ -2917,3 +2919,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 #+end_src
 
+
+* aorisetnaorisetn
+** oairsetnoairsetn
+*** aoirsetnoairsetn
+**** iorsetnoairsentoa
+****** aoirsetnoairsetn

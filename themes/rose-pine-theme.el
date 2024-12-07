@@ -87,6 +87,8 @@
     `(all-the-icons-ivy-rich-package-status-installed-face ((,class (:foreground ,rose-pine-subtext))))
     `(all-the-icons-ivy-rich-off-face ((,class (:foreground ,rose-pine-subtext))))
     `(all-the-icons-ivy-rich-file-priv-no ((,class (:foreground ,rose-pine-subtext))))
+    `(all-the-icons-completion-dir-face ((,class (:foreground ,rose-pine-gold))))
+    `(all-the-icons-dsilver ((,class (:foreground ,rose-pine-fg))))
 
     ;; Evil
     `(evil-ex-info ((,class (:foreground ,rose-pine-love))))
@@ -187,8 +189,11 @@
     `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
      ;; (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
      ;; (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
-    `(org-level-2 ((,class (:foreground ,rose-pine-foam))))
-    `(org-level-3 ((,class (:foreground ,rose-pine-iris))))
+    `(org-level-1 ((,class (:foreground ,rose-pine-pine))))
+    `(org-level-2 ((,class (:foreground ,rose-pine-rose))))
+    `(org-level-3 ((,class (:foreground ,rose-pine-foam))))
+    `(org-level-4 ((,class (:foreground ,rose-pine-iris))))
+    `(org-level-6 ((,class (:foreground ,rose-pine-subtext))))
     `(org-table ((,class (:foreground ,rose-pine-fg))))
     `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
     `(org-document-info ((,class (:foreground ,rose-pine-gold))))

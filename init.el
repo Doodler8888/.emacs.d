@@ -24,6 +24,7 @@
 (load "~/.emacs.d/config.el")
 (load "~/.emacs.d/evil.el")
 (load "~/.emacs.d/eshell/eshell.el")
+(load "~/.emacs.d/eshell/eshell-doc.el")
 (load "~/.emacs.d/eshell/bak.el")
 
 ;; (custom-set-variables
@@ -36,17 +37,19 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(package-selected-packages
-   '(all-the-icons-dired avy cape clojure-ts-mode commander corfu docker
-                         dockerfile-mode embark-consult envrc
-                         eshell-syntax-highlighting evil-collection evil-org
-                         evil-surround exec-path-from-shell fish-completion
-                         flymake-hadolint flymake-shellcheck go-mode
-                         haskell-mode hydra lua-mode magit marginalia meow
-                         nix-mode orderless org-bullets org-download org-drill
-                         popper pyvenv raku-mode shackle sudo-edit swiper
-                         systemd terraform-mode toc-org transpose-frame
-                         treesit-auto undo-tree vertico wgrep yaml-mode
-                         yasnippet zoxide))
+   '(all-the-icons-completion all-the-icons-dired avy cape clojure-ts-mode
+                              commander corfu docker dockerfile-mode
+                              embark-consult envrc eshell-syntax-highlighting
+                              evil-collection evil-org evil-surround
+                              exec-path-from-shell fish-completion
+                              flymake-ansible-lint flymake-hadolint
+                              flymake-shellcheck go-mode haskell-mode hydra
+                              lua-mode magit marginalia meow nix-mode orderless
+                              org-bullets org-download org-drill org-modern
+                              popper pyvenv raku-mode shackle sudo-edit swiper
+                              systemd terraform-mode toc-org transpose-frame
+                              treesit-auto undo-tree vertico wgrep yaml-mode
+                              yasnippet zoxide))
  '(package-vc-selected-packages '((zoxide :url "https://gitlab.com/Vonfry/zoxide.el"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

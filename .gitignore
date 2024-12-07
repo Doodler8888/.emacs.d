@@ -44,6 +44,8 @@ lastdir
 
 .config.org.~undo-tree~
 ielm-history.eld
+.ielm_history
+.ielm-history
 
 \#config.org\#
 

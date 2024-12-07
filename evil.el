@@ -561,3 +561,7 @@
 (with-eval-after-load 'evil
   (evil-define-key 'insert text-mode-map
     (kbd "TAB") #'completion-at-point))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'normal prog-mode-map
+    (kbd "M-.") #'xref-find-definitions))
