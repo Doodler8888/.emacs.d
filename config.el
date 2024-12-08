@@ -1415,6 +1415,20 @@ If an eshell buffer for the directory already exists, switch to it."
     (flycheck-list-errors)))
 
 
+;; Emacs-eat
+
+(use-package eat
+  :ensure t
+  :vc (:url "https://github.com/kephale/emacs-eat"
+       :rev :newest)
+  :config
+  (add-hook 'eshell-first-time-mode-hook
+            #'eat-eshell-visual-command-mode)
+  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
+
+
+;; Envrc
+
 (use-package envrc
   :ensure t
   :config
@@ -1607,11 +1621,29 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Org Mode
 ;; General
 
-(setq org-edit-src-content-indentation 0)
 
-;; (use-package org
-;;   :config
-;;   (setq org-startup-with-inline-images t)
+(use-package org
+  :config
+  (setq org-startup-with-inline-images t)
+  (setq org-edit-src-content-indentation 0)
+  (setq org-blank-before-new-entry
+        '((heading . nil)
+          (plain-list-item . nil)))
+  
+  ;; Disable auto-blank-lines in self-insert-command
+  (setq org-list-empty-line-terminates-plain-lists nil)
+  (setq org-empty-line-terminates-plain-lists nil)
+  )
+
+;; Prevent org-meta-return from folding images
+(defun my/preserve-images-advice (orig-fun &rest args)
+  "Preserve inline image display when inserting new items."
+  (let ((org-inline-image-overlays (copy-sequence org-inline-image-overlays)))
+    (apply orig-fun args)
+    (org-display-inline-images)))
+
+(advice-add 'org-insert-item :around #'my/preserve-images-advice)
+
 ;;   (advice-add 'yank-media :after
 ;;             (lambda (&rest _)
 ;;               (when (eq major-mode 'org-mode)
@@ -1619,7 +1651,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 
 ;; Where to save images if using 'save method
-(setq org-yank-image-dir "/home/wurfkreuz/.secret_dotfiles/org/images/")
+(setq org-yank-image-dir "~/.secret_dotfiles/org/images/")
 
 (defun org-insert-top-level-heading ()
     "Insert a new top-level heading with two empty lines before it."

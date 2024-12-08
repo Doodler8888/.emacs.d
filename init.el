@@ -38,19 +38,22 @@
  '(auth-source-save-behavior nil)
  '(package-selected-packages
    '(all-the-icons-completion all-the-icons-dired avy cape clojure-ts-mode
-                              commander corfu docker dockerfile-mode
-                              embark-consult envrc eshell-syntax-highlighting
-                              evil-collection evil-org evil-surround
-                              exec-path-from-shell fish-completion
-                              flymake-ansible-lint flymake-hadolint
-                              flymake-shellcheck go-mode haskell-mode hydra
-                              lua-mode magit marginalia meow nix-mode orderless
-                              org-bullets org-download org-drill org-modern
-                              popper pyvenv raku-mode shackle sudo-edit swiper
-                              systemd terraform-mode toc-org transpose-frame
-                              treesit-auto undo-tree vertico wgrep yaml-mode
-                              yasnippet zoxide))
- '(package-vc-selected-packages '((zoxide :url "https://gitlab.com/Vonfry/zoxide.el"))))
+                              commander corfu docker dockerfile-mode eat
+                              emacs-eat embark-consult envrc
+                              eshell-syntax-highlighting evil-collection
+                              evil-org evil-surround exec-path-from-shell
+                              fish-completion flymake-ansible-lint
+                              flymake-hadolint flymake-shellcheck go-mode
+                              haskell-mode hydra lua-mode magit marginalia meow
+                              nix-mode orderless org-bullets org-download
+                              org-drill org-modern popper pyvenv raku-mode
+                              shackle sudo-edit swiper systemd terraform-mode
+                              toc-org transpose-frame treesit-auto undo-tree
+                              vertico wgrep yaml-mode yasnippet zoxide))
+ '(package-vc-selected-packages
+   '((eat :url "https://github.com/kephale/emacs-eat")
+     (emacs-eat :url "https://github.com/kephale/emacs-eat")
+     (zoxide :url "https://gitlab.com/Vonfry/zoxide.el"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
