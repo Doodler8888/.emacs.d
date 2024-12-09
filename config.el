@@ -209,38 +209,17 @@
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "10:00pm")
 
-;; (setq comint-use-prompt-regexp nil)
-
 (setq auto-revert-verbose nil)
 
 (setq display-buffer-base-action '(nil . ((some-window . mru))))
 
-;; (with-eval-after-load 'comint
-;;   (add-hook 'comint-mode-hook #'completion-preview-mode))
-;; (add-hook 'eshell-mode-hook #'completion-preview-mode)
-;; (add-hook 'minibuffer-mode-hook #'completion-preview-mode)
-
-;; (defun my-conditional-completion-preview ()
-;;   "Enable completion-preview-mode selectively."
-;;   (if (or (eq this-command 'eval-expression)
-;;           (eq this-command 'async-shell-command)
-;;           (eq this-command 'shell-command))
-;;           ;; (eq this-command 'evil-ex))
-;;       (completion-preview-mode 1)
-;;     (completion-preview-mode -1)))
-
-;; (add-hook 'minibuffer-setup-hook #'my-conditional-completion-preview)
-
-
-(with-eval-after-load 'completion-preview
-  ;; Show the preview already after two symbol characters
-  (setq completion-preview-minimum-symbol-length 2))
   
 (minibuffer-regexp-mode 1)
 
 (setq ielm-history-file-name "~/.emacs.d/.ielm-history")
 
 (delete-selection-mode 1)
+
 
 
 ;; Cursor
@@ -685,7 +664,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
        :rev :newest))
 
 
-;; Project/Projectile
+;; Project.el
 
 (require 'project)
 (setq project-list-file-name-function #'project-files-find-function)
@@ -945,13 +924,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; (add-hook 'git-commit-setup-hook 'my-git-commit-setup)
 
 
-;; Tramp
-
-;; (require 'tramp)
-
-;; ;; (setq tramp-direct-async-process t)
-
-
 ;; Async shell command
 
 ;; Execute async shell command on a current file
@@ -978,8 +950,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 
 ;; Sessions
-
-;; (setq desktop-restore-eager 10)
 
 (defvar current-desktop-session-name nil
   "The name of the currently loaded desktop session.")
@@ -1234,10 +1204,6 @@ If an eshell buffer for the directory already exists, switch to it."
           (rename-buffer eshell-buffer-name)
           (eshell/cd dir))))))
 
-;; Don't set on 'M-p'
-;; (with-eval-after-load 'evil
-;;   (define-key evil-normal-state-map (kbd "M-p") 'SpawnEshellInProjectRoot))
-
 (defun kill-all-eshell-buffers ()
   "Kill all Eshell buffers."
   (interactive)
@@ -1422,6 +1388,15 @@ If an eshell buffer for the directory already exists, switch to it."
   (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
 
 
+;; Buffer termination
+
+(use-package buffer-terminator
+  :ensure t
+  :custom
+  (buffer-terminator-verbose nil)
+  :config
+  (buffer-terminator-mode 1))
+
 ;; Envrc
 
 (use-package envrc
@@ -1431,18 +1406,8 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Flymake
 
-;; (use-package flymake
-;;   :ensure t
-;;   :config
-;;   ;; Define a function to enable flymake-mode in dockerfile-mode
-;;   (defun enable-flymake-mode ()
-;;     "Enable flymake-mode in dockerfile-mode."
-;;     (if (string-equal major-mode "dockerfile-mode")
-;;         (flymake-mode 1)))
-
 ;; (setq flymake-show-diagnostics-at-end-of-line t)
 
-(flymake-mode 1)
 (use-package flymake-ansible-lint
   :hook (((yaml-ts-mode yaml-mode) . flymake-ansible-lint-setup)
          ((yaml-ts-mode yaml-mode) . flymake-mode)))
@@ -1539,7 +1504,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
 
 
-;; Flycheck
+;; ;; Flycheck
 
 (defun my/set-flycheck-faces ()
   (with-eval-after-load 'flycheck
@@ -1577,7 +1542,8 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-hook 'nix-mode-hook 'eglot-ensure)
 
 (add-hook 'python-ts-mode-hook 'eglot-ensure)
-(add-hook 'yaml-ts-mode-hook #'eglot-ensure)
+;; I need to prevent a situation where ansible-lint and eglot work on the same buffer.
+;; (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
 (add-hook 'terraform-mode-hook #'eglot-ensure)
 
 (add-hook 'eglot-managed-mode-hook (lambda () (eldoc-mode -1)))
@@ -1719,16 +1685,6 @@ If an eshell buffer for the directory already exists, switch to it."
                          load-path-line))))))))))
 
 
-;; Org capture
-
-;; Set the path to your Org notes file
-(setq org-default-notes-file "/home/wurfkreuz/.secret_dotfiles/org/notes/quick_notes.org")
-
-(setq org-capture-templates
-      '(("n" "Note" plain (file org-default-notes-file)
-        "%?\nEntered on %U\n" :append t :empty-lines-before 1)))
-
-
 ;; Org download
 
 (use-package org-download
@@ -1775,12 +1731,6 @@ If an eshell buffer for the directory already exists, switch to it."
                '("sequence" org-drill-present-sequence nil t)))
 
 
-;; Org Agenda
-
-(setq org-agenda-files
-      '("~/.secret_dotfiles/org/todo_list.org"))
-
-
 ;; Templates
 
 (require 'org-tempo)
@@ -1810,14 +1760,6 @@ If an eshell buffer for the directory already exists, switch to it."
 (define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
 (define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
 
-;; (add-hook 'org-mode-hook 'prettify-symbols-mode)
-;;   (defun my-org-prettify-symbols ()
-;;   (push '("#+begin_src" . ">") prettify-symbols-alist)
-;;     (push '("#+end_src" . ">") prettify-symbols-alist))
-
-;; (eval-after-load 'org
-;;   '(add-hook 'org-mode-hook 'my-org-prettify-symbols))
-
 
 ;; Org Modern
 
@@ -1825,12 +1767,6 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t
   :init
   (with-eval-after-load 'org (global-org-modern-mode))
-  ;; (setq org-modern-fold-stars
-  ;;     '(("▶" . "▼")
-  ;;       ("▷" . "▽")
-  ;;       (" ⯈" . " ⯆")
-  ;;       ("  ▹" . "  ▿")
-  ;;       ("   ▸" . "   ▾"))))
 (setq org-modern-fold-stars
       '(("◉" . "○")            ; diamonds
         (" ◆" . " ◇")          ; flowers
@@ -1902,7 +1838,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("eo" . eval-defun)
 
     ("E"  . eshell)
-    ;; ("en" . eshell-new)
+    ;; ("en" . eshell-new-instance)
     ;; ("ep" . eshell-pop) 
 
     ("gm" . pop-global-mark) 
@@ -1980,14 +1916,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 ;; Custom functions
 
-(defun add-path (new-path)
-  "Add NEW-PATH to both exec-path and PATH environment variable."
-  ;; (setq exec-path (append (list new-path) exec-path))
-  (setenv "PATH" (concat new-path
-                        ":"
-                        (getenv "PATH")))
-  (message "Added %s to paths" new-path))
-
 (defun org-insert-row-with-floor ()
   "Insert a new row with a 'floor' above in an Org mode table."
   (interactive)
@@ -1998,33 +1926,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (org-return))
 
 ;; (define-key org-mode-map (kbd "C-c f") 'org-insert-row-with-floor)
-
-(defun FormatToThreshold (char-threshold)
-  "Formats the selected text to not exceed CHAR-THRESHOLD characters per line."
-  (interactive "nCharacter Threshold: ")
-  (let ((start (region-beginning))
-        (end (region-end))
-        all-text words formatted-text)
-    (save-excursion
-      (setq all-text (buffer-substring start end))
-      (setq words (split-string all-text))
-      (let ((current-line "")
-            (current-length 0))
-        (dolist (word words)
-          (if (> (+ current-length (length word) 1) char-threshold)
-              (progn
-                (setq formatted-text (concat formatted-text current-line "\n"))
-                (setq current-line word)
-                (setq current-length (length word)))
-            (progn
-              (setq current-line (if (string= "" current-line)
-                                     word
-                                   (concat current-line " " word)))
-              (setq current-length (+ current-length (length word) 1)))))
-        (setq formatted-text (concat formatted-text current-line)))
-      (delete-region start end)
-      (goto-char start)
-      (insert formatted-text))))
 
 (defun my-org-beginning-of-block ()
   "Move to the beginning of the current block and then one line down."
@@ -2232,27 +2133,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
           (kill-new path-to-copy)
           (message "Copied path '%s' to the clipboard." path-to-copy))
       (message "Current buffer has no associated path to copy.")))) ;
-
-(defun z (q)
-  "Query zoxide and launch dired or change directory in Eshell."
-  (interactive "sZoxide: ")
-  (if-let
-      ((zoxide (executable-find "zoxide"))
-       (target
-        (with-temp-buffer
-          (if (= 0 (call-process zoxide nil t nil "query" q))
-              (string-trim (buffer-string))))))
-      (if (derived-mode-p 'eshell-mode)
-          (eshell/cd target)
-        (funcall-interactively #'dired target))
-    (unless zoxide (error "Install zoxide"))
-    (unless target (error "No Match"))))
-
-(defun push-all ()
-  "Execute git add, commit, and push in sequence asynchronously."
-  (interactive)
-  ;; Execute 'push' asynchronously and display output in a separate buffer.
-  (async-shell-command "push -a"))
 
 (defun home ()
   "Open a specific file."
@@ -2502,7 +2382,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (defun evil ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.emacs.d/evil.el"))
+  (find-file "~/.emacs.d/other/evil.el"))
 
 (defun todo ()
   "Open a specific file."

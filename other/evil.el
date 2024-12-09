@@ -25,8 +25,6 @@
   (define-key evil-normal-state-map (kbd "C-d") 'evil-half-scroll-down-and-recenter)
   (setq evil-shift-width 2))
 
-;; (add-hook 'term-mode-hook (lambda () (undo-tree-mode 1)))
-;; (add-hook 'eat-mode-hook (lambda () (undo-tree-mode 1)))
 ;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
 ;; (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
 
@@ -42,23 +40,6 @@
                           (?* . ("*" . "*"))
                           (?= . ("=" . "="))
                           (?+ . ("+" . "+"))))))
-
-;; (use-package evil-commentary
-;;   :ensure t
-;;   :config
-;;   (evil-commentary-mode))
-
-(use-package evil-org
-  :ensure t
-  :after org
-  :config
-  ;; (require 'evil-org-agenda)
-  ;; (evil-org-agenda-set-keys)
-  (add-hook 'org-mode-hook 'evil-org-mode)
-  (add-hook 'evil-org-mode-hook
-            (lambda ()
-              (evil-org-set-key-theme)))
-)
 
 (use-package evil-collection
   :ensure t
@@ -432,19 +413,6 @@
 
 ;; Custom functions
 
-(defun my/evil-org-open-below (count)
-  "Open a new line below the current one and insert a new Org list item if on a list item, otherwise just open a new line."
-  (interactive "p")
-  (if (org-in-item-p)
-      (progn
-        (end-of-line)
-        (org-insert-item))
-    (evil-open-below count)))
-
-(with-eval-after-load 'evil
-  (evil-define-key 'normal org-mode-map
-    "o" 'my/evil-org-open-below))
-
 (with-eval-after-load 'evil
   (evil-define-key 'normal org-mode-map (kbd "[[") 'my-org-beginning-of-block)
   (evil-define-key 'normal org-mode-map (kbd "]]") 'my-org-end-of-block))
@@ -456,15 +424,6 @@
   (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
   (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel)
   (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point))
-  ;; (define-key evil-insert-state-map (kbd "C-f i h") 'insert-path-from-ivy-fzf-home)
-  ;; (define-key evil-insert-state-map (kbd "C-f i c") 'insert-path-from-ivy-fzf-project)
-  ;; (define-key evil-insert-state-map (kbd "C-f i r") 'insert-path-from-ivy-fzf-root))
-
-;; (with-eval-after-load 'evil
-;;   (evil-define-key 'insert global-map (kbd "TAB") 'my-smart-tab))
-  ;; (evil-define-key 'insert global-map (kbd "TAB") 'my-yas-complete-or-expand))
-  ;; (evil-define-key 'insert global-map (kbd "TAB") 'completion-at-point))
-  ;; (evil-define-key 'insert global-map (kbd "TAB") 'vertico-insert))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map (kbd "C-a") 'my-org-cycle-or-preview))

@@ -1,18 +1,26 @@
+(require 'esh-cmd)  ;; Ensure that eshell command functions are loaded
+(require 'em-tramp) ; to load eshell’s sudo
+
+
 ;; Eshell
 
 (use-package eshell
   :ensure nil
   :hook ((eshell-mode . eshell-specific-outline-regexp))
-          ;; (eshell-directory-change . sync-dir-in-buffer-name)
-  ;; :custom
-  ;; (eshell-input-filter 'my-eshell-input-filter)
   :config
+  (setq eshell-hist-move-to-end nil)
+  (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
+        eshell-history-size 100000
+        eshell-buffer-maximum-lines 5000
+        ;; eshell-save-history-on-exit t
+        eshell-history-file-name "~/.emacs.d/eshell_history"
+        eshell-hist-ignoredups t
+        eshell-scroll-to-bottom-on-input t
+        eshell-banner-message ""
+        eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
   (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
 
-;; (setq eshell-history-append t)
-
-;; (setq eshell-destroy-buffer-when-process-dies t)
 
 (use-package eshell-syntax-highlighting
   :ensure t
@@ -21,17 +29,6 @@
   (eshell-syntax-highlighting-global-mode +1))
 
 (add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-;; ;; ;;(add-hook 'eshell-mode-hook 'eshell-toggle-direct-send) ;; !!! very careful !!!
-
-(setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
-      eshell-history-size 100000
-      eshell-buffer-maximum-lines 5000
-      ;; eshell-save-history-on-exit t
-      eshell-history-file-name "~/.emacs.d/eshell_history"
-      eshell-hist-ignoredups t
-      eshell-scroll-to-bottom-on-input t
-      eshell-banner-message ""
-      eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
 
 (add-hook 'eshell-mode-hook
           (lambda ()
@@ -64,7 +61,6 @@
 
 (defun setup-eshell-keys ()
   (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
-;; (define-key eshell-mode-map (kbd "M-r") 'counsel-esh-history))
 
 (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
@@ -81,13 +77,13 @@
       ;; Optionally, you can add a fallback mechanism here, e.g., prompting the user for a TRAMP address
       )))
 
+(defalias 'e 'eshell/edit)
+
+
 (defun eshell/touch (file)
   "Create a file using TRAMP-aware touch implementation."
   (write-region "" nil (expand-file-name file) nil 0))
 
-(require 'esh-cmd)  ;; Ensure that eshell command functions are loaded
-
-;; eshell-s.el
 
 (defun eshell/s (&rest args)
   "Wrapper for sudo. Usage: s ls /path or s apt install package"
@@ -140,19 +136,6 @@
                  (car args)))))))))
 
 
-(defalias 'e 'eshell/edit)
-
-(require 'em-tramp) ; to load eshell’s sudo
-;; (setq eshell-prefer-lisp-functions t)
-;; (setq eshell-prefer-lisp-variables t)
-;; (setq password-cache t) ; enable password caching
-;; (setq password-cache-expiry 10)
-;; (add-hook 'eshell-load-hook (lambda () (add-to-list 'eshell-modules-list 'eshell-tramp)))
-
-;; (add-hook 'eshell-mode-hook
-;;           (lambda ()
-;;             (eshell/alias "sudo" "eshell/sudo $*")))
-
 (defun eshell-clear-buffer ()
   "Clear the current Eshell buffer."
   (interactive)
@@ -163,28 +146,12 @@
     ;; Reinsert the prompt at the correct position
     (eshell-reset)))
 
-(defun eshell-new ()
+(defun eshell-new-instance ()
   "Create a new Eshell buffer with a unique name and open it in the current window."
   (interactive)
   (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
     (eshell)
     (switch-to-buffer eshell-buffer-name)))
-
-(defun eshell-new-pop ()
-  "Create a new Eshell buffer with a unique name, open it in the current window, and toggle popper type if popper-mode is active."
-  (interactive)
-  (let ((eshell-buffer-name (generate-new-buffer-name "*another eshell buffer*")))
-    (eshell)
-    (switch-to-buffer eshell-buffer-name)
-    ;; Check if popper-mode is enabled and popper-toggle-type is available
-    (when (and (featurep 'popper) (bound-and-true-p popper-mode))
-      (popper-toggle-type eshell-buffer-name))))
-
-(defun eshell-pop ()
-  "Execute the eshell command and launch eshell as a popper buffer"
-  (interactive)
-  (eshell)
-  (popper-toggle-type))
 
 (defun eshell-expand-filename-at-point ()
   "Expand the filename at point to its absolute path in eshell."
@@ -216,21 +183,13 @@
     nil))
 (advice-add 'eshell/cat :override #'eshell/cat-with-syntax-highlighting)
 
+
+;; Probably this is used for 'consutl-outline' to work in eshell.
 (defun eshell-specific-outline-regexp ()
   (setq-local outline-regexp eshell-prompt-regexp))
 
-(defun eshell-redirect-to-buffer (buffer)
-  "Auto create command for redirecting to buffer."
-  (interactive (list (read-buffer "Redirect to buffer: ")))
-  (insert (format " >>> #<%s>" buffer)))
 
-(defun echo-current-line ()
-  "Echo the entire current line to the echo area."
-  (interactive)
-  (message "%s" (buffer-substring-no-properties
-                   (line-beginning-position)
-                   (line-end-position))))
-
+;; Code for accessing files in eshell on a la output
 (defun echo-last-word-of-current-line ()
   "Echo the last word of the current line to the echo area and return it."
   (interactive)
@@ -251,34 +210,8 @@ If the file doesn't exist, display an error message."
         (find-file last-word)
       (message "File or directory not found: %s" last-word))))
 
-;; Function to get the last 10 recently visited directories
-(defun my-recent-directories ()
-  "Get a list of the last 10 recently visited directories."
-  (let ((dirs (delete-dups
-               (mapcar 'file-name-directory recentf-list))))
-    (seq-filter #'identity
-                (cl-remove-if-not #'file-directory-p dirs))))
 
-;; Function to prompt user to select a directory and change to it in Eshell
-(defun my-eshell-change-to-recent-directory ()
-  "Prompt user to select a recent directory and change to it in Eshell."
-  (interactive)
-  (let* ((recent-dirs (my-recent-directories))
-         (selected-dir (completing-read "Choose recent directory: " recent-dirs nil t)))
-    (when (and selected-dir (file-directory-p selected-dir))
-      ;; Change directory
-      (eshell/cd selected-dir)
-      ;; Remove the old prompt
-      (let ((inhibit-read-only t))
-        (save-excursion
-          (goto-char (point-max))
-          ;; Move to the previous prompt and delete it
-          (when (re-search-backward eshell-prompt-regexp nil t)
-            (delete-region (point) (point-max)))))
-      ;; Display the new prompt
-      (eshell-emit-prompt))))
-
-
+;; Advice that updates buffers after i use eshell utilities that change state of a filesystem
 (defun my/eshell-file-operation-advice (orig-fun &rest args)
   "Generic advice for eshell file operations to update buffers."
   (let* ((source (directory-file-name (expand-file-name (car args))))  ; Remove trailing slash
@@ -311,3 +244,29 @@ If the file doesn't exist, display an error message."
 ;; (advice-add 'eshell/mv :around #'my/eshell-file-operation-advice)
 ;; (advice-add 'eshell/cp :around #'my/eshell-file-operation-advice)
 ;; (advice-add 'eshell/rm :around #'my/eshell-file-operation-advice)
+
+
+;; Disable "History item: x" messages when scrolling history items.
+(advice-add 'eshell-previous-matching-input :around
+            (lambda (orig-fun &rest args)
+              (let ((inhibit-message t))
+                (apply orig-fun args))))
+
+(advice-add 'eshell-next-matching-input :around
+            (lambda (orig-fun &rest args)
+              (let ((inhibit-message t))
+                (apply orig-fun args))))
+
+
+;; Allows to use zoxide
+(defun eshell/z (q)
+  "Query zoxide and change directory in Eshell."
+  (if-let
+      ((zoxide (executable-find "zoxide"))
+       (target
+        (with-temp-buffer
+          (if (= 0 (call-process zoxide nil t nil "query" q))
+              (string-trim (buffer-string))))))
+      (eshell/cd target)
+    (unless zoxide (error "Install zoxide"))
+    (unless target (error "No Match"))))
