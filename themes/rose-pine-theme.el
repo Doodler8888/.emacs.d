@@ -249,7 +249,7 @@
     `(yas-field-highlight-face ((,class (:background unspecified))))
 
     ;; Tempel
-    `(tempel-field ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
+    `(tempel-field ((,class (:foreground ,rose-pine-fg :background nil))))
     ;; `(tempel-form ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
 
     ;; Swiper

@@ -11,7 +11,7 @@
         evil-want-C-i-jump nil
         evil-want-integration t
         evil-want-minibuffer t
-  evil-undo-system 'undo-tree)
+        evil-undo-system 'undo-tree)
   :config
   (evil-mode 1)
   (evil-set-initial-state 'custom-theme-choose-mode 'normal)
@@ -490,14 +490,6 @@
 ;; Dired mode specific binding
 (evil-define-key 'normal dired-mode-map (kbd "SPC") #'my-space-as-ctrl-c)
 
-
-(with-eval-after-load 'evil
-  (evil-define-key '(normal visual) eshell-mode-map
-    "h" #'backward-char
-    "j" #'next-line
-    "k" #'previous-line
-    "l" #'forward-char))
-
 (with-eval-after-load 'evil
   ;; For help-mode
   (evil-define-key 'normal help-mode-map
@@ -507,7 +499,10 @@
   ;; binding for package just doesn't work.
   (with-eval-after-load 'package
     (evil-define-key 'normal package-menu-mode-map
-      "q" #'quit-window)))
+      "q" #'quit-window))
+
+  (evil-define-key 'normal messages-buffer-mode-map
+    "q" #'quit-window))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert prog-mode-map
@@ -524,3 +519,15 @@
 (with-eval-after-load 'evil
   (evil-define-key 'normal prog-mode-map
     (kbd "M-.") #'xref-find-definitions))
+
+;; (with-eval-after-load 'evil
+;;   (evil-define-key 'insert minibuffer-mode-map
+;;     (kbd "C-n") #'next-line
+;;     (kbd "C-p") #'previous-line
+;;     ))
+
+(with-eval-after-load 'evil
+  (evil-define-key 'insert global-map
+    (kbd "M-`") #'temple-next
+    (kbd "M-~") #'temple-previous
+    ))

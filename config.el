@@ -101,6 +101,8 @@
 
 ;; Auto pairing
 (add-hook 'prog-mode-hook (electric-pair-mode t))
+;; I don't know what it does exactly, it's more like a test
+(setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
 ;; Don't pair '<'
 (setq electric-pair-inhibit-predicate
@@ -197,6 +199,9 @@
 (global-auto-revert-mode 1)
 
 (setq-default truncate-lines t)
+(add-hook 'prog-mode-hook (lambda () ;; For some reason just using the code above doesn't work
+                           (setq truncate-lines t)))
+
 
 (setq enable-local-variables t)
 (setq enable-dir-local-variables t)
@@ -469,15 +474,47 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
 
 
-;; Completion
-
 ;; Snippets
 
-(use-package yasnippet
+;; Configure Tempel
+(use-package tempel
   :ensure t
+  ;; Require trigger prefix before template name when completing.
+  :custom
+  (tempel-trigger-prefix "<")
+
+  :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+         ("M-*" . tempel-insert))
+
+  :init
+
+  ;; Setup completion at point
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.
+    ;; `tempel-expand' only triggers on exact matches. Alternatively use
+    ;; `tempel-complete' if you want to see all matches, but then you
+    ;; should also configure `tempel-trigger-prefix', such that Tempel
+    ;; does not trigger too often when you don't expect it. NOTE: We add
+    ;; `tempel-expand' *before* the main programming mode Capf, such
+    ;; that it will be tried first.
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand
+                      completion-at-point-functions)))
+
+  (add-hook 'conf-mode-hook 'tempel-setup-capf)
+  (add-hook 'prog-mode-hook 'tempel-setup-capf)
+  (add-hook 'text-mode-hook 'tempel-setup-capf)
+
+  ;; Optionally make the Tempel templates available to Abbrev,
+  ;; either locally or globally. `expand-abbrev' is bound to C-x '.
+  ;; (add-hook 'prog-mode-hook #'tempel-abbrev-mode)
+  ;; (global-tempel-abbrev-mode)
   :config
-  (yas-global-mode 1)
-  (yas-reload-all))
+  (setq tempel-path "~/.emacs.d/other/templates")
+)
+
+(use-package tempel-collection
+  :ensure t)
 
 
 ;; Orderless
@@ -895,6 +932,13 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; that i want to perform action there
 (setq dired-dwim-target t)
 
+(defun my/pwd (&optional insert)
+  "Like `pwd', but without printing any additional stuff except the path itself"
+  (interactive "P")
+  (if insert
+      (insert default-directory)
+    (message default-directory)))
+
 (defun dired-next-line-preserve-column (arg)
   "Move to the next line in Dired, preserving the current column position."
   (interactive "p")
@@ -1277,109 +1321,6 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (use-package transpose-frame
   :ensure t)
-
-
-;; Popper
-
-(defun my/show-popper-echo-line ()
-  "Briefly toggle popper to show the echo line."
-  (interactive)
-  ;; Ensure popper-mode and popper-echo-mode are active
-  (when (and popper-mode popper-echo-mode)
-    ;; Toggle a popper window and immediately toggle it back
-    (popper-toggle-latest)
-    (popper-toggle-latest)))
-
-(use-package popper
-  :ensure t
-  :bind (("M-`" . my/show-popper-echo-line))
-         ;; ("M-f"   . popper-toggle))
-         ;; ("M-~"   . popper-cycle))
-  :init
-  (setq popper-window-height 0.33)
-  (setq popper-reference-buffers
-        '("\\*Messages\\*"
-          ;; "Output\\*$"
-          ;; "\\*Async Shell Command\\*"
-          "*Flymake diagnostics.*"
-          ;; "*Flycheck errors.*"
-          ;; "*Python.*"
-          ;; "\\* docker container logs .*\\*"
-          ;; "\\* docker inspect .*\\*"
-          ;; "\\*daemons-output for .*\\*"
-          ;; "\\*kubernetes logs.*\\*"
-          ;; "\\*compilation\\*"
-          ;; "\\*eshell\\*.*"
-          ;; "\\*persistent-shell\\*.*"
-          "\\*cider-repl.*"
-          "\\*cider-doc.*"
-          "\\*cider-error.*"
-          ;; "\\*helpful.*"
-          ;; "\\*man.*"
-          ;; "\\*grep.*"
-          ;; "\\*eshell:.*"
-          "\\*Warnings\\*" ;; It opens in a popper like window anyway.
-          ;; "\\*xref\\*"
-          ;; "\\*Backtrace\\*"
-          ;; "\\*eldoc\\*"
-          ;; "\\*Ement Notifications\\*"
-          ;; "Output\\*$"
-          ;; "\\*Dtache Shell Command\\*"
-          ;; "\\*mu4e-update\\*"
-          ;; help-mode
-          ;; compilation-mode
-          ))
-  (popper-mode +1)
-  (popper-echo-mode +1))
-
-(use-package shackle
-  :ensure t
-  :config
-  (shackle-mode 1))
-
-;; (define-advice popper-raise-popup (:override (&optional buffer) switch-and-stay)
-;;   (when-let* ((buf (get-buffer (or buffer (current-buffer)))))
-;;     (with-current-buffer buf
-;;       (if (popper-popup-p buf)
-;;           (setq popper-popup-status 'raised)
-;;         (setq popper-popup-status nil))
-;;       (setq mode-line-format (default-value 'mode-line-format)))))
-
-(defadvice popper-raise-popup (around switch-and-stay (&optional buffer) activate)
-  "Advice to modify popper-raise-popup behavior."
-  (when-let* ((buf (get-buffer (or buffer (current-buffer)))))
-    (with-current-buffer buf
-      (if (popper-popup-p buf)
-          (setq popper-popup-status 'raised)
-        (setq popper-popup-status nil))
-      (setq mode-line-format (default-value 'mode-line-format)))))
-
-(defun popper-toggle-type-original ()
-  "Run popper-toggle-type with the original behavior by temporarily disabling the advice."
-  (interactive)
-  (ad-disable-advice 'popper-raise-popup 'around 'switch-and-stay)
-  (ad-activate 'popper-raise-popup)
-  (unwind-protect
-      (call-interactively 'popper-toggle-type)
-    (ad-enable-advice 'popper-raise-popup 'around 'switch-and-stay)
-    (ad-activate 'popper-raise-popup)))
-
-;; (global-set-key (kbd "M-f") 'm-f-toggle-or-forward-word)
-(global-set-key (kbd "M-f") 'popper-toggle)
-
-(defun popper-flymake-diagnostics ()
-  "Popper window specifically for Flymake diagnostics buffer."
-  (interactive)
-  (if (string-match-p "\\*.*Flymake diagnostics.*\\*" (buffer-name))
-      (popper-toggle)
-    (flymake-show-buffer-diagnostics)))
-
-(defun popper-flycheck-diagnostics ()
-  "Popper window specifically for Flycheck errors buffer."
-  (interactive)
-  (if (string-match-p "\\*Flycheck errors\\*" (buffer-name))
-      (popper-toggle)
-    (flycheck-list-errors)))
 
 
 ;; Emacs-eat
@@ -1849,10 +1790,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 ;; (global-unset-key (kbd "C-y"))
 
 (defun my-org-cycle-or-preview ()
-  "Cycle in Org mode or show the next completion preview candidate."
+  "Cycle in Org mode or expand Tempel snippet."
   (interactive)
-  (yas-expand)
-  (org-cycle))
+  (call-interactively #'tempel-expand)  ; Call it as if typed directly, because otherwise it doesn't work
+  (when (derived-mode-p 'org-mode)
+    (org-cycle)))
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
@@ -2091,7 +2033,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (let ((path-to-copy nil))
     (cond
      ((eq major-mode 'dired-mode)    ; Dired buffer
-      (setq path-to-copy (pwd)))
+      (setq path-to-copy (my/pwd)))
      ((eq major-mode 'eshell-mode)   ; Eshell buffer
       (setq path-to-copy (eshell/pwd)))
      (t                              ; Default: Regular File buffer
@@ -2353,9 +2295,15 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (load-file "~/.emacs.d/init.el"))
 
 (defun messages ()
-  "Switch to the *Messages* buffer."
+  "Switch to *Messages* buffer and ensure normal state."
   (interactive)
-  (switch-to-buffer "*Messages*"))
+  (switch-to-buffer "*Messages*")
+  (evil-force-normal-state)) ;; Because otherwise non-evil q binding doesn't work
+
+;; (defun messages ()
+;;   "Switch to the *Messages* buffer."
+;;   (interactive)
+;;   (switch-to-buffer "*Messages*"))
 
 (defun config ()
   "Open a specific file."
