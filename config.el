@@ -81,10 +81,8 @@
 
 ;; System
 
-;; (server-start)
 (setq erc-nick "wurfkreuz")
 (global-set-key (kbd "C-x u") 'windmove-up)
-;; (setq evil-want-keybinding nil)
 
 (recentf-mode)
 
@@ -115,12 +113,7 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
-;; Autoinsertion on the search buffer
-(setq ivy-initial-inputs-alist nil)
-
-;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (setq-default indent-tabs-mode nil)
-;; (savehist-mode 1)
 (use-package savehist
   :ensure nil
   :hook
@@ -140,6 +133,7 @@
 (make-directory (concat user-emacs-directory "auto-saves") t)
 (setq auto-save-file-name-transforms
       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+(setq auto-save-list-file-prefix (concat user-emacs-directory "auto-saves/.saves-"))
 ;; There was a situation where emacs created an autosave file in a directory
 ;; that i was currently for an eshell buffer.
 (add-hook 'eshell-mode-hook
@@ -205,9 +199,9 @@
 
 (let ((paths '("/home/wurfkreuz/.nix-profile/bin"
               "/home/wurfkreuz/.ghcup/bin"
-              "/home/wurfkreuz/.local/bin"
+              "/home/wurfkreuz/test-dir/"
               "/usr/bin")))
-  (setq exec-path (append paths exec-path))
+  ;; (setq exec-path (append paths exec-path))
   (setenv "PATH" (concat (string-join paths ":")
                         ":"
                         (getenv "PATH"))))
@@ -694,6 +688,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; Project/Projectile
 
 (require 'project)
+(setq project-list-file-name-function #'project-files-find-function)
 
 (defcustom project-root-markers
   '("Cargo.toml" "compile_commands.json" "compile_flags.txt"
@@ -1447,19 +1442,18 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; (setq flymake-show-diagnostics-at-end-of-line t)
 
-;; (use-package flymake-ansible-lint
-;;   :ensure t
-;;   :commands flymake-ansible-lint-setup
-;;   :hook (((yaml-ts-mode yaml-mode) . flymake-ansible-lint-setup)
-;;          ((yaml-ts-mode yaml-mode) . flymake-mode)))
+(flymake-mode 1)
+(use-package flymake-ansible-lint
+  :hook (((yaml-ts-mode yaml-mode) . flymake-ansible-lint-setup)
+         ((yaml-ts-mode yaml-mode) . flymake-mode)))
 
-(defun enable-flymake-mode ()
-  "Enable flymake-mode in dockerfile-mode."
-  (if (string-equal major-mode "dockerfile-mode")
-      (flymake-mode 1)))
+;; (defun enable-flymake-mode ()
+;;   "Enable flymake-mode in dockerfile-mode."
+;;   (if (string-equal major-mode "dockerfile-mode")
+;;       (flymake-mode 1)))
 
-;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
-(add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
+;; ;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
+;; (add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
 
 (use-package flymake-hadolint
   :ensure t)
@@ -1985,6 +1979,14 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 
 ;; Custom functions
+
+(defun add-path (new-path)
+  "Add NEW-PATH to both exec-path and PATH environment variable."
+  ;; (setq exec-path (append (list new-path) exec-path))
+  (setenv "PATH" (concat new-path
+                        ":"
+                        (getenv "PATH")))
+  (message "Added %s to paths" new-path))
 
 (defun org-insert-row-with-floor ()
   "Insert a new row with a 'floor' above in an Org mode table."

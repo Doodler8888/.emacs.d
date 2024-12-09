@@ -19,16 +19,30 @@
 ;;     "config.org"
 ;;     user-emacs-directory))
 
-;; (load "~/.emacs.d/packages/baremeow.el")
-;; (load "~/.emacs.d/packages/meow.el")
 (load "~/.emacs.d/config.el")
-(load "~/.emacs.d/evil.el")
+(load "~/.emacs.d/other/evil.el")
 (load "~/.emacs.d/eshell/eshell.el")
-(load "~/.emacs.d/eshell/eshell-doc.el")
-(load "~/.emacs.d/eshell/bak.el")
+
+;; (load "~/.emacs.d/eshell/eshell-doc.el")
+;; (load "~/.emacs.d/eshell/bak.el")
 
 ;; (custom-set-variables
 ;;  '(auth-source-save-behavior nil))
+
+;; (use-package org-modern
+;;   :ensure t
+;;   :init
+;;   (with-eval-after-load 'org (global-org-modern-mode))
+;;   (setq org-modern-fold-stars
+;;         '(("◉" . "○")            ; diamonds
+;;           (" ◆" . " ◇")          ; flowers
+;;           ("  ✦" . "  ✧")        ; stars
+;;           ("   ❂" . "   ☸")      ; wheels
+;;           ("    ✤" . "    ❃"))))  ; more flowers/stars
+
+;; (defun load-org ()
+;;   (interactive)
+;;   (load-file "~/.emacs.d/init.el"))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
