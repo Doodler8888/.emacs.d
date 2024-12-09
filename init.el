@@ -50,7 +50,21 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(all-the-icons-completion all-the-icons-dired avy buffer-terminator cape
+                              clojure-ts-mode commander compile-angel corfu
+                              docker dockerfile-mode eat emacs-eat
+                              embark-consult envrc eshell-syntax-highlighting
+                              evil-collection evil-org evil-surround
+                              exec-path-from-shell fish-completion
+                              flymake-ansible-lint flymake-hadolint
+                              flymake-shellcheck go-mode haskell-mode hydra
+                              lua-mode magit marginalia meow nix-mode orderless
+                              org-bullets org-download org-drill org-modern
+                              page-break-lines popper pyvenv raku-mode shackle
+                              sudo-edit swiper systemd terraform-mode toc-org
+                              transpose-frame treesit-auto undo-tree vertico
+                              wgrep yaml-mode yasnippet zoxide))
  '(package-vc-selected-packages
    '((eat :url "https://github.com/kephale/emacs-eat")
      (emacs-eat :url "https://github.com/kephale/emacs-eat")

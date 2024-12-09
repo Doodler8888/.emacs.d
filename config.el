@@ -352,6 +352,12 @@
 (add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
 
 
+;; Compilation
+
+(use-package page-break-lines
+  :ensure t
+  :hook (compilation-mode . page-break-lines-mode))
+
 ;; Cron
 
  ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
@@ -2116,14 +2122,12 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 ;; Custom commands
 
 (defun Cp ()
-  "Copy the full path of the current buffer's file to the clipboard (or appropriate path)."
+  "Copy full path of the current buffer"
   (interactive)
   (let ((path-to-copy nil))
     (cond
      ((eq major-mode 'dired-mode)    ; Dired buffer
-      (setq path-to-copy (if (dired-get-file-for-visit)
-                             (expand-file-name (dired-get-file-for-visit))
-                           (expand-file-name default-directory))))
+      (setq path-to-copy (pwd)))
      ((eq major-mode 'eshell-mode)   ; Eshell buffer
       (setq path-to-copy (eshell/pwd)))
      (t                              ; Default: Regular File buffer
@@ -2133,6 +2137,22 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
           (kill-new path-to-copy)
           (message "Copied path '%s' to the clipboard." path-to-copy))
       (message "Current buffer has no associated path to copy.")))) ;
+
+;;
+(defun Cpn ()
+  "Copy the full path of the current item under cursor"
+  (interactive)
+  (let ((path-to-copy nil))
+    (cond
+     ((eq major-mode 'dired-mode)    ; Dired buffer
+      (setq path-to-copy (if (dired-get-file-for-visit)
+                             (expand-file-name (dired-get-file-for-visit))
+                           (expand-file-name default-directory)))))
+    (if path-to-copy
+        (progn
+          (kill-new path-to-copy)
+          (message "Copied path '%s' to the clipboard." path-to-copy))
+      (message "Is this a dired-mode buffer?")))) ;
 
 (defun home ()
   "Open a specific file."
