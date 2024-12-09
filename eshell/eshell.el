@@ -6,7 +6,9 @@
 
 (use-package eshell
   :ensure nil
-  :hook ((eshell-mode . eshell-specific-outline-regexp))
+  :hook ((eshell-mode . eshell-specific-outline-regexp)
+         (eshell-mode . eshell-hist-mode)
+         (eshell-mode . (lambda () (setq-local scroll-margin 0))))
   :config
   (setq eshell-hist-move-to-end nil)
   (setq eshell-rc-script (concat user-emacs-directory "eshell/eshelrc")
@@ -28,14 +30,7 @@
   :config
   (eshell-syntax-highlighting-global-mode +1))
 
-(add-hook 'eshell-mode-hook 'eshell-hist-mode)  ; Enable Eshell history mode
-
-(add-hook 'eshell-mode-hook
-          (lambda ()
-            (setq-local scroll-margin 0)))
-
 (with-eval-after-load 'eshell
-  ;; Set eshell-save-history-on-exit to nil
   (setq eshell-save-history-on-exit nil)
 
 ;; Define eshell-append-history function
@@ -87,48 +82,29 @@
 
 (defun eshell/s (&rest args)
   "Wrapper for sudo. Usage: s ls /path or s apt install package"
-  ;; Split the arguments into command and remaining args
-  ;; For 's ls /root': command = "ls", args = ("/root")
   (let* ((command (car args))
          (args (cdr args)))
     (cond
-     ;; Handle rm command specially
      ((string= command "rm")
-      ;; Set up TRAMP sudo environment for the current directory
-      ;; If arg is absolute path (like /root), make it /sudo::/root
-      ;; Otherwise keep current directory
       (let ((default-directory 
              (if (and (car args) (file-name-absolute-p (car args)))
                  (file-name-directory (concat "/sudo::" (car args)))
                default-directory)))
-        ;; Execute rm command with TRAMP sudo prefix for absolute paths
-        ;; For 's rm /root/file': becomes (rm "/sudo::/root/file")
         (eshell-named-command 
          "rm"
          (list (if (and (car args) (file-name-absolute-p (car args)))
                    (concat "/sudo::" (car args))
                  (car args))))))
-     
-     ;; Handle apt commands (like 'apt install package')
-     ;; These always run with root privileges
      ((string= command "apt")
-      ;; Set root directory for apt operations
       (let ((default-directory "/sudo::/"))
-        ;; Pass apt subcommands directly
-        ;; For 's apt install emacs': becomes (apt "install" "emacs")
         (eshell-named-command 
          "apt"
          args)))
-     
-     ;; Handle all other commands (ls, cat, etc.)
      (t
-      ;; Same TRAMP setup as rm command
       (let ((default-directory 
              (if (and (car args) (file-name-absolute-p (car args)))
                  (file-name-directory (concat "/sudo::" (car args)))
                default-directory)))
-        ;; Execute command with TRAMP sudo prefix for absolute paths
-        ;; For 's ls /root': becomes (ls "/sudo::/root")
         (eshell-named-command 
          command
          (list (if (and (car args) (file-name-absolute-p (car args)))

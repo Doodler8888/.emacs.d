@@ -37,6 +37,7 @@ projects
 #config.org#
 history
 lastdir
+/var
 
 # Ignore the entire eshell directory
 # /eshell/*

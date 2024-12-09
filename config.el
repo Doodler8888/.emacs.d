@@ -85,6 +85,10 @@
 (global-set-key (kbd "C-x u") 'windmove-up)
 
 (recentf-mode)
+(add-to-list 'recentf-exclude
+             (recentf-expand-file-name no-littering-var-directory))
+(add-to-list 'recentf-exclude
+             (recentf-expand-file-name no-littering-etc-directory))
 
 (setq vc-follow-symlinks t)
 
@@ -129,23 +133,23 @@
         'executable-make-buffer-file-executable-if-script-p)
 
 (setq undo-tree-auto-save-history t)
-(setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
-(make-directory (concat user-emacs-directory "auto-saves") t)
-(setq auto-save-file-name-transforms
-      `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
-(setq auto-save-list-file-prefix (concat user-emacs-directory "auto-saves/.saves-"))
-;; There was a situation where emacs created an autosave file in a directory
-;; that i was currently for an eshell buffer.
-(add-hook 'eshell-mode-hook
-          (lambda ()
-            (setq-local auto-save-default nil)))
-(make-directory (concat user-emacs-directory "lock-files") t)
-(setq lock-file-name-transforms
-      `((".*" ,(concat user-emacs-directory "lock-files/") t)))
-(setq desktop-dirname (concat user-emacs-directory "desktop/"))
-(make-directory (concat user-emacs-directory "backups") t)
-(setq backup-directory-alist
-      `((".*" . ,(concat user-emacs-directory "backups/"))))
+;; (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
+;; (make-directory (concat user-emacs-directory "auto-saves") t)
+;; (setq auto-save-file-name-transforms
+;;       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+;; (setq auto-save-list-file-prefix (concat user-emacs-directory "auto-saves/.saves-"))
+;; ;; There was a situation where emacs created an autosave file in a directory
+;; ;; that i was currently for an eshell buffer.
+;; (add-hook 'eshell-mode-hook
+;;           (lambda ()
+;;             (setq-local auto-save-default nil)))
+;; (make-directory (concat user-emacs-directory "lock-files") t)
+;; (setq lock-file-name-transforms
+;;       `((".*" ,(concat user-emacs-directory "lock-files/") t)))
+;; (setq desktop-dirname (concat user-emacs-directory "desktop/"))
+;; (make-directory (concat user-emacs-directory "backups") t)
+;; (setq backup-directory-alist
+;;       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
 (defun my-disable-auto-save-for-scratch ()
 (when (string= (buffer-name) "*scratch*")
@@ -740,9 +744,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :ensure t
   :custom
   (vertico-scroll-margin 0) ;; Different scroll margin
-  ;; (vertico-count 20) ;; Show more candidates
-  ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  ;; It clears the current path in the minibuffer if it's overshadowed
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
   :init
   (vertico-mode)
   :config
@@ -887,8 +891,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; Auto-revert for sudo files
 (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
 
-(setq wdired-allow-to-create-files t)
-;; (setq wdired-allow-to-change-permissions t)
+;; If i have another pane with dired in the same tab, dired will try to guess
+;; that i want to perform action there
+(setq dired-dwim-target t)
 
 (defun dired-next-line-preserve-column (arg)
   "Move to the next line in Dired, preserving the current column position."
@@ -903,11 +908,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (let ((col (current-column)))
     (dired-previous-line arg)
     (move-to-column col)))
-
-(defun OpenDiredBufferInCurrentWindow ()
-  (interactive)
-  (let ((current-dir (file-name-directory (or (buffer-file-name) default-directory))))
-    (dired current-dir)))
 
 
 ;; Magit
@@ -1654,42 +1654,6 @@ If an eshell buffer for the directory already exists, switch to it."
             (insert (concat "\n  " line)))))
     (message "No region active")))
 
-(defun install-org-from-source ()
-  "Install org-mode from source."
-  (interactive)
-  (let* ((current-org-path (locate-library "org"))
-         (emacs-path (expand-file-name invocation-name invocation-directory))
-         (source-dir (expand-file-name "~/.source")))
-    
-    (message "Using Emacs from: %s" emacs-path)
-    
-    (unless (file-exists-p source-dir)
-      (if (y-or-n-p "~/.source directory doesn't exist. Create it? ")
-          (make-directory source-dir t)
-        (error "Aborted: source directory is required")))
-    
-    (let ((org-dir (expand-file-name "org-mode" source-dir)))
-      (if (file-exists-p org-dir)
-          (when (y-or-n-p "org-mode directory exists. Update it? ")
-            (async-shell-command (format "cd %s && git pull" org-dir) "*org-update*"))
-        (when (y-or-n-p "Clone org-mode repository? ")
-          (async-shell-command 
-           (format "git clone https://git.savannah.gnu.org/git/emacs/org-mode.git %s" org-dir)
-           "*org-clone*")))
-      
-      (when (and (file-exists-p org-dir)
-                (y-or-n-p "Compile org-mode? "))
-        (let ((process (start-process-shell-command 
-                       "org-compile" "*org-compile*"
-                       (format "cd %s && make clean && make" org-dir))))
-          (set-process-sentinel 
-           process
-           (lambda (proc event)
-             (when (string= event "finished\n")
-               (let ((load-path-line (format "(add-to-list 'load-path \"%s/lisp\")" org-dir)))
-                 (message "Compilation finished. Add this line to your init.el to use the new org-mode:\n%s" 
-                         load-path-line))))))))))
-
 
 ;; Org download
 
@@ -1849,7 +1813,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("gm" . pop-global-mark) 
 
-    ("fe" . OpenDiredBufferInCurrentWindow)
+    ("fe" . dired-jump)
 
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
@@ -2138,7 +2102,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
           (message "Copied path '%s' to the clipboard." path-to-copy))
       (message "Current buffer has no associated path to copy.")))) ;
 
-;;
 (defun Cpn ()
   "Copy the full path of the current item under cursor"
   (interactive)
