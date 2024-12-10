@@ -33,12 +33,19 @@
                   branch))))
         (error nil)))))
 
+(defun my-window-number ()
+  "Get the current window number."
+  (let* ((windows (window-list nil nil (frame-first-window)))
+         (num (cl-position (selected-window) windows)))
+    (format "%d" (1+ (or num 0)))))
+
 (setq-default mode-line-format
               '("%e"
+                (:eval (my-window-number))  ; Will update dynamically now
                 mode-line-front-space
                 (:eval (if (buffer-file-name)
-                           (abbreviate-file-name (buffer-file-name))
-                         "%b"))
+                          (abbreviate-file-name (buffer-file-name))
+                        "%b"))
                 " | "
                 (:eval (my-mode-line-major-mode))
                 " | "
@@ -396,11 +403,50 @@
   :ensure t
   )
 
+(with-eval-after-load 'avy
+  (defun avy-action-copy-word (pt)
+    "Copy word at PT and paste at current point (like evil's iw)."
+    (let ((original-window (selected-window))
+          (original-point (point)))
+      (save-excursion
+        (goto-char pt)
+        (let ((bounds (evil-inner-word)))
+          (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
+      (select-window original-window)
+      (goto-char original-point)
+      (yank))
+    t)
 
-;; TLDR
+  (defun avy-action-copy-WORD (pt)
+    "Copy WORD at PT and paste at current point (like evil's iW)."
+    (let ((original-window (selected-window))
+          (original-point (point)))
+      (save-excursion
+        (goto-char pt)
+        (let ((bounds (evil-inner-WORD)))
+          (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
+      (select-window original-window)
+      (goto-char original-point)
+      (yank))
+    t)
 
-(use-package tldr)
+  (defun avy-action-copy-quoted (pt)
+    "Copy quoted text at PT and paste at current point."
+    (let ((original-window (selected-window))
+          (original-point (point)))
+      (save-excursion
+        (goto-char pt)
+        (let ((bounds (evil-select-quote ?\" t t)))
+          (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
+      (select-window original-window)
+      (goto-char original-point)
+      (yank))
+    t)
 
+  ;; Add to dispatch alist
+  (setf (alist-get ?w avy-dispatch-alist) 'avy-action-copy-word
+        (alist-get ?W avy-dispatch-alist) 'avy-action-copy-WORD
+        (alist-get ?\" avy-dispatch-alist) 'avy-action-copy-quoted))
 
 ;; Docker
 
@@ -717,6 +763,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (require 'project)
 (setq project-list-file-name-function #'project-files-find-function)
 
+(defun project-find-file-all ()
+  "Like project-find-file but always includes all files regardless of VCS status."
+  (interactive)
+  (project-find-file t))
+
 (defcustom project-root-markers
   '("Cargo.toml" "compile_commands.json" "compile_flags.txt"
     "project.clj" ".git" "deps.edn" "shadow-cljs.edn")
@@ -749,6 +800,25 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :ensure t
   :bind
   ("C-M-;" . embark-act))
+
+(defun my/find-file-embark (region)
+  "Find file using the selected REGION as filename."
+  (find-file (string-trim region)))
+
+(with-eval-after-load 'embark
+  (add-to-list 'embark-target-finders
+               (lambda ()
+                 (when (use-region-p)
+                   (cons 'region (buffer-substring-no-properties
+                                (region-beginning)
+                                (region-end))))))
+  
+  (add-to-list 'embark-pre-action-hooks
+               '(find-file embark--mark-target))
+  
+  (add-to-list 'embark-keymap-alist '(region . embark-region-map))
+  
+  (define-key embark-region-map (kbd "RET") #'my/find-file-embark))
 
 
 ;; Vertico/Consult
@@ -1122,17 +1192,16 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 ;; Buffers
 ;; Spawn and Pointer
 
-(add-to-list 'display-buffer-alist
-             '("*Faces*" display-buffer-same-window))
-
-(add-to-list 'display-buffer-alist
-             '("*info*" display-buffer-same-window))
-
-(add-to-list 'display-buffer-alist
-             '("*helpful*" display-buffer-same-window))
-
-(add-to-list 'display-buffer-alist
-             '("*Help*" display-buffer-same-window))
+(setq display-buffer-alist
+      (mapcar (lambda (name)
+                `(,name display-buffer-same-window (nil)))
+              '("*Faces*"
+                "*info*"
+                "*helpful*"
+                "*Help*"
+                "*Warnings*"
+                "*Async Shell Command*"
+                "*debug*")))
 
 ;; (add-to-list 'display-buffer-alist
 ;;              '("^\\*\\(Man\\|Faces\\) "
@@ -1705,7 +1774,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (my-bind-keys "C-c "
   '(
-    ("ff" . project-find-file)
+    ;; ("ff" . project-find-file)
+    ("ff" . project-find-file-all)
     ("fd" . project-find-dir)
     ("fb" . ido-switch-buffer)
     ;; ("ff" . ivy-fzf-project)
@@ -1760,7 +1830,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
 
-    ("mm" . messages)
+    ;; ("mm" . messages)
+    ;; ("mm" . toggle-messages-buffer)
 
     ("gbs" . my-vc-switch-branch)
     ("gbc" . vc-create-branch)
@@ -1776,7 +1847,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "M-;") 'my-noop)
 
 (global-unset-key (kbd "C-s"))
-(global-unset-key (kbd "M-TAB"))
 (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 (global-set-key (kbd "C-s C-s") 'my/consult-line-with-evil)
 ;; (global-set-key (kbd "C-s C-s") 'consult-line)
@@ -1799,6 +1869,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (global-unset-key (kbd "C-<tab>"))
 (global-set-key (kbd "<C-tab>") 'previous-buffer)
+(global-unset-key (kbd "S-<tab>"))
+(global-set-key (kbd "S-<iso-lefttab>") 'next-buffer)
 
 (defun my-refresh-command ()
   "Choose the appropriate refresh command based on the major mode."
@@ -1828,6 +1900,46 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 
 ;; Custom functions
+
+(defun toggle-special-buffer (buffer-name-pattern show-buffer-fn &optional select-window)
+  "Generic function to toggle special buffers.
+BUFFER-NAME-PATTERN is a regex to match buffer name.
+SHOW-BUFFER-FN is the function to call to show the buffer.
+SELECT-WINDOW if non-nil, select the window after showing buffer."
+  (let* ((buffer (seq-find (lambda (buf)
+                            (string-match-p buffer-name-pattern (buffer-name buf)))
+                          (buffer-list)))
+         (window (and buffer (get-buffer-window buffer))))
+    ;; If we're already in the special buffer, quit it
+    (if (string-match-p buffer-name-pattern (buffer-name))
+        (quit-window)
+      ;; Otherwise toggle the window
+      (if window
+          (quit-window nil window)
+        (when show-buffer-fn
+          (funcall show-buffer-fn)
+          (when select-window
+            (select-window (get-buffer-window 
+                          (seq-find (lambda (buf)
+                                    (string-match-p buffer-name-pattern (buffer-name buf)))
+                                  (buffer-list))))))))))
+
+(defun toggle-flymake-diagnostics ()
+  "Toggle the display of Flymake diagnostics buffer."
+  (interactive)
+  (toggle-special-buffer "\\*Flymake diagnostics.*\\*"
+                        (lambda ()
+                          (when (bound-and-true-p flymake-mode)
+                            (flymake-show-diagnostics-buffer)))
+                        t))
+
+(defun toggle-messages-buffer ()
+  "Toggle the display of Messages buffer."
+  (interactive)
+  (toggle-special-buffer "\\*Messages\\*"
+                        (lambda () 
+                          (display-buffer "*Messages*"))
+                        t))
 
 (defun org-insert-row-with-floor ()
   "Insert a new row with a 'floor' above in an Org mode table."
@@ -1939,14 +2051,32 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     (message "Snippet files: %s" snippet-files)
     snippet-files))
 
-(defun my-eshell-current-input ()
+;; if i paste this code:
+;; (defun print-keypress ()
+;;   (interactive)
+;;   (message "Key pressed: %s" (this-command-keys-vector)))
+;; (global-set-key (kbd "<S-tab>") 'print-keypress)
+;; over a line using visual-line, then the pasting will be incorrect
+(defun vim-like-paste ()
+  "Paste (yank) replacing the selected region, similar to Vim's paste behavior."
   (interactive)
-  "Return the current characters written before the cursor in Eshell and print it."
-  (let ((input (if (eq major-mode 'eshell-mode)
-                   (buffer-substring-no-properties (line-beginning-position) (point))
-                 "")))
-    (message "Current input: %s" input)
-    input))  ; Still return the input for programmatic use if needed
+  (let ((text (current-kill 0)))
+    (if (and (evil-visual-state-p)
+             (eq evil-visual-selection 'line))
+        ;; Handle evil visual line selection
+        (let ((start (line-beginning-position))
+              (end (line-end-position)))
+          (delete-region start (min (point-max) (1+ end)))  ; include newline
+          (goto-char start)
+          (insert text)
+          (when (not (string-suffix-p "\n" text))
+            (insert "\n")))
+      ;; Handle normal paste
+      (if (string-match-p "\n$" text)
+          (progn
+            (beginning-of-line)
+            (insert text))
+        (insert text)))))
 
 (defun my-completion-preview-insert ()
   "Completes the previewed suggestion and deletes the trailing whitespace."
@@ -1967,6 +2097,24 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (interactive "P")
   (let ((col (current-column)))    ; Save the column position
     (scroll-down-command arg)
+    (recenter)
+    (move-to-column col)))         ; Restore the column position
+
+(defun scroll-half-up-and-recenter ()
+  "Scroll up half screen and recenter, preserving horizontal position."
+  (interactive)
+  (let ((col (current-column))    ; Save the column position
+        (half-height (/ (window-height) 2)))
+    (scroll-up-command (- half-height 2))  ; -2 for some context
+    (recenter)
+    (move-to-column col)))         ; Restore the column position
+
+(defun scroll-half-down-and-recenter ()
+  "Scroll down half screen and recenter, preserving horizontal position."
+  (interactive)
+  (let ((col (current-column))    ; Save the column position
+        (half-height (/ (window-height) 2)))
+    (scroll-down-command (- half-height 2))  ; -2 for some context
     (recenter)
     (move-to-column col)))         ; Restore the column position
 

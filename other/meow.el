@@ -3,17 +3,6 @@
   :init
   (setq meow-use-clipboard t))
 
-(defun vim-like-paste ()
-  "Paste (yank) replacing the selected region, similar to Vim's paste behavior."
-  (interactive)
-  (if (use-region-p)
-      (let ((start (region-beginning))
-            (end (region-end)))
-        (delete-region start end)
-        (goto-char start)
-        (yank))
-    (yank)))
-
 (define-prefix-command 'my-window-map)
 (global-set-key (kbd "C-w") 'my-window-map)
 
@@ -199,6 +188,36 @@
   (meow-line 1)
   (avy-goto-line))
 
+(defun my-append ()
+  "Like Vim's append: move forward one character then enter insert mode."
+  (interactive)
+  (forward-char)
+  (meow-insert))
+
+(defun meow-insert-line-start ()
+  "Like Vim's I: move to first non-whitespace character and enter insert mode."
+  (interactive)
+  (back-to-indentation)
+  (meow-insert))
+
+(defun meow-append-line-end ()
+  "Like Vim's A: move to end of line and enter insert mode."
+  (interactive)
+  (end-of-line)
+  (meow-insert))
+
+(defun meow-goto-first-line ()
+  "Like Vim's gg: go to the first line of buffer."
+  (interactive)
+  (goto-char (point-min))
+  (back-to-indentation))
+
+(defun meow-goto-last-line ()
+  "Like Vim's G: go to the last line of buffer."
+  (interactive)
+  (goto-char (point-max))
+  (back-to-indentation))
+
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
   (setq meow--kbd-kill-region "C-w C-w")
@@ -227,7 +246,9 @@
   (meow-normal-define-key
    '("C-f" . scroll-up-and-recenter)
    '("C-b" . scroll-down-and-recenter)
-   '("C-y" . copy-whole-line)
+   '("C-d" . scroll-half-up-and-recenter)
+   '("C-u" . scroll-half-down-and-recenter)
+   ;; '("C-y" . copy-whole-line)
    ;; '("C-x c" . my/smart-comment)
    '("gc" . my/smart-comment)
    '("gw" . my-fill-region)
@@ -263,8 +284,15 @@
    '("." . meow-bounds-of-thing)
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
-   '("a" . meow-append)
-   '("A" . meow-open-below)
+   ;; '("a" . meow-append)
+   '("a" . my-append)
+   '("i" . meow-insert)
+   '("A" . meow-append-line-end)
+   '("I" . meow-insert-line-start)
+   '("gg" . meow-goto-first-line)
+   '("G" . meow-goto-last-line)
+   ;; '("A" . meow-open-below)
+   ;; '("I" . meow-open-above)
    '("b" . meow-back-word)
    '("B" . meow-back-symbol)
    '("c" . meow-change)
@@ -274,18 +302,17 @@
    '("E" . meow-next-symbol)
    '("f" . meow-find)
    ;; '("g" . meow-cancel-selection)
-   '("G" . meow-grab)
-   '("h" . meow-left)
+   ;; '("G" . meow-grab)
    '("H" . meow-left-expand)
-   '("i" . meow-insert)
-   '("I" . meow-open-above)
    ;; '("j" . meow-next)
+   ;; '("k" . meow-prev)
    '("j" . next-line)
+   '("k" . previous-line)
    '("J" . meow-next-expand)
    ;; '("k" . meow-prev)
-   '("k" . previous-line)
    '("K" . meow-prev-expand)
-   '("l" . meow-right)
+   '("h" . left-char)
+   '("l" . right-char)
    '("L" . meow-right-expand)
    '("m" . meow-join)
    '("n" . meow-search)
@@ -300,12 +327,15 @@
    '("t" . meow-till)
    '("u" . meow-undo)
    '("U" . meow-undo-in-selection)
-   '("v" . meow-visit)
+   ;; '("v" . meow-visit)
    '("w" . meow-mark-word)
    '("W" . meow-mark-symbol)
    ;; '("x" . meow-line)
-   '("x" . meow-line)
-   ;; '("X" . meow-goto-line)
+   ;; '("V" . meow-line)
+   ;; '("v" . set-mark-command)
+   '("v" . evil-visual-char)
+   '("V" . evil-visual-line)
+   ;; '("X"
    '("y" . meow-save)
    ;; '("Y" . meow-sync-grab)
    '("Y" . my/copy-to-end-of-line)
@@ -324,3 +354,8 @@
       (remove 'org-mode meow-expand-exclude-mode-list))
 
 (meow-global-mode 1)
+
+
+;; Evil Mode
+(setq evil-want-keybinding nil)
+(use-package evil)

@@ -22,6 +22,7 @@
 
 (load "~/.emacs.d/config.el")
 (load "~/.emacs.d/other/evil.el")
+;; (load "~/.emacs.d/other/meow.el")
 (load "~/.emacs.d/eshell/eshell.el")
 (load "~/.emacs.d/other/scripts/install-org.el")
 
@@ -39,18 +40,19 @@
  '(auth-source-save-behavior nil)
  '(package-selected-packages
    '(all-the-icons-completion all-the-icons-dired avy buffer-terminator cape
-                              clojure-ts-mode commander corfu docker
+                              casual-avy clojure-ts-mode commander corfu docker
                               dockerfile-mode eat embark-consult envrc
                               eshell-syntax-highlighting evil-collection
                               evil-surround exec-path-from-shell fish-completion
                               flymake-ansible-lint flymake-hadolint
                               flymake-shellcheck go-mode haskell-mode hydra
-                              lua-mode magit marginalia nix-mode no-littering
-                              orderless org-download org-drill org-modern
-                              page-break-lines popper raku-mode shackle
-                              sudo-edit systemd tempel-collection terraform-mode
-                              tldr toc-org transpose-frame treesit-auto
-                              undo-tree vertico wgrep yaml-mode yasnippet zoxide))
+                              lua-mode magit marginalia meow nix-mode
+                              no-littering orderless org-download org-drill
+                              org-modern page-break-lines popper raku-mode
+                              shackle sudo-edit systemd tempel-collection
+                              terraform-mode tldr toc-org transpose-frame
+                              treesit-auto undo-tree vertico wgrep yaml-mode
+                              yasnippet zoxide))
  '(package-vc-selected-packages
    '((eat :url "https://github.com/kephale/emacs-eat")
      (emacs-eat :url "https://github.com/kephale/emacs-eat")

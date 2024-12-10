@@ -2,8 +2,6 @@
 
 (setq evil-want-keybinding nil)
 
-;; Evil Mode
-
 (use-package evil
   :ensure t
   :init
@@ -23,6 +21,11 @@
   (define-key evil-normal-state-map (kbd "C-b") 'scroll-down-and-recenter)
   (define-key evil-normal-state-map (kbd "C-u") 'evil-half-scroll-up-and-recenter)
   (define-key evil-normal-state-map (kbd "C-d") 'evil-half-scroll-down-and-recenter)
+  (define-key evil-normal-state-map (kbd "l") 'forward-char)
+  (define-key evil-normal-state-map (kbd "h") 'backward-char)
+  (define-key evil-normal-state-map (kbd "j") 'next-line)
+  (define-key evil-normal-state-map (kbd "k") 'previous-line)
+  (define-key evil-normal-state-map (kbd "M-f") 'toggle-messages-buffer)
   (setq evil-shift-width 2))
 
 ;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
@@ -404,7 +407,7 @@
 (with-eval-after-load 'evil
   ;;   (define-key evil-normal-state-map (kbd "M-k") 'fix-cycle-backwards)
   ;;   (define-key evil-normal-state-map (kbd "M-j") 'fix-cycle)
-  (define-key evil-normal-state-map (kbd "M-y") 'popper-flymake-diagnostics)
+  (define-key evil-normal-state-map (kbd "M-y") 'toggle-flymake-diagnostics)
   (define-key evil-normal-state-map (kbd "M-t M-c") 'popper-flycheck-diagnostics))
 
 ;; Eglot
@@ -491,18 +494,38 @@
 (evil-define-key 'normal dired-mode-map (kbd "SPC") #'my-space-as-ctrl-c)
 
 (with-eval-after-load 'evil
+  ;; Pointer in shell-command-mode is spawned in the insert state for some reason
+  (evil-set-initial-state 'shell-command-mode 'normal))
+
+(with-eval-after-load 'evil
   ;; For help-mode
   (evil-define-key 'normal help-mode-map
     "q" #'quit-window)
   
-  ;; For some reason, if i try to merge these bindings together, then the
-  ;; binding for package just doesn't work.
-  (with-eval-after-load 'package
-    (evil-define-key 'normal package-menu-mode-map
-      "q" #'quit-window))
+  (evil-define-key 'normal Info-mode-map
+    "q" #'quit-window)
+
+  (evil-define-key 'normal helpful-mode-map
+    "q" #'quit-window)
+
+  (evil-define-key 'normal special-mode-map
+    "q" #'quit-window)
+
+  (evil-define-key 'normal debugger-mode-map
+    "q" #'quit-window)
 
   (evil-define-key 'normal messages-buffer-mode-map
-    "q" #'quit-window))
+    "q" #'quit-window)
+
+  (evil-define-key 'normal compilation-mode-map
+    "q" #'quit-window)
+
+  (evil-define-key 'normal shell-command-mode-map
+    "q" #'quit-window)
+
+  (with-eval-after-load 'package
+    (evil-define-key 'normal package-menu-mode-map
+      "q" #'quit-window)))
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert prog-mode-map

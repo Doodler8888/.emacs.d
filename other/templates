@@ -1,6 +1,7 @@
 emacs-lisp-mode
 (u
-  "(use-package " p n>)
+  "(use-package " p ")" n>
+  )
 
 emacs-lisp-mode
 (uu
@@ -10,16 +11,8 @@ emacs-lisp-mode
     "  " p n>
     ")")
 
-lisp-interaction-mode
-(d
-    "apiVersion: apps/v1" n
-    "kind: Deployment" n
-    "metadata:" n
-    "  name: " p n
-    "            memory: " p)
-
 yaml-ts-mode
-(deployment
+(d
     "apiVersion: apps/v1" n
     "kind: Deployment" n
     "metadata:" n
