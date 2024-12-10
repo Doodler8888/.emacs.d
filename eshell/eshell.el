@@ -80,36 +80,85 @@
   (write-region "" nil (expand-file-name file) nil 0))
 
 
+;; THE LIST WONT BE UPDATED IF YOU USE THE `so' COMMAND
+(defvar eshell-elisp-commands '("ls" "cp" "mv" "touch" "rm")
+  "List of Eshell commands implemented in Elisp that need /sudo:: prefix.")
+
 (defun eshell/s (&rest args)
   "Wrapper for sudo. Usage: s ls /path or s apt install package"
   (let* ((command (car args))
          (args (cdr args)))
-    (cond
-     ((string= command "rm")
-      (let ((default-directory 
-             (if (and (car args) (file-name-absolute-p (car args)))
-                 (file-name-directory (concat "/sudo::" (car args)))
-               default-directory)))
-        (eshell-named-command 
-         "rm"
-         (list (if (and (car args) (file-name-absolute-p (car args)))
-                   (concat "/sudo::" (car args))
-                 (car args))))))
-     ((string= command "apt")
-      (let ((default-directory "/sudo::/"))
-        (eshell-named-command 
-         "apt"
-         args)))
-     (t
-      (let ((default-directory 
-             (if (and (car args) (file-name-absolute-p (car args)))
-                 (file-name-directory (concat "/sudo::" (car args)))
-               default-directory)))
-        (eshell-named-command 
-         command
-         (list (if (and (car args) (file-name-absolute-p (car args)))
-                   (concat "/sudo::" (car args))
-                 (car args)))))))))
+    (message "Command: '%s'" command)
+    (message "List contains: %s" eshell-elisp-commands)
+    (message "Member check result: %s" (member command eshell-elisp-commands))
+    (if (member command eshell-elisp-commands)
+        ;; Handle Eshell's Elisp-implemented commands that need /sudo:: prefix
+        (let ((sudo-path (mapcar (lambda (arg)
+                                  (if (file-name-absolute-p arg)
+                                      (concat "/sudo::" arg)
+                                    arg))
+                                args)))
+          (eshell-command-result (concat command " " (string-join sudo-path " "))))
+      ;; Default case: use direct sudo for system commands
+      (progn
+        (message (concat "eshell/sudo " command " " (string-join args " ")))
+        (eshell-command-result (concat "eshell/sudo " command " " (string-join args " ")))))))
+
+;; (defun eshell/s (&rest args)
+;;   "Wrapper for sudo. Usage: s ls /path or s apt install package"
+;;   (let* ((command (car args))
+;;          (args (cdr args)))
+;;     (cond
+;;      ;; Handle rm command
+;;      ((string= command "rm")
+;;       (eshell-command-result (concat "eshell/sudo /usr/bin/rm " (string-join args " "))))
+     
+;;      ;; Handle apt and its subcommands
+;;      ((string= command "apt")
+;;       (eshell-command-result (concat "eshell/sudo apt " (string-join args " "))))
+     
+;;      ((string= command "swapoff")
+;;       (eshell-command-result (concat "eshell/sudo swapoff " (string-join args " "))))
+
+;;      ;; Handle other commands
+;;      (t
+;;       (let ((sudo-path (mapcar (lambda (arg)
+;;                                 (if (file-name-absolute-p arg)
+;;                                     (concat "/sudo::" arg)
+;;                                   arg))
+;;                               args)))
+;;         (eshell-command-result (concat command " " (string-join sudo-path " "))))))))
+
+;; (defun eshell/s (&rest args)
+;;   "Wrapper for sudo. Usage: s ls /path or s apt install package"
+;;   (let* ((command (car args))
+;;          (args (cdr args)))
+;;     (cond
+;;      ((string= command "rm")
+;;       (let ((default-directory 
+;;              (if (and (car args) (file-name-absolute-p (car args)))
+;;                  (file-name-directory (concat "/sudo::" (car args)))
+;;                default-directory)))
+;;         (eshell-named-command 
+;;          "rm"
+;;          (list (if (and (car args) (file-name-absolute-p (car args)))
+;;                    (concat "/sudo::" (car args))
+;;                  (car args))))))
+;;      ((string= command "apt")
+;;       (let ((default-directory "/sudo::/"))
+;;         (eshell-named-command 
+;;          "apt"
+;;          args)))
+;;      (t
+;;       (let ((default-directory 
+;;              (if (and (car args) (file-name-absolute-p (car args)))
+;;                  (file-name-directory (concat "/sudo::" (car args)))
+;;                default-directory)))
+;;         (eshell-named-command 
+;;          command
+;;          (list (if (and (car args) (file-name-absolute-p (car args)))
+;;                    (concat "/sudo::" (car args))
+;;                  (car args)))))))))
 
 
 (defun eshell-clear-buffer ()

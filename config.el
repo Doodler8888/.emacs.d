@@ -85,10 +85,6 @@
 (global-set-key (kbd "C-x u") 'windmove-up)
 
 (recentf-mode)
-(add-to-list 'recentf-exclude
-             (recentf-expand-file-name no-littering-var-directory))
-(add-to-list 'recentf-exclude
-             (recentf-expand-file-name no-littering-etc-directory))
 
 (setq vc-follow-symlinks t)
 
@@ -135,23 +131,23 @@
         'executable-make-buffer-file-executable-if-script-p)
 
 (setq undo-tree-auto-save-history t)
-;; (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
-;; (make-directory (concat user-emacs-directory "auto-saves") t)
-;; (setq auto-save-file-name-transforms
-;;       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
-;; (setq auto-save-list-file-prefix (concat user-emacs-directory "auto-saves/.saves-"))
-;; ;; There was a situation where emacs created an autosave file in a directory
-;; ;; that i was currently for an eshell buffer.
-;; (add-hook 'eshell-mode-hook
-;;           (lambda ()
-;;             (setq-local auto-save-default nil)))
-;; (make-directory (concat user-emacs-directory "lock-files") t)
-;; (setq lock-file-name-transforms
-;;       `((".*" ,(concat user-emacs-directory "lock-files/") t)))
-;; (setq desktop-dirname (concat user-emacs-directory "desktop/"))
-;; (make-directory (concat user-emacs-directory "backups") t)
-;; (setq backup-directory-alist
-;;       `((".*" . ,(concat user-emacs-directory "backups/"))))
+(setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
+(make-directory (concat user-emacs-directory "auto-saves") t)
+(setq auto-save-file-name-transforms
+      `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
+(setq auto-save-list-file-prefix (concat user-emacs-directory "auto-saves/.saves-"))
+;; There was a situation where emacs created an autosave file in a directory
+;; that i was currently for an eshell buffer.
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (setq-local auto-save-default nil)))
+(make-directory (concat user-emacs-directory "lock-files") t)
+(setq lock-file-name-transforms
+      `((".*" ,(concat user-emacs-directory "lock-files/") t)))
+(setq desktop-dirname (concat user-emacs-directory "desktop/"))
+(make-directory (concat user-emacs-directory "backups") t)
+(setq backup-directory-alist
+      `((".*" . ,(concat user-emacs-directory "backups/"))))
 
 (defun my-disable-auto-save-for-scratch ()
 (when (string= (buffer-name) "*scratch*")
@@ -399,6 +395,11 @@
 (use-package avy
   :ensure t
   )
+
+
+;; TLDR
+
+(use-package tldr)
 
 
 ;; Docker
@@ -2082,7 +2083,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (defun trash ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.local/share/trash"))
+  (find-file "~/.local/share/Trash"))
 
 (defun ngrok ()
   "Open a terminal and execute 'ngrok http http://localhost:8080'."
@@ -2300,11 +2301,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (switch-to-buffer "*Messages*")
   (evil-force-normal-state)) ;; Because otherwise non-evil q binding doesn't work
 
-;; (defun messages ()
-;;   "Switch to the *Messages* buffer."
-;;   (interactive)
-;;   (switch-to-buffer "*Messages*"))
-
 (defun config ()
   "Open a specific file."
   (interactive)
@@ -2319,3 +2315,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   "Open a specific file."
   (interactive)
   (find-file "~/.secret_dotfiles/org/emacs/todo/todo.org"))
+
+(defun templates ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.emacs.d/other/templates"))

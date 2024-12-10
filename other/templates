@@ -1,8 +1,6 @@
 emacs-lisp-mode
 (u
-  "(use-package " p n>
-    ":ensure t" n>
-    ")")
+  "(use-package " p n>)
 
 emacs-lisp-mode
 (uu
@@ -11,3 +9,43 @@ emacs-lisp-mode
     ":config" n>
     "  " p n>
     ")")
+
+lisp-interaction-mode
+(d
+    "apiVersion: apps/v1" n
+    "kind: Deployment" n
+    "metadata:" n
+    "  name: " p n
+    "            memory: " p)
+
+yaml-ts-mode
+(deployment
+    "apiVersion: apps/v1" n
+    "kind: Deployment" n
+    "metadata:" n
+    "  name: " (p "deployment name") n
+    "  namespace: " (p "namespace name") n
+    "  labels:" n
+    "    app: " (p "label value of the Deployment itself") n
+    "spec:" n
+    "  replicas: " (p "number of replicas") n
+    "  selector:" n
+    "    matchLabels:" n
+    "      app: " (p "tells Deployment pods with which label it manage") n
+    "  template:" n
+    "    metadata:" n
+    "      labels:" n
+    "        app: " (p "what label is going to be applied to new pods") n
+    "    spec:" n
+    "      containers:" n
+    "      - name: " (p "container name") n
+    "        image: " (p "image:tag") n
+    "        ports:" n
+    "        - containerPort: " (p "port number") n
+    "        resources:" n
+    "          limits:" n
+    "            cpu: " (p "CPU units (e.g., 500m)") n
+    "            memory: " (p "memory units (e.g., 512Mi)") n
+    "          requests:" n
+    "            cpu: " (p "CPU units (e.g., 200m)") n
+    "            memory: " (p "memory units (e.g., 256Mi)"))

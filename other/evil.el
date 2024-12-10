@@ -528,6 +528,5 @@
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map
-    (kbd "M-`") #'temple-next
-    (kbd "M-~") #'temple-previous
-    ))
+    (kbd "M-`") (lambda () (interactive) (call-interactively #'tempel-next))
+    (kbd "M-~") (lambda () (interactive) (call-interactively #'tempel-previous))))
