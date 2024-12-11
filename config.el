@@ -579,7 +579,13 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Snippets
 
-;; Configure Tempel
+(defun my/select-placeholder ()
+  "Select the placeholder text on the current line."
+  (set-mark (point))
+  (end-of-line)
+  (point))
+
+
 (use-package tempel
   :ensure t
   ;; Require trigger prefix before template name when completing.
@@ -1783,6 +1789,18 @@ If an eshell buffer for the directory already exists, switch to it."
           (dolist (line (cdr lines))
             (insert (concat "\n  " line)))))
     (message "No region active")))
+
+(defun my/org-smart-heading ()
+  "Create a new heading intelligently:
+If on a heading line, create a subheading (M-S-RET).
+Otherwise, create a same-level heading (M-RET)."
+  (interactive)
+  (if (org-at-heading-p)
+      (org-insert-subheading nil)
+    (org-meta-return)))
+
+;; Bind it to a key of your choice, for example:
+(define-key org-mode-map (kbd "M-RET") #'my/org-smart-heading)
 
 
 ;; Org download

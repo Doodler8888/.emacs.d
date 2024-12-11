@@ -274,8 +274,35 @@
   (evil-define-key 'visual emacs-lisp-mode-map (kbd "C-M-x") 'eval-region))
 
 ;; Org Mode
+
+(defun my/evil-smart-open-above ()
+  "Open line above intelligently:
+If on first item of list, use evil-open-above with number formatting.
+If on other numbered items, go up and use org-meta-return.
+If not on a numbered item, just use evil-open-above."
+  (interactive)
+  (if (and (org-in-item-p)
+           (save-excursion
+             (beginning-of-line)
+             (looking-at "^[ \t]*[0-9]+\\."))) ; check if it's a numbered item
+      (if (save-excursion
+            (beginning-of-line)
+            (looking-at "^[ \t]*1\\.")) ; if it's the first item
+          (progn
+            (evil-open-above 1)
+            (insert "1. ")
+            (org-list-repair))
+        (progn
+          (previous-line)
+          (end-of-line)
+          (org-meta-return)
+          (evil-insert-state)))
+    (evil-open-above 1)))
+
 (with-eval-after-load 'org
   (evil-define-key 'normal org-mode-map (kbd "C-M-x") 'org-babel-execute-src-block)
+  (evil-define-key 'normal org-mode-map (kbd "O") 'my/evil-smart-open-above)
+  
   ;; For visual state in org-mode, you might want to keep the default behavior
   ;; or define a custom function to evaluate a region if needed.
   ))
@@ -516,4 +543,3 @@
             (if buffer-read-only
                 (evil-normal-state)
               (evil-insert-state))))
-

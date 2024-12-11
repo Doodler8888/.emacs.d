@@ -1,6 +1,7 @@
 emacs-lisp-mode
 (u
   "(use-package " p ")" n>
+  (tempel-done)  ;; Run this command so that tempel doesn't disable fonts and you don't have to run it yourself
   )
 
 emacs-lisp-mode
@@ -42,3 +43,13 @@ yaml-ts-mode
     "          requests:" n
     "            cpu: " (p "CPU units (e.g., 200m)") n
     "            memory: " (p "memory units (e.g., 256Mi)"))
+
+yaml-ts-mode
+(test
+    "apiVersion: apps/v1" n
+    "kind: Deployment" n
+    "metadata:" n
+    "  name: " (p "deployment name" (my/select-placeholder)) n
+    "  namespace: " (p "namespace name" (my/select-placeholder)) n
+    "  labels:" n
+    "    app: " (p "label value" (my/select-placeholder)) n)
