@@ -26,6 +26,7 @@
   (define-key evil-normal-state-map (kbd "j") 'next-line)
   (define-key evil-normal-state-map (kbd "k") 'previous-line)
   (define-key evil-normal-state-map (kbd "M-f") 'toggle-messages-buffer)
+  (define-key evil-normal-state-map (kbd "M-d") 'toggle-docker-layout)
   (setq evil-shift-width 2))
 
 ;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
@@ -54,12 +55,32 @@
   
   ;; Force normal state for package-menu-mode
   (evil-set-initial-state 'package-menu-mode 'normal)
-  
-  ;; Debug hook to verify
-  (evil-set-initial-state 'package-menu-mode 'normal)
   (evil-set-initial-state 'debugger-mode 'normal)
   
   (evil-collection-init))
+
+(evil-define-text-object evil-inner-defun (count &optional beg end type)
+  "Select inside defun."
+  :type line
+  (when (derived-mode-p 'emacs-lisp-mode 
+                       'lisp-mode 
+                       'scheme-mode 
+                       'clojure-mode
+                       'lisp-interaction-mode)
+    (evil-select-inner-object 'defun beg end type count)))
+
+(evil-define-text-object evil-a-defun (count &optional beg end type)
+  "Select a defun."
+  :type line
+  (when (derived-mode-p 'emacs-lisp-mode 
+                       'lisp-mode 
+                       'scheme-mode 
+                       'clojure-mode
+                       'lisp-interaction-mode)
+    (evil-select-an-object 'defun beg end type count)))
+
+(define-key evil-outer-text-objects-map "d" 'evil-a-defun)
+(define-key evil-inner-text-objects-map "d" 'evil-inner-defun)
 
 (defun my-evil-yank-to-end-of-line ()
   "Yank text from the current point to the end of the line."
@@ -171,11 +192,12 @@
   (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
   (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
 
-(defun my-move-beginning-of-line ()
-  "Move point to the first non-whitespace character of the line and enter insert mode."
-  (interactive)
-  (evil-first-non-blank)
-  (evil-insert-state))
+;; I use back-to-indentation instead now
+;; (defun my-move-beginning-of-line ()
+;;   "Move point to the first non-whitespace character of the line and enter insert mode."
+;;   (interactive)
+;;   (evil-first-non-blank)
+;;   (evil-insert-state))
 
 (defun my-move-end-of-line ()
   "Move point to the very end of the line and enter insert mode."
@@ -186,7 +208,7 @@
     (evil-append-line 1)))
 
 (with-eval-after-load 'evil
-  (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
+  (define-key evil-insert-state-map (kbd "M-i") 'back-to-indentation)
   (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
 
 
@@ -217,55 +239,22 @@
   (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy))
 
 
-;; Kubernetes
-
-;; (with-eval-after-load 'kubernetes-overview
-;;   (evil-define-key 'normal kubernetes-overview-mode-map
-;;     (kbd "?") 'kubernetes-overview-popup
-;;     (kbd "c") 'kubernetes-config-view
-;;     (kbd "d") 'kubernetes-describe-pod
-;;     (kbd "D") 'kubernetes-mark-pod-for-delete
-;;     (kbd "E") 'kubernetes-exec-into
-;;     (kbd "f") 'kubernetes-file-from-pod
-;;     (kbd "g") 'kubernetes-overview-refresh
-;;     (kbd "H") 'kubernetes-overview-set-sections
-;;     (kbd "i") 'kubernetes-navigate
-;;     (kbd "K") 'kubernetes-kill-pod
-;;     (kbd "L") 'kubernetes-logs
-;;     (kbd "m") 'kubernetes-mark-for-delete
-;;     (kbd "M") 'kubernetes-unmark
-;;     (kbd "n") 'kubernetes-overview-next-line
-;;     (kbd "p") 'kubernetes-overview-previous-line
-;;     (kbd "r") 'kubernetes-rollout-history
-;;     (kbd "u") 'kubernetes-unmark-all
-;;     (kbd "U") 'kubernetes-rollout-undo
-;;     (kbd "V") 'kubernetes-view-pod
-;;     (kbd "x") 'kubernetes-delete-marked-objects
-;;     (kbd "y") 'kubernetes-copy-pod-name))
-
 ;; Docker
 
-(defun docker-template ()
-  "Create docker.el windows with a specific layout"
-  (interactive)
-  (delete-other-windows)
-  (evil-window-split)
-  (evil-window-split)
-  (docker-volumes)
-  (docker-containers)
-  (docker-images)
-  (delete-window (nth 1 (window-list)))
-  (delete-window (nth 2 (window-list)))
-  (delete-window (nth 3 (window-list)))
-  )
+;; (defun docker-template ()
+;;   "Create docker.el windows with a specific layout"
+;;   (interactive)
+;;   (delete-other-windows)
+;;   (evil-window-split)
+;;   (evil-window-split)
+;;   (docker-volumes)
+;;   (docker-containers)
+;;   (docker-images)
+;;   (delete-window (nth 1 (window-list)))
+;;   (delete-window (nth 2 (window-list)))
+;;   (delete-window (nth 3 (window-list)))
+;;   )
 
-;; Vimish-fold
-
-;; (with-eval-after-load 'evil
-;;   (define-key evil-normal-state-map (kbd "zf") 'vimish-fold)
-;;   (define-key evil-visual-state-map (kbd "zf") 'vimish-fold)
-;;   (define-key evil-normal-state-map (kbd "zt") 'vimish-fold-toggle)
-;;   (define-key evil-normal-state-map (kbd "zd") 'vimish-fold-delete))
 
 ;; Cider
 
@@ -319,52 +308,10 @@
 (setq evil-move-cursor-back nil)
 (add-hook 'wdired-mode-hook #'evil-normal-state)
 
-(defun my-dired-setup ()
-  (evil-define-key 'normal dired-mode-map (kbd "S") 'my-dired-do-symlink-with-sudo))
-
-(add-hook 'dired-mode-hook 'my-dired-setup)
-
-(defun dired-run-bak-on-marked-files (beg end)
-  "Run the 'bak' script on marked files or visually selected files in Dired, with an option to copy."
-  (interactive
-  (if (use-region-p)
-      (list (region-beginning) (region-end)) ; If there's an active region, use it
-    (list nil nil))) ; Otherwise, process marked files
-  ;; Prompt the user to ask if they want to copy the files.
-  (let ((copy-flag (if (yes-or-no-p "Copy files? ") "-c" nil)))
-    (if (and beg end)
-        ;; If beg and end are provided, process files in the region
-        (save-excursion
-          (goto-char beg)
-          (let ((end-marker (copy-marker end)))
-            (while (< (point) end-marker)
-              (when (dired-move-to-filename)
-                (let ((file (dired-get-filename nil t)))
-                  ;; Conditionally include the -c flag based on user input
-                  (if copy-flag
-                      (start-process "bak-process" nil "bak" copy-flag file)
-                    (start-process "bak-process" nil "bak" file))))
-              (dired-next-line 1))))
-      ;; If no region is active, process marked files
-      (let ((files (dired-get-marked-files)))
-        (dolist (file files)
-          ;; Conditionally include the -c flag based on user input
-          (if copy-flag
-              (start-process "bak-process" nil "bak" copy-flag file)
-            (start-process "bak-process" nil "bak" file))))))
-  ;; Exit visual mode if in Evil mode
-  (when (bound-and-true-p evil-local-mode)
-    (evil-normal-state)))
-
- (defun my-dired-setup ()
-   (evil-define-key 'normal dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files)
-   (evil-define-key 'visual dired-mode-map (kbd "B") 'dired-run-bak-on-marked-files))
-
- (add-hook 'dired-mode-hook 'my-dired-setup)
-
 (with-eval-after-load 'dired
   (evil-define-key 'normal dired-mode-map
     "j" 'dired-next-line-preserve-column
+    "T" 'my/dired-create-empty-files
     "k" 'dired-previous-line-preserve-column))
 
 ;; Eshell
@@ -372,7 +319,13 @@
 (with-eval-after-load 'eshell
   (with-eval-after-load 'evil
     (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
-    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)))
+    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+    (evil-define-key 'normal eshell-mode-map (kbd "C-f C-p") 'eshell/insert-pwd-at-point)
+    (evil-define-key 'insert eshell-mode-map (kbd "C-f C-p") 'eshell/insert-pwd-at-point)
+    
+    ;; Make these bindings higher priority
+    (evil-local-set-key 'normal (kbd "M-,") 'eshell/insert-pwd-at-point)
+    (evil-local-set-key 'insert (kbd "M-,") 'eshell/insert-pwd-at-point)))
 
 (with-eval-after-load 'eshell
   (evil-define-key 'normal eshell-mode-map
@@ -399,7 +352,7 @@
   (define-key evil-insert-state-map (kbd "M-e") 'SpawnEshellSplitBelow))
 ;; (define-key evil-normal-state-map (kbd "M-e") 'open-eshell-in-current-directory))
 
-(evil-define-key 'normal diff-mode-map (kbd "M-k") 'my-eshell-fullscreen)
+;; (evil-define-key 'normal diff-mode-map (kbd "M-k") 'my-eshell-fullscreen)
 (evil-define-key 'insert diff-mode-map (kbd "M-j") 'my-restore-window-configuration)
 
 ;; Popper
@@ -416,9 +369,11 @@
 
 ;; Custom functions
 
+;; This function doesn't work in visual-line
 (with-eval-after-load 'evil
-  (evil-define-key 'normal org-mode-map (kbd "[[") 'my-org-beginning-of-block)
-  (evil-define-key 'normal org-mode-map (kbd "]]") 'my-org-end-of-block))
+  (dolist (state '(normal visual visual-line))
+    (evil-define-key state org-mode-map (kbd "[[") 'my-org-beginning-of-block)
+    (evil-define-key state org-mode-map (kbd "]]") 'my-org-end-of-block)))
 
 ;; Keybindings
 
@@ -553,3 +508,12 @@
   (evil-define-key 'insert global-map
     (kbd "M-`") (lambda () (interactive) (call-interactively #'tempel-next))
     (kbd "M-~") (lambda () (interactive) (call-interactively #'tempel-previous))))
+
+
+;; The problem here is that even after enabling wgrep, i couldn't still use edit keys
+(add-hook 'grep-mode-hook
+          (lambda ()
+            (if buffer-read-only
+                (evil-normal-state)
+              (evil-insert-state))))
+

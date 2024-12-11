@@ -90,6 +90,7 @@
 
 (setq erc-nick "wurfkreuz")
 (global-set-key (kbd "C-x u") 'windmove-up)
+(save-some-buffers t)
 
 (recentf-mode)
 
@@ -201,9 +202,21 @@
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
 
-(setq-default truncate-lines t)
-(add-hook 'prog-mode-hook (lambda () ;; For some reason just using the code above doesn't work
-                           (setq truncate-lines t)))
+;; For some reason just using "(set-default 'truncate-lines t)", and also it's
+;; inconsistent overall
+(set-default 'truncate-lines t)
+(add-hook 'prog-mode-hook (lambda ()
+                           (setq-local truncate-lines t)
+                           (toggle-truncate-lines 1)))
+;; Specific for emacs-lisp-mode
+(add-hook 'emacs-lisp-mode-hook
+          (lambda ()
+            (setq-local truncate-lines t)
+            (toggle-truncate-lines 1)))
+;; ;; Also, you can check what's changing the setting
+;; (add-variable-watcher 'truncate-lines
+;;                      (lambda (sym val op where)
+;;                        (message "truncate-lines changed to %s in %s" val where)))
 
 
 (setq enable-local-variables t)
@@ -491,6 +504,49 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;   (docker-volumes)
 ;; )
 
+(defun docker-template ()
+  "Create docker.el windows with a specific layout"
+  (interactive)
+  (delete-other-windows)
+  (docker-images)
+  (docker-containers)
+  (transpose-frame)
+  (evil-window-move-very-bottom)
+)
+
+(defun toggle-docker-layout ()
+  "Toggle between docker layout and previous layout."
+  (interactive)
+  (let ((mode-name (symbol-name major-mode)))
+    ;; (message "Current mode: %s, contains 'docker': %s" 
+    ;;          mode-name
+    ;;          (if (string-match-p "docker" mode-name) "yes" "no"))
+    (condition-case nil
+        (if (not (get-register ?d))
+            ;; First time setup
+            (progn
+              ;; (message "First time setup: creating docker layout")
+              (window-configuration-to-register ?p)
+              (docker-template)
+              (window-configuration-to-register ?d))
+          ;; Docker register exists - check if we're in docker mode
+          (if (string-match-p "docker" mode-name)
+              (progn
+                ;; (message "In docker mode, switching to previous layout")
+                (jump-to-register ?p))
+            (progn
+              ;; (message "Not in docker mode, switching to docker layout")
+              (window-configuration-to-register ?p)
+              (jump-to-register ?d))))
+      ;; Handle invalid register by doing first-time setup
+      (error
+       ;; (message "Invalid register detected, doing first-time setup")
+       (set-register ?p nil)
+       (set-register ?d nil)
+       (window-configuration-to-register ?p)
+       (docker-template)
+       (window-configuration-to-register ?d)))))
+
 ;; (defun my-docker-shell ()
 ;;   (interactive)
 ;;   (let ((container-id (read-string "Enter container ID: ")))
@@ -689,7 +745,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   
   ;; Default for all buffers
   (setq completion-at-point-functions
-        (list #'cape-file))
+        (list #'tempel-complete  ; or #'tempel-expand
+              #'cape-file))
 
   ;; For ALL buffers except elisp and eshell
   (add-hook 'after-change-major-mode-hook
@@ -697,7 +754,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
               (unless (or (derived-mode-p 'emacs-lisp-mode)
                          (derived-mode-p 'eshell-mode))
                 (setq-local completion-at-point-functions
-                            (list #'cape-file
+                            (list #'tempel-complete  ; or #'tempel-expand
+                                  #'cape-file
                                   #'my/dabbrev-capf)))))
 
   ;; For Elisp modes
@@ -707,14 +765,16 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (add-hook (intern (concat (symbol-name mode) "-hook"))
               (lambda ()
                 (setq-local completion-at-point-functions
-                            (list #'elisp-completion-at-point
+                            (list #'tempel-complete  ; or #'tempel-expand
+                                  #'elisp-completion-at-point
                                   #'cape-file)))))
   
   ;; Special case for eval-expression-minibuffer
   (add-hook 'eval-expression-minibuffer-setup-hook
             (lambda ()
               (setq-local completion-at-point-functions
-                          (list #'elisp-completion-at-point
+                          (list #'tempel-complete  ; or #'tempel-expand
+                                #'elisp-completion-at-point
                                 #'cape-file)))))
 
 (use-package fish-completion
@@ -881,8 +941,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (use-package consult
   :ensure t)
 
+;; Disable preview for consult-recent-file
+(advice-add 'consult-recent-file :around
+            (lambda (orig-fun &rest args)
+              (cl-letf (((symbol-function 'consult--file-preview) #'ignore))
+                (apply orig-fun args))))
+
 (use-package embark-consult
   :ensure t)
+
+(defun consult-line-visible-region ()
+  "Search for a matching line only in the visible portion of the current buffer."
+  (interactive)
+  (save-restriction
+    (narrow-to-region (window-start) (window-end))
+    (consult-line)))
 
 (defun my-vertico-shell-command-history ()
   "Use `completing-read` to search through shell command history and return the selected command."
@@ -924,6 +997,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package all-the-icons-dired
   :ensure t
+  :init
+  (setq all-the-icons-dired-monochrome nil) ;; adds coloring to the dired icons
   :hook (dired-mode . (lambda ()
                         (when (not (file-remote-p default-directory))
                           (all-the-icons-dired-mode t)))))
@@ -955,29 +1030,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Hydra
 
-(defun my-enlarge-window-horizontally ()
-  "Enlarge the current window horizontally in a more intuitive way."
-  (interactive)
-  (if (window-at-side-p (selected-window) 'right)
-      (shrink-window-horizontally 5)
-    (enlarge-window-horizontally 5)))
-
-(defun my-shrink-window-horizontally ()
-  "Shrink the current window horizontally in a more intuitive way."
-  (interactive)
-  (if (window-at-side-p (selected-window) 'right)
-      (enlarge-window-horizontally 5)
-    (shrink-window-horizontally 5)))
-
 (use-package hydra
   :ensure t
   :config
   (defhydra hydra-window-size (:color red)
     "window size"
-    ("h" my-shrink-window-horizontally "shrink horizontally")
-    ("l" my-enlarge-window-horizontally "enlarge horizontally")
-    ("j" (lambda () (interactive) (shrink-window 3)) "shrink vertically")
-    ("k" (lambda () (interactive) (enlarge-window 3)) "enlarge vertically")
+    ("+" evil-window-increase-height "increase height")
+    ("-" evil-window-decrease-height "decrease height")
+    (">" evil-window-increase-width "increase width")
+    ("<" evil-window-decrease-width "decrease width")
     ("t" transpose-frame "transpose windows")
     ("q" nil "quit")))
 
@@ -1002,6 +1063,28 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; If i have another pane with dired in the same tab, dired will try to guess
 ;; that i want to perform action there
 (setq dired-dwim-target t)
+
+(defun my/dired-create-empty-files ()
+  "Create multiple empty files in current dired directory."
+  (interactive)
+  (let (files done)
+    (while (not done)
+      (condition-case nil
+          (let ((file (completing-read
+                      (format "File %s (C-g when done): "
+                             (if files
+                                 (format "[added: %s]"
+                                         (mapconcat #'identity files " "))
+                               ""))
+                      #'completion-file-name-table
+                      nil nil)))
+            (push file files))
+        (quit (setq done t))))
+    (when files
+      (dolist (file (nreverse files))
+        (let ((filepath (expand-file-name file default-directory)))
+          (dired-create-empty-file filepath)))
+      (revert-buffer))))
 
 (defun my/pwd (&optional insert)
   "Like `pwd', but without printing any additional stuff except the path itself"
@@ -1185,6 +1268,20 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
         (setq current-desktop-session-name new-name)
         (message "Session renamed to '%s'." new-name)))))
 
+;; I need a better check
+;; (defun exit-docker-layout-if-active ()
+;;   "Switch from docker layout to previous layout if docker layout is active."
+;;   (condition-case nil
+;;       (when (and (get-register ?d)
+;;                  (seq-some (lambda (window)
+;;                             (string-match-p "docker"
+;;                                           (symbol-name (with-current-buffer (window-buffer window)
+;;                                                        major-mode))))
+;;                           (window-list)))
+;;         (jump-to-register ?p))
+;;     (error nil)))
+
+;; (add-hook 'kill-emacs-hook #'exit-docker-layout-if-active)
 (add-hook 'kill-emacs-hook 'clean-buffer-list)
 (add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
@@ -1243,6 +1340,25 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 
 ;; Eshell buffer
 
+(define-minor-mode toggle-buffer-mode
+  "Minor mode for buffers that are meant to be temporary/toggled."
+  :lighter " Toggle"
+  :global nil)
+
+;; Add hook to kill toggle windows and buffers before saving session
+(defun kill-toggle-buffers ()
+  "Kill all windows and buffers that have toggle-buffer-mode enabled."
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (when toggle-buffer-mode
+        ;; First find and delete any window showing this buffer
+        (dolist (window (get-buffer-window-list buffer nil t))
+          (delete-window window))
+        ;; Then kill the buffer
+        (kill-buffer buffer)))))
+
+(add-hook 'kill-emacs-hook #'kill-toggle-buffers)
+
 (defvar eshell-buffer-name "*eshell*"
   "The name of the eshell buffer.")
 
@@ -1271,7 +1387,9 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
       (setq one-third-height (max one-third-height 1))
       (split-window-below (- one-third-height))
       (other-window 1)
-      (open-eshell-in-current-directory))))
+      (open-eshell-in-current-directory)
+      ;; Enable toggle-buffer-mode in the new eshell buffer
+      (toggle-buffer-mode 1))))
 
 (defun open-eshell-in-current-directory ()
   "Open eshell in the directory of the current buffer.
@@ -1375,8 +1493,8 @@ If an eshell buffer for the directory already exists, switch to it."
           ;; (message "Restored window configuration for tab: %s" tab-name))
       (message "No saved window configuration for this tab: %s" tab-name))))
 
-(global-set-key (kbd "M-k") 'my-eshell-fullscreen)
-(global-set-key (kbd "M-j") 'my-restore-window-configuration)
+;; (global-set-key (kbd "M-k") 'my-eshell-fullscreen)
+;; (global-set-key (kbd "M-j") 'my-restore-window-configuration)
 
 (defun display-current-tab-name ()
   "Display the name of the current tab in tab-bar-mode."
@@ -1601,6 +1719,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (use-package org
   :config
+  (setq browse-url-browser-function 'browse-url-default-browser) ;; Make links to open a default web browser.
   (setq org-startup-with-inline-images t)
   (setq org-edit-src-content-indentation 0)
   (setq org-blank-before-new-entry
@@ -1749,11 +1868,16 @@ If an eshell buffer for the directory already exists, switch to it."
   :init
   (with-eval-after-load 'org (global-org-modern-mode))
 (setq org-modern-fold-stars
-      '(("◉" . "○")            ; diamonds
-        (" ◆" . " ◇")          ; flowers
-        ("  ✦" . "  ✧")        ; stars
-        ("   ❂" . "   ☸")      ; wheels
-        ("    ✤" . "    ❃"))))  ; more flowers/stars
+      '(("#" . "#")            ; diamonds
+      ;; '(("◉" . "○")            ; diamonds
+        ("##" . "##")          ; flowers
+        ;; (" ◆" . " ◇")          ; flowers
+        ;; ("  ✦" . "  ✧")        ; stars
+        ("###" . "###")        ; stars
+        ;; ("   ❂" . "   ☸")      ; wheels
+        ("####" . "####")      ; wheels
+        ;; ("    ✤" . "    ❃"))))  ; more flowers/stars
+        ("#####" . "#####"))))  ; more flowers/stars
 
 
 ;; Enabling Table of Contents
@@ -1849,6 +1973,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-unset-key (kbd "C-s"))
 (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 (global-set-key (kbd "C-s C-s") 'my/consult-line-with-evil)
+(global-set-key (kbd "C-s C-c") 'consult-line-visible-region)
 ;; (global-set-key (kbd "C-s C-s") 'consult-line)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
@@ -1856,6 +1981,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
 ;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
 (global-set-key (kbd "C-h M-f") 'describe-face)
+(global-set-key (kbd "C-s C-y") 'yank-pop)
+(global-set-key (kbd "M-<f1>") 'tab-bar-move-tab-backward)
+(global-set-key (kbd "M-<f2>") 'tab-bar-move-tab)
 
 ;; (global-unset-key (kbd "C-t"))
 ;; (global-unset-key (kbd "C-y"))
@@ -1900,6 +2028,28 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 
 ;; Custom functions
+
+(defun my-package-isolate ()
+  "Isolate packages with better completion."
+  (interactive)
+  (let (packages done)
+    (while (not done)
+      (condition-case nil
+          (let ((package (completing-read 
+                         (format "Package %s (C-g when done): "
+                                (if packages 
+                                    (format "[added: %s]" 
+                                            (mapconcat #'identity packages " "))
+                                  ""))
+                         (mapcar #'car package-alist)
+                         nil t)))
+            (push package packages))
+        (quit (setq done t))))
+    (when packages
+      (package-isolate 
+       (mapcar (lambda (name)
+                 (cadr (assoc (intern name) package-alist)))
+               (nreverse packages))))))
 
 (defun toggle-special-buffer (buffer-name-pattern show-buffer-fn &optional select-window)
   "Generic function to toggle special buffers.
@@ -2232,6 +2382,11 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   "Open a specific file."
   (interactive)
   (find-file "~/.local/share/Trash"))
+
+(defun strash ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/trash/emacs/"))
 
 (defun ngrok ()
   "Open a terminal and execute 'ngrok http http://localhost:8080'."

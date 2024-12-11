@@ -38,6 +38,10 @@ projects
 history
 lastdir
 /var
+.workgroups
+registers
+saved-layout
+test.el
 
 # Ignore the entire eshell directory
 # /eshell/*

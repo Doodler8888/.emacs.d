@@ -23,7 +23,6 @@
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
   (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
 
-
 (use-package eshell-syntax-highlighting
   :ensure t
   :after esh-mode  ;; don't change to 'eshell-mode'
@@ -55,7 +54,8 @@
       (insert last-arg))))
 
 (defun setup-eshell-keys ()
-  (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument))
+  (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument)
+  (define-key eshell-mode-map (kbd "M-,") 'eshell/insert-pwd-at-point))
 
 (add-hook 'eshell-mode-hook 'setup-eshell-keys)
 
@@ -286,7 +286,7 @@ If the file doesn't exist, display an error message."
 ;; Allows to use zoxide
 (defun eshell/z (q)
   "Query zoxide and change directory in Eshell."
-  (if-let
+  (if-let*
       ((zoxide (executable-find "zoxide"))
        (target
         (with-temp-buffer
@@ -295,3 +295,65 @@ If the file doesn't exist, display an error message."
       (eshell/cd target)
     (unless zoxide (error "Install zoxide"))
     (unless target (error "No Match"))))
+
+
+(defun eshell/insert-pwd-at-point ()
+  "Insert the current directory path at point in current eshell command line."
+  (interactive)
+  (insert (expand-file-name default-directory)))
+
+(defun eshell-insert-last-output ()
+  "Insert the output of the last command."
+  (interactive)
+  (let* ((start (save-excursion
+                  (eshell-previous-prompt 1)
+                  (forward-line 1)
+                  (point)))
+         (end (save-excursion
+                (eshell-previous-prompt 0)
+                (line-beginning-position)))
+         (output (with-current-buffer "*eshell*"
+                  (buffer-substring-no-properties start end))))
+    (when (and output (not (string-empty-p output)))
+      (insert (string-trim-right 
+               (replace-regexp-in-string "^[^\n]*\\$ ?" "" output))))))
+
+(defun eshell-get-output-from-last-command ()
+  "Get the output of the last command in eshell."
+  (save-excursion
+    (let* ((input-start (eshell-beginning-of-input))
+           (input-end (eshell-end-of-input))
+           (input (buffer-substring input-start input-end))
+           (output (and (not (string-empty-p input))
+                       (string-trim (eshell-previous-output-string 0)))))
+      output)))
+
+
+;; Eshell prompt
+
+(defun git-prompt-branch-name ()
+  "Get current git branch name"
+  (let ((args '("symbolic-ref" "HEAD" "--short")))
+    (with-temp-buffer
+      (apply #'process-file "git" nil (list t nil) nil args)
+      (unless (bobp)
+        (goto-char (point-min))
+        (buffer-substring-no-properties (point) (line-end-position))))))
+
+(defun my-eshell-prompt ()
+  "Custom eshell prompt with git branch info and continuation prompt."
+  (let* ((default-directory (eshell/pwd))
+         (pwd (abbreviate-file-name default-directory)))
+    (concat
+     pwd  ; Remove the propertize here to keep default eshell directory coloring
+     (let ((branch (shell-command-to-string "git rev-parse --abbrev-ref HEAD 2>/dev/null")))
+       (if (string-match-p "^[A-Za-z]" branch)
+           (propertize (format " [%s]" (string-trim branch)) 'face 'font-lock-function-name-face)
+         ""))
+     "\n"
+     (propertize ">" 'face 'eshell-prompt)
+     " ")))
+
+;; Update the prompt regexp to match the new format
+(setq eshell-prompt-function #'my-eshell-prompt)
+(setq eshell-prompt-regexp "^> ")

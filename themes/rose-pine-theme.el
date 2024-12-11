@@ -78,6 +78,12 @@
     (set-face-attribute 'tab-bar-tab nil
         		:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
+    ;; Hydra
+   `(hydra-face-amaranth ((,class (:foreground ,rose-pine-love))))
+   `(hydra-face-red ((,class (:foreground ,rose-pine-love))))
+   `(hydra-face-rose ((,class (:foreground ,rose-pine-rose))))
+   `(hydra-face-blue ((,class (:foreground ,rose-pine-iris))))
+       
     ;; Ivy
     `(ivy-current-match ((,class (:background ,rose-pine-bg2))))
     `(ivy-modified-buffer ((,class (:foreground ,rose-pine-fg))))
@@ -189,11 +195,11 @@
     `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
      ;; (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
      ;; (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
-    `(org-level-1 ((,class (:foreground ,rose-pine-pine))))
-    `(org-level-2 ((,class (:foreground ,rose-pine-rose))))
-    `(org-level-3 ((,class (:foreground ,rose-pine-foam))))
-    `(org-level-4 ((,class (:foreground ,rose-pine-iris))))
-    `(org-level-6 ((,class (:foreground ,rose-pine-subtext))))
+    `(org-level-6 ((,class (:foreground ,rose-pine-pine))))
+    `(org-level-1 ((,class (:foreground ,rose-pine-rose))))
+    `(org-level-2 ((,class (:foreground ,rose-pine-foam))))
+    `(org-level-3 ((,class (:foreground ,rose-pine-iris))))
+    `(org-level-5 ((,class (:foreground ,rose-pine-subtext))))
     `(org-table ((,class (:foreground ,rose-pine-fg))))
     `(org-document-info-keyword ((,class (:foreground ,rose-pine-fg))))
     `(org-document-info ((,class (:foreground ,rose-pine-gold))))
