@@ -357,3 +357,16 @@ If the file doesn't exist, display an error message."
 ;; Update the prompt regexp to match the new format
 (setq eshell-prompt-function #'my-eshell-prompt)
 (setq eshell-prompt-regexp "^> ")
+
+
+(defun my/eshell-clear ()
+  "Clear the eshell buffer."
+  (interactive)
+  (eshell/clear-scrollback))
+
+(defun my/eshell-clear-ls ()
+  "Clear screen and list directory contents."
+  (interactive)
+  (eshell/clear-scrollback)
+  (let ((default-directory (eshell/pwd)))
+    (eshell-command "ls -la")))

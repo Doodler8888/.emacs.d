@@ -223,7 +223,7 @@
     (unless (derived-mode-p 'dired-mode)
       (call-interactively 'evil-avy-goto-char))))
 
-(defun my/conditional-search-or-avy ()
+(defun my/evil-conditional-search-or-avy ()
   "Use `evil-search-forward` in Dired buffers, otherwise use `avy-goto-char-all-windows`."
   (interactive)
   (if (derived-mode-p 'dired-mode)
@@ -235,8 +235,8 @@
   (evil-set-initial-state 'help-mode 'normal)
   
   ;; Then set our keybindings
-  (define-key evil-visual-state-map (kbd "/") 'my/conditional-search-or-avy)
-  (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy))
+  (define-key evil-visual-state-map (kbd "/") 'my/evil-conditional-search-or-avy)
+  (define-key evil-normal-state-map (kbd "/") 'my/evil-conditional-search-or-avy))
 
 
 ;; Docker
@@ -307,7 +307,8 @@ If not on a numbered item, just use evil-open-above."
   ;; or define a custom function to evaluate a region if needed.
   ))
 
-;; Vertico
+
+;; Vertico/Consult
 
 (evil-define-key 'insert minibuffer-local-map (kbd "M-r") 'my-shell-command-history-and-insert)
 (evil-define-key 'normal minibuffer-local-map (kbd "M-r") 'my-shell-command-history-and-insert)
@@ -343,16 +344,29 @@ If not on a numbered item, just use evil-open-above."
 
 ;; Eshell
 
+(defun my/eshell-clear ()
+  "Clear the eshell buffer."
+  (interactive)
+  (eshell/clear-scrollback))
+
+(defun my/eshell-clear-ls ()
+  "Clear screen and list directory contents."
+  (interactive)
+  (eshell/clear-scrollback)
+  (eshell/ls "-la"))
+
 (with-eval-after-load 'eshell
   (with-eval-after-load 'evil
-    (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'eshell-clear-buffer)
-    (evil-define-key 'normal eshell-mode-map (kbd "C-l") 'eshell-clear-buffer)
+    (evil-define-key 'insert eshell-mode-map (kbd "M-s") 'my/eshell-clear-ls)
+    (evil-define-key 'normal eshell-mode-map (kbd "M-s") 'my/eshell-clear-ls)
+    (evil-define-key 'insert eshell-mode-map (kbd "M-l") 'my/eshell-clear)
+    (evil-define-key 'normal eshell-mode-map (kbd "M-l") 'my/eshell-clear)
     (evil-define-key 'normal eshell-mode-map (kbd "C-f C-p") 'eshell/insert-pwd-at-point)
-    (evil-define-key 'insert eshell-mode-map (kbd "C-f C-p") 'eshell/insert-pwd-at-point)
+    (evil-define-key 'insert eshell-mode-map (kbd "C-f C-p") 'eshell/insert-pwd-at-point))
     
     ;; Make these bindings higher priority
     (evil-local-set-key 'normal (kbd "M-,") 'eshell/insert-pwd-at-point)
-    (evil-local-set-key 'insert (kbd "M-,") 'eshell/insert-pwd-at-point)))
+    (evil-local-set-key 'insert (kbd "M-,") 'eshell/insert-pwd-at-point))
 
 (with-eval-after-load 'eshell
   (evil-define-key 'normal eshell-mode-map
@@ -543,3 +557,18 @@ If not on a numbered item, just use evil-open-above."
             (if buffer-read-only
                 (evil-normal-state)
               (evil-insert-state))))
+
+
+;; I put this to evil because if it's going to be in the main config, it will
+;; change the 's' binding in meow.
+(define-prefix-command 'my-window-map)
+(global-set-key (kbd "C-w") 'my-window-map)
+
+(global-set-key (kbd "C-w C-l") 'windmove-right)
+(global-set-key (kbd "C-w C-h") 'windmove-left)
+(global-set-key (kbd "C-w C-k") 'windmove-up)
+(global-set-key (kbd "C-w C-j") 'windmove-down)
+
+(global-set-key (kbd "C-w C-s") 'split-window-below) 
+(global-set-key (kbd "C-w C-v") 'split-window-right)  
+(global-set-key (kbd "C-w C-c") 'delete-window)        

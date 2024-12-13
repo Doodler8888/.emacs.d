@@ -21,8 +21,8 @@
 ;;     user-emacs-directory))
 
 (load "~/.emacs.d/config.el")
-(load "~/.emacs.d/other/evil.el")
-;; (load "~/.emacs.d/other/meow.el")
+;; (load "~/.emacs.d/other/evil.el")
+(load "~/.emacs.d/other/meow.el")
 (load "~/.emacs.d/eshell/eshell.el")
 (load "~/.emacs.d/other/scripts/install-org.el")
 

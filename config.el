@@ -206,7 +206,7 @@
 ;; inconsistent overall
 (set-default 'truncate-lines t)
 (add-hook 'prog-mode-hook (lambda ()
-                           (setq-local truncate-lines t)
+                           ;; (setq-local truncate-lines t)
                            (toggle-truncate-lines 1)))
 ;; Specific for emacs-lisp-mode
 (add-hook 'emacs-lisp-mode-hook
@@ -1304,6 +1304,7 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
                 "*Help*"
                 "*Warnings*"
                 "*Async Shell Command*"
+                "*vc-git*"
                 "*debug*")))
 
 ;; (add-to-list 'display-buffer-alist
@@ -2032,18 +2033,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   ;; Add more keybindings as needed
   )
 
-(define-prefix-command 'my-window-map)
-(global-set-key (kbd "C-w") 'my-window-map)
-
-(global-set-key (kbd "C-w C-l") 'windmove-right)
-(global-set-key (kbd "C-w C-h") 'windmove-left)
-(global-set-key (kbd "C-w C-k") 'windmove-up)
-(global-set-key (kbd "C-w C-j") 'windmove-down)
-
-(global-set-key (kbd "C-w C-s") 'split-window-below) 
-(global-set-key (kbd "C-w C-v") 'split-window-right)  
-(global-set-key (kbd "C-w C-c") 'delete-window)        
-
 
 ;; Custom functions
 
@@ -2252,7 +2241,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (completion-preview-insert)
   (delete-backward-char 1))
 
-(defun scroll-up-and-recenter (arg)
+(defun scroll-down-and-recenter (arg)
   "Scroll up ARG lines and recenter, preserving horizontal position."
   (interactive "P")
   (let ((col (current-column)))    ; Save the column position
@@ -2260,7 +2249,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
     (recenter)
     (move-to-column col)))         ; Restore the column position
 
-(defun scroll-down-and-recenter (arg)
+(defun scroll-up-and-recenter (arg)
   "Scroll down ARG lines and recenter, preserving horizontal position."
   (interactive "P")
   (let ((col (current-column)))    ; Save the column position

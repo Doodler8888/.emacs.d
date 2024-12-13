@@ -42,7 +42,6 @@ lastdir
 registers
 saved-layout
 test.el
-
 # Ignore the entire eshell directory
 # /eshell/*
 # !/eshell/aliases
