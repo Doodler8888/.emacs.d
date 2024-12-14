@@ -222,7 +222,8 @@ If no forward match is found, search backward."
     (comment-or-uncomment-region start end)))
 
 (defun my-meow-paste-before ()
-  "Paste before cursor without overwriting kill ring."
+  "Paste before c  "Paste before cursor without overwriting kill ring."
+ursor without overwriting kill ring."
   (interactive)
         (meow-open-above)
         (yank)
@@ -234,6 +235,78 @@ If no forward match is found, search backward."
   (move-beginning-of-line 1)
   (copy-whole-line)
   (yank))
+
+(defun my/meow-smart-paste ()
+  "Paste like Vim, handling both line-wise and regular pastes."
+  (interactive)
+  (if (region-active-p)
+      (meow-replace)  ; Just use meow-replace for selections
+    (let ((text (current-kill 0 t)))
+      (if (string-suffix-p "\n" text)
+          (progn
+            (forward-line)
+            (beginning-of-line)
+            (insert text)
+            (forward-line -1)
+            (beginning-of-line))
+        (yank)))))
+
+(defun my/meow-replace-char ()
+  "Replace character(s) with input character, like Vim's r."
+  (interactive)
+  (let ((char (read-char "Replace with: ")))
+    (if (region-active-p)
+        (let ((start (region-beginning))
+              (end (region-end)))
+          (delete-region start end)
+          (insert (make-string (- end start) char)))
+      (delete-char 1)
+      (insert-char char)
+      (backward-char))))
+
+
+(defvar my/last-selection-start nil "Start position of last visual selection.")
+(defvar my/last-selection-end nil "End position of last visual selection.")
+(defvar my/last-selection-type nil "Type of last visual selection.")
+
+(defun my/save-selection (&rest _)
+  "Save the current selection coordinates."
+  (when (region-active-p)
+    (setq my/last-selection-start (mark)
+          my/last-selection-end (point)
+          my/last-selection-type (meow--selection-type))))
+
+(defun my/restore-selection ()
+  "Restore the last saved selection, similar to Vim's gv."
+  (interactive)
+  (when (and my/last-selection-start my/last-selection-end)
+    (goto-char my/last-selection-end)
+    (set-mark my/last-selection-start)
+    (activate-mark)
+    (when my/last-selection-type
+      (setq meow--selection-type my/last-selection-type))))
+
+;; Add advice to save selection before deactivating
+(advice-add 'deactivate-mark :before #'my/save-selection)
+
+;; (defun my/meow-smart-paste ()
+;;   "Paste like Vim, handling both line-wise and regular pastes."
+;;   (interactive)
+;;   (let ((text (current-kill 0 t)))
+;;     (if (region-active-p)
+;;         ;; Handle any active selection (including M-h)
+;;         (progn
+;;           (delete-region (region-beginning) (region-end))
+;;           (insert text))
+;;       ;; No selection - handle line-wise or regular paste
+;;       (if (string-suffix-p "\n" text)
+;;           (progn
+;;             (forward-line)
+;;             (beginning-of-line)
+;;             (insert text)
+;;             (forward-line -1)
+;;             (beginning-of-line))
+;;         (yank)))))
 
 (defun copy-whole-line ()
   "Copy the current line to the kill ring."
@@ -350,67 +423,22 @@ If no forward match is found, search backward."
                 electric-newline-and-maybe-indent))
   (advice-add func :before #'my/cancel-selection-before-ret))
 
-(defun my/meow-smart-save ()
-  "Enhanced save (yank) command with Vim-like behavior."
-  (interactive)
-  (if (and (or meow--expand-nav-function
-               (equal (car (meow--selection-type)) 'expand))
-           (region-active-p)
-           (meow--selection-type))
-      (meow-save)
-    (let ((key (read-key "Enter j/k or number: ")))
-      (cond
-       ;; If numeric input, handle count then direction
-       ((and (>= key ?0) (<= key ?9))
-        (let* ((num-str (string key))
-               (next-key (read-key))
-               ;; Keep reading numbers
-               (_ (while (and (>= next-key ?0) (<= next-key ?9))
-                    (setq num-str (concat num-str (string next-key))
-                          next-key (read-key))))
-               (count (string-to-number num-str)))
-          (cond ((eq next-key ?j)
-                 (let ((start (line-beginning-position))
-                       (end (save-excursion
-                             (forward-line count)
-                             (line-end-position))))
-                   (kill-ring-save start (1+ end)))) ; Include newline
-                ((eq next-key ?k)
-                 (let ((end (1+ (line-end-position))) ; Include newline
-                       (start (save-excursion
-                               (forward-line (- count))
-                               (line-beginning-position))))
-                   (kill-ring-save start end))))))
-       ;; Simple j/k without count
-       ((eq key ?j)
-        (let ((start (line-beginning-position))
-              (end (save-excursion
-                    (forward-line 1)
-                    (line-end-position))))
-          (kill-ring-save start (1+ end)))) ; Include newline
-       ((eq key ?k)
-        (let ((end (1+ (line-end-position))) ; Include newline
-              (start (save-excursion
-                      (forward-line -1)
-                      (line-beginning-position))))
-          (kill-ring-save start end)))
-       (t (meow-save))))))
-
 (defun my/meow-smart-delete ()
   "Enhanced delete command with Vim-like behavior."
   (interactive)
-  (if (and (or meow--expand-nav-function
-               (equal (car (meow--selection-type)) 'expand))
-           (region-active-p)
-           (meow--selection-type))
+  (if (region-active-p)
       (my/generic-meow-smart-delete)
-    (let ((key (read-key "Enter j/k or number: ")))
+    (let ((key (read-key "Enter d/j/k or number: "))
+          (current-column (current-column)))  ; Save current column
       (cond
-       ;; If numeric input, handle count then direction
+       ((eq key ?d)
+        (kill-region (line-beginning-position)
+                    (min (point-max) 
+                        (1+ (line-end-position))))
+        (move-to-column current-column))  ; Restore column position
        ((and (>= key ?0) (<= key ?9))
         (let* ((num-str (string key))
                (next-key (read-key))
-               ;; Keep reading numbers
                (_ (while (and (>= next-key ?0) (<= next-key ?9))
                     (setq num-str (concat num-str (string next-key))
                           next-key (read-key))))
@@ -418,40 +446,44 @@ If no forward match is found, search backward."
           (cond ((eq next-key ?j)
                  (let ((start (line-beginning-position))
                        (end (save-excursion
-                             (forward-line count)
-                             (line-end-position))))
-                   (delete-region start end)))
+                             (forward-line (1+ count))
+                             (line-beginning-position))))
+                   (kill-region start end)
+                   (move-to-column current-column)))  ; Restore column position
                 ((eq next-key ?k)
                  (let ((end (line-end-position))
                        (start (save-excursion
                                (forward-line (- count))
                                (line-beginning-position))))
-                   (delete-region start end))))))
-       ;; Simple j/k without count
+                   (kill-region start (1+ end))
+                   (move-to-column current-column))))))  ; Restore column position
        ((eq key ?j)
         (let ((start (line-beginning-position))
               (end (save-excursion
-                    (forward-line 1)
-                    (line-end-position))))
-          (delete-region start end)))
+                    (forward-line 2)
+                    (line-beginning-position))))
+          (kill-region start end)
+          (move-to-column current-column)))  ; Restore column position
        ((eq key ?k)
         (let ((end (line-end-position))
               (start (save-excursion
                       (forward-line -1)
                       (line-beginning-position))))
-          (delete-region start end)))
+          (kill-region start (1+ end))
+          (move-to-column current-column)))  ; Restore column position
        (t (my/generic-meow-smart-delete))))))
 
 (defun my/meow-smart-change ()
   "Enhanced change command with Vim-like behavior."
   (interactive)
-  (if (and (or meow--expand-nav-function
-               (equal (car (meow--selection-type)) 'expand))
-           (region-active-p)
-           (meow--selection-type))
+  (if (region-active-p)
       (meow-change)
-    (let ((key (read-key "Enter j/k or number: ")))
+    (let ((key (read-key "Enter c/j/k or number: ")))
       (cond
+       ((eq key ?c)
+        (delete-region (line-beginning-position)
+                      (line-end-position))
+        (meow-insert))
        ((and (>= key ?0) (<= key ?9))
         (let* ((num-str (string key))
                (next-key (read-key))
@@ -471,7 +503,7 @@ If no forward match is found, search backward."
                        (start (save-excursion
                                (forward-line (- count))
                                (line-beginning-position))))
-                   (delete-region start end)
+                   (delete-region start (1+ end))
                    (meow-insert))))))
        ((eq key ?j)
         (let ((start (line-beginning-position))
@@ -485,25 +517,73 @@ If no forward match is found, search backward."
               (start (save-excursion
                       (forward-line -1)
                       (line-beginning-position))))
-          (delete-region start end)
+          (delete-region start (1+ end))
           (meow-insert)))
        (t (meow-change))))))
 
-(defun my/meow-delete-insert ()
-  "Uses meow-delete and meow-insert sequetually"
+(defun my/meow-smart-save ()
+  "Enhanced save (yank) command with Vim-like behavior."
   (interactive)
-  (meow-cancel-selection)
-  (meow-delete)
-  (meow-insert))
+  (if (region-active-p)
+      (meow-save)
+    (let ((key (read-key "Enter y/j/k or number: ")))
+      (cond
+       ((eq key ?y)
+        (let ((start (line-beginning-position))
+              (end (min (point-max)
+                       (1+ (line-end-position)))))
+          (kill-ring-save start end)))
+       ((and (>= key ?0) (<= key ?9))
+        (let* ((num-str (string key))
+               (next-key (read-key))
+               (_ (while (and (>= next-key ?0) (<= next-key ?9))
+                    (setq num-str (concat num-str (string next-key))
+                          next-key (read-key))))
+               (count (string-to-number num-str)))
+          (cond ((eq next-key ?j)
+                 (let ((start (line-beginning-position))
+                       (end (save-excursion
+                             (forward-line (1+ count))
+                             (line-beginning-position))))
+                   (kill-ring-save start end)))
+                ((eq next-key ?k)
+                 (let ((end (line-end-position))
+                       (start (save-excursion
+                               (forward-line (- count))
+                               (line-beginning-position))))
+                   (kill-ring-save start (1+ end)))))))
+       ((eq key ?j)
+        (let ((start (line-beginning-position))
+              (end (save-excursion
+                    (forward-line 2)
+                    (line-beginning-position))))
+          (kill-ring-save start end)))
+       ((eq key ?k)
+        (let ((end (line-end-position))
+              (start (save-excursion
+                      (forward-line -1)
+                      (line-beginning-position))))
+          (kill-ring-save start (1+ end))))
+       (t (meow-save))))))
+
+(defun my/meow-delete-insert ()
+  "Uses meow-delete and meow-insert sequentially"
+  (interactive)
+  (if (region-active-p)
+      (progn
+        (meow-cancel-selection)
+        (meow-delete)
+        (meow-insert))
+    (progn
+      (meow-delete)
+      (meow-insert))))
 
 (defun my/generic-meow-smart-delete ()
   "If selection is active, use meow-kill. If not, use meow-delete."
   (interactive)
-  (if (not (and meow--expand-nav-function
-                (region-active-p)
-                (meow--selection-type)))
-      (meow-delete)
-    (meow-kill)))
+  (if (region-active-p)
+      (meow-kill)
+    (meow-delete)))
 
 (defun avy-goto-char-all-windows ()
   "Invoke `avy-goto-char` across all windows in the current frame, except in Dired buffers."
@@ -720,10 +800,11 @@ If no forward match is found, search backward."
    '("F" . my/meow-find-backward)
    ;; '("g" . meow-cancel-selection)
    '("g" . nil)
-   '("g ;" . meow-pop-to-global-mark)
-   '("g v" . meow-pop-selection)
+   '("g ;" . goto-last-change)
+   '("g v" . my/restore-selection)
    '("g c" . my/smart-comment)
    '("g g" . beginning-of-buffer)
+   '("g z" . zoxide-travel)
    '("G" . end-of-buffer)
    '("h" . meow-left)
    '("H" . meow-left-expand)
@@ -741,11 +822,12 @@ If no forward match is found, search backward."
    '("o" . meow-block)
    '("O" . meow-to-block)
    ;; '("p" . meow-yank)
-   '("p" . yank)
+   ;; '("p" . yank)
+   '("p" . my/meow-smart-paste)
    '("P" . my-meow-paste-before)
    '("q" . meow-quit)
    '("Q" . meow-goto-line)
-   '("r" . meow-replace)
+   '("r" . my/meow-replace-char)
    '("R" . meow-swap-grab)
    ;; '("s" . meow-kill)
    '("s" . my/meow-delete-insert)

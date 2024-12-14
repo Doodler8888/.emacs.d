@@ -409,6 +409,10 @@
 (add-hook 'yaml-ts-mode-hook (lambda () 
   (auto-fill-mode -1)))
 
+;; Go to last change
+
+(use-package goto-chg)
+
 
 ;; Avy
 
@@ -2620,6 +2624,11 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   "Open a specific file."
   (interactive)
   (find-file "~/.emacs.d/other/evil.el"))
+
+(defun meow ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.emacs.d/other/meow.el"))
 
 (defun todo ()
   "Open a specific file."

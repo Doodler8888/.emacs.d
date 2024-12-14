@@ -157,6 +157,8 @@
         (evil-normal-state)
         (backward-char)))))
 
+
+
 (with-eval-after-load 'evil
   (define-key evil-visual-state-map "P" 'my-evil-paste-before))
 
