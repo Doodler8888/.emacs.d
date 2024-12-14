@@ -943,6 +943,34 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         ;; Set search direction to forward
         (setq isearch-forward t)))))
 
+(defun my/search-next ()
+  "Search forward using last consult-line pattern."
+  (interactive)
+  (when-let* ((pattern (car regexp-search-ring)))
+    (let ((case-fold-search t)
+          (current-pos (point)))
+      ;; Move past current match if we're at one
+      (when (looking-at pattern)
+        (goto-char (match-end 0)))
+      (if (and (re-search-forward pattern nil t)
+               (match-beginning 0))
+          (let ((match-pos (match-beginning 0)))
+            (goto-char match-pos)
+            t)
+        nil))))
+
+(defun my/search-previous ()
+  "Search backward using last consult-line pattern."
+  (interactive)
+  (when-let* ((pattern (car regexp-search-ring)))
+    (let ((case-fold-search t)
+          (current-pos (point)))  ; Debug: store current position
+      (if (re-search-backward pattern nil t)
+          (let ((match-pos (match-beginning 0)))  ; Debug: store match position
+            (goto-char match-pos)
+            t)
+        nil))))
+
 (use-package marginalia
   :ensure t
   :init

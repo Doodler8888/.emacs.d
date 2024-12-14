@@ -41,20 +41,23 @@
 (setq meow--kbd-backward-char "H-b")
 (setq meow--kbd-mark-paragraph "H-r")
 
+(define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-word)
 
 (define-prefix-command 'my-window-map)
-(global-set-key (kbd "C-w") 'my-window-map)
+(define-key meow-normal-state-keymap (kbd "C-w") 'my-window-map)
 
-(global-set-key (kbd "C-w C-l") 'windmove-right)
-(global-set-key (kbd "C-w C-h") 'windmove-left)
-(global-set-key (kbd "C-w C-k") 'windmove-up)
-(global-set-key (kbd "C-w C-j") 'windmove-down)
+(define-key meow-normal-state-keymap (kbd "C-w C-l") 'windmove-right)
+(define-key meow-normal-state-keymap (kbd "C-w C-h") 'windmove-left)
+(define-key meow-normal-state-keymap (kbd "C-w C-k") 'windmove-up)
+(define-key meow-normal-state-keymap (kbd "C-w C-j") 'windmove-down)
 
-(global-set-key (kbd "C-w C-s") 'split-window-below) 
-(global-set-key (kbd "C-w C-v") 'split-window-right)  
-(global-set-key (kbd "C-w C-c") 'delete-window)        
+(define-key meow-normal-state-keymap (kbd "C-w C-s") 'split-window-below)
+(define-key meow-normal-state-keymap (kbd "C-w C-v") 'split-window-right)
+(define-key meow-normal-state-keymap (kbd "C-w C-c") 'delete-window)
+(define-key meow-normal-state-keymap (kbd "C-w c") 'delete-window)
 
-(global-set-key (kbd "C-w C-w") 'kill-region)
+(define-key meow-normal-state-keymap (kbd "C-w C-w") 'kill-region)
+
 
 (define-key minibuffer-local-map (kbd "M-n") 'my-next-history-element)
 (define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
@@ -214,20 +217,34 @@ If no forward match is found, search backward."
     (goto-char start)
     (set-mark end)))
 
-(defun my/smart-comment ()
-  "Comment or uncomment region if active, otherwise comment/uncomment current line."
+(defun my/indent-region-right ()
+  "Indent region or current line to the right by 2 spaces (like Vim's >>)."
   (interactive)
-  (let ((start (if (region-active-p) (region-beginning) (line-beginning-position)))
-        (end (if (region-active-p) (region-end) (line-end-position))))
-    (comment-or-uncomment-region start end)))
+  (if (region-active-p)
+      (let ((deactivate-mark nil))  ; Preserve the active region
+        (indent-rigidly (region-beginning) (region-end) 2))
+    (indent-rigidly (line-beginning-position) (line-end-position) 2)))
+
+(defun my/indent-region-left ()
+  "Indent region or current line to the left by 2 spaces (like Vim's <<)."
+  (interactive)
+  (if (region-active-p)
+      (let ((deactivate-mark nil))  ; Preserve the active region
+        (indent-rigidly (region-beginning) (region-end) -2))
+    (indent-rigidly (line-beginning-position) (line-end-position) -2)))
+
+;; (defun my/smart-comment ()
+;;   "Comment or uncomment region if active, otherwise comment/uncomment current line."
+;;   (interactive)
+;;   (let ((start (if (region-active-p) (region-beginning) (line-beginning-position)))
+;;         (end (if (region-active-p) (region-end) (line-end-position))))
+;;     (comment-or-uncomment-region start end)))
 
 (defun my-meow-paste-before ()
-  "Paste before c  "Paste before cursor without overwriting kill ring."
-ursor without overwriting kill ring."
+  "Paste before cursor without overwriting kill ring."
   (interactive)
-        (meow-open-above)
-        (yank)
-        (meow-insert-exit))
+  (save-excursion
+    (insert (current-kill 0 t))))
 
 (defun save-and-paste ()
   "Copy the current line to the kill ring."
@@ -251,19 +268,28 @@ ursor without overwriting kill ring."
             (beginning-of-line))
         (yank)))))
 
+;; ;; Work like in vim
+;; (defun my/meow-replace-char ()
+;;   "Replace character(s) with input character, like Vim's r."
+;;   (interactive)
+;;   (let ((char (read-char "Replace with: ")))
+;;     (if (region-active-p)
+;;         (let ((start (region-beginning))
+;;               (end (region-end)))
+;;           (delete-region start end)
+;;           (insert (make-string (- end start) char)))
+;;       (delete-char 1)
+;;       (insert-char char)
+;;       (backward-char))))
+
+;; It's a simplified version that doesn't work on a selection
 (defun my/meow-replace-char ()
-  "Replace character(s) with input character, like Vim's r."
+  "Replace character with input character, like Vim's r."
   (interactive)
   (let ((char (read-char "Replace with: ")))
-    (if (region-active-p)
-        (let ((start (region-beginning))
-              (end (region-end)))
-          (delete-region start end)
-          (insert (make-string (- end start) char)))
-      (delete-char 1)
-      (insert-char char)
-      (backward-char))))
-
+    (delete-char 1)
+    (insert-char char)
+    (backward-char)))
 
 (defvar my/last-selection-start nil "Start position of last visual selection.")
 (defvar my/last-selection-end nil "End position of last visual selection.")
@@ -332,12 +358,6 @@ ursor without overwriting kill ring."
   "Delete from cursor position to end of line, like Vim's D command."
   (interactive)
   (delete-region (point) (line-end-position)))
-
-(defun my/meow-revers-line ()
-  "Reverse meow-line"
-  (interactive)
-  (meow-line 1)
-  (meow-reverse))
 
 (defun my/meow-revers-line ()
   "Reverse meow-line"
@@ -423,148 +443,175 @@ ursor without overwriting kill ring."
                 electric-newline-and-maybe-indent))
   (advice-add func :before #'my/cancel-selection-before-ret))
 
+(defvar my/motion-alist
+  '((?j . next-line)
+    (?k . previous-line)
+    (?g . (((?g . beginning-of-buffer))))
+    (?G . end-of-buffer))
+  "Alist of line-wise motions.")
+
+(defun my/get-motion-info (key)
+  "Get motion info for a key, handling multi-char sequences."
+  (let ((motion-info (alist-get key my/motion-alist)))
+    (if (and (listp motion-info)
+             (listp (car motion-info)))
+      (let ((next-key (read-key)))
+        (alist-get next-key (car motion-info)))
+      motion-info)))
+
+(defun my/get-line-bounds (motion-cmd &optional count)
+  "Get the bounds for line-wise motion."
+  (let ((count (or count 1)))
+    (save-excursion
+      (cond
+       ;; Handle gg (beginning of buffer)
+       ((eq motion-cmd 'beginning-of-buffer)
+        (cons (point-min)
+              (min (point-max)
+                   (1+ (line-end-position)))))
+       
+       ;; Handle G (end of buffer)
+       ((eq motion-cmd 'end-of-buffer)
+        (cons (line-beginning-position)
+              (point-max)))
+       
+       ;; Handle k (up)
+       ((eq motion-cmd 'previous-line)
+        (cons (save-excursion
+                (forward-line (- count))
+                (line-beginning-position))
+              (min (point-max)
+                   (1+ (line-end-position)))))
+       
+       ;; Handle j (down)
+       ((eq motion-cmd 'next-line)
+        (cons (line-beginning-position)
+              (save-excursion
+                (forward-line (1+ count))
+                (min (point-max)
+                     (line-beginning-position)))))))))
+
+(defun my/handle-operator (operator &optional special-handler)
+  "Handle motion selection and apply operator."
+  (let ((key (read-key "Enter motion: "))
+        (current-column (current-column)))
+    (cond
+     ((and special-handler (funcall special-handler key current-column)))
+     
+     ((and (>= key ?0) (<= key ?9))
+      (let* ((num-str (string key))
+             (next-key (read-key))
+             (_ (while (and (>= next-key ?0) (<= next-key ?9))
+                  (setq num-str (concat num-str (string next-key))
+                        next-key (read-key))))
+             (count (string-to-number num-str))
+             (motion-cmd (my/get-motion-info next-key)))
+        (when motion-cmd
+          (let* ((bounds (my/get-line-bounds motion-cmd count))
+                 (start (car bounds))
+                 (end (cdr bounds)))
+            (funcall operator start end)
+            (when current-column
+              (move-to-column current-column))))))
+     
+     (t
+      (when-let* ((motion-cmd (my/get-motion-info key)))
+        (let* ((bounds (my/get-line-bounds motion-cmd 1))
+               (start (car bounds))
+               (end (cdr bounds)))
+          (funcall operator start end)
+          (when current-column
+            (move-to-column current-column))))))))
+
+(defun my/operate-on-motion (operator motion-cmd motion-type &optional count column)
+  "Apply operator on region covered by motion."
+  (let* ((bounds (my/get-motion-bounds motion-cmd motion-type count))
+         (start (car bounds))
+         (end (cdr bounds)))
+    (funcall operator start end)
+    (when column
+      (move-to-column column))))
+
+(defun my/comment-special-handler (key _)
+  "Handle special cases for comment operator."
+  (when (eq key ?c)  ; Changed from ?g to ?c
+    (comment-or-uncomment-region (line-beginning-position)
+                                (line-end-position))
+    t))
+
+(defun my/meow-smart-comment ()
+  "Enhanced comment command with motion support."
+  (interactive)
+  (if (region-active-p)
+      (comment-or-uncomment-region (region-beginning) (region-end))
+    (my/handle-operator 'comment-or-uncomment-region
+                        #'my/comment-special-handler)))
+
+;; Special handlers for each operator
+(defun my/delete-special-handler (key column)
+  "Handle special cases for delete operator."
+  (when (eq key ?d)
+    (kill-region (line-beginning-position)
+                 (min (point-max) 
+                      (1+ (line-end-position))))
+    (move-to-column column)
+    t))
+
+;; Operator functions with their special cases
 (defun my/meow-smart-delete ()
   "Enhanced delete command with Vim-like behavior."
   (interactive)
   (if (region-active-p)
       (my/generic-meow-smart-delete)
-    (let ((key (read-key "Enter d/j/k or number: "))
-          (current-column (current-column)))  ; Save current column
-      (cond
-       ((eq key ?d)
-        (kill-region (line-beginning-position)
-                    (min (point-max) 
-                        (1+ (line-end-position))))
-        (move-to-column current-column))  ; Restore column position
-       ((and (>= key ?0) (<= key ?9))
-        (let* ((num-str (string key))
-               (next-key (read-key))
-               (_ (while (and (>= next-key ?0) (<= next-key ?9))
-                    (setq num-str (concat num-str (string next-key))
-                          next-key (read-key))))
-               (count (string-to-number num-str)))
-          (cond ((eq next-key ?j)
-                 (let ((start (line-beginning-position))
-                       (end (save-excursion
-                             (forward-line (1+ count))
-                             (line-beginning-position))))
-                   (kill-region start end)
-                   (move-to-column current-column)))  ; Restore column position
-                ((eq next-key ?k)
-                 (let ((end (line-end-position))
-                       (start (save-excursion
-                               (forward-line (- count))
-                               (line-beginning-position))))
-                   (kill-region start (1+ end))
-                   (move-to-column current-column))))))  ; Restore column position
-       ((eq key ?j)
-        (let ((start (line-beginning-position))
-              (end (save-excursion
-                    (forward-line 2)
-                    (line-beginning-position))))
-          (kill-region start end)
-          (move-to-column current-column)))  ; Restore column position
-       ((eq key ?k)
-        (let ((end (line-end-position))
-              (start (save-excursion
-                      (forward-line -1)
-                      (line-beginning-position))))
-          (kill-region start (1+ end))
-          (move-to-column current-column)))  ; Restore column position
-       (t (my/generic-meow-smart-delete))))))
+    (my/handle-operator 'kill-region #'my/delete-special-handler)))
 
 (defun my/meow-smart-change ()
   "Enhanced change command with Vim-like behavior."
   (interactive)
   (if (region-active-p)
       (meow-change)
-    (let ((key (read-key "Enter c/j/k or number: ")))
-      (cond
-       ((eq key ?c)
-        (delete-region (line-beginning-position)
-                      (line-end-position))
-        (meow-insert))
-       ((and (>= key ?0) (<= key ?9))
-        (let* ((num-str (string key))
-               (next-key (read-key))
-               (_ (while (and (>= next-key ?0) (<= next-key ?9))
-                    (setq num-str (concat num-str (string next-key))
-                          next-key (read-key))))
-               (count (string-to-number num-str)))
-          (cond ((eq next-key ?j)
-                 (let ((start (line-beginning-position))
-                       (end (save-excursion
-                             (forward-line count)
-                             (line-end-position))))
-                   (delete-region start end)
-                   (meow-insert)))
-                ((eq next-key ?k)
-                 (let ((end (line-end-position))
-                       (start (save-excursion
-                               (forward-line (- count))
-                               (line-beginning-position))))
-                   (delete-region start (1+ end))
-                   (meow-insert))))))
-       ((eq key ?j)
-        (let ((start (line-beginning-position))
-              (end (save-excursion
-                    (forward-line 1)
-                    (line-end-position))))
-          (delete-region start end)
-          (meow-insert)))
-       ((eq key ?k)
-        (let ((end (line-end-position))
-              (start (save-excursion
-                      (forward-line -1)
-                      (line-beginning-position))))
-          (delete-region start (1+ end))
-          (meow-insert)))
-       (t (meow-change))))))
+    (my/handle-operator 'my/change-operator #'my/change-special-handler)))
+
+(defun my/change-operator (start end)
+  "Delete region and enter insert mode."
+  (let ((indentation (save-excursion
+                      (goto-char start)
+                      (current-indentation)))
+        (line-wise (save-excursion
+                    (goto-char start)
+                    (= start (line-beginning-position)))))
+    (delete-region start end)
+    (when line-wise
+      (insert "\n")  ; Insert a new line for line-wise operations
+      (forward-line -1))  ; Move to the empty line
+    (when (looking-at-p "^$")
+      (indent-to indentation))
+    (meow-insert)))
+
+(defun my/change-special-handler (key _)
+  "Handle special cases for change operator."
+  (when (eq key ?c)
+    (let ((indentation (current-indentation)))
+      (delete-region (line-beginning-position)
+                    (line-end-position))
+      (indent-to indentation)
+      (meow-insert))
+    t))
+
+(defun my/save-special-handler (key _)
+  "Handle special cases for yank operator."
+  (when (eq key ?y)
+    (kill-ring-save (line-beginning-position)
+                    (min (point-max)
+                         (1+ (line-end-position))))
+    t))
 
 (defun my/meow-smart-save ()
   "Enhanced save (yank) command with Vim-like behavior."
   (interactive)
   (if (region-active-p)
       (meow-save)
-    (let ((key (read-key "Enter y/j/k or number: ")))
-      (cond
-       ((eq key ?y)
-        (let ((start (line-beginning-position))
-              (end (min (point-max)
-                       (1+ (line-end-position)))))
-          (kill-ring-save start end)))
-       ((and (>= key ?0) (<= key ?9))
-        (let* ((num-str (string key))
-               (next-key (read-key))
-               (_ (while (and (>= next-key ?0) (<= next-key ?9))
-                    (setq num-str (concat num-str (string next-key))
-                          next-key (read-key))))
-               (count (string-to-number num-str)))
-          (cond ((eq next-key ?j)
-                 (let ((start (line-beginning-position))
-                       (end (save-excursion
-                             (forward-line (1+ count))
-                             (line-beginning-position))))
-                   (kill-ring-save start end)))
-                ((eq next-key ?k)
-                 (let ((end (line-end-position))
-                       (start (save-excursion
-                               (forward-line (- count))
-                               (line-beginning-position))))
-                   (kill-ring-save start (1+ end)))))))
-       ((eq key ?j)
-        (let ((start (line-beginning-position))
-              (end (save-excursion
-                    (forward-line 2)
-                    (line-beginning-position))))
-          (kill-ring-save start end)))
-       ((eq key ?k)
-        (let ((end (line-end-position))
-              (start (save-excursion
-                      (forward-line -1)
-                      (line-beginning-position))))
-          (kill-ring-save start (1+ end))))
-       (t (meow-save))))))
+    (my/handle-operator 'kill-ring-save #'my/save-special-handler)))
 
 (defun my/meow-delete-insert ()
   "Uses meow-delete and meow-insert sequentially"
@@ -755,6 +802,9 @@ ursor without overwriting kill ring."
    ;; '("0" . meow-digit-argument)
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet))
+  ;; (meow-insert-define-key
+  ;;  '("C-w" . backward-kill-word)
+  ;;  )
   (meow-normal-define-key
    ;; '("0" . meow-expand-0)
    ;; '("9" . meow-expand-9)
@@ -783,7 +833,6 @@ ursor without overwriting kill ring."
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
    '("a" . my/meow-append)
-   '("A" . meow-open-below)
    '("b" . meow-back-word)
    '("B" . meow-back-symbol)
    ;; '("c" . meow-change)
@@ -802,14 +851,17 @@ ursor without overwriting kill ring."
    '("g" . nil)
    '("g ;" . goto-last-change)
    '("g v" . my/restore-selection)
-   '("g c" . my/smart-comment)
+   '("g c" . my/meow-smart-comment)
    '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
    '("G" . end-of-buffer)
    '("h" . meow-left)
    '("H" . meow-left-expand)
    '("i" . meow-insert)
-   '("I" . meow-open-above)
+   ;; '("A" . meow-open-below)
+   ;; '("I" . meow-open-above)
+   '("A" . meow-append-line-end)
+   '("I" . meow-insert-line-start)
    '("j" . meow-next)
    '("J" . meow-next-expand)
    '("k" . meow-prev)
@@ -817,10 +869,12 @@ ursor without overwriting kill ring."
    '("l" . meow-right)
    '("L" . meow-right-expand)
    '("m" . meow-join)
-   '("n" . meow-search)
-   '("N" . isearch-repeat-backward)
-   '("o" . meow-block)
-   '("O" . meow-to-block)
+   '("n" . my/search-next)
+   '("N" . my/search-previous)
+   '("o" . meow-open-below)
+   '("O" . meow-open-above)
+   ;; '("o" . meow-block)
+   ;; '("O" . meow-to-block)
    ;; '("p" . meow-yank)
    ;; '("p" . yank)
    '("p" . my/meow-smart-paste)
@@ -834,14 +888,19 @@ ursor without overwriting kill ring."
    '("S" . meow-kill-whole-line)
    '("u" . meow-undo)
    '("U" . meow-undo-in-selection)
-   '("v" . meow-visit)
+   ;; '("v" . meow-visit)
+   '("v" . my/meow-revers-line)
+   '("V" . meow-line)
    '("w" . meow-mark-word)
    '("W" . meow-mark-symbol)
-   '("x" . meow-line)
+   ;; '("x" . meow-line)
+   '("x" . delete-char)
    '("X" . my/meow-revers-line)
    ;; '("y" . meow-save)
    '("y" . my/meow-smart-save)
    '("Y" . meow-sync-grab)
+   '(">" . my/indent-region-right)
+   '("<" . my/indent-region-left)
    '("z" . meow-grab)
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
@@ -868,7 +927,8 @@ ursor without overwriting kill ring."
                  (Info-mode . normal)
                  (special-mode . normal)
                  (shell-command-mode . normal)
-                 (debugger-mode . normal))
+                 (debugger-mode . normal)
+                 (emacs-lisp-compilation-mode . normal))
                 meow-mode-state-list)))
 
 (meow-setup)

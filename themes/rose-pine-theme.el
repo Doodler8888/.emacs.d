@@ -255,7 +255,7 @@
     `(yas-field-highlight-face ((,class (:background unspecified))))
 
     ;; Tempel
-    `(tempel-field ((,class (:foreground ,rose-pine-fg :background nil))))
+    `(tempel-field ((,class (:foreground ,rose-pine-fg :background unspecified))))
     `(tempel-default ((,class (:foreground ,rose-pine-fg :background ,rose-pine-blendedbg))))
     ;; `(tempel-form ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
 
