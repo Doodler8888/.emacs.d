@@ -45,6 +45,9 @@ test.el
 # Ignore the entire eshell directory
 # /eshell/*
 # !/eshell/aliases
+/tree-sitter
+\#meow.el\#
+meow.el.bak
 
 .config.org.~undo-tree~
 ielm-history.eld

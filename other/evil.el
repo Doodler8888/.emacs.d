@@ -138,11 +138,6 @@
 (define-key evil-normal-state-map (kbd "gc") 'my-evil-comment)
 (define-key evil-visual-state-map (kbd "gc") 'my-evil-comment)
 
-(evil-define-operator my-evil-fill (beg end type)
-  "Fill the text from BEG to END."
-  (interactive "<R>")
-  (my-fill-region beg end))
-
 (defun my-evil-paste-before ()
   "Paste before cursor without overwriting kill ring."
   (interactive)
@@ -156,7 +151,6 @@
         (insert text)
         (evil-normal-state)
         (backward-char)))))
-
 
 
 (with-eval-after-load 'evil

@@ -202,21 +202,21 @@
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
 
-;; For some reason just using "(set-default 'truncate-lines t)", and also it's
-;; inconsistent overall
-(set-default 'truncate-lines t)
-(add-hook 'prog-mode-hook (lambda ()
-                           ;; (setq-local truncate-lines t)
-                           (toggle-truncate-lines 1)))
-;; Specific for emacs-lisp-mode
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-            (setq-local truncate-lines t)
-            (toggle-truncate-lines 1)))
-;; ;; Also, you can check what's changing the setting
-;; (add-variable-watcher 'truncate-lines
-;;                      (lambda (sym val op where)
-;;                        (message "truncate-lines changed to %s in %s" val where)))
+;; ;; For some reason just using "(set-default 'truncate-lines t)", and also it's
+;; ;; inconsistent overall
+;; (set-default 'truncate-lines t)
+;; (add-hook 'prog-mode-hook (lambda ()
+;;                            ;; (setq-local truncate-lines t)
+;;                            (toggle-truncate-lines 1)))
+;; ;; Specific for emacs-lisp-mode
+;; (add-hook 'emacs-lisp-mode-hook
+;;           (lambda ()
+;;             (setq-local truncate-lines t)
+;;             (toggle-truncate-lines 1)))
+;; ;; ;; Also, you can check what's changing the setting
+;; ;; (add-variable-watcher 'truncate-lines
+;; ;;                      (lambda (sym val op where)
+;; ;;                        (message "truncate-lines changed to %s in %s" val where)))
 
 
 (setq enable-local-variables t)
@@ -2667,3 +2667,4 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   "Open a specific file."
   (interactive)
   (find-file "~/.emacs.d/other/templates"))
+
