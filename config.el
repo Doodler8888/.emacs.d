@@ -12,6 +12,7 @@
 (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
 (add-hook 'text-mode-hook 'display-line-numbers-mode)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'messages-buffer-mode-hook 'display-line-numbers-mode)
 
 (defun my-mode-line-major-mode ()
   "Returns a clean name of the current major mode."
@@ -202,21 +203,19 @@
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
 
-;; ;; For some reason just using "(set-default 'truncate-lines t)", and also it's
-;; ;; inconsistent overall
-;; (set-default 'truncate-lines t)
-;; (add-hook 'prog-mode-hook (lambda ()
-;;                            ;; (setq-local truncate-lines t)
-;;                            (toggle-truncate-lines 1)))
-;; ;; Specific for emacs-lisp-mode
-;; (add-hook 'emacs-lisp-mode-hook
-;;           (lambda ()
-;;             (setq-local truncate-lines t)
-;;             (toggle-truncate-lines 1)))
-;; ;; ;; Also, you can check what's changing the setting
-;; ;; (add-variable-watcher 'truncate-lines
-;; ;;                      (lambda (sym val op where)
-;; ;;                        (message "truncate-lines changed to %s in %s" val where)))
+(set-default 'truncate-lines t)
+(add-hook 'prog-mode-hook (lambda ()
+                           ;; (setq-local truncate-lines t)
+                           (toggle-truncate-lines 1)))
+;; Specific for emacs-lisp-mode
+(add-hook 'emacs-lisp-mode-hook
+          (lambda ()
+            (setq-local truncate-lines t)
+            (toggle-truncate-lines 1)))
+;; ;; Also, you can check what's changing the setting
+;; (add-variable-watcher 'truncate-lines
+;;                      (lambda (sym val op where)
+;;                        (message "truncate-lines changed to %s in %s" val where)))
 
 
 (setq enable-local-variables t)
@@ -238,13 +237,18 @@
 
 (setq display-buffer-base-action '(nil . ((some-window . mru))))
 
-  
 (minibuffer-regexp-mode 1)
 
 (setq ielm-history-file-name "~/.emacs.d/.ielm-history")
 
-(delete-selection-mode 1)
+(defun my-tramp-cleanup ()
+  "Clean up TRAMP buffers and connections on Emacs exit."
+  (when (fboundp 'tramp-cleanup-all-buffers)
+    (tramp-cleanup-all-buffers))
+  (when (fboundp 'tramp-cleanup-all-connections)
+    (tramp-cleanup-all-connections)))
 
+(add-hook 'kill-emacs-hook #'my-tramp-cleanup)
 
 
 ;; Cursor
@@ -930,6 +934,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :config
   (define-key vertico-map (kbd "M-RET") #'vertico-exit-input))
 
+
+(defvar my/last-search-type nil
+  "Stores the type of the last search performed.")
+
 (defun my/consult-line-with-evil ()
   "Run consult-line and set up evil search pattern."
   (interactive)
@@ -938,15 +946,25 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       (message "Search string: %S" search-string)
       (let ((search-string-prop 
              (propertize search-string 
-                        'isearch-case-fold-search t)))
+                         'isearch-case-fold-search t)))
         (push search-string-prop regexp-search-ring)
         ;; Set search direction to forward
-        (setq isearch-forward t)))))
+        (setq isearch-forward t)
+        (setq my/last-search-type 'consult)))))
+
+(defun my/get-last-search-pattern ()
+  "Get the last search pattern based on the last search type."
+  (cond
+   ((eq my/last-search-type 'consult)
+    (car regexp-search-ring))
+   ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
+    (if isearch-regexp isearch-string (regexp-quote isearch-string)))
+   (t "")))
 
 (defun my/search-next ()
-  "Search forward using last consult-line pattern."
+  "Search forward using last search pattern."
   (interactive)
-  (when-let* ((pattern (car regexp-search-ring)))
+  (when-let* ((pattern (my/get-last-search-pattern)))
     (let ((case-fold-search t)
           (current-pos (point)))
       ;; Move past current match if we're at one
@@ -956,20 +974,31 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                (match-beginning 0))
           (let ((match-pos (match-beginning 0)))
             (goto-char match-pos)
+            (message "Match found: %s" (match-string 0))
             t)
+        (message "No more matches")
         nil))))
 
 (defun my/search-previous ()
-  "Search backward using last consult-line pattern."
+  "Search backward using last search pattern."
   (interactive)
-  (when-let* ((pattern (car regexp-search-ring)))
-    (let ((case-fold-search t)
-          (current-pos (point)))  ; Debug: store current position
+  (when-let* ((pattern (my/get-last-search-pattern)))
+    (let ((case-fold-search t))
       (if (re-search-backward pattern nil t)
-          (let ((match-pos (match-beginning 0)))  ; Debug: store match position
+          (let ((match-pos (match-beginning 0)))
             (goto-char match-pos)
+            (message "Match found: %s" (match-string 0))
             t)
+        (message "No more matches")
         nil))))
+
+(advice-add 'isearch-forward :after
+            (lambda (&rest _)
+              (setq my/last-search-type 'isearch)))
+
+(advice-add 'isearch-backward :after
+            (lambda (&rest _)
+              (setq my/last-search-type 'isearch)))
 
 (use-package marginalia
   :ensure t
@@ -977,7 +1006,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (marginalia-mode))
 
 (use-package consult
-  :ensure t)
+  :ensure t
+  :config
+  (with-eval-after-load 'org
+    (define-key org-mode-map (kbd "C-s C-o") 'consult-imenu)))
 
 ;; Disable preview for consult-recent-file
 (advice-add 'consult-recent-file :around
@@ -1011,6 +1043,48 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (let ((selected-command (my-vertico-shell-command-history)))
     (my-insert-selected-command selected-command)))
 
+(defun my-vertico-eval-history ()
+  "Use `completing-read` to search through Emacs Lisp evaluation history and return the selected expression."
+  (let ((history read-expression-history))
+    (completing-read "Eval history: " history nil nil nil 'read-expression-history)))
+
+(defun my-insert-selected-expression (selected-expression)
+  "Insert the selected expression into the minibuffer and print a message."
+  (when selected-expression
+    (insert selected-expression)))
+
+(defun my-eval-history-and-insert ()
+  "Search Emacs Lisp evaluation history and insert the selected expression into the minibuffer."
+  (interactive)
+  (let ((selected-expression (my-vertico-eval-history)))
+    (my-insert-selected-expression selected-expression)))
+
+(defun my-smart-history-and-insert ()
+  "Insert history item based on the current minibuffer context."
+  (interactive)
+  (let ((prompt (minibuffer-prompt)))
+    (cond
+     ;; For shell and async-shell commands
+     ((or (string-match-p "Shell command:" prompt)
+          (string-match-p "Async shell command:" prompt))
+      (my-shell-command-history-and-insert))
+     
+     ;; For eval expressions
+     ((string-match-p "Eval:" prompt)
+      (my-eval-history-and-insert))
+     
+     ;; Default case: combine both histories
+     (t
+      (let* ((combined-history (append shell-command-history read-expression-history))
+             (selected-item (completing-read "Combined history: " combined-history nil nil nil)))
+        (insert selected-item))))))
+
+(defun setup-minibuffer-keys ()
+  (define-key minibuffer-local-map (kbd "M-r") 'my-smart-history-and-insert))
+
+;; Add the setup function to minibuffer-setup-hook
+(add-hook 'minibuffer-setup-hook 'setup-minibuffer-keys)
+
 (defun my-eshell-history-choose ()
   "Select an item from eshell history using Vertico and insert it into the eshell prompt."
   (interactive)
@@ -1026,6 +1100,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
       (eshell-kill-input)
       (insert finale-command))))
 
+(add-hook 'eshell-mode-hook
+          (lambda ()
+            (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)))
 
 ;; Icons
 
@@ -1097,6 +1174,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Auto-revert for sudo files
 (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
+
+;; This setting isn't about the ability to change permission bits, but about
+;; disabling confirmation on file renaming.
+(setq wdired-allow-to-change-permissions t)
 
 ;; If i have another pane with dired in the same tab, dired will try to guess
 ;; that i want to perform action there
@@ -1328,31 +1409,21 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 ;; Spawn and Pointer
 
 (setq display-buffer-alist
-      (mapcar (lambda (name)
-                `(,name display-buffer-same-window (nil)))
-              '("*Faces*"
-                "*info*"
-                "*helpful*"
-                "*Help*"
-                "*Warnings*"
-                "*Async Shell Command*"
-                "*vc-git*"
-                "*debug*")))
-
-;; (add-to-list 'display-buffer-alist
-;;              '("^\\*\\(Man\\|Faces\\) "
-;;                (display-buffer-reuse-window display-buffer-pop-up-window)
-;;                (post-command-select-window . t)))
-
-(add-to-list 'display-buffer-alist
-             '("\\*Man "
-               (display-buffer-reuse-window display-buffer-pop-up-window)
-               (post-command-select-window . t)))
-
-;; (add-to-list 'display-buffer-alist
-;;              '("*Faces*"
-;;                (display-buffer-reuse-window display-buffer-pop-up-window)
-;;                (post-command-select-window . t)))
+      (append
+       (mapcar (lambda (name)
+                 `(,name
+                   (display-buffer-reuse-window display-buffer-pop-up-window)
+                   (post-command-select-window . t)))
+               '("*Faces*"
+                 "*info*"
+                 "*helpful*"
+                 "*Help*"
+                 "*Warnings*"
+                 "*Async Shell Command*"
+                 "*vc-git*"
+                 "*debug*"
+                 "\\*Man "))
+       display-buffer-alist))
 
 
 ;; Shell buffer
@@ -1429,6 +1500,23 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
       (open-eshell-in-current-directory)
       ;; Enable toggle-buffer-mode in the new eshell buffer
       (toggle-buffer-mode 1))))
+
+(defun SpawnEshellCurrentWindow ()
+  "Open a shell in the current window or toggle it if already open."
+  (interactive)
+  (if (eq major-mode 'eshell-mode)
+      (progn
+        (when (and eshell-toggle-buffer (buffer-live-p eshell-toggle-buffer))
+          (switch-to-buffer eshell-toggle-buffer))
+        (setq eshell-toggle-buffer nil
+              eshell-toggle-window nil))
+    (setq eshell-toggle-buffer (current-buffer)
+          eshell-toggle-window (selected-window))
+    (let ((current-directory default-directory))
+      (save-excursion
+        (eshell)
+        (eshell/cd current-directory)))
+    (toggle-buffer-mode 1)))
 
 (defun open-eshell-in-current-directory ()
   "Open eshell in the directory of the current buffer.
@@ -1779,10 +1867,10 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (advice-add 'org-insert-item :around #'my/preserve-images-advice)
 
-;;   (advice-add 'yank-media :after
-;;             (lambda (&rest _)
-;;               (when (eq major-mode 'org-mode)
-;;                 (org-display-inline-images)))))
+(advice-add 'yank-media :after
+            (lambda (&rest _)
+              (when (eq major-mode 'org-mode)
+                (org-display-inline-images))))
 
 
 ;; Where to save images if using 'save method
@@ -1918,20 +2006,21 @@ Otherwise, create a same-level heading (M-RET)."
   :ensure t
   :init
   (with-eval-after-load 'org (global-org-modern-mode))
-(setq org-modern-fold-stars
-      '(("#" . "#")            ; diamonds
+
+  (setq org-modern-fold-stars
+      '(("*" . "*")            ; diamonds
       ;; '(("◉" . "○")            ; diamonds
-        ("##" . "##")          ; flowers
+        ("**" . "**")          ; flowers
         ;; (" ◆" . " ◇")          ; flowers
         ;; ("  ✦" . "  ✧")        ; stars
-        ("###" . "###")        ; stars
+        ("***" . "***")        ; stars
         ;; ("   ❂" . "   ☸")      ; wheels
-        ("####" . "####")      ; wheels
+        ("****" . "****")      ; wheels
         ;; ("    ✤" . "    ❃"))))  ; more flowers/stars
-        ("#####" . "#####"))))  ; more flowers/stars
+        ("*****" . "*****"))))  ; more flowers/stars
 
 
-;; Enabling Table of Contents
+;; Table of Contents
 
 (use-package toc-org
   :ensure t
@@ -1991,12 +2080,14 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("rr" . my-refresh-command)
 
-    ("er" . eval-region)
-    ("eo" . eval-defun)
+    ("vr" . eval-region)
+    ("vo" . eval-defun)
 
     ("E"  . eshell)
-    ;; ("en" . eshell-new-instance)
+    ("e" . SpawnEshellCurrentWindow)
     ;; ("ep" . eshell-pop) 
+
+    ("m" . toggle-messages-buffer)
 
     ("gm" . pop-global-mark) 
 
@@ -2035,6 +2126,43 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-s C-y") 'yank-pop)
 (global-set-key (kbd "M-<f1>") 'tab-bar-move-tab-backward)
 (global-set-key (kbd "M-<f2>") 'tab-bar-move-tab)
+(global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
+
+;; For help-mode
+(define-key help-mode-map (kbd "q") #'quit-window)
+
+;; For Info-mode
+(with-eval-after-load 'info
+  (define-key Info-mode-map (kbd "q") #'quit-window))
+
+;; For helpful-mode
+(with-eval-after-load 'helpful
+  (define-key helpful-mode-map (kbd "q") #'quit-window))
+
+;; For special-mode
+(define-key special-mode-map (kbd "q") #'quit-window)
+
+;; For debugger-mode
+(with-eval-after-load 'debug
+  (define-key debugger-mode-map (kbd "q") #'quit-window))
+
+;; For messages-buffer-mode
+(with-eval-after-load 'message
+  (define-key messages-buffer-mode-map (kbd "q") #'quit-window))
+
+;; For compilation-mode
+(with-eval-after-load 'compile
+  (define-key compilation-mode-map (kbd "q") #'quit-window))
+
+;; For shell-command-mode
+;; Note: shell-command-mode-map might not exist, you might need to adjust this
+(with-eval-after-load 'shell
+  (when (boundp 'shell-command-mode-map)
+    (define-key shell-command-mode-map (kbd "q") #'quit-window)))
+
+;; For package-menu-mode
+(with-eval-after-load 'package
+  (define-key package-menu-mode-map (kbd "q") #'quit-window))
 
 ;; (global-unset-key (kbd "C-t"))
 ;; (global-unset-key (kbd "C-y"))

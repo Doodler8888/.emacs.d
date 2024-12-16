@@ -22,6 +22,9 @@
         eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
   (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
+  ;; (define-key eshell-mode-map (kbd "M-r") 'my-eshell-history-choose))
+
+(global-set-key (kbd "M-r") 'my-eshell-history-choose)
 
 (use-package eshell-syntax-highlighting
   :ensure t
@@ -44,17 +47,32 @@
 ;; Add eshell-append-history to eshell-pre-command-hook
 (add-hook 'eshell-pre-command-hook #'eshell-append-history))
 
+(defvar-local lw-eshell-last-inserted-arg nil)
+
 (defun eshell-insert-last-argument ()
-  "Insert the last argument of the previous command."
+  "Insert the last argument of the last command"
   (interactive)
-  (let* ((last-command (eshell-previous-input-string 0))
-         (args (split-string-and-unquote last-command))
-         (last-arg (car (last args))))
-    (when last-arg
-      (insert last-arg))))
+  (if (eq last-command this-command)
+      (let ((completions (cl-mapcan
+                          (lambda (cmd) (cl-remove-if (lambda (s) (string-prefix-p "-" s)) (cdr (string-split cmd))))
+                          (ring-elements eshell-history-ring))))
+        (set-mark (max (point-min) (- (point) (length lw-eshell-last-inserted-arg))))
+        (let ((result (completing-read
+                       "Insert:"
+                       (lambda (string pred action)
+                         (if (eq action 'metadata)
+                             `(metadata (display-sort-function . ,#'identity))
+                           (complete-with-action action completions string pred))))))
+          (when (region-active-p) (delete-region (region-beginning) (region-end)))
+          (insert result)))
+    (when-let ((last-cmd (eshell-get-history 0)))
+      (insert (setq lw-eshell-last-inserted-arg (car (last (string-split last-cmd))))))))
+
+(global-unset-key (kbd "M-s"))
 
 (defun setup-eshell-keys ()
   (define-key eshell-mode-map (kbd "M-.") 'eshell-insert-last-argument)
+  (define-key eshell-mode-map (kbd "M-s") 'my/eshell-clear-ls)
   (define-key eshell-mode-map (kbd "M-,") 'eshell/insert-pwd-at-point))
 
 (add-hook 'eshell-mode-hook 'setup-eshell-keys)
@@ -365,8 +383,13 @@ If the file doesn't exist, display an error message."
   (eshell/clear-scrollback))
 
 (defun my/eshell-clear-ls ()
-  "Clear screen and list directory contents."
+  "Clear screen, list directory contents, and show a new prompt."
   (interactive)
-  (eshell/clear-scrollback)
-  (let ((default-directory (eshell/pwd)))
-    (eshell-command "ls -la")))
+  (let ((inhibit-read-only t))  ; Allow modification of read-only parts
+    (eshell/clear-scrollback)
+    (eshell/cd (eshell/pwd))  ; Ensure we're in the correct directory
+    (goto-char (point-max))
+    (eshell-kill-input)
+    (insert "ls -la")
+    (eshell-send-input)
+    (goto-char (point-max))))

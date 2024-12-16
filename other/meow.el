@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package meow
   :ensure t
   :init
@@ -141,28 +143,6 @@
   (interactive "p\ncTill backward:")
   (meow-till (- arg) ch))
 
-(defun my/meow-find-backward-and-select-inner (arg ch)
-  "Find the previous occurrence of CH and select its inner content."
-  (interactive "p\ncFind backward and select inner:")
-  (let* ((case-fold-search nil)
-         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-         (end (point))
-         beg
-         (thing-char (cond
-                      ((memq ch '(?\( ?\))) ?r)  ; 'r' for round brackets
-                      ((memq ch '(?\[ ?\])) ?s)  ; 's' for square brackets
-                      ((memq ch '(?\{ ?\})) ?c)  ; 'c' for curly braces
-                      ((memq ch '(?' ?\" ?`)) ?g)  ; 'g' for quotes (single, double, and backticks)
-                      (t nil))))
-    (save-mark-and-excursion
-      (setq beg (search-backward ch-str nil t arg)))
-    (if (not beg)
-        (message "char %s not found" ch-str)
-      (goto-char beg)
-      (if thing-char
-          (meow-inner-of-thing thing-char)
-        (message "No inner selection defined for this character")))))
-
 (defun meow-find-and-select-inner (n ch)
   "Find the next N occurrence of CH and select its inner content within current line only.
 If no forward match is found, search backward."
@@ -194,29 +174,39 @@ If no forward match is found, search backward."
       (message "char %s not found in current line" ch-str))
      (forward-pos
       (goto-char forward-pos)
-      (when thing-char
-        (if (memq ch '(?\) ?\] ?\}))
-            (progn
-              (backward-sexp)
-              (forward-char)
-              (set-mark (point))
-              (backward-char)
-              (forward-sexp)
-              (backward-char))
-          (meow-inner-of-thing thing-char))))
+      (if (eq ch ?')
+          (let ((bounds (meow--parse-single-quote nil)))
+            (when bounds
+              (set-mark (car bounds))
+              (goto-char (cdr bounds))))
+        (when thing-char
+          (if (memq ch '(?\) ?\] ?\}))
+              (progn
+                (backward-sexp)
+                (forward-char)
+                (set-mark (point))
+                (backward-char)
+                (forward-sexp)
+                (backward-char))
+            (meow-inner-of-thing thing-char)))))
      (backward-pos
       (goto-char backward-pos)
-      (when thing-char
-        (if (memq ch '(?\) ?\] ?\}))
-            (progn
-              (forward-char)
-              (backward-sexp)
-              (forward-char)
-              (set-mark (point))
-              (backward-char)
-              (forward-sexp)
-              (backward-char))
-          (meow-inner-of-thing thing-char)))))))
+      (if (eq ch ?')
+          (let ((bounds (meow--parse-single-quote nil)))
+            (when bounds
+              (set-mark (car bounds))
+              (goto-char (cdr bounds))))
+        (when thing-char
+          (if (memq ch '(?\) ?\] ?\}))
+              (progn
+                (forward-char)
+                (backward-sexp)
+                (forward-char)
+                (set-mark (point))
+                (backward-char)
+                (forward-sexp)
+                (backward-char))
+            (meow-inner-of-thing thing-char))))))))
 
 (defun meow-find-and-select-outer (n ch)
   "Find the next N occurrence of CH and select its outer content within current line only.
@@ -252,68 +242,34 @@ If no forward match is found, search backward."
       (message "char %s not found in current line" ch-str))
      (forward-pos
       (goto-char forward-pos)
-      (when pair-char
-        (if (memq ch '(?\) ?\] ?\}))
+      (if (eq ch ?')
+          (let ((bounds (meow--parse-single-quote t)))
+            (goto-char (car bounds))
+            (set-mark (cdr bounds)))
+        (when pair-char
+          (if (memq ch '(?\) ?\] ?\}))
+              (progn
+                (set-mark (point))
+                (backward-sexp))
             (progn
+              (backward-char)
               (set-mark (point))
-              (backward-sexp))
-          (progn
-            (backward-char)
-            (set-mark (point))
-            (forward-sexp)))))
+              (forward-sexp))))))
      (backward-pos
       (goto-char backward-pos)
-      (when pair-char
-        (if (memq ch '(?\) ?\] ?\}))
-            (progn
-              (forward-char)
-              (set-mark (point))
-              (backward-sexp))
-          (progn
-            (set-mark (point))
-            (forward-sexp))))))))
-
-(defun my/meow-find-nearest-and-select-inner (n ch)
-  "Find the nearest occurrence of CH within current line and select its inner content."
-  (interactive "p\ncFind nearest and select inner:")
-  (let* ((case-fold-search nil)
-         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-         (pos (point))
-         (line-start (line-beginning-position))
-         (line-end (line-end-position))
-         (forward-pos (save-excursion
-                       (when (search-forward ch-str line-end t n)
-                         (backward-char)  ; Move back to be on the character
-                         (point))))
-         (backward-pos (save-excursion
-                        (when (search-backward ch-str line-start t n)
-                          (point))))
-         (thing-char (cond
-                      ((memq ch '(?\( ?\))) ?r)
-                      ((memq ch '(?\[ ?\])) ?s)
-                      ((memq ch '(?\{ ?\})) ?c)
-                      ((memq ch '(?' ?\" ?`)) ?g)
-                      (t nil))))
-    (when thing-char  ; Only proceed if it's a pair character
-      (cond
-       ((and (null forward-pos) (null backward-pos))
-        (message "char %s not found in current line" ch-str))
-       ((null backward-pos)
-        (goto-char forward-pos)
-        (meow-inner-of-thing thing-char))
-       ((null forward-pos)
-        (goto-char backward-pos)
-        (meow-inner-of-thing thing-char))
-       (t
-        (let ((forward-dist (- forward-pos pos))
-              (backward-dist (- pos backward-pos)))
-          (if (< forward-dist backward-dist)
+      (if (eq ch ?')
+          (let ((bounds (meow--parse-single-quote t)))
+            (goto-char (car bounds))
+            (set-mark (cdr bounds)))
+        (when pair-char
+          (if (memq ch '(?\) ?\] ?\}))
               (progn
-                (goto-char forward-pos)
-                (meow-inner-of-thing thing-char))
+                (forward-char)
+                (set-mark (point))
+                (backward-sexp))
             (progn
-              (goto-char backward-pos)
-              (meow-inner-of-thing thing-char)))))))))
+              (set-mark (point))
+              (forward-sexp)))))))))
 
 (defun meow--parse-inside-whitespace (inner)
   "Parse the bounds for inside whitespace selection."
@@ -358,6 +314,61 @@ If no forward match is found, search backward."
     (goto-char start)
     (set-mark end)))
 
+(defun meow--parse-single-quote (outer)
+  "Parse the bounds for single quote selection."
+  (save-excursion
+    (let* ((line-start (line-beginning-position))
+           (line-end (line-end-position))
+           start end)
+      (setq start (search-backward "'" line-start t))
+      (when start
+        (setq end (search-forward "'" line-end t))
+        (when (and end (= (1+ start) end))
+          ;; If quotes are adjacent, search for the next set
+          (setq end (search-forward "'" line-end t))
+          (unless end
+            ;; If no closing quote found, search backward from initial point
+            (goto-char start)
+            (setq start (search-backward "'" line-start t)))))
+      (when (and start end)
+        (if outer
+            (cons start end)
+          (cons (1+ start) (1- end)))))))
+
+(add-to-list 'meow-char-thing-table '(?' . single-quote))
+
+(advice-add 'meow--parse-inner-of-thing-char :around
+            (lambda (orig-fun ch)
+              (cond
+               ((eq ch ?w)
+                (meow--parse-inside-whitespace t))
+               ((eq ch ?')
+                (meow--parse-single-quote nil))
+               (t
+                (funcall orig-fun ch)))))
+
+(advice-add 'meow--parse-bounds-of-thing-char :around
+            (lambda (orig-fun ch)
+              (if (eq ch ?')
+                  (meow--parse-single-quote t)
+                (funcall orig-fun ch))))
+
+(defun select-inside-single-quote ()
+  "Select the text inside single quotes."
+  (interactive)
+  (let ((bounds (meow--parse-single-quote nil)))
+    (when bounds
+      (goto-char (cdr bounds))  ; Move point to the end
+      (set-mark (car bounds))))) ; Set mark at the start
+
+(defun select-around-single-quote ()
+  "Select the text including single quotes."
+  (interactive)
+  (let ((bounds (meow--parse-single-quote t)))
+    (when bounds
+      (goto-char (cdr bounds))  ; Move point to the end
+      (set-mark (car bounds)))))
+
 (defun my/indent-region-right ()
   "Indent region or current line to the right by 2 spaces (like Vim's >>)."
   (interactive)
@@ -384,14 +395,22 @@ If no forward match is found, search backward."
 (defun my-meow-paste-before ()
   "Paste before cursor without overwriting kill ring, similar to Vim's 'P'."
   (interactive)
-  (let ((content (current-kill 0 t)))
+  (let* ((content (current-kill 0 t))
+         (lines (split-string content "\n")))
     (cond
-     ;; For linewise content (ends with newline)
-     ((string-match-p "\n$" content)
+     ;; For multi-line content
+     ((> (length lines) 1)
+      (beginning-of-line)
+      (save-excursion
+        (insert (string-join lines "\n"))
+        (unless (string-suffix-p "\n" content)
+          (insert "\n"))))
+     ;; For single-line content ending with newline
+     ((string-suffix-p "\n" content)
       (beginning-of-line)
       (save-excursion
         (insert content)))
-     ;; For characterwise content
+     ;; For single-line content without newline
      (t
       (save-excursion
         (backward-char)
@@ -404,20 +423,32 @@ If no forward match is found, search backward."
   (copy-whole-line)
   (yank))
 
-(defun my/meow-smart-paste ()
-  "Paste like Vim, handling both line-wise and regular pastes."
-  (interactive)
+(defun my/meow-smart-paste (&optional arg)
+  "Paste like Vim, handling both line-wise and regular pastes.
+With numeric prefix ARG, paste that many times.
+With raw prefix argument (C-u without a number), paste from the kill ring."
+  (interactive "P")
   (if (region-active-p)
       (meow-replace)  ; Just use meow-replace for selections
-    (let ((text (current-kill 0 t)))
-      (if (string-suffix-p "\n" text)
-          (progn
-            (forward-line)
-            (beginning-of-line)
-            (insert text)
-            (forward-line -1)
-            (beginning-of-line))
-        (yank)))))
+    (let* ((raw-prefix (equal arg '(4)))
+           (numeric-prefix (and (integerp arg) (> arg 0)))
+           (text (if raw-prefix
+                     (current-kill (if (listp last-command-event)
+                                       0
+                                     (mod (- (aref (this-command-keys) 0) ?0)
+                                          kill-ring-max))
+                                   t)
+                   (current-kill 0 t)))
+           (repeat-count (if numeric-prefix arg 1)))
+      (dotimes (_ repeat-count)
+        (if (string-suffix-p "\n" text)
+            (progn
+              (forward-line)
+              (beginning-of-line)
+              (insert text)
+              (forward-line -1)
+              (beginning-of-line))
+          (insert text))))))
 
 ;; ;; Work like in vim
 ;; (defun my/meow-replace-char ()
@@ -481,24 +512,10 @@ If no forward match is found, search backward."
 ;; Add advice to save selection before deactivating
 (advice-add 'meow--cancel-selection :before #'my/save-selection)
 
-;; (defun my/meow-smart-paste ()
-;;   "Paste like Vim, handling both line-wise and regular pastes."
-;;   (interactive)
-;;   (let ((text (current-kill 0 t)))
-;;     (if (region-active-p)
-;;         ;; Handle any active selection (including M-h)
-;;         (progn
-;;           (delete-region (region-beginning) (region-end))
-;;           (insert text))
-;;       ;; No selection - handle line-wise or regular paste
-;;       (if (string-suffix-p "\n" text)
-;;           (progn
-;;             (forward-line)
-;;             (beginning-of-line)
-;;             (insert text)
-;;             (forward-line -1)
-;;             (beginning-of-line))
-;;         (yank)))))
+(defun my/copy-to-end-of-line ()
+  "Copy text from the current cursor position to the end of the line."
+  (interactive)
+  (kill-ring-save (point) (line-end-position)))
 
 (defun copy-whole-line ()
   "Copy the current line to the kill ring."
@@ -616,12 +633,12 @@ If no forward match is found, search backward."
 (defvar my/motion-alist
   '((?j . next-line)
     (?k . previous-line)
-    (?g . (((?g . beginning-of-buffer)
-            (?w . fill-region))))
+    (?g . (((?g . beginning-of-buffer))))
     (?G . end-of-buffer)
     (?\M-{ . backward-paragraph)
     (?\M-} . forward-paragraph)
-    (?= . indent-region))
+    (?\C-\M-a . beginning-of-defun)
+    (?\C-\M-e . end-of-defun))
   "Alist of line-wise motions.")
 
 (defun my/get-motion-info (key)
@@ -663,7 +680,35 @@ If no forward match is found, search backward."
               (save-excursion
                 (forward-line (1+ count))
                 (min (point-max)
-                     (line-beginning-position)))))))))
+                     (line-beginning-position)))))
+
+       ;; Handle M-{ (backward-paragraph)
+       ((eq motion-cmd 'backward-paragraph)
+        (cons (progn
+                (backward-paragraph count)
+                (line-beginning-position))
+              (line-end-position)))
+
+       ;; Handle M-} (forward-paragraph)
+       ((eq motion-cmd 'forward-paragraph)
+        (cons (line-beginning-position)
+              (progn
+                (forward-paragraph count)
+                (line-end-position))))
+
+       ;; Handle C-M-a (beginning-of-defun)
+       ((eq motion-cmd 'beginning-of-defun)
+        (cons (progn
+                (beginning-of-defun count)
+                (line-beginning-position))
+              (line-end-position)))
+
+       ;; Handle C-M-e (end-of-defun)
+       ((eq motion-cmd 'end-of-defun)
+        (cons (line-beginning-position)
+              (progn
+                (end-of-defun count)
+                (line-end-position))))))))
 
 (defun my/handle-operator (operator &optional special-handler)
   "Handle motion selection and apply operator."
@@ -697,44 +742,27 @@ If no forward match is found, search backward."
           (when current-column
             (move-to-column current-column))))))))
 
-(defun my/operate-on-motion (operator motion-cmd motion-type &optional count column)
-  "Apply operator on region covered by motion."
-  (let* ((bounds (my/get-motion-bounds motion-cmd motion-type count))
-         (start (car bounds))
-         (end (cdr bounds)))
-    (funcall operator start end)
-    (when column
-      (move-to-column column))))
+(defun my/make-special-handler (key-char operation)
+  "Create a special handler for a given key and operation."
+  (lambda (key _)
+    (when (eq key key-char)
+      (funcall operation (line-beginning-position) (line-end-position))
+      t)))
 
-(defun my/comment-special-handler (key _)
-  "Handle special cases for comment operator."
-  (when (eq key ?c)  ; Changed from ?g to ?c
-    (comment-or-uncomment-region (line-beginning-position)
-                                (line-end-position))
-    t))
+(defun my/make-smart-operator (operation special-key)
+  "Create a smart operator function for a given operation and special key."
+  (lambda ()
+    (interactive)
+    (if (region-active-p)
+        (funcall operation (region-beginning) (region-end))
+      (my/handle-operator operation
+                          (my/make-special-handler special-key operation)))))
 
-(defun my/fill-special-handler (key _)
-  "Handle special cases for fill operator."
-  (when (eq key ?w)
-    (fill-region (line-beginning-position)
-                 (line-end-position))
-    t))
-
-(defun my/meow-smart-comment ()
-  "Enhanced comment command with motion support."
-  (interactive)
-  (if (region-active-p)
-      (comment-or-uncomment-region (region-beginning) (region-end))
-    (my/handle-operator 'comment-or-uncomment-region
-                        #'my/comment-special-handler)))
-
-(defun my/meow-smart-fill ()
-  "Enhanced fill command with motion support."
-  (interactive)
-  (if (region-active-p)
-      (fill-region (region-beginning) (region-end))
-    (my/handle-operator 'fill-region
-                        #'my/fill-special-handler)))
+;; Define the smart operators directly
+(defalias 'my/meow-smart-comment (my/make-smart-operator #'comment-or-uncomment-region ?c))
+(defalias 'my/meow-smart-fill (my/make-smart-operator #'fill-region ?w))
+(defalias 'my/meow-smart-indent (my/make-smart-operator #'indent-region ?=))
+;; (defalias 'my/meow-smart-indent (my/make-smart-operator #'indent-region ?=))
 
 ;; Special handlers for each operator
 (defun my/delete-special-handler (key column)
@@ -747,12 +775,37 @@ If no forward match is found, search backward."
     t))
 
 ;; Operator functions with their special cases
+;; (defun my/meow-smart-delete ()
+;;   "Enhanced delete command with Vim-like behavior."
+;;   (interactive)
+;;   (if (region-active-p)
+;;       (my/generic-meow-smart-delete)
+;;     (my/handle-operator 'kill-region #'my/delete-special-handler)))
+
+(defun my/generic-meow-smart-delete ()
+  "If selection is active, use meow-kill. If not, use meow-delete."
+  (interactive)
+  (if (region-active-p)
+      (meow-kill)
+    (meow-delete)))
+
+(defvar my/last-deleted-text nil
+  "Stores the last deleted text.")
+
+(defun my/kill-region-and-save (beg end)
+  "Kill the region between BEG and END and save it to `my/last-deleted-text`."
+  (setq my/last-deleted-text (buffer-substring-no-properties beg end))
+  (kill-region beg end))
+
 (defun my/meow-smart-delete ()
   "Enhanced delete command with Vim-like behavior."
   (interactive)
   (if (region-active-p)
       (my/generic-meow-smart-delete)
-    (my/handle-operator 'kill-region #'my/delete-special-handler)))
+    (my/handle-operator 'my/kill-region-and-save #'my/delete-special-handler)
+    (when my/last-deleted-text
+      (kill-new my/last-deleted-text)
+      (setq my/last-deleted-text nil))))
 
 (defun my/meow-smart-change ()
   "Enhanced change command with Vim-like behavior."
@@ -989,7 +1042,7 @@ If no forward match is found, search backward."
    '("^" . my/meow-line-beginning)
    '("$" . my/meow-line-end)
    ;; '("0" . my/meow-line-start)
-   '("0" . my-meow-line-or-digit-0)
+   ;; '("0" . my-meow-line-or-digit-0)
    '("g" . nil)
    '("g ;" . goto-last-change)
    '("g v" . my/restore-selection)
@@ -1009,7 +1062,6 @@ If no forward match is found, search backward."
    '("V" . my/meow-line-down)
    '("w" . meow-mark-word)
    '("W" . meow-mark-symbol)
-   '("x" . my/delete-char-to-kill-ring)
    '("y" . my/meow-smart-save)
    '("'" . meow-find-and-select-inner)
    '("\"" . meow-find-and-select-outer)
@@ -1055,8 +1107,8 @@ If no forward match is found, search backward."
    '("7" . (lambda () (interactive) (my-meow-digit 7)))  ;; was 2, fixed to 7
    '("8" . (lambda () (interactive) (my-meow-digit 8)))  ;; was 2, fixed to 8
    '("9" . (lambda () (interactive) (my-meow-digit 9)))  ;; was 2, fixed to 9
-   ;; '("0" . (lambda () (interactive) (my-meow-digit 0)))
-   '("0" . (lambda () (interactive) (my-meow-line-or-digit-0)))
+   '("0" . (lambda () (interactive) (my-meow-digit 0)))
+   ;; '("0" . (lambda () (interactive) (my-meow-line-or-digit-0)))
    ;; '("-" . negative-argument)
    '(";" . meow-reverse)
    '("," . meow-inner-of-thing)
@@ -1082,7 +1134,6 @@ If no forward match is found, search backward."
    '("^" . my/meow-line-beginning)
    '("$" . my/meow-line-end)
    ;; '("0" . my/meow-line-start)
-   '("0" . my-meow-line-or-digit-0)
    '("g" . nil)
    '("g ;" . goto-last-change)
    '("g v" . my/restore-selection)
@@ -1112,9 +1163,8 @@ If no forward match is found, search backward."
    ;; '("o" . meow-block)
    ;; '("O" . meow-to-block)
    ;; '("p" . meow-yank)
-   ;; '("p" . yank)
    '("p" . my/meow-smart-paste)
-   '("P" . my-meow-paste-before)
+   ;; '("P" . placeholder)
    ;; '("q" . meow-quit)
    '("Q" . meow-goto-line)
    '("r" . my/meow-replace-char)
@@ -1141,16 +1191,17 @@ If no forward match is found, search backward."
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
    '("C-r" . undo-tree-redo)
-   '("C-M-m" . toggle-messages-buffer)
+   ;; '("C-M-m" . toggle-messages-buffer) ;; It's transaltes to M-RET
    '("M-y" . toggle-flymake-diagnostics)
    ;; '("'" . repeat)
    '("'" . meow-find-and-select-inner)
    '("\"" . meow-find-and-select-outer)
    '("/" . my/conditional-search-or-avy)
+   '("?" . isearch-forward)
    '("M-v" . scroll-up-and-recenter)
    '("C-v" . scroll-down-and-recenter)
    '("C-M-y" . save-and-paste)
-   '("=" . indent-region)
+   '("=" . my/meow-smart-indent)
    ;; '("C-d" . scroll-half-up-and-recenter)
    ;; '("C-u" . scroll-half-down-and-recenter)
    '("<escape>" . meow-cancel-selection)))
@@ -1178,9 +1229,4 @@ If no forward match is found, search backward."
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
 
 (meow-setup)
-
-(setq meow-expand-exclude-mode-list
-      (remove 'org-mode meow-expand-exclude-mode-list))
-
 (meow-global-mode 1)
-

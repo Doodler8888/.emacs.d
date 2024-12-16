@@ -301,6 +301,7 @@
  
     ;; More faces
     `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
+    `(show-paren-mismatch ((,class (:foreground ,rose-pine-fg :background ,rose-pine-love))))
     `(show-paren-match ((t (:background ,rose-pine-subtext :foreground ,rose-pine-fg :weight bold))))
     `(match ((,class (:background ,rose-pine-love :foreground ,rose-pine-bg))))
     `(minibuffer-prompt ((,class (:foreground ,rose-pine-iris))))
