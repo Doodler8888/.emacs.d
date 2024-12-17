@@ -323,34 +323,60 @@ If no forward match is found, search backward."
       (message "char %s not found in current line" ch-str))
      (forward-pos
       (goto-char forward-pos)
-      (if (eq ch ?')
-          (let ((bounds (meow--parse-single-quote t)))
-            (goto-char (car bounds))
-            (set-mark (cdr bounds)))
+      (if (memq ch '(?' ?\" ?`))
+          (let ((end-pos (save-excursion
+                           (when (search-forward ch-str line-end t)
+                             (point)))))
+            (if end-pos
+                (progn
+                  (set-mark (1- forward-pos))
+                  (goto-char end-pos))
+              (message "No closing %s found in current line" ch-str)))
         (when pair-char
           (if (memq ch '(?\) ?\] ?\}))
               (progn
                 (set-mark (point))
-                (backward-sexp))
+                (condition-case nil
+                    (backward-sexp)
+                  (scan-error (goto-char line-start)))
+                (when (< (point) line-start)
+                  (goto-char line-start)))
             (progn
               (backward-char)
               (set-mark (point))
-              (forward-sexp))))))
+              (condition-case nil
+                  (forward-sexp)
+                (scan-error (goto-char line-end)))
+              (when (> (point) line-end)
+                (goto-char line-end)))))))
      (backward-pos
       (goto-char backward-pos)
-      (if (eq ch ?')
-          (let ((bounds (meow--parse-single-quote t)))
-            (goto-char (car bounds))
-            (set-mark (cdr bounds)))
+      (if (memq ch '(?' ?\" ?`))
+          (let ((start-pos (save-excursion
+                             (when (search-backward ch-str line-start t)
+                               (point)))))
+            (if start-pos
+                (progn
+                  (set-mark (1+ backward-pos))
+                  (goto-char start-pos))
+              (message "No opening %s found in current line" ch-str)))
         (when pair-char
           (if (memq ch '(?\) ?\] ?\}))
               (progn
                 (forward-char)
                 (set-mark (point))
-                (backward-sexp))
+                (condition-case nil
+                    (backward-sexp)
+                  (scan-error (goto-char line-start)))
+                (when (< (point) line-start)
+                  (goto-char line-start)))
             (progn
               (set-mark (point))
-              (forward-sexp)))))))))
+              (condition-case nil
+                  (forward-sexp)
+                (scan-error (goto-char line-end)))
+              (when (> (point) line-end)
+                (goto-char line-end))))))))))
 
 (defun meow--parse-inside-whitespace (inner)
   "Parse the bounds for inside whitespace selection."
