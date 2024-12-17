@@ -1,8 +1,0 @@
-# -*- mode: snippet -*-
-# name: src
-# key: <s
-# expand-env: ((yas-indent-line 'fixed) (yas-wrap-around-region 'nil))
-# --
-#+begin_src ${1:$$(yas-choose-value '("fundamental" "text" "emacs-lisp" "bash-ts" "clojure-ts" "python-ts" "http :pretty" "js" "json-ts" "yaml-ts" "markdown" "dockerfile" "sql"))}
-$0
-#+end_src

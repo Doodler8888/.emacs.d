@@ -1,4 +1,0 @@
-# key: gc
-# name: git commit
-# --
-git commit $0

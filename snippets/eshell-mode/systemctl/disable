@@ -1,4 +1,0 @@
-# key: sde
-# name: systemctl disable
-# --
-eshell/sudo systemctl disable $0

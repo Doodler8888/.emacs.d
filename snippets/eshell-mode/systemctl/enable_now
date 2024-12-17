@@ -1,4 +1,0 @@
-# key: seen
-# name: systemctl enable now
-# --
-eshell/sudo systemctl enable --now $0

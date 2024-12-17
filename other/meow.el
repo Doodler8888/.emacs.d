@@ -15,6 +15,35 @@
 (advice-add 'meow-next :after #'my/reset-prefix-arg)
 (advice-add 'meow-prev :after #'my/reset-prefix-arg)
 
+(defun my-match-paren-with-selection (arg)
+  "Go to the matching parenthesis and select the enclosed text, including the delimiters.
+If not on a parenthesis, insert % or do nothing if in Meow mode."
+  (interactive "p")
+  (cond 
+   ((looking-at "\\s(")
+    (let ((start (point)))
+      (forward-sexp 1)
+      (set-mark start)))
+   ((looking-back "\\s)" 1)
+    (let ((end (point)))
+      (backward-sexp 1)
+      (set-mark end)))
+   ((looking-at "\\s)")
+    (let ((end (1+ (point))))
+      (forward-char 1)
+      (backward-sexp 1)
+      (set-mark end)))
+   ((looking-back "\\s(" 1)
+    (let ((start (1- (point))))
+      (backward-char 1)
+      (forward-sexp 1)
+      (set-mark start)))
+   (t
+    (if (bound-and-true-p meow-mode)
+        (message "Not on a delimiter")
+      (self-insert-command (or arg 1)))))
+  (when (region-active-p)
+    (activate-mark)))
 
 (defun my/meow-line-beginning ()
   "Move to the first non-whitespace character of the line and apply selection."
@@ -97,6 +126,24 @@
 (setq meow--kbd-backward-char "H-b")
 (setq meow--kbd-mark-paragraph "H-r")
 
+
+(defun my-select-window-by-number (number)
+  "Select the window specified by NUMBER.
+Numbered from top-left to bottom-right."
+  (interactive "P")
+  (let* ((windows (window-list-1 nil nil t))
+         (window-count (length windows))
+         (index (if (numberp number)
+                    (1- number)
+                  (let ((char (read-char "Window: ")))
+                    (if (and (>= char ?1) (<= char ?9))
+                        (- char ?1)
+                      (error "Invalid window number"))))))
+    (if (>= index window-count)
+        (error "Window number %d out of range" (1+ index))
+      (select-window (nth index windows)))))
+
+
 (define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-word)
 
 (define-prefix-command 'my-window-map)
@@ -112,26 +159,60 @@
 (define-key meow-normal-state-keymap (kbd "C-w C-c") 'delete-window)
 (define-key meow-normal-state-keymap (kbd "C-w c") 'delete-window)
 
-(define-key meow-normal-state-keymap (kbd "C-w C-w") 'kill-region)
+(define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number)
 
 
-(define-key meow-motion-state-keymap (kbd "C-w") 'my-window-map)
+;; (define-key meow-motion-state-keymap (kbd "C-w") 'my-window-map)
 
-(define-key meow-motion-state-keymap (kbd "C-w C-l") 'windmove-right)
-(define-key meow-motion-state-keymap (kbd "C-w C-h") 'windmove-left)
-(define-key meow-motion-state-keymap (kbd "C-w C-k") 'windmove-up)
-(define-key meow-motion-state-keymap (kbd "C-w C-j") 'windmove-down)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-l") 'windmove-right)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-h") 'windmove-left)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-k") 'windmove-up)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-j") 'windmove-down)
 
-(define-key meow-motion-state-keymap (kbd "C-w C-s") 'split-window-below)
-(define-key meow-motion-state-keymap (kbd "C-w C-v") 'split-window-right)
-(define-key meow-motion-state-keymap (kbd "C-w C-c") 'delete-window)
-(define-key meow-motion-state-keymap (kbd "C-w c") 'delete-window)
-
-(define-key meow-motion-state-keymap (kbd "C-w C-w") 'kill-region)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-s") 'split-window-below)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-v") 'split-window-right)
+;; (define-key meow-motion-state-keymap (kbd "C-w C-c") 'delete-window)
+;; (define-key meow-motion-state-keymap (kbd "C-w c") 'delete-window)
 
 
 (define-key minibuffer-local-map (kbd "M-n") 'my-next-history-element)
 (define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
+
+
+(defun surround-region-with-symbol (start end)
+  "Surround the region with a symbol input by the user."
+  (interactive "r")
+  (let* ((input (read-char "Enter symbol: "))
+         (char (char-to-string input))
+         (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
+         (closing (cdr (assoc char pairs))))
+    (save-excursion
+      (goto-char end)
+      (insert (or closing char))
+      (goto-char start)
+      (insert char))))
+
+(defun change-surrounding-symbol (start end)
+  "Change the symbols surrounding the region."
+  (interactive "r")
+  (let* ((region-text (buffer-substring-no-properties start end))
+         (first-char (substring region-text 0 1))
+         (last-char (substring region-text -1))
+         (content (substring region-text 1 -1))
+         (new-symbol (char-to-string (read-char "Enter new symbol: ")))
+         (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
+         (closing (cdr (assoc new-symbol pairs))))
+    (delete-region start end)
+    (insert new-symbol content (or closing new-symbol))))
+
+(defun delete-surrounding-symbol (start end)
+  "Delete the symbols surrounding the region."
+  (interactive "r")
+  (let* ((region-text (buffer-substring-no-properties start end))
+         (content (substring region-text 1 -1)))
+    (delete-region start end)
+    (insert content)))
+
 
 (defun my/meow-find-backward (arg ch)
   "Combine negative argument with meow-find to search backward in one keybinding."
@@ -617,19 +698,6 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
 ;; Bind it to your preferred key
 (global-set-key (kbd "C-x C-;") 'my-multi-comment-dwim)
 
-(defun my/cancel-selection-before-ret (&rest _)
-  "Cancel meow selection before executing RET binding."
-  (when (and (meow-normal-mode-p)
-             (region-active-p))
-    (meow-cancel-selection)))
-
-;; Common RET functions in different modes
-(dolist (func '(newline
-                newline-and-indent
-                org-return
-                electric-newline-and-maybe-indent))
-  (advice-add func :before #'my/cancel-selection-before-ret))
-
 (defvar my/motion-alist
   '((?j . next-line)
     (?k . previous-line)
@@ -1051,11 +1119,10 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g z" . zoxide-travel)
    '("G" . end-of-buffer)
    '("h" . meow-left)
-   '("H" . meow-left-expand)
    '("i" . meow-insert)
    '("j" . meow-next)
    '("k" . meow-prev)
-   '("l" . meow-right)
+   '("l" . meow-right) ;; For some reason it works strangely in dired
    '("n" . my/search-next)
    '("N" . my/search-previous)
    '("v" . my/meow-line-up)
@@ -1115,6 +1182,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("." . meow-bounds-of-thing)
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
+   '("%" . my-match-paren-with-selection)
    '("a" . my/meow-append)
    '("b" . meow-back-word)
    '("B" . meow-back-symbol)
@@ -1136,12 +1204,16 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    ;; '("0" . my/meow-line-start)
    '("g" . nil)
    '("g ;" . goto-last-change)
+   '("g ;" . goto-last-change)
    '("g v" . my/restore-selection)
    '("g c" . my/meow-smart-comment)
    '("g w" . my/meow-smart-fill)
    '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
    '("G" . end-of-buffer)
+   '("S s" . surround-region-with-symbol)
+   '("S c" . change-surrounding-symbol)
+   '("S d" . delete-surrounding-symbol)
    '("h" . meow-left)
    '("H" . meow-left-expand)
    '("i" . meow-insert)
@@ -1168,10 +1240,10 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    ;; '("q" . meow-quit)
    '("Q" . meow-goto-line)
    '("r" . my/meow-replace-char)
-   '("R" . meow-swap-grab)
+   '("R" . dot-mode-execute)
    ;; '("s" . meow-kill)
    '("s" . my/meow-delete-insert)
-   '("S" . meow-kill-whole-line)
+   ;; '("S" . meow-kill-whole-line)
    '("u" . meow-undo)
    '("U" . meow-undo-in-selection)
    ;; '("v" . meow-visit)
@@ -1207,26 +1279,55 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("<escape>" . meow-cancel-selection)))
    ;; '("<escape>" . ignore)))
 
+(defun meow-magit-mode ()
+  "Custom Meow state for Magit modes."
+  (meow--switch-state 'magit)
+  (setq meow--current-state 'magit))
+
+(meow-define-state magit
+  "Custom state for Magit."
+  ;; Use the full keyboard
+  :lighter " [MG]"
+  :keymap (make-keymap))
+
 (with-eval-after-load 'meow
   (setq meow-mode-state-list
         (append '((messages-buffer-mode . normal)
-                 (help-mode . normal)
-                 (helpful-mode . normal)
-                 (Info-mode . normal)
-                 (special-mode . normal)
-                 (shell-command-mode . normal)
-                 (debugger-mode . normal)
-                 (emacs-lisp-compilation-mode . normal)
-                 (magit-status-mode . motion)
-                 (magit-log-mode . motion)
-                 (magit-diff-mode . motion)
-                 (magit-process-mode . motion)
-                 (magit-stash-mode . motion)
-                 (magit-refs-mode . motion))
+                  (help-mode . normal)
+                  (helpful-mode . normal)
+                  (Info-mode . normal)
+                  (special-mode . normal)
+                  (shell-command-mode . normal)
+                  (debugger-mode . normal)
+                  (emacs-lisp-compilation-mode . normal)
+                  (magit-status-mode . magit)
+                  (magit-log-mode . magit)
+                  (magit-diff-mode . magit)
+                  (magit-process-mode . magit)
+                  (magit-stash-mode . magit)
+                  (magit-refs-mode . magit)
+                  (dired-mode . magit)
+                  ;; Docker modes
+                  (docker-container-mode . motion)
+                  (docker-image-mode . motion)
+                  (docker-network-mode . motion)
+                  (docker-volume-mode . motion)
+                  (docker-context-mode . motion)
+                  (docker-machine-mode . motion))
                 meow-mode-state-list)))
 
 (with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "SPC") 'my-space-as-ctrl-c))
+
+;; Makes functions like meow-next-word to ignore whitespaces
+(setq meow-next-thing-include-syntax
+      '((word "[:space:]" "[:space:]")
+        (symbol "[:space:]" "[:space:]")))
+
 
 (meow-setup)
 (meow-global-mode 1)

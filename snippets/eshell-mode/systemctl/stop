@@ -1,4 +1,0 @@
-# key: ssp
-# name: systemctl stop
-# --
-eshell/sudo systemctl stop $0

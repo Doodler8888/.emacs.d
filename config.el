@@ -164,6 +164,13 @@
 
 (add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
 
+(defun disable-auto-save-for-eshell ()
+  "Disable auto-save for eshell buffers."
+  (when (eq major-mode 'eshell-mode)
+    (setq-local auto-save-default nil)))
+
+(add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
+
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
   (make-directory desktop-dirname))
@@ -204,18 +211,18 @@
 (global-auto-revert-mode 1)
 
 (set-default 'truncate-lines t)
-(add-hook 'prog-mode-hook (lambda ()
-                           ;; (setq-local truncate-lines t)
-                           (toggle-truncate-lines 1)))
-;; Specific for emacs-lisp-mode
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-            (setq-local truncate-lines t)
-            (toggle-truncate-lines 1)))
-;; ;; Also, you can check what's changing the setting
-;; (add-variable-watcher 'truncate-lines
-;;                      (lambda (sym val op where)
-;;                        (message "truncate-lines changed to %s in %s" val where)))
+;; (add-hook 'prog-mode-hook (lambda ()
+;;                            ;; (setq-local truncate-lines t)
+;;                            (toggle-truncate-lines 1)))
+;; ;; Specific for emacs-lisp-mode
+;; (add-hook 'emacs-lisp-mode-hook
+;;           (lambda ()
+;;             (setq-local truncate-lines t)
+;;             (toggle-truncate-lines 1)))
+;; ;; ;; Also, you can check what's changing the setting
+;; ;; (add-variable-watcher 'truncate-lines
+;; ;;                      (lambda (sym val op where)
+;; ;;                        (message "truncate-lines changed to %s in %s" val where)))
 
 
 (setq enable-local-variables t)
@@ -468,6 +475,13 @@
   (setf (alist-get ?w avy-dispatch-alist) 'avy-action-copy-word
         (alist-get ?W avy-dispatch-alist) 'avy-action-copy-WORD
         (alist-get ?\" avy-dispatch-alist) 'avy-action-copy-quoted))
+
+;; Dot mode (repeatition)
+
+(use-package dot-mode
+  :init
+  (global-dot-mode t))
+
 
 ;; Docker
 
@@ -1183,28 +1197,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; that i want to perform action there
 (setq dired-dwim-target t)
 
-(defun my/dired-create-empty-files ()
-  "Create multiple empty files in current dired directory."
-  (interactive)
-  (let (files done)
-    (while (not done)
-      (condition-case nil
-          (let ((file (completing-read
-                      (format "File %s (C-g when done): "
-                             (if files
-                                 (format "[added: %s]"
-                                         (mapconcat #'identity files " "))
-                               ""))
-                      #'completion-file-name-table
-                      nil nil)))
-            (push file files))
-        (quit (setq done t))))
-    (when files
-      (dolist (file (nreverse files))
-        (let ((filepath (expand-file-name file default-directory)))
-          (dired-create-empty-file filepath)))
-      (revert-buffer))))
-
 (defun my/pwd (&optional insert)
   "Like `pwd', but without printing any additional stuff except the path itself"
   (interactive "P")
@@ -1843,10 +1835,27 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Org Mode
 ;; General
 
+(defvar browse-url-default-browser-executable "/snap/bin/vivaldi.vivaldi-stable"
+  "Path to the default browser executable.")
+
+(defun my/browse-url-default-browser (url &rest _args)
+  "Browse URL using the default browser."
+  (if (and browse-url-default-browser-executable
+           (file-executable-p browse-url-default-browser-executable))
+      (start-process 
+       browse-url-default-browser-executable
+       nil
+       browse-url-default-browser-executable
+       url)
+    (message "Browser executable not found or not executable. Falling back to system default.")
+    (browse-url-default-handler url)))
+
+(setq browse-url-browser-function 'my/browse-url-default-browser)
 
 (use-package org
   :config
-  (setq browse-url-browser-function 'browse-url-default-browser) ;; Make links to open a default web browser.
+  (setq browse-url-browser-function 'my/browse-url-default-browser)
+  ;; (setq browse-url-browser-function 'browse-url-default-browser) ;; Make links to open a default web browser.
   (setq org-startup-with-inline-images t)
   (setq org-edit-src-content-indentation 0)
   (setq org-blank-before-new-entry
@@ -2026,172 +2035,6 @@ Otherwise, create a same-level heading (M-RET)."
   :ensure t
   :commands toc-org-enable
   :init (add-hook 'org-mode-hook 'toc-org-enable))
-
-
-;; Keybindings
-
-(defun my-bind-keys (keymap-prefix bindings)
-  "Bind keys in KEYMAP-PREFIX.
-BINDINGS is an alist of (KEY . COMMAND) pairs."
-  (dolist (binding bindings)
-    (global-set-key (kbd (concat keymap-prefix (car binding))) (cdr binding))))
-
-(my-bind-keys "C-c "
-  '(
-    ;; ("ff" . project-find-file)
-    ("ff" . project-find-file-all)
-    ("fd" . project-find-dir)
-    ("fb" . ido-switch-buffer)
-    ;; ("ff" . ivy-fzf-project)
-    ;; ("fh" . ivy-fzf-home)
-    ;; ("fc" . ivy-fzf-current-directory)
-    ;; ("fr" . ivy-fzf-root)
-    ("fr" . consult-recent-file)
-    ("fs" . consult-ripgrep)
-
-    ("ss" . save-current-desktop-session)
-    ("sd" . delete-desktop-session)
-    ("sl" . load-desktop-with-name)
-    ("sr" . rename-desktop-session)
-
-    ("k"  . kill-buffer)
-    ("w"  . write-file)
-    ("bc" . ido-kill-buffer)
-    ("bx" . kill-current-buffer)
-
-    ("tn" . tab-bar-new-tab)
-    ("tx" . tab-bar-close-tab)
-    ("tr" . tab-bar-rename-tab)
-
-    ("D"  . docker-template)
-
-    ("do" . daemons-stop)
-    ("ds" . daemons-start)
-    ("de" . daemons-enable)
-    ("dd" . daemons-disable)
-    ("du" . daemons-status)
-    ("dr" . daemons-restart)
-
-    ("w"  . hydra-window-size/body)
-
-    ("pt" . popper-toggle-type)
-    ("pe" . popper-toggle-type-original)
-    ("pr" . my-remove-popper-status-from-frame-buffers)
-
-    ("rr" . my-refresh-command)
-
-    ("vr" . eval-region)
-    ("vo" . eval-defun)
-
-    ("E"  . eshell)
-    ("e" . SpawnEshellCurrentWindow)
-    ;; ("ep" . eshell-pop) 
-
-    ("m" . toggle-messages-buffer)
-
-    ("gm" . pop-global-mark) 
-
-    ("fe" . dired-jump)
-
-    ("xx" . add-execute-permissions-to-current-file)
-    ("xr" . add-write-permissions-to-current-file)
-
-    ;; ("mm" . messages)
-    ;; ("mm" . toggle-messages-buffer)
-
-    ("gbs" . my-vc-switch-branch)
-    ("gbc" . vc-create-branch)
-
-    ))
-
-;; (global-unset-key (kbd "M-;"))
-
-(defun my-noop ()
-"A no-op function that does nothing."
-(interactive))
-
-(global-set-key (kbd "M-;") 'my-noop)
-
-(global-unset-key (kbd "C-s"))
-(global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
-(global-set-key (kbd "C-s C-s") 'my/consult-line-with-evil)
-(global-set-key (kbd "C-s C-c") 'consult-line-visible-region)
-;; (global-set-key (kbd "C-s C-s") 'consult-line)
-(global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
-(global-set-key (kbd "C-s C-b") 'sql-send-buffer)
-;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
-(define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
-;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
-(global-set-key (kbd "C-h M-f") 'describe-face)
-(global-set-key (kbd "C-s C-y") 'yank-pop)
-(global-set-key (kbd "M-<f1>") 'tab-bar-move-tab-backward)
-(global-set-key (kbd "M-<f2>") 'tab-bar-move-tab)
-(global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
-
-;; For help-mode
-(define-key help-mode-map (kbd "q") #'quit-window)
-
-;; For Info-mode
-(with-eval-after-load 'info
-  (define-key Info-mode-map (kbd "q") #'quit-window))
-
-;; For helpful-mode
-(with-eval-after-load 'helpful
-  (define-key helpful-mode-map (kbd "q") #'quit-window))
-
-;; For special-mode
-(define-key special-mode-map (kbd "q") #'quit-window)
-
-;; For debugger-mode
-(with-eval-after-load 'debug
-  (define-key debugger-mode-map (kbd "q") #'quit-window))
-
-;; For messages-buffer-mode
-(with-eval-after-load 'message
-  (define-key messages-buffer-mode-map (kbd "q") #'quit-window))
-
-;; For compilation-mode
-(with-eval-after-load 'compile
-  (define-key compilation-mode-map (kbd "q") #'quit-window))
-
-;; For shell-command-mode
-;; Note: shell-command-mode-map might not exist, you might need to adjust this
-(with-eval-after-load 'shell
-  (when (boundp 'shell-command-mode-map)
-    (define-key shell-command-mode-map (kbd "q") #'quit-window)))
-
-;; For package-menu-mode
-(with-eval-after-load 'package
-  (define-key package-menu-mode-map (kbd "q") #'quit-window))
-
-;; (global-unset-key (kbd "C-t"))
-;; (global-unset-key (kbd "C-y"))
-
-(defun my-org-cycle-or-preview ()
-  "Cycle in Org mode or expand Tempel snippet."
-  (interactive)
-  (call-interactively #'tempel-expand)  ; Call it as if typed directly, because otherwise it doesn't work
-  (when (derived-mode-p 'org-mode)
-    (org-cycle)))
-
-(global-unset-key (kbd "C-<tab>"))
-(global-set-key (kbd "<C-tab>") 'previous-buffer)
-(global-unset-key (kbd "S-<tab>"))
-(global-set-key (kbd "S-<iso-lefttab>") 'next-buffer)
-
-(defun my-refresh-command ()
-  "Choose the appropriate refresh command based on the major mode."
-  (interactive)
-  (if (eq major-mode 'kubernetes-overview-mode)
-      (kubernetes-refresh)
-    (revert-buffer)))
-
-(defun my-disable-magit-keybindings ()
-  "Disable specific keybindings in Magit."
-  (define-key magit-mode-map (kbd "M-1") nil) ; Disable M-1
-  (define-key magit-mode-map (kbd "M-2") nil) ; Disable M-2
-  ;; Add more keybindings as needed
-  )
 
 
 ;; Custom functions
@@ -2796,3 +2639,8 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (interactive)
   (find-file "~/.emacs.d/other/templates"))
 
+(defun q ()
+  "Save all modified buffers without prompting, then kill Emacs."
+  (interactive)
+  (save-some-buffers t)
+  (kill-emacs))

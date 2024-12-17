@@ -469,13 +469,6 @@ If not on a numbered item, just use evil-open-above."
   (evil-scroll-down arg)
   (recenter))
 
-;; Function to reuse
-(defun my-space-as-ctrl-c ()
-  (interactive)
-  (setq prefix-arg current-prefix-arg)
-  (setq unread-command-events
-        (listify-key-sequence (kbd "C-c"))))
-
 ;; Normal state binding
 (define-key evil-normal-state-map (kbd "SPC") #'my-space-as-ctrl-c)
 

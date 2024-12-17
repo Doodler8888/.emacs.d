@@ -24,6 +24,8 @@
 ;; (load "~/.emacs.d/other/evil.el")
 (load "~/.emacs.d/other/meow.el")
 (load "~/.emacs.d/eshell/eshell.el")
+(load "~/.emacs.d/other/dired.el")
+(load "~/.emacs.d/other/keybindings.el")
 (load "~/.emacs.d/other/scripts/install-org.el")
 
 ;; (load "~/.emacs.d/eshell/eshell-doc.el")
@@ -41,7 +43,7 @@
  '(package-selected-packages
    '(activities all-the-icons-completion all-the-icons-dired avy buffer-terminator
                 cape casual-avy clojure-ts-mode commander corfu docker
-                dockerfile-mode eat embark-consult envrc
+                dockerfile-mode dot-mode eat embark-consult embrace envrc
                 eshell-syntax-highlighting evil-collection evil-org
                 evil-surround exec-path-from-shell fish-completion
                 flymake-ansible-lint flymake-hadolint flymake-shellcheck go-mode

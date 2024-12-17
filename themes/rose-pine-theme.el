@@ -179,7 +179,7 @@
     `(dired-symlink ((,class (:foreground ,rose-pine-subtext))))
     `(dired-ignored ((,class (:foreground ,rose-pine-subtext))))
     `(dired-marked ((,class (:foreground ,rose-pine-iris))))
-
+    `(dired-flagged ((,class (:foreground ,rose-pine-iris))))
     `(dired-async-failures ((,class (:foreground ,rose-pine-love))))
     `(dired-async-message ((,class (:foreground ,rose-pine-gold))))
     `(dired-async-mode-message ((,class (:foreground ,rose-pine-gold))))
@@ -298,7 +298,20 @@
     `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
     `(eshell-ls-readonly ((,class (:foreground ,rose-pine-subtext))))
     `(eshell-ls-archive ((,class (:foreground ,rose-pine-iris))))
- 
+
+    ;; ;; Meow
+    ;; `(meow-position-highlight-number ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-number-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-number-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-number-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-reverse-number-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-reverse-number-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-reverse-number-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-region-cursor-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-region-cursor-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-region-cursor-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; ;; meow-region-cursor-1
+    
     ;; More faces
     `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
     `(show-paren-mismatch ((,class (:foreground ,rose-pine-fg :background ,rose-pine-love))))

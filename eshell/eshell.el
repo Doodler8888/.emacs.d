@@ -65,7 +65,7 @@
                            (complete-with-action action completions string pred))))))
           (when (region-active-p) (delete-region (region-beginning) (region-end)))
           (insert result)))
-    (when-let ((last-cmd (eshell-get-history 0)))
+    (when-let* ((last-cmd (eshell-get-history 0)))
       (insert (setq lw-eshell-last-inserted-arg (car (last (string-split last-cmd))))))))
 
 (global-unset-key (kbd "M-s"))

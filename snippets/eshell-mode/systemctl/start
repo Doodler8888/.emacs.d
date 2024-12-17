@@ -1,4 +1,0 @@
-# key: sst
-# name: systemctl start
-# --
-eshell/sudo systemctl start $0

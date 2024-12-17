@@ -1,4 +1,0 @@
-# key: gr
-# name: git rm
-# --
-git rm $0
