@@ -476,12 +476,6 @@
         (alist-get ?W avy-dispatch-alist) 'avy-action-copy-WORD
         (alist-get ?\" avy-dispatch-alist) 'avy-action-copy-quoted))
 
-;; Dot mode (repeatition)
-
-(use-package dot-mode
-  :init
-  (global-dot-mode t))
-
 
 ;; Docker
 
@@ -1019,11 +1013,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :init
   (marginalia-mode))
 
-(use-package consult
-  :ensure t
-  :config
-  (with-eval-after-load 'org
-    (define-key org-mode-map (kbd "C-s C-o") 'consult-imenu)))
+(use-package consult)
+  ;; :ensure t
+  ;; :config
+  ;; (with-eval-after-load 'org
+  ;;   (define-key org-mode-map (kbd "C-s C-o") 'consult-imenu)))
 
 ;; Disable preview for consult-recent-file
 (advice-add 'consult-recent-file :around
@@ -1642,6 +1636,13 @@ If an eshell buffer for the directory already exists, switch to it."
   (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
 
 
+;; Multiple cursors
+
+(use-package multiple-cursors
+  :config
+  (setq mc/always-run-for-all t))
+
+
 ;; Buffer termination
 
 (use-package buffer-terminator
@@ -1835,7 +1836,7 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Org Mode
 ;; General
 
-(defvar browse-url-default-browser-executable "/snap/bin/vivaldi.vivaldi-stable"
+(defvar browse-url-default-browser-executable "/usr/bin/vivaldi"
   "Path to the default browser executable.")
 
 (defun my/browse-url-default-browser (url &rest _args)
@@ -1866,6 +1867,92 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq org-list-empty-line-terminates-plain-lists nil)
   (setq org-empty-line-terminates-plain-lists nil)
   )
+
+
+(defun my/org-heading-folded-p ()
+  "Check if the current Org heading is folded.
+Returns t if the heading is folded, nil otherwise.
+If not on a heading, returns nil."
+  (when (org-at-heading-p)
+    (save-excursion
+      (end-of-line)
+      (when (and (not (eobp))
+                 (org-fold-folded-p))
+        (forward-char)
+        (if (org-invisible-p) t nil)))))
+
+(require 'f)
+(require 'subr-x)  ; for string-trim
+
+(defvar my/org-fold-state-dir (expand-file-name "org-fold-states" (or (getenv "XDG_DATA_HOME") "~/.local/share"))
+  "Directory to store org fold state files.")
+
+(defun my/org-save-fold-state ()
+  "Save the fold state of all headings in the current Org buffer to a file in my/org-fold-state-dir."
+  (when (eq major-mode 'org-mode)
+    (unless (file-exists-p my/org-fold-state-dir)
+      (make-directory my/org-fold-state-dir t))
+    (let* ((file-name (buffer-file-name))
+           (file-hash (md5 (expand-file-name file-name)))
+           (fold-state-file (f-join my/org-fold-state-dir (concat (f-base file-name) "-" file-hash ".foldstate")))
+           (fold-state '()))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward org-heading-regexp nil t)
+          (let* ((level (org-outline-level))
+                 (heading (org-get-heading t t t t))
+                 (folded (my/org-heading-folded-p))
+                 (begin (line-beginning-position)))
+            (push (list :level level
+                        :heading (substring-no-properties heading)
+                        :folded folded
+                        :position begin)
+                  fold-state))))
+      (with-temp-file fold-state-file
+        (prin1 (list :file file-name :state (nreverse fold-state)) (current-buffer))))))
+
+(defun my/org-restore-fold-state ()
+  "Restore the fold state of all headings in the current Org buffer from a file in my/org-fold-state-dir."
+  (when (eq major-mode 'org-mode)
+    (let* ((file-name (buffer-file-name))
+           (file-hash (md5 (expand-file-name file-name)))
+           (fold-state-file (f-join my/org-fold-state-dir (concat (f-base file-name) "-" file-hash ".foldstate"))))
+      (when (file-exists-p fold-state-file)
+        (let* ((fold-data (with-temp-buffer
+                            (insert-file-contents fold-state-file)
+                            (read (current-buffer))))
+               (stored-file (plist-get fold-data :file))
+               (fold-state (plist-get fold-data :state)))
+          (when (string= stored-file file-name)
+            (save-excursion
+              (org-show-all)
+              (dolist (heading fold-state)
+                (goto-char (plist-get heading :position))
+                (when (org-at-heading-p)
+                  (if (plist-get heading :folded)
+                      (outline-hide-subtree)
+                    (outline-show-entry)
+                    (outline-show-children)))))))))))
+
+(defun my/org-save-fold-state-after-cycle (&rest _)
+  "Save fold state after cycling a heading."
+  (when (eq major-mode 'org-mode)
+    (my/org-save-fold-state)))
+
+(defun my/org-maybe-restore-fold-state ()
+  "Restore fold state if the current buffer is an Org file."
+  (when (and (eq major-mode 'org-mode) (buffer-file-name))
+    (my/org-restore-fold-state)))
+
+;; Hook to save fold state after cycling
+(advice-add 'org-cycle :after #'my/org-save-fold-state-after-cycle)
+
+;; Hook to restore fold state when opening a file
+(add-hook 'find-file-hook #'my/org-maybe-restore-fold-state)
+
+;; Optional: Save fold state when killing an Org buffer
+(add-hook 'kill-buffer-hook #'my/org-save-fold-state)
+
 
 ;; Prevent org-meta-return from folding images
 (defun my/preserve-images-advice (orig-fun &rest args)
@@ -2038,6 +2125,39 @@ Otherwise, create a same-level heading (M-RET)."
 
 
 ;; Custom functions
+
+(defun my-org-outline ()
+  "Jump to an org heading using completion, showing headings in order from top to bottom."
+  (interactive)
+  (unless (eq major-mode 'org-mode)
+    (error "Not in org-mode"))
+  (let ((candidates '())
+        (current-pos (point)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward org-heading-regexp nil t)
+        (let* ((pos (point-at-bol))
+               (level (org-outline-level))
+               (heading (org-get-heading t t t t))
+               (display (format "%5d %s%s" 
+                                (line-number-at-pos pos)
+                                (make-string (* 2 (1- level)) ?\s)
+                                heading)))
+          (push (cons display pos) candidates))))
+    (setq candidates (nreverse candidates))
+    (if candidates
+        (let* ((collection
+                (lambda (string pred action)
+                  (if (eq action 'metadata)
+                      '(metadata (display-sort-function . identity))
+                    (complete-with-action action candidates string pred))))
+               (selection (completing-read "Go to heading: " collection nil t))
+               (position (cdr (assoc selection candidates))))
+          (when position
+            (goto-char position)
+            (org-show-context)
+            (recenter)))
+      (message "No headings found in this buffer."))))
 
 (defun my-package-isolate ()
   "Isolate packages with better completion."

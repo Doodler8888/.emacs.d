@@ -47,6 +47,7 @@ test.el
 # !/eshell/aliases
 /tree-sitter
 \#meow.el\#
+\#config.el\#
 meow.el.bak
 
 .config.org.~undo-tree~

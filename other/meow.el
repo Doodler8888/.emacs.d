@@ -5,6 +5,7 @@
   :init
   (delete-selection-mode -1)
   (setq meow-use-clipboard t))
+  ;; (setq meow-use-dynamic-face-color nil))
 
 ;; Argument count doesn't get reset right away when i use meow-next/prev
 (defun my/reset-prefix-arg (&rest _)
@@ -14,6 +15,15 @@
 
 (advice-add 'meow-next :after #'my/reset-prefix-arg)
 (advice-add 'meow-prev :after #'my/reset-prefix-arg)
+
+;; Delete the 'window' option for selection
+(setq meow-char-thing-table
+      (assq-delete-all ?w meow-char-thing-table))
+
+;; For number hints to work in org mode
+(setq meow-expand-exclude-mode-list 
+      (remove 'org-mode meow-expand-exclude-mode-list))
+
 
 (defun my-match-paren-with-selection (arg)
   "Go to the matching parenthesis and select the enclosed text, including the delimiters.
@@ -1284,7 +1294,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("Y" . meow-sync-grab)
    '(">" . my/indent-region-right)
    '("<" . my/indent-region-left)
-   '("M" . meow-grab)
+   '("M" . mc/edit-lines)
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
@@ -1343,11 +1353,18 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
                 meow-mode-state-list)))
 
 (with-eval-after-load 'dired
+  (define-prefix-command 'my-dired-g-map)
+  (define-key dired-mode-map (kbd "g") 'my-dired-g-map)
+  (define-key my-dired-g-map (kbd "z") 'zoxide-travel)
+  (define-key dired-mode-map (kbd "j") 'dired-next-line)
+  (define-key dired-mode-map (kbd "k") 'dired-previous-line)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
 
-(with-eval-after-load 'org
-  (define-key org-mode-map (kbd "SPC") 'my-space-as-ctrl-c))
+(with-eval-after-load 'magit
+  (define-key magit-status-mode-map (kbd "j") 'magit-section-forward)
+  (define-key magit-mode-map (kbd "k") 'magit-section-backward)
+  (define-key magit-mode-map (kbd "SPC") 'my-space-as-ctrl-c))
 
 ;; Makes functions like meow-next-word to ignore whitespaces
 (setq meow-next-thing-include-syntax

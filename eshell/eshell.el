@@ -21,7 +21,7 @@
         eshell-banner-message ""
         eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
-  (define-key eshell-mode-map (kbd "C-s C-o") 'consult-outline))
+  (define-key eshell-mode-map (kbd "C-s C-o") 'my-eshell-outline))
   ;; (define-key eshell-mode-map (kbd "M-r") 'my-eshell-history-choose))
 
 (global-set-key (kbd "M-r") 'my-eshell-history-choose)
@@ -393,3 +393,33 @@ If the file doesn't exist, display an error message."
     (insert "ls -la")
     (eshell-send-input)
     (goto-char (point-max))))
+
+(defun my-eshell-outline ()
+  "Jump to an eshell prompt using completion, showing most recent commands first."
+  (interactive)
+  (let* ((prompt-regexp eshell-prompt-regexp)
+         (candidates '())
+         (current-pos (point)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward prompt-regexp nil t)
+        (let* ((pos (line-beginning-position))
+               (end-pos (line-end-position))
+               (line (buffer-substring-no-properties pos end-pos))
+               (stripped-line (replace-regexp-in-string "^[^0-9a-zA-Z]*" "" line)))
+          ;; Only add non-empty prompts
+          (unless (string-empty-p (string-trim stripped-line))
+            (let ((display (format "%5d %s" (line-number-at-pos pos) stripped-line)))
+              (push (cons display pos) candidates))))))
+    (if candidates
+        (let* ((collection
+                (lambda (string pred action)
+                  (if (eq action 'metadata)
+                      '(metadata (display-sort-function . identity))
+                    (complete-with-action action candidates string pred))))
+               (selection (completing-read "Go to prompt: " collection nil t))
+               (position (cdr (assoc selection candidates))))
+          (when position
+            (goto-char position)
+            (recenter)))
+      (message "No non-empty prompts found in this buffer."))))

@@ -47,12 +47,12 @@
                 eshell-syntax-highlighting evil-collection evil-org
                 evil-surround exec-path-from-shell fish-completion
                 flymake-ansible-lint flymake-hadolint flymake-shellcheck go-mode
-                haskell-mode hydra lua-mode magit marginalia meow nix-mode
-                no-littering orderless org-download org-drill org-modern
-                page-break-lines popper raku-mode shackle sudo-edit systemd
-                tab-bookmark tempel-collection terraform-mode tldr toc-org
-                transpose-frame treesit-auto undo-tree vertico wgrep workgroups2
-                yaml-mode yasnippet zoxide))
+                haskell-mode hydra lua-mode magit marginalia meow
+                multiple-cursors nix-mode no-littering orderless org-download
+                org-drill org-modern page-break-lines popper raku-mode shackle
+                sudo-edit systemd tab-bookmark tempel-collection terraform-mode
+                tldr toc-org transpose-frame treesit-auto undo-tree vertico
+                wgrep workgroups2 yaml-mode yasnippet zoxide))
  '(package-vc-selected-packages
    '((tab-bookmark :url "https://github.com/minad/tab-bookmark")
      (eat :url "https://github.com/kephale/emacs-eat")

@@ -6,6 +6,7 @@
       (rose-pine-blendedbg "#17191a")
       (rose-pine-bg "#1d1f21")
       (rose-pine-bg2 "#2e2c3d")
+      (meow-region "#262431")
       (rose-pine-rose "#ebbcba")
       (rose-pine-love "#eb6f92")
       (rose-pine-blendedlove "#2e202f")
@@ -299,18 +300,18 @@
     `(eshell-ls-readonly ((,class (:foreground ,rose-pine-subtext))))
     `(eshell-ls-archive ((,class (:foreground ,rose-pine-iris))))
 
-    ;; ;; Meow
+    ;; Meow
     ;; `(meow-position-highlight-number ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; `(meow-position-highlight-number-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; `(meow-position-highlight-number-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; `(meow-position-highlight-number-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; `(meow-position-highlight-reverse-number-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; `(meow-position-highlight-reverse-number-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; `(meow-position-highlight-reverse-number-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
+    ;; `(meow-position-highlight-number-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-highlight))))
+    ;; `(meow-position-highlight-number-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-highlight2))))
+    ;; `(meow-position-highlight-number-3 ((,class (:foreground nil :background nil))))
+    ;; `(meow-position-highlight-reverse-number-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-highlight))))
+    ;; `(meow-position-highlight-reverse-number-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-highlight2))))
+    ;; `(meow-position-highlight-reverse-number-3 ((,class (:foreground nil :background nil))))
     ;; `(meow-region-cursor-1 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
     ;; `(meow-region-cursor-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
     ;; `(meow-region-cursor-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
-    ;; ;; meow-region-cursor-1
+    ;; meow-region-cursor-1
     
     ;; More faces
     `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))

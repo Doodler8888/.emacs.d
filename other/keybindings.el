@@ -190,3 +190,5 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (setq prefix-arg current-prefix-arg)
   (setq unread-command-events
         (listify-key-sequence (kbd "C-c"))))
+
+(define-key org-mode-map (kbd "C-s C-o") 'my-org-outline)
