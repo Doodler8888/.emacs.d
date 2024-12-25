@@ -13,11 +13,6 @@
 (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
 (add-hook 'text-mode-hook 'display-line-numbers-mode)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(defun my/disable-minibuffer-messages (orig-fun &rest args)
-  "Disable messages in the minibuffer."
-  nil)
-(advice-add 'minibuffer-message :around #'my/disable-minibuffer-messages)
-
 (defun enable-line-numbers-in-messages-buffer ()
   (with-current-buffer "*Messages*"
     (display-line-numbers-mode 1)))
@@ -51,8 +46,8 @@
 (defun my-window-number ()
   "Get the current window number."
   (let* ((windows (window-list nil nil (frame-first-window)))
-         (num (cl-position (selected-window) windows)))
-    (format "%d" (1+ (or num 0)))))
+         (num (cl-position (selected-window) format)))
+    (windows "%d" (1+ (or num 0)))))
 
 (setq-default mode-line-format
               '("%e"
@@ -189,6 +184,14 @@
     (setq-local auto-save-default nil)
     (auto-save-mode -1)))
 (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
+
+(defun disable-auto-save-for-non-file-buffers ()
+  "Disable auto-save for buffers not associated with a file."
+  (unless (buffer-file-name)
+    (setq-local auto-save-default nil)
+    (auto-save-mode -1)))
+
+(add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -472,6 +475,17 @@
 (use-package avy
   :ensure t
   )
+
+(defun avy-jump-to-window ()
+  "Use avy to jump to a specific window."
+  (interactive)
+  (let ((avy-all-windows 'all-frames))
+    (avy-with avy-jump-to-window
+      (avy--process
+       (mapcar (lambda (w)
+                 (cons (window-start w) w))
+               (avy-window-list))
+       #'avy--overlay-post))))
 
 (with-eval-after-load 'avy
   (defun avy-action-copy-word (pt)
@@ -974,11 +988,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :ensure t
   :bind (:map vertico-map
               ("C-<backspace>" . vertico-directory-up))
-  :custom
-  (vertico-scroll-margin 0) ;; Different scroll margin
-  (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  ;; :custom
+  ;; (vertico-scroll-margin 0) ;; Different scroll margin
+  ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
   ;; It clears the current path in the minibuffer if it's overshadowed
-  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
+  ;; :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
   :init
   (vertico-mode)
   ;; (icomplete-vertical-mode)
@@ -1452,18 +1466,11 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
                 "*Async Shell Command*"
                 "*vc-git*"
                 "*debug*")))
-;; (add-to-list 'display-buffer-alist
-;;              '("^\\*\\(Man\\|Faces\\) "
-;;                (display-buffer-reuse-window display-buffer-pop-up-window)
-;;                (post-command-select-window . t)))
+
 (add-to-list 'display-buffer-alist
-             '("\\*Man "
+             '("\\*\\(Man\\|Help\\) "
                (display-buffer-reuse-window display-buffer-pop-up-window)
                (post-command-select-window . t)))
-;; (add-to-list 'display-buffer-alist
-;;              '("*Faces*"
-;;                (display-buffer-reuse-window display-buffer-pop-up-window)
-;;                (post-command-select-window . t)))
 
 ;; Shell buffer
 
@@ -2086,6 +2093,7 @@ Otherwise, create a same-level heading (M-RET)."
             (lambda ()
               (org-display-inline-images))))
 
+(define-key org-mode-map (kbd "C-x p") #'org-download-clipboard)
 
 ;; Org-drill
 

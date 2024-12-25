@@ -190,17 +190,22 @@ Numbered from top-left to bottom-right."
 
 
 (defun surround-region-with-symbol (start end)
-  "Surround the region with a symbol input by the user."
+  "Surround the region with a symbol input by the user.
+Adds spaces when using right brackets."
   (interactive "r")
   (let* ((input (read-char "Enter symbol: "))
          (char (char-to-string input))
          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
-         (closing (cdr (assoc char pairs))))
+         (left-char (or (car (rassoc char pairs)) char))
+         (right-char (or (cdr (assoc left-char pairs)) char))
+         (add-spaces (member char '(")" "]" "}" ">"))))
     (save-excursion
       (goto-char end)
-      (insert (or closing char))
+      (when add-spaces (insert " "))
+      (insert right-char)
       (goto-char start)
-      (insert char))))
+      (insert left-char)
+      (when add-spaces (insert " ")))))
 
 (defun change-surrounding-symbol (start end)
   "Change the symbols surrounding the region."
@@ -1218,7 +1223,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("." . meow-bounds-of-thing)
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
-   '("%" . my-match-paren-with-selection)
+   ;; '("%" . my-match-paren-with-selection)
    '("a" . my/meow-append)
    '("b" . meow-back-word)
    '("B" . meow-back-symbol)

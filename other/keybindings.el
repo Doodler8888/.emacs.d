@@ -54,6 +54,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("vr" . eval-region)
     ("vo" . eval-defun)
 
+    ("j" . avy-jump-to-window)
+    
     ("E"  . eshell)
     ("e" . open-eshell-in-current-directory)
     ;; ("ep" . eshell-pop) 

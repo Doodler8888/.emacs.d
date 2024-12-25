@@ -38,8 +38,6 @@
           (file-error
            (message "Error creating symlink: %s" (error-message-string err))))))))
 
-(define-key dired-mode-map (kbd "S") 'my/dired-sudo-symlink)
-
 
 (defun my/dired-toggle-bak-extension ()
   "Toggle '.bak' extension for marked files in Dired.
@@ -62,8 +60,6 @@ If a file doesn't end with '.bak', add it; if it does, remove it."
             (rename-file file new-file t)))))
     (revert-buffer)
     (message "%s renamed." msg-prefix)))
-
-(define-key dired-mode-map (kbd "K") 'my/dired-toggle-bak-extension)
 
 
 (defun my/dired-create-empty-files ()
@@ -88,4 +84,7 @@ If a file doesn't end with '.bak', add it; if it does, remove it."
           (dired-create-empty-file filepath)))
       (revert-buffer))))
 
-(define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files)
+(with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "S") 'my/dired-sudo-symlink)
+  (define-key dired-mode-map (kbd "K") 'my/dired-toggle-bak-extension)
+  (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))
