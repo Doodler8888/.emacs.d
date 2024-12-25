@@ -55,7 +55,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("vo" . eval-defun)
 
     ("E"  . eshell)
-    ("e" . SpawnEshellCurrentWindow)
+    ("e" . open-eshell-in-current-directory)
     ;; ("ep" . eshell-pop) 
 
     ("m" . toggle-messages-buffer)
@@ -146,16 +146,37 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (define-key dired-mode-map (kbd "C-w c") 'delete-window)
   (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
-(define-key eshell-mode-map (kbd "q") #'quit-window)
-(define-key help-mode-map (kbd "q") #'quit-window)
-(define-key Info-mode-map (kbd "q") #'quit-window)
-;; (define-key helpful-mode-map (kbd "q") #'quit-window)
-(define-key special-mode-map (kbd "q") #'quit-window)
-(define-key debugger-mode-map (kbd "q") #'quit-window)
-(define-key messages-buffer-mode-map (kbd "q") #'quit-window)
-(define-key compilation-mode-map (kbd "q") #'quit-window)
-(define-key shell-command-mode-map (kbd "q") #'quit-window)
-(define-key package-menu-mode-map (kbd "q") #'quit-window)
+;; Without the condition i might get an error about an undefined binding
+(with-eval-after-load 'eshell
+  (define-key eshell-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'help-mode
+  (define-key help-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'info
+  (define-key Info-mode-map (kbd "q") #'quit-window))
+
+;; Commented out as in your original code
+;; (with-eval-after-load 'helpful
+;;   (define-key helpful-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'simple
+  (define-key special-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'debug
+  (define-key debugger-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'message
+  (define-key messages-buffer-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'compile
+  (define-key compilation-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'shell
+  (define-key shell-command-mode-map (kbd "q") #'quit-window))
+
+(with-eval-after-load 'package
+  (define-key package-menu-mode-map (kbd "q") #'quit-window))
 ;; (with-eval-after-load 'shell
 ;;   (when (boundp 'shell-command-mode-map)
 ;;     (define-key shell-command-mode-map (kbd "q") #'quit-window)))
@@ -191,4 +212,5 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (setq unread-command-events
         (listify-key-sequence (kbd "C-c"))))
 
-(define-key org-mode-map (kbd "C-s C-o") 'my-org-outline)
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-s C-o") 'my-org-outline))

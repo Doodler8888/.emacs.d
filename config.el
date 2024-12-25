@@ -4,6 +4,7 @@
 
 (menu-bar-mode -1)
 (tool-bar-mode -1)
+(setq minibuffer-message-timeout 0)
 (setq inhibit-startup-screen t)
 (global-display-line-numbers-mode 1)
 (setq display-line-numbers 'visual
@@ -12,7 +13,20 @@
 (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
 (add-hook 'text-mode-hook 'display-line-numbers-mode)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(add-hook 'messages-buffer-mode-hook 'display-line-numbers-mode)
+(defun my/disable-minibuffer-messages (orig-fun &rest args)
+  "Disable messages in the minibuffer."
+  nil)
+(advice-add 'minibuffer-message :around #'my/disable-minibuffer-messages)
+
+(defun enable-line-numbers-in-messages-buffer ()
+  (with-current-buffer "*Messages*"
+    (display-line-numbers-mode 1)))
+(add-hook 'after-init-hook 'enable-line-numbers-in-messages-buffer)
+(advice-add 'message :after 
+            (lambda (&rest _) 
+              (when (get-buffer "*Messages*")
+                (with-current-buffer "*Messages*"
+                  (display-line-numbers-mode 1)))))
 
 (defun my-mode-line-major-mode ()
   "Returns a clean name of the current major mode."
@@ -161,15 +175,20 @@
 (defun my-disable-auto-save-for-scratch ()
 (when (string= (buffer-name) "*scratch*")
   (auto-save-mode -1)))
-
 (add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
 
 (defun disable-auto-save-for-eshell ()
   "Disable auto-save for eshell buffers."
   (when (eq major-mode 'eshell-mode)
     (setq-local auto-save-default nil)))
-
 (add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
+
+(defun disable-auto-save-for-messages-buffer ()
+  "Disable auto-save for the *Messages* buffer."
+  (when (string= (buffer-name) "*Messages*")
+    (setq-local auto-save-default nil)
+    (auto-save-mode -1)))
+(add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -256,6 +275,29 @@
     (tramp-cleanup-all-connections)))
 
 (add-hook 'kill-emacs-hook #'my-tramp-cleanup)
+
+;; Save unexuted minibuffer input
+
+(defvar my-last-unexecuted-minibuffer-input nil
+  "Stores the last unexecuted minibuffer input.")
+
+(defun my-save-unexecuted-minibuffer-input ()
+  "Save the current minibuffer input if it's not empty."
+  (let ((input (minibuffer-contents)))
+    (when (and (not (string-empty-p input))
+               (not (eq input my-last-unexecuted-minibuffer-input)))
+      (setq my-last-unexecuted-minibuffer-input input))))
+
+(add-hook 'minibuffer-exit-hook #'my-save-unexecuted-minibuffer-input)
+
+(defun my-insert-last-unexecuted-minibuffer-input ()
+  "Insert the last unexecuted minibuffer input at point."
+  (interactive)
+  (when my-last-unexecuted-minibuffer-input
+    (insert my-last-unexecuted-minibuffer-input)))
+
+;; Bind it to C-r in minibuffer-local-map
+(define-key minibuffer-local-map (kbd "C-r") #'my-insert-last-unexecuted-minibuffer-input)
 
 
 ;; Cursor
@@ -647,13 +689,11 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (use-package orderless
   :ensure t
   :init
-  ;; ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
+  
 ;; Corfu/Cape
 
 (use-package emacs
@@ -932,6 +972,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package vertico
   :ensure t
+  :bind (:map vertico-map
+              ("C-<backspace>" . vertico-directory-up))
   :custom
   (vertico-scroll-margin 0) ;; Different scroll margin
   (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
@@ -939,6 +981,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
   :init
   (vertico-mode)
+  ;; (icomplete-vertical-mode)
+  ;; (setq icomplete-compute-delay 0)
+  ;; (setq icomplete-show-matches-on-no-input t)
   :config
   (define-key vertico-map (kbd "M-RET") #'vertico-exit-input))
 
@@ -1391,26 +1436,34 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 (add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
 
-;; Buffers
-;; Spawn and Pointer
+;; ;; Buffers
+;; ;; Spawn and Pointer
 
+;; ;; If i refactor this, then corfu might start to work incorrectly when i
+;; ;; invoke a popup, then wait for an echo popup and press C-n
 (setq display-buffer-alist
-      (append
-       (mapcar (lambda (name)
-                 `(,name
-                   (display-buffer-reuse-window display-buffer-pop-up-window)
-                   (post-command-select-window . t)))
-               '("*Faces*"
-                 "*info*"
-                 "*helpful*"
-                 "*Help*"
-                 "*Warnings*"
-                 "*Async Shell Command*"
-                 "*vc-git*"
-                 "*debug*"
-                 "\\*Man "))
-       display-buffer-alist))
-
+      (mapcar (lambda (name)
+                `(,name display-buffer-same-window (nil)))
+              '("*Faces*"
+                "*info*"
+                "*helpful*"
+                "*Help*"
+                "*Warnings*"
+                "*Async Shell Command*"
+                "*vc-git*"
+                "*debug*")))
+;; (add-to-list 'display-buffer-alist
+;;              '("^\\*\\(Man\\|Faces\\) "
+;;                (display-buffer-reuse-window display-buffer-pop-up-window)
+;;                (post-command-select-window . t)))
+(add-to-list 'display-buffer-alist
+             '("\\*Man "
+               (display-buffer-reuse-window display-buffer-pop-up-window)
+               (post-command-select-window . t)))
+;; (add-to-list 'display-buffer-alist
+;;              '("*Faces*"
+;;                (display-buffer-reuse-window display-buffer-pop-up-window)
+;;                (post-command-select-window . t)))
 
 ;; Shell buffer
 
