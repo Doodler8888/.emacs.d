@@ -25,13 +25,17 @@
                           dest))
              (sudo-src (if use-sudo
                            (concat "/sudo::" (expand-file-name src))
-                         src))
+                         (expand-file-name src)))
              (sudo-dest (if use-sudo
                             (replace-regexp-in-string "^/sudo::[^:]+:" "" full-dest)
                           full-dest)))
         (condition-case err
             (progn
-              (make-symbolic-link sudo-src sudo-dest t)
+              (if use-sudo
+                  (with-temp-buffer
+                    (let ((default-directory "/sudo::"))
+                      (make-symbolic-link sudo-src sudo-dest t)))
+                (make-symbolic-link sudo-src sudo-dest t))
               (message "Created symlink: %s -> %s" 
                        (if use-sudo (concat "/sudo::..." (file-name-nondirectory src)) src)
                        (if use-sudo (concat "/sudo::..." (file-name-nondirectory sudo-dest)) sudo-dest)))

@@ -103,6 +103,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "M-<f1>") 'tab-bar-move-tab-backward)
 (global-set-key (kbd "M-<f2>") 'tab-bar-move-tab)
 (global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
+(global-set-key (kbd "C-s C-o") 'consult-outline)
 
 ;; (define-prefix-command 'my-window-map)
 ;; (global-set-key (kbd "C-w") 'my-window-map)
@@ -214,5 +215,5 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (setq unread-command-events
         (listify-key-sequence (kbd "C-c"))))
 
-(with-eval-after-load 'org
-  (define-key org-mode-map (kbd "C-s C-o") 'my-org-outline))
+;; (with-eval-after-load 'org
+;;   (define-key org-mode-map (kbd "C-s C-o") 'my-org-outline))

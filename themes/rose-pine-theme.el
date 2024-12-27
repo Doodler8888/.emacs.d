@@ -191,9 +191,12 @@
     `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
  
     ;; Org mode
-    `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
-    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
-    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
+    ;; `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
+    `(org-block ((t (:background unspecified))))  ; Set background color for org blocks
+    ;; `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
+    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background unspecified))))  ; Set colors for begin line
+    ;; `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
+    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background unspecified))))
      ;; (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
      ;; (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
     `(org-level-1 ((,class (:foreground ,rose-pine-rose))))
@@ -227,7 +230,12 @@
     ;; `(org-block-begin-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
     ;; `(org-block-end-line ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
     ;; `(org-code ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-bg))))
- 
+
+    ;; Completion
+    `(completions-highlight ((,class (:background ,rose-pine-subtle))))
+    `(icomplete-selected-match ((,class (:background ,rose-pine-subtle))))
+    `(highlight ((,class (:background ,rose-pine-subtle))))
+    
     ;; Vertico
     `(vertico-current ((,class (:background ,rose-pine-subtle))))
 
@@ -296,7 +304,7 @@
     `(eshell-ls-special ((,class (:foreground ,rose-pine-iris))))
     `(eshell-ls-unreadable ((,class (:foreground ,rose-pine-fg2))))
     `(eshell-ls-missing ((,class (:foreground ,rose-pine-love))))
-    `(eshell-ls-backup ((,class (:foreground ,rose-pine-iris))))
+    `(eshell-ls-backup ((,class (:foreground ,rose-pine-subtext))))
     `(eshell-ls-executable ((,class (:foreground ,rose-pine-pine))))
     `(eshell-ls-readonly ((,class (:foreground ,rose-pine-subtext))))
     `(eshell-ls-archive ((,class (:foreground ,rose-pine-iris))))

@@ -45,17 +45,18 @@
 
 (defun my-window-number ()
   "Get the current window number."
-  (let* ((windows (window-list nil nil (frame-first-window)))
-         (num (cl-position (selected-window) format)))
-    (windows "%d" (1+ (or num 0)))))
+  (let* ((windows (window-list-1 (frame-first-window) 'nomini t))
+         (num (cl-position (selected-window) windows)))
+    (format "%d" (1+ (or num 0)))))
 
 (setq-default mode-line-format
               '("%e"
-                (:eval (my-window-number))  ; Will update dynamically now
+                (:eval (my-window-number))
+                ""  ; Single space after the window number
                 mode-line-front-space
                 (:eval (if (buffer-file-name)
-                          (abbreviate-file-name (buffer-file-name))
-                        "%b"))
+                           (abbreviate-file-name (buffer-file-name))
+                         "%b"))
                 " | "
                 (:eval (my-mode-line-major-mode))
                 " | "
@@ -310,14 +311,6 @@
 (show-paren-mode 1)
 
 
-;; Undo tree
-
-(use-package undo-tree
-  :ensure t
-  :init
-  (global-undo-tree-mode))
-
-
 ;; Theme
 
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))(put 'eval 'safe-local-variable #'identity)
@@ -433,15 +426,9 @@
 (add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
 
 
-;; Compilation
-
-(use-package page-break-lines
-  :ensure t
-  :hook (compilation-mode . page-break-lines-mode))
-
 ;; Cron
 
- ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
+;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
 ;; (use-package emacs-crontab-mode
 ;;   :vc (:url "https://gitlab.com/Bacaliu/emacs-crontab-mode"
 ;;        :rev :newest))
@@ -634,12 +621,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;; Wgrep
 
 (use-package wgrep
-  :ensure t)
-
-
-;; Commander
-
-(use-package commander
   :ensure t)
 
 
@@ -881,12 +862,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (exec-path-from-shell-initialize))
 
 
-;; Sudo Edit
-
-(use-package sudo-edit
-  :ensure t)
-
-
 ;; Zoxide
 
 (use-package zoxide
@@ -999,6 +974,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; (setq icomplete-compute-delay 0)
   ;; (setq icomplete-show-matches-on-no-input t)
   :config
+  (setq vertico-preselect 'first)
   (define-key vertico-map (kbd "M-RET") #'vertico-exit-input))
 
 
@@ -1170,27 +1146,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (add-hook 'eshell-mode-hook
           (lambda ()
             (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)))
-
-;; Icons
-
-(use-package all-the-icons
-  :ensure t
-  :if (display-graphic-p))
-
-(use-package all-the-icons-dired
-  :ensure t
-  :init
-  (setq all-the-icons-dired-monochrome nil) ;; adds coloring to the dired icons
-  :hook (dired-mode . (lambda ()
-                        (when (not (file-remote-p default-directory))
-                          (all-the-icons-dired-mode t)))))
-
-(use-package all-the-icons-completion
-  :ensure t
-  :after all-the-icons
-  :config
-  (all-the-icons-completion-mode)
-  (add-hook 'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup))
 
 
 ;; With-editor
@@ -1465,6 +1420,7 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
                 "*Warnings*"
                 "*Async Shell Command*"
                 "*vc-git*"
+                "*compilation*"
                 "*debug*")))
 
 (add-to-list 'display-buffer-alist
@@ -1472,97 +1428,8 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
                (display-buffer-reuse-window display-buffer-pop-up-window)
                (post-command-select-window . t)))
 
-;; Shell buffer
-
-(defun my-shell-mode-hook ()
-  (setq-local scroll-margin 0))
-
-(add-hook 'shell-mode-hook 'my-shell-mode-hook)
-
-(setq explicit-shell-file-name "/usr/bin/zsh")  ; your shell path here
-(setq explicit-bash-args '("--login" "-i"))
-
-(defun my-shell-mode-hook ()
-  "Custom shell-mode hook to remove the first line of output."
-  (let ((inhibit-read-only t))
-    (save-excursion
-      (goto-char (point-min))
-      (delete-line))))
-
-(add-hook 'shell-mode-hook
-          (lambda ()
-            (run-with-timer 0.1 nil 'my-shell-mode-hook)))
-
 
 ;; Eshell buffer
-
-(define-minor-mode toggle-buffer-mode
-  "Minor mode for buffers that are meant to be temporary/toggled."
-  :lighter " Toggle"
-  :global nil)
-
-;; Add hook to kill toggle windows and buffers before saving session
-(defun kill-toggle-buffers ()
-  "Kill all windows and buffers that have toggle-buffer-mode enabled."
-  (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (when toggle-buffer-mode
-        ;; First find and delete any window showing this buffer
-        (dolist (window (get-buffer-window-list buffer nil t))
-          (delete-window window))
-        ;; Then kill the buffer
-        (kill-buffer buffer)))))
-
-(add-hook 'kill-emacs-hook #'kill-toggle-buffers)
-
-(defvar eshell-buffer-name "*eshell*"
-  "The name of the eshell buffer.")
-
-(defvar eshell-toggle-window-configuration nil
-  "Variable to store the window configuration before opening eshell.")
-
-(defvar eshell-toggle-selected-window nil
-  "Variable to store the selected window before opening eshell.")
-
-(defun SpawnEshellSplitBelow ()
-  "Open a shell in a small split below or toggle it if already open."
-  (interactive)
-  (if (eq major-mode 'eshell-mode)
-      (progn
-        (when eshell-toggle-window-configuration
-          (set-window-configuration eshell-toggle-window-configuration)
-          (setq eshell-toggle-window-configuration nil))
-        (when eshell-toggle-selected-window
-          (select-window eshell-toggle-selected-window)
-          (setq eshell-toggle-selected-window nil)))
-    (setq eshell-toggle-window-configuration (current-window-configuration))
-    (setq eshell-toggle-selected-window (selected-window))
-    ;; Calculate one third of the total window height
-    (let ((one-third-height (/ (window-total-height) 3)))
-      ;; Ensure the height is at least 1 to avoid errors
-      (setq one-third-height (max one-third-height 1))
-      (split-window-below (- one-third-height))
-      (other-window 1)
-      (open-eshell-in-current-directory)
-      ;; Enable toggle-buffer-mode in the new eshell buffer
-      (toggle-buffer-mode 1))))
-
-(defun SpawnEshellCurrentWindow ()
-  "Open a shell in the current window or toggle it if already open."
-  (interactive)
-  (if (eq major-mode 'eshell-mode)
-      (progn
-        (when (and eshell-toggle-buffer (buffer-live-p eshell-toggle-buffer))
-          (switch-to-buffer eshell-toggle-buffer))
-        (setq eshell-toggle-buffer nil
-              eshell-toggle-window nil))
-    (setq eshell-toggle-buffer (current-buffer)
-          eshell-toggle-window (selected-window))
-    (let ((current-directory default-directory))
-      (save-excursion
-        (eshell)
-        (eshell/cd current-directory)))
-    (toggle-buffer-mode 1)))
 
 (defun open-eshell-in-current-directory ()
   "Open eshell in the directory of the current buffer.
@@ -1623,62 +1490,7 @@ If an eshell buffer for the directory already exists, switch to it."
       (kill-buffer buffer))))
 
 
-(defvar my-saved-tab-configurations (make-hash-table :test 'equal)
-  "Hash table to store the saved window configurations per tab name.")
-
-(defvar my-fullscreen-eshell-active nil
-  "Flag to indicate if we're currently in a fullscreen Eshell.")
-
-(defun my-current-tab-name ()
-  "Get the current tab's name."
-  (alist-get 'name (tab-bar--current-tab)))
-
-(defun my-eshell-fullscreen ()
-  "Replace the current window layout with a fullscreen Eshell for the current tab."
-  (interactive)
-  (let* ((tab-name (my-current-tab-name))
-         (eshell-buffer-name (format "*eshell<%s>*" tab-name)))
-    (if tab-name
-        (if my-fullscreen-eshell-active
-            (message "Already in fullscreen Eshell. Use M-j to restore previous layout.")
-          (progn
-            (puthash tab-name (current-window-configuration) my-saved-tab-configurations)
-            ;; (message "Saved window configuration for tab: %s" tab-name)
-            (delete-other-windows)
-            ;; Switch to or create the Eshell buffer
-            (if (get-buffer eshell-buffer-name)
-                (switch-to-buffer eshell-buffer-name)
-              (progn
-                (switch-to-buffer (get-buffer-create eshell-buffer-name))
-                (eshell)))
-            (setq my-fullscreen-eshell-active t)))
-      (message "Failed to get tab name. Is the tab-bar-mode enabled?"))))
-
-(defun my-restore-window-configuration ()
-  "Restore the previously saved window configuration for the current tab."
-  (interactive)
-  (let* ((tab-name (my-current-tab-name))
-         (config (gethash tab-name my-saved-tab-configurations)))
-    (if config
-        (progn
-          (set-window-configuration config)
-          (setq my-fullscreen-eshell-active nil))
-          ;; (message "Restored window configuration for tab: %s" tab-name))
-      (message "No saved window configuration for this tab: %s" tab-name))))
-
-;; (global-set-key (kbd "M-k") 'my-eshell-fullscreen)
-;; (global-set-key (kbd "M-j") 'my-restore-window-configuration)
-
-(defun display-current-tab-name ()
-  "Display the name of the current tab in tab-bar-mode."
-  (interactive)
-  (let ((tab-name (alist-get 'name (tab-bar--current-tab))))
-    (if tab-name
-        (message "Current tab name: %s" tab-name)
-      (message "Current tab has no name"))))
-
-
-;; Transpose frame
+; Transpose frame
 
 (use-package transpose-frame
   :ensure t)
@@ -1874,11 +1686,11 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package envrc
   :ensure t
   :config
-  (envrc-global-mode)
-  (add-hook 'eglot-managed-mode-hook
-            (lambda ()
-              (message "Eglot started with env: VIRTUAL_ENV=%s" (getenv "VIRTUAL_ENV"))
-              (message "Python path: %s" (executable-find "python")))))
+  (envrc-global-mode))
+  ;; (add-hook 'eglot-managed-mode-hook
+  ;;           (lambda ()
+  ;;             (message "Eglot started with env: VIRTUAL_ENV=%s" (getenv "VIRTUAL_ENV"))
+  ;;             (message "Python path: %s" (executable-find "python")))))
 
 
 ;; Example for dir-locals:
@@ -1928,27 +1740,49 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq org-empty-line-terminates-plain-lists nil)
   )
 
-
-(defun my/org-heading-folded-p ()
-  "Check if the current Org heading is folded.
-Returns t if the heading is folded, nil otherwise.
-If not on a heading, returns nil."
-  (when (org-at-heading-p)
+(defun my/org-fold-all-headings ()
+  "Fold all headings in the current Org buffer."
+  (interactive)
+  (when (eq major-mode 'org-mode)
     (save-excursion
-      (end-of-line)
-      (when (and (not (eobp))
-                 (org-fold-folded-p))
-        (forward-char)
-        (if (org-invisible-p) t nil)))))
+      (goto-char (point-min))
+      (unless (org-at-heading-p) (outline-next-heading))
+      (while (not (eobp))
+        (outline-hide-subtree)
+        (outline-next-heading)))))
+
 
 (require 'f)
-(require 'subr-x)  ; for string-trim
+(require 'subr-x)
+
+(defvar my/org-debug-log-file "/home/wurfkreuz/org-fold-debug.log"
+  "File to store debug logs for org fold state operations.")
+
+(defun my/org-debug-log (message &rest args)
+  "Write a debug MESSAGE with ARGS to the debug log file."
+  (let ((log-message (format "[%s] %s\n" (format-time-string "%Y-%m-%d %H:%M:%S") (apply #'format message args))))
+    (with-temp-buffer
+      (insert log-message)
+      (write-region (point-min) (point-max) my/org-debug-log-file t 'silent))))
+
+(defun my/org-heading-folded-p ()
+  "Check if the current Org heading is folded."
+  (let ((result (when (org-at-heading-p)
+                  (save-excursion
+                    (end-of-line)
+                    (when (and (not (eobp))
+                               (org-fold-folded-p))
+                      (forward-char)
+                      (org-invisible-p))))))
+    (my/org-debug-log "Checking if heading is folded at point %d: %s" (point) result)
+    result))
 
 (defvar my/org-fold-state-dir (expand-file-name "org-fold-states" (or (getenv "XDG_DATA_HOME") "~/.local/share"))
   "Directory to store org fold state files.")
 
 (defun my/org-save-fold-state ()
-  "Save the fold state of all headings in the current Org buffer to a file in my/org-fold-state-dir."
+  "Save the fold state of all headings in the current Org buffer."
+  (my/org-debug-log "Attempting to save fold state for buffer: %s" (buffer-name))
   (when (eq major-mode 'org-mode)
     (unless (file-exists-p my/org-fold-state-dir)
       (make-directory my/org-fold-state-dir t))
@@ -1956,6 +1790,7 @@ If not on a heading, returns nil."
            (file-hash (md5 (expand-file-name file-name)))
            (fold-state-file (f-join my/org-fold-state-dir (concat (f-base file-name) "-" file-hash ".foldstate")))
            (fold-state '()))
+      (my/org-debug-log "Saving fold state to file: %s" fold-state-file)
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward org-heading-regexp nil t)
@@ -1967,40 +1802,56 @@ If not on a heading, returns nil."
                         :heading (substring-no-properties heading)
                         :folded folded
                         :position begin)
-                  fold-state))))
+                  fold-state)
+            (my/org-debug-log "Recorded heading: Level %d, Folded %s, Position %d, Heading: %s"
+                              level folded begin (substring-no-properties heading)))))
       (with-temp-file fold-state-file
-        (prin1 (list :file file-name :state (nreverse fold-state)) (current-buffer))))))
+        (let ((print-length nil)
+              (print-level nil))
+          (prin1 (list :file file-name :state (nreverse fold-state)) (current-buffer))))
+      (my/org-debug-log "Fold state saved for %s with %d headings" (f-filename file-name) (length fold-state)))))
 
 (defun my/org-restore-fold-state ()
-  "Restore the fold state of all headings in the current Org buffer from a file in my/org-fold-state-dir."
+  "Restore the fold state of all headings in the current Org buffer."
+  (my/org-debug-log "Attempting to restore fold state for buffer: %s" (buffer-name))
   (when (eq major-mode 'org-mode)
     (let* ((file-name (buffer-file-name))
            (file-hash (md5 (expand-file-name file-name)))
            (fold-state-file (f-join my/org-fold-state-dir (concat (f-base file-name) "-" file-hash ".foldstate"))))
-      (when (file-exists-p fold-state-file)
-        (let* ((fold-data (with-temp-buffer
-                            (insert-file-contents fold-state-file)
-                            (read (current-buffer))))
-               (stored-file (plist-get fold-data :file))
-               (fold-state (plist-get fold-data :state)))
-          (when (string= stored-file file-name)
-            (save-excursion
-              (org-show-all)
-              (dolist (heading fold-state)
-                (goto-char (plist-get heading :position))
-                (when (org-at-heading-p)
-                  (if (plist-get heading :folded)
-                      (outline-hide-subtree)
-                    (outline-show-entry)
-                    (outline-show-children)))))))))))
+      (my/org-debug-log "Looking for fold state file: %s" fold-state-file)
+      (if (file-exists-p fold-state-file)
+          (let* ((fold-data (with-temp-buffer
+                              (insert-file-contents fold-state-file)
+                              (read (current-buffer))))
+                 (stored-file (plist-get fold-data :file))
+                 (fold-state (plist-get fold-data :state)))
+            (my/org-debug-log "Fold state file found. Stored file: %s, Current file: %s" stored-file file-name)
+            (if (string= stored-file file-name)
+                (save-excursion
+                  (org-show-all)
+                  (my/org-debug-log "Showing all headings before restoring state")
+                  (dolist (heading fold-state)
+                    (goto-char (plist-get heading :position))
+                    (when (org-at-heading-p)
+                      (let ((folded (plist-get heading :folded)))
+                        (if folded
+                            (outline-hide-subtree)
+                          (outline-show-entry)
+                          (outline-show-children))
+                        (my/org-debug-log "Restored heading at position %d: Folded %s"
+                                          (plist-get heading :position) folded)))))
+              (my/org-debug-log "Stored file name does not match current file name")))
+        (my/org-debug-log "Fold state file not found: %s" fold-state-file)))))
 
 (defun my/org-save-fold-state-after-cycle (&rest _)
   "Save fold state after cycling a heading."
+  (my/org-debug-log "Saving fold state after cycling")
   (when (eq major-mode 'org-mode)
     (my/org-save-fold-state)))
 
 (defun my/org-maybe-restore-fold-state ()
   "Restore fold state if the current buffer is an Org file."
+  (my/org-debug-log "Attempting to restore fold state for newly opened file: %s" (buffer-name))
   (when (and (eq major-mode 'org-mode) (buffer-file-name))
     (my/org-restore-fold-state)))
 
@@ -2011,7 +1862,11 @@ If not on a heading, returns nil."
 (add-hook 'find-file-hook #'my/org-maybe-restore-fold-state)
 
 ;; Optional: Save fold state when killing an Org buffer
-(add-hook 'kill-buffer-hook #'my/org-save-fold-state)
+(add-hook 'kill-buffer-hook
+          (lambda ()
+            (when (eq major-mode 'org-mode)
+              (my/org-debug-log "Saving fold state before killing buffer: %s" (buffer-name))
+              (my/org-save-fold-state))))
 
 
 ;; Prevent org-meta-return from folding images
@@ -2155,34 +2010,6 @@ Otherwise, create a same-level heading (M-RET)."
 
 (define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
 (define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
-
-
-;; Org Modern
-
-(use-package org-modern
-  :ensure t
-  :init
-  (with-eval-after-load 'org (global-org-modern-mode))
-
-  (setq org-modern-fold-stars
-      '(("*" . "*")            ; diamonds
-      ;; '(("◉" . "○")            ; diamonds
-        ("**" . "**")          ; flowers
-        ;; (" ◆" . " ◇")          ; flowers
-        ;; ("  ✦" . "  ✧")        ; stars
-        ("***" . "***")        ; stars
-        ;; ("   ❂" . "   ☸")      ; wheels
-        ("****" . "****")      ; wheels
-        ;; ("    ✤" . "    ❃"))))  ; more flowers/stars
-        ("*****" . "*****"))))  ; more flowers/stars
-
-
-;; Table of Contents
-
-(use-package toc-org
-  :ensure t
-  :commands toc-org-enable
-  :init (add-hook 'org-mode-hook 'toc-org-enable))
 
 
 ;; Custom functions

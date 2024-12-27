@@ -137,11 +137,45 @@ If not on a parenthesis, insert % or do nothing if in Meow mode."
 (setq meow--kbd-mark-paragraph "H-r")
 
 
+(defun my/select-line-for-up (&optional arg)
+  "Select ARG + 1 lines upward if ARG is provided, otherwise select just the current line.
+If ARG is provided, it selects the current line and ARG lines above it."
+  (interactive "P")
+  (if (null arg)
+      ;; No argument: select just the current line
+      (progn
+        (end-of-line)
+        (push-mark (point) nil t)
+        (beginning-of-line))
+    ;; With argument: select current line and ARG lines above (ARG + 1 total)
+    (let ((num-lines (1+ (prefix-numeric-value arg))))
+      (end-of-line)
+      (push-mark (point) nil t)
+      (beginning-of-line)
+      (forward-line (- (1- num-lines))))))
+
+(defun my/select-line-for-down (&optional arg)
+  "Select ARG + 1 lines downward if ARG is provided, otherwise select just the current line.
+If ARG is provided, it selects the current line and ARG lines below it."
+  (interactive "P")
+  (if (null arg)
+      ;; No argument: select just the current line
+      (progn
+        (beginning-of-line)
+        (push-mark (point) nil t)
+        (forward-line 1))
+    ;; With argument: select current line and ARG lines below (ARG + 1 total)
+    (let ((num-lines (1+ (prefix-numeric-value arg))))
+      (beginning-of-line)
+      (push-mark (point) nil t)
+      (forward-line num-lines))))
+
+
 (defun my-select-window-by-number (number)
   "Select the window specified by NUMBER.
 Numbered from top-left to bottom-right."
   (interactive "P")
-  (let* ((windows (window-list-1 nil nil t))
+  (let* ((windows (window-list-1 (frame-first-window) 'nomini t))
          (window-count (length windows))
          (index (if (numberp number)
                     (1- number)
@@ -783,14 +817,18 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
               (min (point-max)
                    (1+ (line-end-position)))))
        
-       ;; Handle j (down)
-       ((eq motion-cmd 'next-line)
-        (cons (line-beginning-position)
-              (save-excursion
-                (forward-line (1+ count))
-                (min (point-max)
-                     (line-beginning-position)))))
 
+       ;; Handle j (down) with special last-line handling
+       ((eq motion-cmd 'next-line)
+        (let ((start (line-beginning-position))
+              (end (save-excursion
+                     (forward-line (1+ count))
+                     (if (eobp)
+                         (point)  ; If at buffer end, use current point
+                       (min (point-max)
+                            (line-beginning-position))))))
+          (cons start end)))
+       
        ;; Handle M-{ (backward-paragraph)
        ((eq motion-cmd 'backward-paragraph)
         (cons (progn
@@ -1159,11 +1197,13 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
    '("G" . end-of-buffer)
-   '("h" . meow-left)
+   ;; '("h" . meow-left)
+   '("h" . backward-char)
    '("i" . meow-insert)
    '("j" . meow-next)
    '("k" . meow-prev)
-   '("l" . meow-right) ;; For some reason it works strangely in dired
+   ;; '("l" . meow-right) ;; For some reason it works strangely in dired
+   '("l" . forward-char)
    '("n" . my/search-next)
    '("N" . my/search-previous)
    '("v" . my/meow-line-up)
@@ -1288,8 +1328,10 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("u" . meow-undo)
    '("U" . meow-undo-in-selection)
    ;; '("v" . meow-visit)
-   '("v" . my/meow-line-up)
-   '("V" . my/meow-line-down)
+   ;; '("v" . my/meow-line-up)
+   '("v" . my/select-line-for-up)
+   ;; '("V" . my/meow-line-down)
+   '("V" . my/select-line-for-down)
    '("w" . meow-mark-word)
    '("W" . meow-mark-symbol)
    ;; '("x" . meow-line)
@@ -1303,7 +1345,8 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
-   '("C-r" . undo-tree-redo)
+   ;; '("C-r" . undo-tree-redo)
+   '("C-r" . undo-redo)
    ;; '("C-M-m" . toggle-messages-buffer) ;; It's transaltes to M-RET
    '("M-y" . toggle-flymake-diagnostics)
    ;; '("'" . repeat)
