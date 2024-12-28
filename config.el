@@ -1775,15 +1775,15 @@ If an eshell buffer for the directory already exists, switch to it."
                       (forward-char)
                       (org-invisible-p))))))
     (my/org-debug-log "Checking if heading is folded at point %d: %s" (point) result)
-    result))
+    (if result t nil)))  ; Ensure boolean return value
 
 (defvar my/org-fold-state-dir (expand-file-name "org-fold-states" (or (getenv "XDG_DATA_HOME") "~/.local/share"))
   "Directory to store org fold state files.")
 
 (defun my/org-save-fold-state ()
   "Save the fold state of all headings in the current Org buffer."
-  (my/org-debug-log "Attempting to save fold state for buffer: %s" (buffer-name))
-  (when (eq major-mode 'org-mode)
+  (when (and (eq major-mode 'org-mode) (buffer-file-name))
+    (my/org-debug-log "Starting fold state save for buffer: %s" (buffer-name))
     (unless (file-exists-p my/org-fold-state-dir)
       (make-directory my/org-fold-state-dir t))
     (let* ((file-name (buffer-file-name))
@@ -1809,12 +1809,13 @@ If an eshell buffer for the directory already exists, switch to it."
         (let ((print-length nil)
               (print-level nil))
           (prin1 (list :file file-name :state (nreverse fold-state)) (current-buffer))))
-      (my/org-debug-log "Fold state saved for %s with %d headings" (f-filename file-name) (length fold-state)))))
+      (my/org-debug-log "Fold state saved for %s with %d headings" (f-filename file-name) (length fold-state))
+      (my/org-debug-log "Completed fold state save for %s" (buffer-name)))))
 
 (defun my/org-restore-fold-state ()
   "Restore the fold state of all headings in the current Org buffer."
-  (my/org-debug-log "Attempting to restore fold state for buffer: %s" (buffer-name))
-  (when (eq major-mode 'org-mode)
+  (when (and (eq major-mode 'org-mode) (buffer-file-name))
+    (my/org-debug-log "Starting fold state restore for buffer: %s" (buffer-name))
     (let* ((file-name (buffer-file-name))
            (file-hash (md5 (expand-file-name file-name)))
            (fold-state-file (f-join my/org-fold-state-dir (concat (f-base file-name) "-" file-hash ".foldstate"))))
@@ -1841,18 +1842,19 @@ If an eshell buffer for the directory already exists, switch to it."
                         (my/org-debug-log "Restored heading at position %d: Folded %s"
                                           (plist-get heading :position) folded)))))
               (my/org-debug-log "Stored file name does not match current file name")))
-        (my/org-debug-log "Fold state file not found: %s" fold-state-file)))))
+        (my/org-debug-log "Fold state file not found: %s" fold-state-file)))
+    (my/org-debug-log "Completed fold state restore for %s" (buffer-name))))
 
 (defun my/org-save-fold-state-after-cycle (&rest _)
   "Save fold state after cycling a heading."
-  (my/org-debug-log "Saving fold state after cycling")
-  (when (eq major-mode 'org-mode)
+  (when (and (eq major-mode 'org-mode) (buffer-file-name))
+    (my/org-debug-log "Saving fold state after cycling in buffer: %s" (buffer-name))
     (my/org-save-fold-state)))
 
 (defun my/org-maybe-restore-fold-state ()
   "Restore fold state if the current buffer is an Org file."
-  (my/org-debug-log "Attempting to restore fold state for newly opened file: %s" (buffer-name))
   (when (and (eq major-mode 'org-mode) (buffer-file-name))
+    (my/org-debug-log "Attempting to restore fold state for newly opened file: %s" (buffer-name))
     (my/org-restore-fold-state)))
 
 ;; Hook to save fold state after cycling
@@ -1864,7 +1866,7 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Optional: Save fold state when killing an Org buffer
 (add-hook 'kill-buffer-hook
           (lambda ()
-            (when (eq major-mode 'org-mode)
+            (when (and (eq major-mode 'org-mode) (buffer-file-name))
               (my/org-debug-log "Saving fold state before killing buffer: %s" (buffer-name))
               (my/org-save-fold-state))))
 
@@ -2013,6 +2015,7 @@ Otherwise, create a same-level heading (M-RET)."
 
 
 ;; Custom functions
+
 
 (defun my-org-outline ()
   "Jump to an org heading using completion, showing headings in order from top to bottom."

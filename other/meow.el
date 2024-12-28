@@ -25,6 +25,18 @@
       (remove 'org-mode meow-expand-exclude-mode-list))
 
 
+(defun my/yank-with-selection ()
+  "Yank text, replacing the active region if one exists."
+  (interactive)
+  (if (use-region-p)
+      (let ((region-beginning (region-beginning))
+            (region-end (region-end)))
+        (delete-region region-beginning region-end)
+        (goto-char region-beginning)
+        (yank))
+    (yank)))
+
+
 (defun my-match-paren-with-selection (arg)
   "Go to the matching parenthesis and select the enclosed text, including the delimiters.
 If not on a parenthesis, insert % or do nothing if in Meow mode."
@@ -776,8 +788,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
 (defvar my/motion-alist
   '((?j . next-line)
     (?k . previous-line)
-    (?g . (((?g . beginning-of-buffer))))
-    (?G . end-of-buffer)
+    ;; (?\M-< . (((?g . beginning-of-buffer))))
+    (?\M-< . beginning-of-buffer)
+    (?\M-> . end-of-buffer)
     (?\M-{ . backward-paragraph)
     (?\M-} . forward-paragraph)
     (?\C-\M-a . beginning-of-defun)
@@ -1194,9 +1207,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g ;" . goto-last-change)
    '("g v" . my/restore-selection)
    '("g c" . my/meow-smart-comment)
-   '("g g" . beginning-of-buffer)
+   ;; '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
-   '("G" . end-of-buffer)
+   ;; '("G" . end-of-buffer)
    ;; '("h" . meow-left)
    '("h" . backward-char)
    '("i" . meow-insert)
@@ -1213,6 +1226,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("y" . my/meow-smart-save)
    '("'" . meow-find-and-select-inner)
    '("\"" . meow-find-and-select-outer)
+   '("C-y" . my/yank-with-selection)
    '("<escape>" . meow-cancel-selection))
    ;; '("<escape>" . ignore))
   (meow-leader-define-key
@@ -1289,9 +1303,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g v" . my/restore-selection)
    '("g c" . my/meow-smart-comment)
    '("g w" . my/meow-smart-fill)
-   '("g g" . beginning-of-buffer)
+   ;; '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
-   '("G" . end-of-buffer)
+   ;; '("G" . end-of-buffer)
    '("S s" . surround-region-with-symbol)
    '("S c" . change-surrounding-symbol)
    '("S d" . delete-surrounding-symbol)
@@ -1357,6 +1371,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("M-v" . scroll-up-and-recenter)
    '("C-v" . scroll-down-and-recenter)
    '("C-M-y" . save-and-paste)
+   '("C-y" . my/yank-with-selection)
    '("=" . my/meow-smart-indent)
    ;; '("C-d" . scroll-half-up-and-recenter)
    ;; '("C-u" . scroll-half-down-and-recenter)
