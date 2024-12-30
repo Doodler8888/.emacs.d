@@ -457,6 +457,27 @@
 (use-package goto-chg)
 
 
+;; Daemons
+(use-package daemons
+  :ensure t
+  :config
+  (defun my/show-daemon-bindings ()
+    "Show available keybindings for daemons mode."
+    (interactive)
+    (message "Daemons mode bindings:
+RET - Show status
+s   - Start service
+S   - Stop service
+r   - Reload service
+R   - Restart service
+e   - Enable service
+d   - Disable service
+g   - Refresh list
+?   - Show this help"))
+  
+  (define-key daemons-mode-map (kbd "?") #'my/show-daemon-bindings))
+
+
 ;; Avy
 
 (use-package avy
@@ -974,7 +995,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; (setq icomplete-compute-delay 0)
   ;; (setq icomplete-show-matches-on-no-input t)
   :config
-  (setq vertico-preselect 'first)
+  ;; (setq vertico-preselect 'first)
   (define-key vertico-map (kbd "M-RET") #'vertico-exit-input))
 
 
@@ -1401,8 +1422,12 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 ;;     (error nil)))
 
 ;; (add-hook 'kill-emacs-hook #'exit-docker-layout-if-active)
-(add-hook 'kill-emacs-hook 'clean-buffer-list)
+;; (add-hook 'kill-emacs-hook 'clean-buffer-list)
 (add-hook 'kill-emacs-hook 'save-current-desktop-session)
+
+(advice-add 'save-current-desktop-session :before
+            (lambda (&rest _)
+              (save-some-buffers t)))
 
 
 ;; ;; Buffers
@@ -2016,6 +2041,15 @@ Otherwise, create a same-level heading (M-RET)."
 
 ;; Custom functions
 
+(defun my/copy-kill-ring-to-clipboard ()
+  "Show kill ring entries and copy selected one to system clipboard."
+  (interactive)
+  (let* ((candidates (cl-remove-duplicates kill-ring :test #'string=))
+         (selected (completing-read "Copy to clipboard: " candidates)))
+    (kill-new selected)
+    (set-clipboard-text selected)
+    (message "Copied to clipboard: %s" (truncate-string-to-width selected 60 nil
+                                                                 nil "..."))))
 
 (defun my-org-outline ()
   "Jump to an org heading using completion, showing headings in order from top to bottom."
@@ -2402,7 +2436,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
 (defun trash ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.local/share/Trash"))
+  (find-file "~/.local/share/Trash/files"))
 
 (defun strash ()
   "Open a specific file."
@@ -2655,3 +2689,34 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
+
+;; (cond
+;;  ;; Wayland
+;;  ((string-equal "wayland" (getenv "XDG_SESSION_TYPE"))
+;;   (setq wl-copy-process nil)
+;;   ;; Add any other Wayland-specific settings here
+;;   (message "Configuring for Wayland"))
+
+;;  ;; X11
+;;  ((or (string-equal "x11" (getenv "XDG_SESSION_TYPE"))
+;;       (string-equal "x11" (getenv "XDG_SESSION_DESKTOP")))
+;;   (setq x-select-enable-clipboard t
+;;         x-select-enable-primary t
+;;         select-enable-clipboard t
+;;         select-enable-primary t)
+;;   ;; Add any other X11-specific settings here
+;;   (message "Configuring for X11"))
+
+;;  ;; Default case
+;;  (t
+;;   (message "Unknown window system, using default clipboard settings")))
+
+;; ;; Common settings for both
+;; (setq select-enable-clipboard t
+;;       select-enable-primary t)
+
+;; ;; Enable xclip-mode only for non-GUI Emacs on X11
+;; (when (and (not (display-graphic-p))
+;;            (string-equal "x11" (getenv "XDG_SESSION_TYPE")))
+;;   (xclip-mode 1))

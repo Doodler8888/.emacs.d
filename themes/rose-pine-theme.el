@@ -238,6 +238,7 @@
     
     ;; Vertico
     `(vertico-current ((,class (:background ,rose-pine-subtle))))
+    ;; `(vertico-current ((,class (:box (:line-width -1 :color ,rose-pine-rose)))))
 
     ;; Consult
     `(consult-highlight-mark ((,class (:foreground unspecified :background ,rose-pine-subtle))))

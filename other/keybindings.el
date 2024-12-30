@@ -12,12 +12,15 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("ff" . project-find-file-all)
     ("fd" . project-find-dir)
     ("fb" . ido-switch-buffer)
+    ("fy" my/copy-kill-ring-to-clipboard)
     ;; ("ff" . ivy-fzf-project)
     ;; ("fh" . ivy-fzf-home)
     ;; ("fc" . ivy-fzf-current-directory)
     ;; ("fr" . ivy-fzf-root)
     ("fr" . consult-recent-file)
     ("fs" . consult-ripgrep)
+
+    ("fe" . dired-jump)
 
     ("ss" . save-current-desktop-session)
     ("sd" . delete-desktop-session)
@@ -43,6 +46,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ;; ("du" . daemons-status)
     ;; ("dr" . daemons-restart)
 
+    ("dd" . daemons)
+    
     ("w"  . hydra-window-size/body)
 
     ("pt" . popper-toggle-type)
@@ -66,8 +71,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("ue" . my-tramp-cleanup)
 
     ("gm" . pop-global-mark) 
-
-    ("fe" . dired-jump)
 
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
@@ -105,49 +108,30 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
 (global-set-key (kbd "C-s C-o") 'consult-outline)
 
-;; (define-prefix-command 'my-window-map)
-;; (global-set-key (kbd "C-w") 'my-window-map)
 
-;; (global-set-key (kbd "C-w C-l") 'windmove-right)
-;; (global-set-key (kbd "C-w C-h") 'windmove-left)
-;; (global-set-key (kbd "C-w C-k") 'windmove-up)
-;; (global-set-key (kbd "C-w C-j") 'windmove-down)
+(defun my/setup-window-keys (mode-map)
+  "Set up window management keybindings for the given MODE-MAP."
+  (define-prefix-command 'my-window-map)
+  (define-key mode-map (kbd "C-w") 'my-window-map)
 
-;; (global-set-key (kbd "C-w C-s") 'split-window-below)
-;; (global-set-key (kbd "C-w C-v") 'split-window-right)
-;; (global-set-key (kbd "C-w C-c") 'delete-window)
-;; (global-set-key (kbd "C-w c") 'delete-window)
+  (define-key mode-map (kbd "C-w C-l") 'windmove-right)
+  (define-key mode-map (kbd "C-w C-h") 'windmove-left)
+  (define-key mode-map (kbd "C-w C-k") 'windmove-up)
+  (define-key mode-map (kbd "C-w C-j") 'windmove-down)
 
+  (define-key mode-map (kbd "C-w C-s") 'split-window-below)
+  (define-key mode-map (kbd "C-w C-v") 'split-window-right)
+  (define-key mode-map (kbd "C-w C-c") 'delete-window)
+  (define-key mode-map (kbd "C-w c") 'delete-window)
+  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
 (with-eval-after-load 'magit
-  (define-prefix-command 'my-window-map)
-  (define-key magit-mode-map (kbd "C-w") 'my-window-map)
-
-  (define-key magit-mode-map (kbd "C-w C-l") 'windmove-right)
-  (define-key magit-mode-map (kbd "C-w C-h") 'windmove-left)
-  (define-key magit-mode-map (kbd "C-w C-k") 'windmove-up)
-  (define-key magit-mode-map (kbd "C-w C-j") 'windmove-down)
-
-  (define-key magit-mode-map (kbd "C-w C-s") 'split-window-below)
-  (define-key magit-mode-map (kbd "C-w C-v") 'split-window-right)
-  (define-key magit-mode-map (kbd "C-w C-c") 'delete-window)
-  (define-key magit-mode-map (kbd "C-w c") 'delete-window)
-  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
-
+  (my/setup-window-keys magit-mode-map))
 (with-eval-after-load 'dired
-  (define-prefix-command 'my-window-map)
-  (define-key dired-mode-map (kbd "C-w") 'my-window-map)
+  (my/setup-window-keys dired-mode-map))
+(with-eval-after-load 'daemons
+  (my/setup-window-keys daemons-mode-map))
 
-  (define-key dired-mode-map (kbd "C-w C-l") 'windmove-right)
-  (define-key dired-mode-map (kbd "C-w C-h") 'windmove-left)
-  (define-key dired-mode-map (kbd "C-w C-k") 'windmove-up)
-  (define-key dired-mode-map (kbd "C-w C-j") 'windmove-down)
-
-  (define-key dired-mode-map (kbd "C-w C-s") 'split-window-below)
-  (define-key dired-mode-map (kbd "C-w C-v") 'split-window-right)
-  (define-key dired-mode-map (kbd "C-w C-c") 'delete-window)
-  (define-key dired-mode-map (kbd "C-w c") 'delete-window)
-  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
 ;; Without the condition i might get an error about an undefined binding
 (with-eval-after-load 'eshell

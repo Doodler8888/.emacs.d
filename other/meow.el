@@ -683,7 +683,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
 (defun my/copy-to-end-of-line ()
   "Copy text from the current cursor position to the end of the line."
   (interactive)
-  (kill-ring-save (point) (line-end-position)))
+  (let ((start (point))
+        (end (line-end-position)))
+    (kill-ring-save start end)))
 
 (defun copy-whole-line ()
   "Copy the current line to the kill ring."
@@ -788,9 +790,8 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
 (defvar my/motion-alist
   '((?j . next-line)
     (?k . previous-line)
-    ;; (?\M-< . (((?g . beginning-of-buffer))))
-    (?\M-< . beginning-of-buffer)
-    (?\M-> . end-of-buffer)
+    (?g . (((?g . beginning-of-buffer))))
+    (?G . end-of-buffer)
     (?\M-{ . backward-paragraph)
     (?\M-} . forward-paragraph)
     (?\C-\M-a . beginning-of-defun)
@@ -1207,9 +1208,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g ;" . goto-last-change)
    '("g v" . my/restore-selection)
    '("g c" . my/meow-smart-comment)
-   ;; '("g g" . beginning-of-buffer)
+   '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
-   ;; '("G" . end-of-buffer)
+   '("G" . end-of-buffer)
    ;; '("h" . meow-left)
    '("h" . backward-char)
    '("i" . meow-insert)
@@ -1303,9 +1304,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g v" . my/restore-selection)
    '("g c" . my/meow-smart-comment)
    '("g w" . my/meow-smart-fill)
-   ;; '("g g" . beginning-of-buffer)
+   '("g g" . beginning-of-buffer)
    '("g z" . zoxide-travel)
-   ;; '("G" . end-of-buffer)
+   '("G" . end-of-buffer)
    '("S s" . surround-region-with-symbol)
    '("S c" . change-surrounding-symbol)
    '("S d" . delete-surrounding-symbol)
@@ -1406,7 +1407,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
                   (magit-stash-mode . magit)
                   (magit-refs-mode . magit)
                   (dired-mode . magit)
-                  ;; Docker modes
+                  (daemons-mode . magit)
                   (docker-container-mode . motion)
                   (docker-image-mode . motion)
                   (docker-network-mode . motion)
@@ -1429,11 +1430,37 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (define-key magit-mode-map (kbd "k") 'magit-section-backward)
   (define-key magit-mode-map (kbd "SPC") 'my-space-as-ctrl-c))
 
+(with-eval-after-load 'daemons
+  ;; (define-key daemons-mode-map (kbd "s") 'daemons-start-at-point)
+  (define-key daemons-mode-map (kbd "j") 'next-line)
+  (define-key daemons-mode-map (kbd "k") 'previous-line)
+  (define-key daemons-mode-map (kbd "?") 'my/show-daemon-bindings))
+
 ;; Makes functions like meow-next-word to ignore whitespaces
 (setq meow-next-thing-include-syntax
       '((word "[:space:]" "[:space:]")
         (symbol "[:space:]" "[:space:]")))
 
+;; This code disables triggering C-x on pressing 'space x'
+(setq meow-keypad-describe-delay 3)
+
+(defun my/meow-always-c-c-dispatch ()
+  "Make keypad always dispatch to C-c."
+  (setq meow--keypad-this "C-c")
+  (meow--keypad-start))
+
+(setq meow-keypad-start-keys nil)  ; Clear default special keys
+(setq meow-keypad-leader-dispatch "C-c")  ; Set leader to C-c
+(setq meow-keypad-self-insert-undefined nil)  ; Don't fall back to undefined
+
+(meow-define-state keypad
+  "KEYPAD state"
+  :keymap (let ((keymap (make-sparse-keymap)))
+            (suppress-keymap keymap t)
+            (define-key keymap [remap self-insert-command] #'my/meow-always-c-c-dispatch)
+            keymap))
+
 
 (meow-setup)
 (meow-global-mode 1)
+

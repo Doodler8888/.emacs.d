@@ -90,5 +90,5 @@ If a file doesn't end with '.bak', add it; if it does, remove it."
 
 (with-eval-after-load 'dired
   (define-key dired-mode-map (kbd "S") 'my/dired-sudo-symlink)
-  (define-key dired-mode-map (kbd "K") 'my/dired-toggle-bak-extension)
+  (define-key dired-mode-map (kbd "b") 'my/dired-toggle-bak-extension)
   (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))

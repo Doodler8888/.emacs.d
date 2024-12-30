@@ -41,14 +41,14 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(package-selected-packages
-   '(avy buffer-terminator cape clojure-ts-mode commander corfu docker
-         dockerfile-mode eat emacs-crontab-mode embark-consult envrc
+   '(avy buffer-terminator cape clojure-ts-mode commander corfu daemons daemons.el
+         docker dockerfile-mode eat emacs-crontab-mode embark-consult envrc
          eshell-syntax-highlighting exec-path-from-shell fish-completion
          flymake-ansible-lint flymake-hadolint flymake-shellcheck go-mode
          goto-chg haskell-mode hydra lua-mode magit marginalia meow
-         multiple-cursors nix-mode orderless org-download org-drill raku-mode
-         systemd tempel-collection terraform-mode toc-org transpose-frame
-         treesit-auto vertico wgrep yaml-mode zoxide))
+         multiple-cursors nix-mode orderless org-download org-drill prodigy
+         raku-mode systemd tempel-collection terraform-mode toc-org
+         transpose-frame treesit-auto vertico wgrep yaml-mode zoxide))
  '(package-vc-selected-packages
    '((emacs-crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
      (tab-bookmark :url "https://github.com/minad/tab-bookmark")
