@@ -984,8 +984,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :ensure t
   :bind (:map vertico-map
               ("C-<backspace>" . vertico-directory-up))
-  ;; :custom
-  ;; (vertico-scroll-margin 0) ;; Different scroll margin
+  ;; :vertico
+  ;; (custom-scroll-margin 0) ;; Different scroll margin
   ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
   ;; It clears the current path in the minibuffer if it's overshadowed
   ;; :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
@@ -1016,14 +1016,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         (setq isearch-forward t)
         (setq my/last-search-type 'consult)))))
 
-(defun my/get-last-search-pattern ()
-  "Get the last search pattern based on the last search type."
-  (cond
-   ((eq my/last-search-type 'consult)
-    (car regexp-search-ring))
-   ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
-    (if isearch-regexp isearch-string (regexp-quote isearch-string)))
-   (t "")))
+;; (defun my/get-last-search-pattern ()
+;;   "Get the last search pattern based on the last search type."
+;;   (cond
+;;    ((eq my/last-search-type 'consult)
+;;     (car regexp-search-ring))
+;;    ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
+;;     (if isearch-regexp isearch-string (regexp-quote isearch-string)))
+;;    (t "")))
 
 (defun my/search-next ()
   "Search forward using last search pattern."
@@ -1765,6 +1765,19 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq org-empty-line-terminates-plain-lists nil)
   )
 
+(define-key org-mode-map (kbd "C-x p") #'yank-media)
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (org-display-inline-images)))
+
+(setq org-yank-image-save-method "~/Pictures/org-images/")
+(make-directory "~/Pictures/org-images/" t)
+
+
+(require 'f)
+(require 'subr-x)
+
 (defun my/org-fold-all-headings ()
   "Fold all headings in the current Org buffer."
   (interactive)
@@ -1775,10 +1788,6 @@ If an eshell buffer for the directory already exists, switch to it."
       (while (not (eobp))
         (outline-hide-subtree)
         (outline-next-heading)))))
-
-
-(require 'f)
-(require 'subr-x)
 
 (defvar my/org-debug-log-file "/home/wurfkreuz/org-fold-debug.log"
   "File to store debug logs for org fold state operations.")
@@ -1962,20 +1971,6 @@ Otherwise, create a same-level heading (M-RET)."
 (define-key org-mode-map (kbd "M-RET") #'my/org-smart-heading)
 
 
-;; Org download
-
-(use-package org-download
-  :ensure t
-  :init
-  ;; (setq org-download-image-dir "/home/wurfkreuz/.local/share/images")
-  (setq org-download-image-dir "/home/wurfkreuz/.secret_dotfiles/org/images/")
-  :config
-  (add-hook 'org-mode-hook 'org-download-enable)
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (org-display-inline-images))))
-
-(define-key org-mode-map (kbd "C-x p") #'org-download-clipboard)
 
 ;; Org-drill
 
@@ -2720,3 +2715,41 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
 ;; (when (and (not (display-graphic-p))
 ;;            (string-equal "x11" (getenv "XDG_SESSION_TYPE")))
 ;;   (xclip-mode 1))
+
+(defun my-occur-like ()
+  "Prompt for non-empty lines in the current buffer using `completing-read'."
+  (interactive)
+  (let* ((lines (split-string (buffer-string) "\n"))
+         (numbered-lines (cl-loop for line in lines
+                                for n from 1
+                                unless (string-match-p "^[[:space:]]*$" line)
+                                collect (format "%4d: %s" n line)))
+         (choice (completing-read "Select line: " numbered-lines)))
+    (message "Choice: %S" choice)  ; Debug print
+    (let ((match (string-match "^[[:space:]]*\\([0-9]+\\):" choice)))
+      (if (not match)
+          (message "No match found for line number pattern")
+        ;; Store the search pattern before moving to the line
+        (let* ((line-num (match-string 1 choice))
+               (search-string (substring choice (match-end 0))))
+          ;; (message "Line num: %S, Search string: %S" line-num search-string)  ; Debug print
+          (when search-string
+            (push (propertize (string-trim search-string)
+                             'isearch-case-fold-search t)
+                  regexp-search-ring)
+            (setq my/last-search-type 'occur))
+          ;; Original line navigation behavior
+          (goto-char (point-min))
+          (forward-line (1- (string-to-number line-num))))))))
+
+;; Add occur to get-last-search-pattern
+(defun my/get-last-search-pattern ()
+  "Get the last search pattern based on the last search type."
+  (cond
+   ((eq my/last-search-type 'occur)
+    (car regexp-search-ring))
+   ((eq my/last-search-type 'consult)
+    (car regexp-search-ring))
+   ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
+    (if isearch-regexp isearch-string (regexp-quote isearch-string)))
+   (t "")))
