@@ -2036,6 +2036,45 @@ Otherwise, create a same-level heading (M-RET)."
 
 ;; Custom functions
 
+(defun my-occur-like ()
+  "Prompt for non-empty lines in the current buffer using `completing-read'."
+  (interactive)
+  (let* ((lines (split-string (buffer-string) "\n"))
+         (numbered-lines (cl-loop for line in lines
+                                for n from 1
+                                unless (string-match-p "^[[:space:]]*$" line)
+                                collect (format "%4d: %s" n line)))
+         (choice (completing-read "Select line: " numbered-lines)))
+    (message "Choice: %S" choice)  ; Debug print
+    (let ((match (string-match "^[[:space:]]*\\([0-9]+\\):" choice)))
+      (if (not match)
+          (message "No match found for line number pattern")
+        ;; Store the search pattern before moving to the line
+        (let* ((line-num (match-string 1 choice))
+               (search-string (substring choice (match-end 0))))
+          ;; (message "Line num: %S, Search string: %S" line-num search-string)  ; Debug print
+          (when search-string
+            (push (propertize (string-trim search-string)
+                             'isearch-case-fold-search t)
+                  regexp-search-ring)
+            (setq my/last-search-type 'occur))
+          ;; Original line navigation behavior
+          (goto-char (point-min))
+          (forward-line (1- (string-to-number line-num))))))))
+
+;; Add occur to get-last-search-pattern
+(defun my/get-last-search-pattern ()
+  "Get the last search pattern based on the last search type."
+  (cond
+   ((eq my/last-search-type 'occur)
+    (car regexp-search-ring))
+   ((eq my/last-search-type 'consult)
+    (car regexp-search-ring))
+   ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
+    (if isearch-regexp isearch-string (regexp-quote isearch-string)))
+   (t "")))
+
+
 (defun my/copy-kill-ring-to-clipboard ()
   "Show kill ring entries and copy selected one to system clipboard."
   (interactive)
@@ -2716,40 +2755,3 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
 ;;            (string-equal "x11" (getenv "XDG_SESSION_TYPE")))
 ;;   (xclip-mode 1))
 
-(defun my-occur-like ()
-  "Prompt for non-empty lines in the current buffer using `completing-read'."
-  (interactive)
-  (let* ((lines (split-string (buffer-string) "\n"))
-         (numbered-lines (cl-loop for line in lines
-                                for n from 1
-                                unless (string-match-p "^[[:space:]]*$" line)
-                                collect (format "%4d: %s" n line)))
-         (choice (completing-read "Select line: " numbered-lines)))
-    (message "Choice: %S" choice)  ; Debug print
-    (let ((match (string-match "^[[:space:]]*\\([0-9]+\\):" choice)))
-      (if (not match)
-          (message "No match found for line number pattern")
-        ;; Store the search pattern before moving to the line
-        (let* ((line-num (match-string 1 choice))
-               (search-string (substring choice (match-end 0))))
-          ;; (message "Line num: %S, Search string: %S" line-num search-string)  ; Debug print
-          (when search-string
-            (push (propertize (string-trim search-string)
-                             'isearch-case-fold-search t)
-                  regexp-search-ring)
-            (setq my/last-search-type 'occur))
-          ;; Original line navigation behavior
-          (goto-char (point-min))
-          (forward-line (1- (string-to-number line-num))))))))
-
-;; Add occur to get-last-search-pattern
-(defun my/get-last-search-pattern ()
-  "Get the last search pattern based on the last search type."
-  (cond
-   ((eq my/last-search-type 'occur)
-    (car regexp-search-ring))
-   ((eq my/last-search-type 'consult)
-    (car regexp-search-ring))
-   ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
-    (if isearch-regexp isearch-string (regexp-quote isearch-string)))
-   (t "")))
