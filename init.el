@@ -40,7 +40,14 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(avy buffer-terminator cape clojure-ts-mode corfu daemons docker
+         dockerfile-mode eat embark-consult envrc eshell-syntax-highlighting
+         exec-path-from-shell f fish-completion flymake-ansible-lint
+         flymake-hadolint flymake-shellcheck go-mode goto-chg haskell-mode hydra
+         lua-mode magit marginalia meow multiple-cursors nix-mode orderless
+         org-appear org-drill raku-mode systemd tempel-collection terraform-mode
+         transpose-frame treesit-auto vertico wgrep yaml-mode zoxide))
  '(package-vc-selected-packages
    '((eat :url "https://github.com/kephale/emacs-eat")
      (zoxide :url "https://gitlab.com/Vonfry/zoxide.el")

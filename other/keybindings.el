@@ -29,8 +29,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("k"  . kill-buffer)
     ("w"  . write-file)
-    ("bc" . ido-kill-buffer)
-    ("bx" . kill-current-buffer)
+    ("bb" . ibuffer)
+    ("bx" . my/kill-current-buffer)
 
     ("tn" . tab-bar-new-tab)
     ("tx" . tab-bar-close-tab)
@@ -93,7 +93,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (global-unset-key (kbd "C-s"))
 (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
-(global-set-key (kbd "C-s C-s") 'my-occur-like)
+;; (global-set-key (kbd "C-s C-s") 'my-occur-like)
+(global-set-key (kbd "C-s C-s") 'consult-line)
 (global-set-key (kbd "C-s C-c") 'consult-line-visible-region)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)

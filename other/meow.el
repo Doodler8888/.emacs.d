@@ -680,16 +680,16 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (interactive)
   (kill-region (point) (line-end-position)))
 
+;; (defun my/meow-delete-to-end-of-line ()
+;;   "Delete from the current cursor position to the end of the line."
+;;   (interactive)
+;;   (delete-region (point) (line-end-position)))
+
 (defun my/meow-change-to-end-of-line ()
   "Delete from the current cursor position to the end of the line, add to kill ring, and enter insert mode."
   (interactive)
   (kill-region (point) (line-end-position))
   (meow-insert))
-
-(defun my/meow-delete-to-end-of-line ()
-  "Delete from the current cursor position to the end of the line."
-  (interactive)
-  (delete-region (point) (line-end-position)))
 
 (defun my/meow-line-up (&optional arg)
   "Select lines upward. If ARG is provided, select ARG+1 lines up. Otherwise, select one line up."

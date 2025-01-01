@@ -129,6 +129,21 @@
 (auto-fill-mode 1)
 (setq-default fill-column 80)
 (add-hook 'text-mode-hook 'auto-fill-mode)
+(define-minor-mode aggressive-fill-mode
+  "Minor mode for aggressive line filling."
+  :lighter " AggrFill"
+  (if aggressive-fill-mode
+      (add-hook 'after-change-functions #'my/aggressive-fill nil t)
+    (remove-hook 'after-change-functions #'my/aggressive-fill t)))
+(defun my/aggressive-fill (_begin _end _len)
+  "Fill paragraph continuously while typing."
+  (when (> (current-column) fill-column)
+    (do-auto-fill)))
+(define-globalized-minor-mode global-aggressive-fill-mode
+  aggressive-fill-mode
+  (lambda () (aggressive-fill-mode 1)))
+(add-hook 'text-mode-hook 'aggressive-fill-mode)
+
 
 (setq python-shell-interpreter "/usr/bin/python3")
 
@@ -999,72 +1014,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (define-key vertico-map (kbd "M-RET") #'vertico-exit-input))
 
 
-(defvar my/last-search-type nil
-  "Stores the type of the last search performed.")
-
-(defun my/consult-line-with-evil ()
-  "Run consult-line and set up evil search pattern."
-  (interactive)
-  (let ((selected (consult-line)))
-    (when-let* ((search-string (car consult--line-history)))
-      (message "Search string: %S" search-string)
-      (let ((search-string-prop 
-             (propertize search-string 
-                         'isearch-case-fold-search t)))
-        (push search-string-prop regexp-search-ring)
-        ;; Set search direction to forward
-        (setq isearch-forward t)
-        (setq my/last-search-type 'consult)))))
-
-;; (defun my/get-last-search-pattern ()
-;;   "Get the last search pattern based on the last search type."
-;;   (cond
-;;    ((eq my/last-search-type 'consult)
-;;     (car regexp-search-ring))
-;;    ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
-;;     (if isearch-regexp isearch-string (regexp-quote isearch-string)))
-;;    (t "")))
-
-(defun my/search-next ()
-  "Search forward using last search pattern."
-  (interactive)
-  (when-let* ((pattern (my/get-last-search-pattern)))
-    (let ((case-fold-search t)
-          (current-pos (point)))
-      ;; Move past current match if we're at one
-      (when (looking-at pattern)
-        (goto-char (match-end 0)))
-      (if (and (re-search-forward pattern nil t)
-               (match-beginning 0))
-          (let ((match-pos (match-beginning 0)))
-            (goto-char match-pos)
-            (message "Match found: %s" (match-string 0))
-            t)
-        (message "No more matches")
-        nil))))
-
-(defun my/search-previous ()
-  "Search backward using last search pattern."
-  (interactive)
-  (when-let* ((pattern (my/get-last-search-pattern)))
-    (let ((case-fold-search t))
-      (if (re-search-backward pattern nil t)
-          (let ((match-pos (match-beginning 0)))
-            (goto-char match-pos)
-            (message "Match found: %s" (match-string 0))
-            t)
-        (message "No more matches")
-        nil))))
-
-(advice-add 'isearch-forward :after
-            (lambda (&rest _)
-              (setq my/last-search-type 'isearch)))
-
-(advice-add 'isearch-backward :after
-            (lambda (&rest _)
-              (setq my/last-search-type 'isearch)))
-
-
 (use-package marginalia
   :ensure t
   :init
@@ -1075,6 +1024,35 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; :config
   ;; (with-eval-after-load 'org
   ;;   (define-key org-mode-map (kbd "C-s C-o") 'consult-imenu)))
+
+;; Variable to store the last search string
+(defvar my/last-search-pattern nil
+  "Stores the last search pattern from consult-line.")
+
+;; Advice to store the search string
+(defun my/store-search-string (&rest args)
+  "Store the search string used in consult-line."
+  (setq my/last-search-pattern (car consult--line-history)))
+
+(advice-add 'consult-line :after #'my/store-search-string)
+
+(defun my/search-next ()
+  "Search forward using last search pattern."
+  (interactive)
+  (when my/last-search-pattern
+    (let ((case-fold-search t))
+      (if (re-search-forward my/last-search-pattern nil t)
+          (message "Match found: %s" (match-string 0))
+        (message "No more matches")))))
+
+(defun my/search-previous ()
+  "Search backward using last search pattern."
+  (interactive)
+  (when my/last-search-pattern
+    (let ((case-fold-search t))
+      (if (re-search-backward my/last-search-pattern nil t)
+          (message "Match found: %s" (match-string 0))
+        (message "No more matches")))))
 
 ;; Disable preview for consult-recent-file
 (advice-add 'consult-recent-file :around
@@ -1622,6 +1600,22 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; (use-package markdown-mode ;; can't be found by the package installer
 ;;   :ensure t)
 
+(define-generic-mode kdl-mode
+  ;; Comment style
+  '("//" ("/*" . "*/"))
+  ;; Keywords
+  nil
+  ;; Additional font-lock pairs
+  nil
+  ;; File extension
+  '("\\.kdl\\'")
+  ;; Additional function calls
+  nil
+  "Major mode for editing KDL files.")
+
+(provide 'kdl-mode)
+
+
 (when (require 'dockerfile-mode nil 'noerror)
   ;; Add a hook to automatically use dockerfile-mode for Dockerfiles
   (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
@@ -1734,6 +1728,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Org Mode
 ;; General
+
 
 (defvar browse-url-default-browser-executable "/usr/bin/vivaldi"
   "Path to the default browser executable.")
@@ -1975,6 +1970,14 @@ Otherwise, create a same-level heading (M-RET)."
 (define-key org-mode-map (kbd "M-RET") #'my/org-smart-heading)
 
 
+;; Org appear
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :custom
+  (org-appear-autoemphasis t)
+  (org-appear-autolinks t)
+  (org-appear-autosubmarkers t))
+
 
 ;; Org-drill
 
@@ -2040,72 +2043,10 @@ Otherwise, create a same-level heading (M-RET)."
 
 ;; Custom functions
 
-(defun my-occur-like ()
-  "Prompt for non-empty lines in the current buffer using `completing-read'."
+(defun my/kill-current-buffer ()
+  "Kill the current buffer without confirmation."
   (interactive)
-  (let* ((lines (split-string (buffer-string) "\n"))
-         (numbered-lines (cl-loop for line in lines
-                                for n from 1
-                                unless (string-match-p "^[[:space:]]*$" line)
-                                collect (format "%4d: %s" n line)))
-         (orig-point (point))
-         (orig-window-start (window-start))
-         (user-input nil)
-         (restore-position (lambda ()
-                           (goto-char orig-point)
-                           (set-window-start (selected-window) orig-window-start)))
-         (occur-update-function (lambda (&rest _)
-                                (when-let* ((index vertico--index)
-                                          (candidates vertico--candidates)
-                                          ((seq-find (lambda (c) 
-                                                     (string-match "^[[:space:]]*[0-9]+:" c))
-                                                   candidates))
-                                          (cand (and (>= index 0)
-                                                    (nth index candidates)))
-                                          (match (string-match "^[[:space:]]*\\([0-9]+\\):" cand))
-                                          (line-num (match-string 1 cand)))
-                                  (setq user-input (car vertico--input))
-                                  (with-selected-window (minibuffer-selected-window)
-                                    (goto-char (point-min))
-                                    (forward-line (1- (string-to-number line-num)))
-                                    (recenter))))))
-    
-    (advice-add 'vertico--update :after occur-update-function)
-    
-    (unwind-protect
-        (condition-case nil
-            (let ((choice (completing-read "Select line: " numbered-lines)))
-              (if (or (null choice) (string-empty-p choice))
-                  (funcall restore-position)
-                (let ((match (string-match "^[[:space:]]*\\([0-9]+\\):" choice)))
-                  (if (not match)
-                      (funcall restore-position)
-                    (let* ((line-num (match-string 1 choice))
-                           (search-string user-input))
-                      (message "Search string: %S" search-string)
-                      (when search-string
-                        (push (propertize search-string
-                                        'isearch-case-fold-search t)
-                              regexp-search-ring)
-                        (setq my/last-search-type 'occur))
-                      (goto-char (point-min))
-                      (forward-line (1- (string-to-number line-num)))
-                      (recenter))))))
-          (quit (funcall restore-position)))
-      
-      (advice-remove 'vertico--update occur-update-function))))
-
-;; Add occur to get-last-search-pattern
-(defun my/get-last-search-pattern ()
-  "Get the last search pattern based on the last search type."
-  (cond
-   ((eq my/last-search-type 'occur)
-    (car regexp-search-ring))
-   ((eq my/last-search-type 'consult)
-    (car regexp-search-ring))
-   ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
-    (if isearch-regexp isearch-string (regexp-quote isearch-string)))
-   (t "")))
+  (kill-buffer (current-buffer)))
 
 
 (defun my/copy-kill-ring-to-clipboard ()
@@ -2766,3 +2707,5 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
+

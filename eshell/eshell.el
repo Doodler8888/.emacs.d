@@ -21,6 +21,7 @@
         eshell-banner-message ""
         eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
+  (define-key eshell-mode-map (kbd "C-f C-z") 'my/eshell-zoxide-cd)
   (define-key eshell-mode-map (kbd "C-s C-o") 'my-eshell-outline))
   ;; (define-key eshell-mode-map (kbd "M-r") 'my-eshell-history-choose))
 
@@ -423,3 +424,16 @@ If the file doesn't exist, display an error message."
             (goto-char position)
             (recenter)))
       (message "No non-empty prompts found in this buffer."))))
+
+
+(defun my/eshell-zoxide-cd ()
+  "Switch to a zoxide directory in eshell using completing-read."
+  (interactive)
+  (when (eq major-mode 'eshell-mode)
+    (let* ((zoxide-output (shell-command-to-string "zoxide query -l"))
+           (dirs (split-string zoxide-output "\n" t))
+           (choice (completing-read "Select directory: " dirs)))
+      (when choice
+        (eshell/cd choice)
+        (eshell-kill-input)
+        (eshell-emit-prompt)))))
