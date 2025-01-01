@@ -1013,6 +1013,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; (setq vertico-preselect 'first)
   (define-key vertico-map (kbd "M-RET") #'vertico-exit-input))
 
+(defvar my/vertico-face-remap nil "Cookie for face remapping.")
+
+(defun my/vertico-handle-cmdline-face (&rest _)
+  "Toggle vertico-current face based on index."
+  (when (bound-and-true-p vertico--index)
+    (if (= vertico--index -1)
+        (when (null my/vertico-face-remap)
+          (setq my/vertico-face-remap
+                (face-remap-add-relative 'vertico-current 'default)))
+      (when my/vertico-face-remap
+        (face-remap-remove-relative my/vertico-face-remap)
+        (setq my/vertico-face-remap nil)))))
+
+(advice-add 'vertico--exhibit :after #'my/vertico-handle-cmdline-face)
+
 
 (use-package marginalia
   :ensure t
@@ -1768,8 +1783,7 @@ If an eshell buffer for the directory already exists, switch to it."
           (lambda ()
             (org-display-inline-images)))
 
-(setq org-yank-image-save-method "~/Pictures/org-images/")
-(make-directory "~/Pictures/org-images/" t)
+(setq org-yank-image-save-method "~/.secret_dotfiles/pictures/org/")
 
 
 (unless (package-installed-p 'f)
