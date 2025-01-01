@@ -40,21 +40,12 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages
-   '(avy buffer-terminator cape clojure-ts-mode commander corfu daemons daemons.el
-         docker dockerfile-mode eat emacs-crontab-mode embark-consult envrc
-         eshell-syntax-highlighting exec-path-from-shell fish-completion
-         flymake-ansible-lint flymake-hadolint flymake-shellcheck go-mode
-         goto-chg haskell-mode hydra lua-mode magit marginalia meow
-         multiple-cursors nix-mode orderless org-download org-drill prodigy
-         raku-mode systemd tempel-collection terraform-mode toc-org
-         transpose-frame treesit-auto vertico wgrep yaml-mode zoxide))
+ '(package-selected-packages nil)
  '(package-vc-selected-packages
-   '((emacs-crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
-     (tab-bookmark :url "https://github.com/minad/tab-bookmark")
-     (eat :url "https://github.com/kephale/emacs-eat")
-     (emacs-eat :url "https://github.com/kephale/emacs-eat")
-     (zoxide :url "https://gitlab.com/Vonfry/zoxide.el"))))
+   '((eat :url "https://github.com/kephale/emacs-eat")
+     (zoxide :url "https://gitlab.com/Vonfry/zoxide.el")
+     (fish-completion :url
+                      "https://github.com/LemonBreezes/emacs-fish-completion.git"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

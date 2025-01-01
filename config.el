@@ -1064,6 +1064,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
             (lambda (&rest _)
               (setq my/last-search-type 'isearch)))
 
+
 (use-package marginalia
   :ensure t
   :init
@@ -1205,6 +1206,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Basic trash settings
 (setq delete-by-moving-to-trash t)
+(setq dired-recursive-copies 'always)
 
 ;; Configure connection-local variables for sudo operations
 (connection-local-set-profile-variables
@@ -1775,6 +1777,8 @@ If an eshell buffer for the directory already exists, switch to it."
 (make-directory "~/Pictures/org-images/" t)
 
 
+(unless (package-installed-p 'f)
+  (package-install 'f))
 (require 'f)
 (require 'subr-x)
 
@@ -2044,23 +2048,52 @@ Otherwise, create a same-level heading (M-RET)."
                                 for n from 1
                                 unless (string-match-p "^[[:space:]]*$" line)
                                 collect (format "%4d: %s" n line)))
-         (choice (completing-read "Select line: " numbered-lines)))
-    (message "Choice: %S" choice)  ; Debug print
-    (let ((match (string-match "^[[:space:]]*\\([0-9]+\\):" choice)))
-      (if (not match)
-          (message "No match found for line number pattern")
-        ;; Store the search pattern before moving to the line
-        (let* ((line-num (match-string 1 choice))
-               (search-string (substring choice (match-end 0))))
-          ;; (message "Line num: %S, Search string: %S" line-num search-string)  ; Debug print
-          (when search-string
-            (push (propertize (string-trim search-string)
-                             'isearch-case-fold-search t)
-                  regexp-search-ring)
-            (setq my/last-search-type 'occur))
-          ;; Original line navigation behavior
-          (goto-char (point-min))
-          (forward-line (1- (string-to-number line-num))))))))
+         (orig-point (point))
+         (orig-window-start (window-start))
+         (user-input nil)
+         (restore-position (lambda ()
+                           (goto-char orig-point)
+                           (set-window-start (selected-window) orig-window-start)))
+         (occur-update-function (lambda (&rest _)
+                                (when-let* ((index vertico--index)
+                                          (candidates vertico--candidates)
+                                          ((seq-find (lambda (c) 
+                                                     (string-match "^[[:space:]]*[0-9]+:" c))
+                                                   candidates))
+                                          (cand (and (>= index 0)
+                                                    (nth index candidates)))
+                                          (match (string-match "^[[:space:]]*\\([0-9]+\\):" cand))
+                                          (line-num (match-string 1 cand)))
+                                  (setq user-input (car vertico--input))
+                                  (with-selected-window (minibuffer-selected-window)
+                                    (goto-char (point-min))
+                                    (forward-line (1- (string-to-number line-num)))
+                                    (recenter))))))
+    
+    (advice-add 'vertico--update :after occur-update-function)
+    
+    (unwind-protect
+        (condition-case nil
+            (let ((choice (completing-read "Select line: " numbered-lines)))
+              (if (or (null choice) (string-empty-p choice))
+                  (funcall restore-position)
+                (let ((match (string-match "^[[:space:]]*\\([0-9]+\\):" choice)))
+                  (if (not match)
+                      (funcall restore-position)
+                    (let* ((line-num (match-string 1 choice))
+                           (search-string user-input))
+                      (message "Search string: %S" search-string)
+                      (when search-string
+                        (push (propertize search-string
+                                        'isearch-case-fold-search t)
+                              regexp-search-ring)
+                        (setq my/last-search-type 'occur))
+                      (goto-char (point-min))
+                      (forward-line (1- (string-to-number line-num)))
+                      (recenter))))))
+          (quit (funcall restore-position)))
+      
+      (advice-remove 'vertico--update occur-update-function))))
 
 ;; Add occur to get-last-search-pattern
 (defun my/get-last-search-pattern ()
@@ -2573,6 +2606,16 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (interactive)
   (find-file (expand-file-name "~/.dotfiles/sway")))
 
+(defun i3 ()
+  "Open sway config file."
+  (interactive)
+  (find-file (expand-file-name "~/.dotfiles/i3")))
+
+(defun zellij ()
+  "Open sway config file."
+  (interactive)
+  (find-file (expand-file-name "~/.dotfiles/zellij")))
+
 (defun nix ()
   "Open sway config file."
   (interactive)
@@ -2723,35 +2766,3 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-
-;; (cond
-;;  ;; Wayland
-;;  ((string-equal "wayland" (getenv "XDG_SESSION_TYPE"))
-;;   (setq wl-copy-process nil)
-;;   ;; Add any other Wayland-specific settings here
-;;   (message "Configuring for Wayland"))
-
-;;  ;; X11
-;;  ((or (string-equal "x11" (getenv "XDG_SESSION_TYPE"))
-;;       (string-equal "x11" (getenv "XDG_SESSION_DESKTOP")))
-;;   (setq x-select-enable-clipboard t
-;;         x-select-enable-primary t
-;;         select-enable-clipboard t
-;;         select-enable-primary t)
-;;   ;; Add any other X11-specific settings here
-;;   (message "Configuring for X11"))
-
-;;  ;; Default case
-;;  (t
-;;   (message "Unknown window system, using default clipboard settings")))
-
-;; ;; Common settings for both
-;; (setq select-enable-clipboard t
-;;       select-enable-primary t)
-
-;; ;; Enable xclip-mode only for non-GUI Emacs on X11
-;; (when (and (not (display-graphic-p))
-;;            (string-equal "x11" (getenv "XDG_SESSION_TYPE")))
-;;   (xclip-mode 1))
-
