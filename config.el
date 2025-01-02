@@ -129,20 +129,6 @@
 (auto-fill-mode 1)
 (setq-default fill-column 80)
 (add-hook 'text-mode-hook 'auto-fill-mode)
-(define-minor-mode aggressive-fill-mode
-  "Minor mode for aggressive line filling."
-  :lighter " AggrFill"
-  (if aggressive-fill-mode
-      (add-hook 'after-change-functions #'my/aggressive-fill nil t)
-    (remove-hook 'after-change-functions #'my/aggressive-fill t)))
-(defun my/aggressive-fill (_begin _end _len)
-  "Fill paragraph continuously while typing."
-  (when (> (current-column) fill-column)
-    (do-auto-fill)))
-(define-globalized-minor-mode global-aggressive-fill-mode
-  aggressive-fill-mode
-  (lambda () (aggressive-fill-mode 1)))
-(add-hook 'text-mode-hook 'aggressive-fill-mode)
 
 
 (setq python-shell-interpreter "/usr/bin/python3")
@@ -440,6 +426,38 @@
 (add-to-list 'auto-mode-alist '("sshd_config\\'" . conf-mode))
 (add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
 
+
+(defun debug-comment-lines ()
+  "Print out comment lines around cursor position."
+  (interactive)
+  (save-excursion
+    (let ((orig-point (point))
+          (comment-char (string (char-after (comment-beginning))))
+          (block-start nil)
+          (lines '()))
+      
+      (message "=== Comment Block Detection ===")
+      (message "Using comment char: %s" comment-char)
+      
+      ;; First go up to find start
+      (beginning-of-line)
+      (while (and (not (bobp))
+                  (not (looking-at "^[[:space:]]*$"))
+                  (looking-at (format "^[[:space:]]*%s" comment-char)))
+        (forward-line -1))
+      (unless (looking-at (format "^[[:space:]]*%s" comment-char))
+        (forward-line 1))
+      (setq block-start (point))
+      
+      ;; Now print from start to end
+      (message "Comment block from line %d:" (line-number-at-pos))
+      (while (and (not (eobp))
+                  (not (looking-at "^[[:space:]]*$"))
+                  (looking-at (format "^[[:space:]]*%s" comment-char)))
+        (message "%d: %s" 
+                (line-number-at-pos)
+                (buffer-substring (line-beginning-position) (line-end-position)))
+        (forward-line 1)))))
 
 ;; Cron
 
@@ -2627,7 +2645,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (interactive)
   (find-file "~/.emacs.d/config.el"))
 
-(defun alc ()
+(defun zlj ()
   "Open a specific file."
   (interactive)
   (find-file "~/.dotfiles/zellij/config.kdl"))

@@ -7,6 +7,25 @@
   (setq meow-use-clipboard t))
   ;; (setq meow-use-dynamic-face-color nil))
 
+;; (use-package meow-tree-sitter
+;;   :init
+;;   (meow-tree-sitter-register-defaults)
+;;   :hook
+;;   ((bash-ts-mode
+;;     c-ts-mode
+;;     c++-ts-mode
+;;     cmake-ts-mode
+;;     css-ts-mode
+;;     json-ts-mode
+;;     python-ts-mode
+;;     rust-ts-mode
+;;     typescript-ts-mode
+;;     yaml-ts-mode) . meow-tree-sitter-mode))
+
+;; (with-eval-after-load 'meow
+;;   (define-key rectangle-mark-mode-map [remap meow-insert] 'string-rectangle))
+
+
 ;; Argument count doesn't get reset right away when i use meow-next/prev
 (defun my/reset-prefix-arg (&rest _)
   "Reset the prefix argument to nil."
@@ -350,94 +369,6 @@ If no forward match is found, search backward."
                 (backward-char))
             (meow-inner-of-thing thing-char))))))))
 
-(defun meow-find-and-select-outer (n ch)
-  "Find the next N occurrence of CH and select its outer content within current line only.
-If no forward match is found, search backward."
-  (interactive "p\ncFind and select outer:")
-  (let* ((case-fold-search nil)
-         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-         (line-start (line-beginning-position))
-         (line-end (line-end-position))
-         (pos (point))
-         forward-pos
-         backward-pos
-         (pair-char (cond
-                     ((eq ch ?\() ?\))
-                     ((eq ch ?\)) ?\()
-                     ((eq ch ?\[) ?\])
-                     ((eq ch ?\]) ?\[)
-                     ((eq ch ?\{) ?\})
-                     ((eq ch ?\}) ?\{)
-                     ((memq ch '(?' ?\" ?`)) ch)
-                     (t nil))))
-    ;; Try forward search first
-    (save-excursion
-      (setq forward-pos (search-forward ch-str line-end t n)))
-    
-    ;; If forward search fails, try backward search
-    (when (not forward-pos)
-      (save-excursion
-        (setq backward-pos (search-backward ch-str line-start t n))))
-    
-    (cond
-     ((not (or forward-pos backward-pos))
-      (message "char %s not found in current line" ch-str))
-     (forward-pos
-      (goto-char forward-pos)
-      (if (memq ch '(?' ?\" ?`))
-          (let ((end-pos (save-excursion
-                           (when (search-forward ch-str line-end t)
-                             (point)))))
-            (if end-pos
-                (progn
-                  (set-mark (1- forward-pos))
-                  (goto-char end-pos))
-              (message "No closing %s found in current line" ch-str)))
-        (when pair-char
-          (if (memq ch '(?\) ?\] ?\}))
-              (progn
-                (set-mark (point))
-                (condition-case nil
-                    (backward-sexp)
-                  (scan-error (goto-char line-start)))
-                (when (< (point) line-start)
-                  (goto-char line-start)))
-            (progn
-              (backward-char)
-              (set-mark (point))
-              (condition-case nil
-                  (forward-sexp)
-                (scan-error (goto-char line-end)))
-              (when (> (point) line-end)
-                (goto-char line-end)))))))
-     (backward-pos
-      (goto-char backward-pos)
-      (if (memq ch '(?' ?\" ?`))
-          (let ((start-pos (save-excursion
-                             (when (search-backward ch-str line-start t)
-                               (point)))))
-            (if start-pos
-                (progn
-                  (set-mark (1+ backward-pos))
-                  (goto-char start-pos))
-              (message "No opening %s found in current line" ch-str)))
-        (when pair-char
-          (if (memq ch '(?\) ?\] ?\}))
-              (progn
-                (forward-char)
-                (set-mark (point))
-                (condition-case nil
-                    (backward-sexp)
-                  (scan-error (goto-char line-start)))
-                (when (< (point) line-start)
-                  (goto-char line-start)))
-            (progn
-              (set-mark (point))
-              (condition-case nil
-                  (forward-sexp)
-                (scan-error (goto-char line-end)))
-              (when (> (point) line-end)
-                (goto-char line-end))))))))))
 
 (defun meow--parse-inside-whitespace (inner)
   "Parse the bounds for inside whitespace selection."
@@ -452,13 +383,153 @@ If no forward match is found, search backward."
                   (point))))
       (cons start end))))
 
-(add-to-list 'meow-char-thing-table '(?w . inside-whitespace))
+(defun meow--parse-outside-whitespace (inner)
+  "Parse the bounds for outside whitespace selection."
+  (save-excursion
+    (let* ((line-start (line-beginning-position))
+           (line-end (line-end-position))
+           ;; First find the inner bounds
+           (inner-start (progn
+                         (skip-syntax-backward "^-" line-start)
+                         (point)))
+           (inner-end (progn
+                       (skip-syntax-forward "^-" line-end)
+                       (point)))
+           ;; Then extend to include surrounding whitespace
+           (outer-start (progn
+                         (goto-char inner-start)
+                         (skip-syntax-backward "-" line-start)
+                         (point)))
+           (outer-end (progn
+                       (goto-char inner-end)
+                       (skip-syntax-forward "-" line-end)
+                       (point))))
+      (cons outer-start outer-end))))
 
+(defun meow--comment-line-p ()
+  "Return non-nil if the current line is a comment line in Emacs Lisp."
+  (save-excursion
+    (back-to-indentation)
+    (looking-at-p ";+")))
+
+(defun meow--parse-inside-comment (inner)
+  "Parse the bounds for inside comment block selection."
+  (save-excursion
+    (let ((comment-char (string (char-after (comment-beginning))))
+          block-start block-end start-line)
+      (message "=== Meow Comment Selection ===")
+      (message "Using comment char: %s" comment-char)
+      
+      ;; First go up to find start
+      (beginning-of-line)
+      (message "Starting at line: %d" (line-number-at-pos))
+      (while (and (not (bobp))
+                  (not (looking-at "^[[:space:]]*$"))
+                  (looking-at (format "^[[:space:]]*%s" comment-char)))
+        (message "Going up, current line: %s" 
+                (buffer-substring (line-beginning-position) (line-end-position)))
+        (forward-line -1))
+      
+      ;; Move one line forward if we stopped at non-comment
+      (unless (looking-at (format "^[[:space:]]*%s" comment-char))
+        (forward-line 1))
+      
+      ;; Remember where we started
+      (setq start-line (line-number-at-pos))
+      
+      ;; Set start position right after comment marker
+      (skip-chars-forward "[:space:]")
+      (forward-char (length comment-char))
+      (backward-char 1)  ;; Move back one character to include first letter
+      (setq block-start (point))
+      (message "Block start at line %d, pos %d: '%s'" 
+              (line-number-at-pos) block-start
+              (buffer-substring (line-beginning-position) (line-end-position)))
+      
+      ;; Go back to start line and then go down
+      (goto-line start-line)
+      (while (and (not (eobp))
+                  (not (looking-at "^[[:space:]]*$"))
+                  (looking-at (format "^[[:space:]]*%s" comment-char)))
+        (message "Going down, current line: %s"
+                (buffer-substring (line-beginning-position) (line-end-position)))
+        (forward-line 1))
+      
+      ;; Move back one line and to its end
+      (forward-line -1)
+      (end-of-line)
+      (setq block-end (point))
+      (message "Block end at line %d, pos %d: '%s'"
+              (line-number-at-pos) block-end
+              (buffer-substring (line-beginning-position) (line-end-position)))
+      
+      (message "Returning selection: (%d . %d)" block-start block-end)
+      (cons block-start block-end))))
+
+
+(defun meow--parse-outside-comment (inner)
+  "Parse the bounds for outside comment block selection, including empty lines until next content."
+  (save-excursion
+    (let ((comment-char (string (char-after (comment-beginning))))
+          comment-start comment-end block-start block-end current-line)
+      ;; Remember current line
+      (setq current-line (line-number-at-pos))
+      
+      ;; First find the start of current comment block
+      (beginning-of-line)
+      (while (and (not (bobp))
+                  (looking-at (format "^[[:space:]]*%s" comment-char)))
+        (forward-line -1))
+      (unless (bobp)
+        (forward-line 1))
+      (setq comment-start (point))
+      
+      ;; Find end of current comment block
+      (while (and (not (eobp))
+                  (looking-at (format "^[[:space:]]*%s" comment-char)))
+        (forward-line 1))
+      (setq comment-end (point))
+      
+      ;; Go back to comment start and look for empty lines above
+      (goto-char comment-start)
+      (while (and (not (bobp))
+                  (save-excursion
+                    (forward-line -1)
+                    (looking-at "^[[:space:]]*$")))
+        (forward-line -1))
+      (setq block-start (point))
+      
+      ;; Go to comment end and look for empty lines below
+      (goto-char comment-end)
+      (while (and (not (eobp))
+                  (looking-at "^[[:space:]]*$"))
+        (forward-line 1))
+      (setq block-end (point))
+      
+      (cons block-start block-end))))
+
+;; Add items to the table
+(add-to-list 'meow-char-thing-table '(?w . whitespace))
+(add-to-list 'meow-char-thing-table '(?/ . comment))
+
+;; Debug: See what's in the table after adding
+(message "After: %S" meow-char-thing-table)
+
+;; Add the function handling
 (advice-add 'meow--parse-inner-of-thing-char :around
             (lambda (orig-fun ch)
-              (if (eq ch ?w)
-                  (meow--parse-inside-whitespace t)
-                (funcall orig-fun ch))))
+              (cond
+               ((eq ch ?w) (meow--parse-inside-whitespace t))
+               ((eq ch ?/) (meow--parse-inside-comment t))
+               (t (funcall orig-fun ch)))))
+
+(advice-add 'meow--parse-bounds-of-thing-char :around
+            (lambda (orig-fun ch)
+              (cond
+               ((eq ch ?w) (meow--parse-outside-whitespace t))
+               ((eq ch ?/) (meow--parse-outside-comment t))
+               (t (funcall orig-fun ch)))))
+
 
 (defun select-inside-whitespace ()
   "Select the current symbol without surrounding whitespace."
@@ -1079,7 +1150,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("'" . meow-find-and-select-inner)
    '("\"" . meow-find-and-select-outer)
    '("C-y" . my/yank-with-selection)
-   '(":" . execute-extended-command)
+   ;; '(":" . execute-extended-command)
    '("<escape>" . meow-cancel-selection))
    ;; '("<escape>" . ignore))
   (meow-leader-define-key
@@ -1226,7 +1297,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("C-M-y" . save-and-paste)
    '("C-y" . my/yank-with-selection)
    '("=" . my/meow-smart-indent)
-   '(":" . execute-extended-command)
+   ;; '(":" . execute-extended-command)
    ;; '("C-d" . scroll-half-up-and-recenter)
    ;; '("C-u" . scroll-half-down-and-recenter)
    '("<escape>" . meow-cancel-selection)))
@@ -1293,6 +1364,27 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key daemons-mode-map (kbd "?") 'my/show-daemon-bindings))
 
+(setq meow-paren-keymap (make-keymap))
+(meow-define-state paren
+  "meow state for interacting with smartparens"
+  :lighter " [P]"
+  :keymap meow-paren-keymap)
+
+;; meow-define-state creates the variable
+(setq meow-cursor-type-paren 'hollow)
+
+(meow-define-keys 'paren
+  '("<escape>" . meow-normal-mode)
+  '("l" . sp-forward-sexp)
+  '("h" . sp-backward-sexp)
+  '("j" . sp-down-sexp)
+  '("k" . sp-up-sexp)
+  '("n" . sp-forward-slurp-sexp)
+  '("b" . sp-forward-barf-sexp)
+  '("v" . sp-backward-barf-sexp)
+  '("c" . sp-backward-slurp-sexp)
+  '("u" . meow-undo))
+
 ;; Makes functions like meow-next-word to ignore whitespaces
 (setq meow-next-thing-include-syntax
       '((word "[:space:]" "[:space:]")
@@ -1318,6 +1410,21 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
             keymap))
 
 
+;; ;; Used for making 'symbol' movements to ignore slashes. But i'm not use i like it.
+;; (defun my-forward-symbol (&optional arg)
+;;   "Move forward across one balanced expression.
+;; Treats slashes as part of the symbol."
+;;   (interactive "^p")
+;;   (let ((arg (or arg 1))
+;;         (sym-syntax (string-to-syntax "_")))  ; treat slash as symbol constituent
+;;     (with-syntax-table (copy-syntax-table (syntax-table))
+;;       (modify-syntax-entry ?/ "_")  ; make slash a symbol constituent
+;;       (forward-symbol arg))))
+;; ;; Register our new symbol movement function
+;; (put 'my-symbol 'forward-op #'my-forward-symbol)
+;; ;; Tell Meow to use our custom symbol definition
+;; (setq meow-symbol-thing 'my-symbol)
+
+
 (meow-setup)
 (meow-global-mode 1)
-
