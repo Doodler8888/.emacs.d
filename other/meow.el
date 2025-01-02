@@ -25,6 +25,8 @@
 ;; (with-eval-after-load 'meow
 ;;   (define-key rectangle-mark-mode-map [remap meow-insert] 'string-rectangle))
 
+(setq-default indent-line-function nil)
+(global-set-key (kbd "TAB") #'completion-at-point)
 
 ;; Argument count doesn't get reset right away when i use meow-next/prev
 (defun my/reset-prefix-arg (&rest _)
@@ -512,9 +514,6 @@ If no forward match is found, search backward."
 (add-to-list 'meow-char-thing-table '(?w . whitespace))
 (add-to-list 'meow-char-thing-table '(?/ . comment))
 
-;; Debug: See what's in the table after adding
-(message "After: %S" meow-char-thing-table)
-
 ;; Add the function handling
 (advice-add 'meow--parse-inner-of-thing-char :around
             (lambda (orig-fun ch)
@@ -787,20 +786,19 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (forward-char)
   (meow-insert))
 
-(defun my/meow-append ()
-  "If selection is active, use meow-kill. If not, use meow-delete."
+(defun my/generic-append ()
+  "Like Vim's append: move forward one character then enter insert mode."
   (interactive)
-  (if (not (and meow--expand-nav-function
-                (region-active-p)
-                (meow--selection-type)))
-      (my/generic-append)
-    (meow-append)))
-
-(defun meow-insert-line-start ()
-  "Like Vim's I: move to first non-whitespace character and enter insert mode."
-  (interactive)
-  (back-to-indentation)
+  (forward-char)
   (meow-insert))
+
+(defun my/meow-append ()
+  "If selection is active, use meow-append. If not, use generic append."
+  (interactive)
+  (if (region-active-p)
+      (meow-append)
+    (my/generic-append)))
+
 
 (defun meow-append-line-end ()
   "Like Vim's A: move to end of line and enter insert mode."
@@ -1131,7 +1129,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g v" . (lambda () (interactive) (set-mark-command 4)))
    '("g c" . my/meow-smart-comment)
    '("g g" . beginning-of-buffer)
-   '("g z" . zoxide-travel)
+   '("g z" . my/zoxide-switch)
    '("G" . end-of-buffer)
    ;; '("h" . meow-left)
    '("h" . backward-char)
@@ -1228,7 +1226,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g c" . my/meow-smart-comment)
    '("g w" . my/meow-smart-fill)
    '("g g" . beginning-of-buffer)
-   '("g z" . zoxide-travel)
+   '("g z" . my/zoxide-switch)
    '("G" . end-of-buffer)
    '("S s" . surround-region-with-symbol)
    '("S c" . change-surrounding-symbol)

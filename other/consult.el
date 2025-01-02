@@ -24,7 +24,7 @@
 ;;     (if isearch-regexp isearch-string (regexp-quote isearch-string)))
 ;;    (t "")))
 
-(defun my/search-next ()
+(defun my/search-next2 ()
   "Search forward using last search pattern."
   (interactive)
   (when-let* ((pattern (my/get-last-search-pattern)))

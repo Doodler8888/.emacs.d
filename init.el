@@ -21,11 +21,12 @@
 ;;     user-emacs-directory))
 
 (load "~/.emacs.d/config.el")
-;; (load "~/.emacs.d/other/evil.el")
+(load "~/.emacs.d/other/custom-functions.el")
 (load "~/.emacs.d/other/meow.el")
 (load "~/.emacs.d/eshell/eshell.el")
 (load "~/.emacs.d/other/dired.el")
 (load "~/.emacs.d/other/keybindings.el")
+(load "~/.emacs.d/other/save-org-headings.el")
 (load "~/.emacs.d/other/scripts/install-org.el")
 
 ;; (load "~/.emacs.d/eshell/eshell-doc.el")

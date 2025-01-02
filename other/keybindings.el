@@ -75,6 +75,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
 
+    ("za" . my/zoxide-add)
+    
     ;; ("mm" . messages)
     ;; ("mm" . toggle-messages-buffer)
 
@@ -107,7 +109,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "M-<f2>") 'tab-bar-move-tab)
 (global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
 (global-set-key (kbd "C-x 2") 'winner-undo)
-
+(define-key occur-mode-map (kbd "C-x C-q") 'occur-edit-mode)
 
 (defun my/setup-window-keys (mode-map)
   "Set up window management keybindings for the given MODE-MAP."

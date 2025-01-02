@@ -22,6 +22,7 @@
         eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
   (define-key eshell-mode-map (kbd "C-f C-z") 'my/eshell-zoxide-cd)
+  (define-key eshell-mode-map (kbd "M-l") 'my/eshell-clear)
   (define-key eshell-mode-map (kbd "C-s C-o") 'my-eshell-outline))
   ;; (define-key eshell-mode-map (kbd "M-r") 'my-eshell-history-choose))
 

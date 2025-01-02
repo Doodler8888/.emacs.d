@@ -44,12 +44,14 @@
 
 
 (defun my/dired-toggle-bak-extension ()
-  "Toggle '.bak' extension for marked files in Dired.
-If a file doesn't end with '.bak', add it; if it does, remove it."
+  "Toggle '.bak' extension for marked files/directories in Dired.
+If an item doesn't end with '.bak', add it; if it does, remove it.
+Prompts whether to keep the original or not."
   (interactive)
   (let* ((files (dired-get-marked-files t current-prefix-arg))
          (num-files (length files))
-         (msg-prefix (if (= num-files 1) "File" "Files")))
+         (msg-prefix (if (= num-files 1) "Item" "Items"))
+         (keep-original (y-or-n-p "Make copy? ")))
     (dolist (file files)
       (let* ((dir (file-name-directory file))
              (name (file-name-nondirectory file))
@@ -60,10 +62,16 @@ If a file doesn't end with '.bak', add it; if it does, remove it."
           (setq new-name (concat name ".bak")))
         (let ((new-file (expand-file-name new-name dir)))
           (when (or (not (file-exists-p new-file))
-                    (yes-or-no-p (format "File %s already exists. Overwrite? " new-file)))
-            (rename-file file new-file t)))))
+                    (yes-or-no-p (format "%s already exists. Overwrite? " new-file)))
+            (if (file-directory-p file)
+                (if keep-original
+                    (copy-directory file new-file t t t)
+                  (rename-file file new-file t))
+              (if keep-original
+                  (copy-file file new-file t)
+                (rename-file file new-file t)))))))
     (revert-buffer)
-    (message "%s renamed." msg-prefix)))
+    (message "%s %s." msg-prefix (if keep-original "copied" "renamed"))))
 
 
 (defun my/dired-create-empty-files ()
