@@ -106,6 +106,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "M-<f1>") 'tab-bar-move-tab-backward)
 (global-set-key (kbd "M-<f2>") 'tab-bar-move-tab)
 (global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
+(global-set-key (kbd "C-x 2") 'winner-undo)
 
 
 (defun my/setup-window-keys (mode-map)

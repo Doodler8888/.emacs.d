@@ -1344,10 +1344,13 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (define-prefix-command 'my-dired-g-map)
   (define-key dired-mode-map (kbd "g") 'my-dired-g-map)
   (define-key my-dired-g-map (kbd "z") 'zoxide-travel)
+  (define-key my-dired-g-map (kbd "g") 'beginning-of-buffer)
+  (define-key dired-mode-map (kbd "G") 'end-of-buffer)
   (define-key dired-mode-map (kbd "j") 'dired-next-line)
   (define-key dired-mode-map (kbd "k") 'dired-previous-line)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
   (define-key dired-mode-map (kbd "/") 'my/conditional-search-or-avy)
+  (define-key dired-mode-map (kbd "W") 'Cpn)
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
 

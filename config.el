@@ -192,8 +192,14 @@
   (unless (buffer-file-name)
     (setq-local auto-save-default nil)
     (auto-save-mode -1)))
-
 (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
+
+(defun disable-auto-save-for-ediff ()
+  "Disable auto-save for ediff merge buffers."
+  (when (string-match-p "\\`ediff" (buffer-name))
+    (setq-local auto-save-default nil)
+    (auto-save-mode -1)))
+(add-hook 'ediff-prepare-buffer-hook #'disable-auto-save-for-ediff)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -248,6 +254,7 @@
 ;; ;;                      (lambda (sym val op where)
 ;; ;;                        (message "truncate-lines changed to %s in %s" val where)))
 
+(winner-mode 1)
 
 (setq enable-local-variables t)
 (setq enable-dir-local-variables t)
@@ -1263,6 +1270,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Magit
 
+(require 'smerge-mode)
+
 (use-package magit
   :ensure t
   :config
@@ -1273,6 +1282,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (define-key magit-mode-map (kbd "M-5") nil)
   (define-key magit-mode-map (kbd "M-6") nil)
   )
+
+
+;; Custom option of stash, because i don't know how else to execute 'stash
+;; apply' without the '--index' flag.
+(transient-define-suffix magit-stash-apply-no-index (stash)
+  "Apply a stash to the working tree without --index."
+  :description "apply (no index)"
+  (interactive (list (magit-read-stash "Apply stash")))
+  (magit-run-git "stash" "apply" stash))
+
+(transient-append-suffix 'magit-stash "a"
+  '("A" magit-stash-apply-no-index))
+
+(with-eval-after-load 'magit-process
+  (define-key magit-process-mode-map (kbd "j") 'magit-section-forward))
 
 ;; (defun my-git-commit-setup ()
 ;;   "Set up the default commit message."
