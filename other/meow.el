@@ -46,6 +46,21 @@
       (remove 'org-mode meow-expand-exclude-mode-list))
 
 
+(defun my/forward-list ()
+  "Move forward over a balanced group with mark."
+  (interactive)
+  (set-mark (point))
+  (forward-list))
+
+(defun my/backward-list ()
+  "Move backward over a balanced group with mark."
+  (interactive)
+  (set-mark (point))
+  (backward-list))
+
+(global-set-key (kbd "C-M-n") #'my/forward-list)
+(global-set-key (kbd "C-M-p") #'my/backward-list)
+
 (defun my/yank-with-selection ()
   "Yank text, replacing the active region if one exists."
   (interactive)

@@ -210,37 +210,51 @@
 (setq backup-directory-alist
       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
-(defun my-disable-auto-save-for-scratch ()
-(when (string= (buffer-name) "*scratch*")
-  (auto-save-mode -1)))
-(add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
 
-(defun disable-auto-save-for-eshell ()
-  "Disable auto-save for eshell buffers."
-  (when (eq major-mode 'eshell-mode)
-    (setq-local auto-save-default nil)))
-(add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
+;; First, disable auto-save globally
+(setq auto-save-default nil)
 
-(defun disable-auto-save-for-messages-buffer ()
-  "Disable auto-save for the *Messages* buffer."
-  (when (string= (buffer-name) "*Messages*")
-    (setq-local auto-save-default nil)
-    (auto-save-mode -1)))
-(add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
+;; Then enable only for programming and text modes
+(defun enable-auto-save-for-prog-and-text ()
+  "Enable auto-save for programming and text modes."
+  (when (or (derived-mode-p 'prog-mode)
+            (derived-mode-p 'text-mode))
+    (setq-local auto-save-default t)
+    (auto-save-mode 1)))
 
-(defun disable-auto-save-for-non-file-buffers ()
-  "Disable auto-save for buffers not associated with a file."
-  (unless (buffer-file-name)
-    (setq-local auto-save-default nil)
-    (auto-save-mode -1)))
-(add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
+(add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
 
-(defun disable-auto-save-for-ediff ()
-  "Disable auto-save for ediff merge buffers."
-  (when (string-match-p "\\`ediff" (buffer-name))
-    (setq-local auto-save-default nil)
-    (auto-save-mode -1)))
-(add-hook 'ediff-prepare-buffer-hook #'disable-auto-save-for-ediff)
+;; (defun my-disable-auto-save-for-scratch ()
+;; (when (string= (buffer-name) "*scratch*")
+;;   (auto-save-mode -1)))
+;; (add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
+
+;; (defun disable-auto-save-for-eshell ()
+;;   "Disable auto-save for eshell buffers."
+;;   (when (eq major-mode 'eshell-mode)
+;;     (setq-local auto-save-default nil)))
+;; (add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
+
+;; (defun disable-auto-save-for-messages-buffer ()
+;;   "Disable auto-save for the *Messages* buffer."
+;;   (when (string= (buffer-name) "*Messages*")
+;;     (setq-local auto-save-default nil)
+;;     (auto-save-mode -1)))
+;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
+
+;; (defun disable-auto-save-for-non-file-buffers ()
+;;   "Disable auto-save for buffers not associated with a file."
+;;   (unless (buffer-file-name)
+;;     (setq-local auto-save-default nil)
+;;     (auto-save-mode -1)))
+;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
+
+;; (defun disable-auto-save-for-ediff ()
+;;   "Disable auto-save for ediff merge buffers."
+;;   (when (string-match-p "\\`ediff" (buffer-name))
+;;     (setq-local auto-save-default nil)
+;;     (auto-save-mode -1)))
+;; (add-hook 'ediff-prepare-buffer-hook #'disable-auto-save-for-ediff)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -251,7 +265,7 @@
 (setq desktop-auto-save-timeout 30)
 (setq desktop-auto-save-timeout nil)
 
-(auto-save-mode 1)
+;; (auto-save-mode 1)
 (setq auto-save-interval 1)  ; Auto-save every 1 second
 (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
 (setq auto-save-no-message t)
@@ -1580,6 +1594,9 @@ If an eshell buffer for the directory already exists, switch to it."
   :config
   (setq mc/always-run-for-all t))
 
+(use-package symbol-overlay-mc
+  :bind (("C-c C-n" . symbol-overlay-mc-mark-all)))
+
 
 ;; Buffer termination
 
@@ -2133,7 +2150,7 @@ Otherwise, create a same-level heading (M-RET)."
 (defun nix ()
   "Open sway config file."
   (interactive)
-  (find-file (expand-file-name "~/.dotfiles/nix")))
+  (find-file (expand-file-name "~/.dotfiles/nix/")))
 
 (defun date ()
   "Display the current date and time in the minibuffer using the shell's 'date' command."
@@ -2229,13 +2246,7 @@ Otherwise, create a same-level heading (M-RET)."
 (defun manager ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.dotfiles/nix/home.nix"))
-
-(defun nix ()
-  "Open a specific file."
-  (interactive)
-  (find-file "/etc/nixos/configuration.nix")
-  (tramp-revert-buffer-with-sudo))
+  (find-file "~/.dotfiles/home-manager/home.nix"))
 
 (defun so ()
   "Reload the Emacs configuration."
