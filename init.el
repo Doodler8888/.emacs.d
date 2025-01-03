@@ -42,14 +42,14 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(package-selected-packages
-   '(avy buffer-terminator cape clojure-ts-mode corfu daemons docker
+   '(avy buffer-terminator cape clojure-ts-mode corfu cursor-undo daemons docker
          dockerfile-mode eat embark-consult envrc eshell-syntax-highlighting
          exec-path-from-shell f fish-completion flymake-ansible-lint
          flymake-hadolint flymake-shellcheck go-mode goto-chg haskell-mode hydra
          lua-mode magit marginalia meow-tree-sitter multiple-cursors nix-mode
          orderless org-appear org-drill raku-mode symbol-overlay-mc systemd
-         tempel-collection terraform-mode transpose-frame treesit-auto vertico
-         wgrep yaml-mode zoxide))
+         tempel-collection terraform-mode transpose-frame treesit-auto undo-tree
+         vertico wgrep yaml-mode zoxide))
  '(package-vc-selected-packages
    '((eat :url "https://github.com/kephale/emacs-eat")
      (zoxide :url "https://gitlab.com/Vonfry/zoxide.el")

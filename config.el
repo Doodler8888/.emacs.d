@@ -191,8 +191,6 @@
 (add-hook 'after-save-hook
         'executable-make-buffer-file-executable-if-script-p)
 
-(setq undo-tree-auto-save-history t)
-(setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory "undo-tree-history"))))
 (make-directory (concat user-emacs-directory "auto-saves") t)
 (setq auto-save-file-name-transforms
       `((".*" ,(concat user-emacs-directory "auto-saves/") t)))
@@ -542,9 +540,55 @@
 (add-hook 'yaml-ts-mode-hook (lambda () 
   (auto-fill-mode -1)))
 
-;; Go to last change
+
+;; Undo tree
+
+(use-package undo-tree
+  :ensure t
+  :init
+  (global-undo-tree-mode)
+  :config
+  ;; Save history
+  (setq undo-tree-auto-save-history t)
+  ;; Set directory for undo history files
+  (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory
+                                                            "undo-tree-history")))))
+  
+;; Create undo directory if it doesn't exist
+(make-directory "~/.emacs.d/undo-tree-history" t)
+
 
 (use-package goto-chg)
+
+(defvar-local my-jump-ring '()
+  "Ring of positions from goto-last-change jumps.")
+
+(defvar-local my-jump-index 0
+  "Current position in jump ring.")
+
+(defun my-goto-last-change ()
+  "Wrapper for goto-last-change that stores jump positions."
+  (interactive)
+  (let ((old-pos (point)))
+    (message "Storing position: %d" old-pos)
+    (call-interactively 'goto-last-change)
+    (push old-pos my-jump-ring)
+    (setq my-jump-index 0)
+    (message "Jump ring now: %S" my-jump-ring)))
+
+(defun my-goto-last-change-reverse ()
+  "Go back through stored jump positions."
+  (interactive)
+  (message "Current ring: %S, index: %d" my-jump-ring my-jump-index)
+  (if (null my-jump-ring)
+      (message "No previous jumps")
+    (let ((pos (nth my-jump-index my-jump-ring)))
+      (when pos
+        (goto-char pos)
+        (setq my-jump-index (1+ my-jump-index))
+        (when (>= my-jump-index (length my-jump-ring))
+          (setq my-jump-index 0))))))
+
 
 
 ;; Daemons
@@ -1961,6 +2005,28 @@ Otherwise, create a same-level heading (M-RET)."
 
 (add-to-list 'org-structure-template-alist
            '("t" . "src TODO\n\n* TODO \n\n?"))
+
+(defun my/org-tempo-insert-block ()
+  "Insert a source block and maintain indentation."
+  (interactive)
+  (let* ((indent (current-indentation))
+         (indent-str (make-string indent ?\s)))
+    (org-tempo-complete-tag)
+    ;; Fix begin tag indentation
+    (beginning-of-line 0)  ; go to beginning of #+begin line
+    (delete-horizontal-space)  ; remove any existing indentation
+    (insert indent-str)
+    ;; Add indentation for cursor position
+    (forward-line)
+    (delete-horizontal-space)
+    (insert indent-str)
+    ;; Fix end tag indentation
+    (forward-line)
+    (delete-horizontal-space)  ; remove any existing indentation
+    (insert indent-str)
+    ;; Go back to content line
+    (forward-line -1)
+    (end-of-line)))
 
 
 ;; Visuals
