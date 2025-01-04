@@ -68,6 +68,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("m" . toggle-messages-buffer)
 
     ("uu" . tramp-revert-buffer-with-sudo)
+    ("ud" . tramp-revert-buffer-with-doas)
     ("ue" . my-tramp-cleanup)
 
     ("gm" . pop-global-mark) 
@@ -111,6 +112,25 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-x 2") 'winner-undo)
 (define-key occur-mode-map (kbd "C-x C-q") 'occur-edit-mode)
 
+(defun my/setup-global-window-keys ()
+  "Set up global window management keybindings."
+  (define-prefix-command 'my-window-map)
+  (global-set-key (kbd "C-w") 'my-window-map)
+
+  (global-set-key (kbd "C-w C-l") 'windmove-right)
+  (global-set-key (kbd "C-w C-h") 'windmove-left)
+  (global-set-key (kbd "C-w C-k") 'windmove-up)
+  (global-set-key (kbd "C-w C-j") 'windmove-down)
+
+  (global-set-key (kbd "C-w C-s") 'split-window-below)
+  (global-set-key (kbd "C-w C-v") 'split-window-right)
+  (global-set-key (kbd "C-w C-c") 'delete-window)
+  (global-set-key (kbd "C-w c") 'delete-window)
+  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
+
+;; Call the setup function
+(my/setup-global-window-keys)
+
 (defun my/setup-window-keys (mode-map)
   "Set up window management keybindings for the given MODE-MAP."
   (define-prefix-command 'my-window-map)
@@ -126,6 +146,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (define-key mode-map (kbd "C-w C-c") 'delete-window)
   (define-key mode-map (kbd "C-w c") 'delete-window)
   (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
+
 
 (with-eval-after-load 'magit
   (my/setup-window-keys magit-mode-map))

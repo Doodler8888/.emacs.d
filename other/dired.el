@@ -1,3 +1,15 @@
+(defun tramp-file-name-with-doas (filename)
+  "Convert FILENAME into a multi-hop file name with \"doas\"."
+  (let ((tramp-file-name-with-method "doas"))
+    (tramp-file-name-with-sudo filename)))
+
+(defun tramp-revert-buffer-with-doas ()
+  "Revert current buffer to visit with \"doas\" permissions."
+  (interactive)
+  (let ((tramp-file-name-with-method "doas"))
+    (tramp-revert-buffer-with-sudo)))
+
+
 (defun my/dired-sudo-symlink (&optional arg)
   "Create a symlink with sudo capability if needed."
   (interactive "P")

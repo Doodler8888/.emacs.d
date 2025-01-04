@@ -38,8 +38,8 @@
 (advice-add 'meow-prev :after #'my/reset-prefix-arg)
 
 ;; Delete the 'window' option for selection
-(setq meow-char-thing-table
-      (assq-delete-all ?w meow-char-thing-table))
+(setq meow-char-thing-table (assq-delete-all ?\. meow-char-thing-table))
+(setq meow-char-thing-table (assq-delete-all ?w meow-char-thing-table))
 
 ;; For number hints to work in org mode
 (setq meow-expand-exclude-mode-list 
@@ -525,14 +525,54 @@ If no forward match is found, search backward."
       
       (cons block-start block-end))))
 
-;; Add items to the table
+(defun meow--parse-inside-sentence (inner)
+  "Parse the bounds for inside sentence selection across multiple lines."
+  (save-excursion
+    (let* ((start (progn
+                    (if (eq major-mode 'org-mode)
+                        (org-backward-sentence)
+                      (backward-sentence))
+                    (skip-syntax-forward " >")
+                    (point)))
+           (end (progn
+                  (forward-sentence)
+                  (skip-syntax-backward " >")
+                  (point))))
+      (cons start end))))
+
+(defun meow--parse-outside-sentence (inner)
+  "Parse the bounds for outside sentence selection across multiple lines."
+  (save-excursion
+    (let* (;; First find the inner bounds
+           (inner-start (progn
+                         (backward-sentence)
+                         (skip-syntax-forward " >")
+                         (point)))
+           (inner-end (progn
+                       (forward-sentence)
+                       (skip-syntax-backward " >")
+                       (point)))
+           ;; Then extend to include surrounding whitespace/punctuation
+           (outer-start (progn
+                         (goto-char inner-start)
+                         (skip-syntax-backward " >.")
+                         (point)))
+           (outer-end (progn
+                       (goto-char inner-end)
+                       (skip-syntax-forward " >.")
+                       (point))))
+      (cons outer-start outer-end))))
+
+(add-to-list 'meow-char-thing-table '(?m . sentence))
+;; (add-to-list 'meow-char-thing-table '(?\. . my-sentence))
 (add-to-list 'meow-char-thing-table '(?w . whitespace))
 (add-to-list 'meow-char-thing-table '(?/ . comment))
 
-;; Add the function handling
 (advice-add 'meow--parse-inner-of-thing-char :around
             (lambda (orig-fun ch)
               (cond
+               ;; ((eq ch ?\.) (meow--parse-inside-sentence t))
+               ((eq ch ?m) (meow--parse-inside-sentence t))
                ((eq ch ?w) (meow--parse-inside-whitespace t))
                ((eq ch ?/) (meow--parse-inside-comment t))
                (t (funcall orig-fun ch)))))
@@ -541,6 +581,7 @@ If no forward match is found, search backward."
             (lambda (orig-fun ch)
               (cond
                ((eq ch ?w) (meow--parse-outside-whitespace t))
+               ((eq ch ?m) (meow--parse-outside-sentence t))
                ((eq ch ?/) (meow--parse-outside-comment t))
                (t (funcall orig-fun ch)))))
 
@@ -795,10 +836,10 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (meow-line 1)
   (avy-goto-line))
 
-(defun my/generic-append ()
-  "Like Vim's append: move forward one character then enter insert mode."
+(defun meow-insert-line-start ()
+  "Like Vim's I: move to first non-whitespace character and enter insert mode."
   (interactive)
-  (forward-char)
+  (back-to-indentation)
   (meow-insert))
 
 (defun my/generic-append ()
@@ -813,7 +854,6 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (if (region-active-p)
       (meow-append)
     (my/generic-append)))
-
 
 (defun meow-append-line-end ()
   "Like Vim's A: move to end of line and enter insert mode."
@@ -1232,8 +1272,8 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("T" . my/meow-till-backward)
    '("F" . my/meow-find-backward)
    ;; '("g" . meow-cancel-selection)
-   '("^" . my/meow-line-beginning)
-   '("$" . my/meow-line-end)
+   ;; '("^" . my/meow-line-beginning)
+   ;; '("$" . my/meow-line-end)
    ;; '("0" . my/meow-line-start)
    '("g" . nil)
    '("g ;" . my-goto-last-change)
