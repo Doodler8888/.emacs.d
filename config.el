@@ -222,10 +222,10 @@
 
 (add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
 
-;; (defun my-disable-auto-save-for-scratch ()
-;; (when (string= (buffer-name) "*scratch*")
-;;   (auto-save-mode -1)))
-;; (add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
+(defun my-disable-auto-save-for-scratch ()
+(when (string= (buffer-name) "*scratch*")
+  (auto-save-mode -1)))
+(add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
 
 ;; (defun disable-auto-save-for-eshell ()
 ;;   "Disable auto-save for eshell buffers."
@@ -482,38 +482,6 @@
 (add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
 
 
-(defun debug-comment-lines ()
-  "Print out comment lines around cursor position."
-  (interactive)
-  (save-excursion
-    (let ((orig-point (point))
-          (comment-char (string (char-after (comment-beginning))))
-          (block-start nil)
-          (lines '()))
-      
-      (message "=== Comment Block Detection ===")
-      (message "Using comment char: %s" comment-char)
-      
-      ;; First go up to find start
-      (beginning-of-line)
-      (while (and (not (bobp))
-                  (not (looking-at "^[[:space:]]*$"))
-                  (looking-at (format "^[[:space:]]*%s" comment-char)))
-        (forward-line -1))
-      (unless (looking-at (format "^[[:space:]]*%s" comment-char))
-        (forward-line 1))
-      (setq block-start (point))
-      
-      ;; Now print from start to end
-      (message "Comment block from line %d:" (line-number-at-pos))
-      (while (and (not (eobp))
-                  (not (looking-at "^[[:space:]]*$"))
-                  (looking-at (format "^[[:space:]]*%s" comment-char)))
-        (message "%d: %s" 
-                (line-number-at-pos)
-                (buffer-substring (line-beginning-position) (line-end-position)))
-        (forward-line 1)))))
-
 ;; Cron
 
 ;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
@@ -588,28 +556,6 @@
         (setq my-jump-index (1+ my-jump-index))
         (when (>= my-jump-index (length my-jump-ring))
           (setq my-jump-index 0))))))
-
-
-
-;; Daemons
-(use-package daemons
-  :ensure t
-  :config
-  (defun my/show-daemon-bindings ()
-    "Show available keybindings for daemons mode."
-    (interactive)
-    (message "Daemons mode bindings:
-RET - Show status
-s   - Start service
-S   - Stop service
-r   - Reload service
-R   - Restart service
-e   - Enable service
-d   - Disable service
-g   - Refresh list
-?   - Show this help"))
-  
-  (define-key daemons-mode-map (kbd "?") #'my/show-daemon-bindings))
 
 
 ;; Avy
@@ -1620,28 +1566,6 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 
 
-;; Emacs-eat
-
-(use-package eat
-  :ensure t
-  :vc (:url "https://github.com/kephale/emacs-eat"
-       :rev :newest)
-  :config
-  (add-hook 'eshell-first-time-mode-hook
-            #'eat-eshell-visual-command-mode)
-  (add-hook 'eshell-first-time-mode-hook #'eat-eshell-mode))
-
-
-;; Multiple cursors
-
-(use-package multiple-cursors
-  :config
-  (setq mc/always-run-for-all t))
-
-(use-package symbol-overlay-mc
-  :bind (("C-c C-n" . symbol-overlay-mc-mark-all)))
-
-
 ;; Buffer termination
 
 (use-package buffer-terminator
@@ -2003,8 +1927,10 @@ Otherwise, create a same-level heading (M-RET)."
 (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
 (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
 
-(add-to-list 'org-structure-template-alist
-           '("t" . "src TODO\n\n* TODO \n\n?"))
+;; It's displayed incorrectly in icomplete-vertical and causes a stutter with
+;; vertico
+;; (add-to-list 'org-structure-template-alist
+;;            '("t" . "src TODO\n\n* TODO \n\n?"))
 
 (defun my/org-tempo-insert-block ()
   "Insert a source block and maintain indentation."
@@ -2274,6 +2200,11 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (find-file "~/.dotfiles/zellij/config.kdl"))
 
+(defun alc ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/alacritty/alacritty.toml"))
+
 (defun zsh ()
   "Open a specific file."
   (interactive)
@@ -2318,7 +2249,7 @@ Otherwise, create a same-level heading (M-RET)."
   "Reload the Emacs configuration."
   (interactive)
   (save-some-buffers t)
-  (load-file "~/.emacs.d/init.el")
+  ;; (load-file "~/.emacs.d/init.el")
   (load-file "~/.emacs.d/init.el"))
 
 (defun messages ()
@@ -2357,5 +2288,3 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-
