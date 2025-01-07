@@ -386,3 +386,35 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (wrap-edit-mode -1))
 
 (global-set-key (kbd "C-c g e") 'wrap-edit-mode)
+
+
+;; Save unexuted minibuffer input
+
+(defvar my-last-unexecuted-minibuffer-input nil
+  "Stores the last unexecuted minibuffer input.")
+
+(defun my-save-unexecuted-minibuffer-input ()
+  "Save the current minibuffer input if it's not empty."
+  (let ((input (minibuffer-contents)))
+    (when (and (not (string-empty-p input))
+               (not (eq input my-last-unexecuted-minibuffer-input)))
+      (setq my-last-unexecuted-minibuffer-input input))))
+
+(add-hook 'minibuffer-exit-hook #'my-save-unexecuted-minibuffer-input)
+
+(defun my-insert-last-unexecuted-minibuffer-input ()
+  "Insert the last unexecuted minibuffer input at point."
+  (interactive)
+  (when my-last-unexecuted-minibuffer-input
+    (insert my-last-unexecuted-minibuffer-input)))
+
+(define-key minibuffer-local-map (kbd "C-r") #'my-insert-last-unexecuted-minibuffer-input)
+
+
+(defun delete-two-chars-back ()
+  "Delete the previous two characters."
+  (interactive)
+  (delete-char -2))
+
+(define-key prog-mode-map (kbd "C-<backspace>") #'delete-two-chars-back)
+

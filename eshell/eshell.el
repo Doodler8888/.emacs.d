@@ -28,12 +28,6 @@
 
 (global-set-key (kbd "M-r") 'my-eshell-history-choose)
 
-(use-package eshell-syntax-highlighting
-  :ensure t
-  :after esh-mode  ;; don't change to 'eshell-mode'
-  :config
-  (eshell-syntax-highlighting-global-mode +1))
-
 (with-eval-after-load 'eshell
   (setq eshell-save-history-on-exit nil)
 

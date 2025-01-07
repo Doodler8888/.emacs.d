@@ -1,6 +1,7 @@
 ;; -*- lexical-binding: t -*-
 
 (add-to-list 'load-path "~/.source/org-mode/lisp")
+(add-to-list 'load-path "~/.source/emacs-pcre/")
 
 (require 'package)
 (setq use-package-always-ensure t)
@@ -41,17 +42,11 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages
-   '(avy buffer-terminator cape clojure-ts-mode corfu cursor-undo daemons docker
-         dockerfile-mode eat embark-consult envrc eshell-syntax-highlighting
-         exec-path-from-shell f fish-completion flymake-ansible-lint
-         flymake-hadolint flymake-shellcheck go-mode goto-chg haskell-mode hydra
-         lua-mode magit marginalia meow-tree-sitter multiple-cursors nix-mode
-         orderless org-appear org-drill raku-mode symbol-overlay-mc systemd
-         tempel-collection terraform-mode transpose-frame treesit-auto undo-tree
-         vertico wgrep yaml-mode zoxide))
+ '(package-selected-packages nil)
  '(package-vc-selected-packages
-   '((eat :url "https://github.com/kephale/emacs-eat")
+   '((pcre :url "https://github.com/syohex/emacs-pcre")
+     (hop :url "https://github.com/Animeshz/hop.el")
+     (eat :url "https://github.com/kephale/emacs-eat")
      (zoxide :url "https://gitlab.com/Vonfry/zoxide.el")
      (fish-completion :url
                       "https://github.com/LemonBreezes/emacs-fish-completion.git"))))

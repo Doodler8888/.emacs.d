@@ -37,10 +37,6 @@
 (advice-add 'meow-next :after #'my/reset-prefix-arg)
 (advice-add 'meow-prev :after #'my/reset-prefix-arg)
 
-;; Delete the 'window' option for selection
-(setq meow-char-thing-table (assq-delete-all ?\. meow-char-thing-table))
-(setq meow-char-thing-table (assq-delete-all ?w meow-char-thing-table))
-
 ;; For number hints to work in org mode
 (setq meow-expand-exclude-mode-list 
       (remove 'org-mode meow-expand-exclude-mode-list))
@@ -321,6 +317,65 @@ Adds spaces when using right brackets."
   (interactive "p\ncTill backward:")
   (meow-till (- arg) ch))
 
+(defun select-inside-quotes ()
+  "Select text inside the closest set of double or single quotes."
+  (interactive)
+  (let ((syntax-string (string (char-syntax (following-char)))))
+    ;; First try to find quotes around point
+    (cond
+     ;; If we're already inside quotes, select the content
+     ((string= syntax-string "\"")
+      (let ((start (save-excursion
+                    (skip-syntax-backward "\"")
+                    (point)))
+            (end (save-excursion
+                  (skip-syntax-forward "\"")
+                  (point))))
+        (goto-char start)
+        (forward-char 1)
+        (push-mark (- end 1))
+        (activate-mark)))
+     ;; Otherwise, search for the nearest quotes
+     (t
+      (let* ((start-dquote (save-excursion
+                            (search-backward "\"" nil t)))
+             (end-dquote (when start-dquote
+                          (save-excursion
+                            (goto-char start-dquote)
+                            (forward-char 1)
+                            (search-forward "\"" nil t))))
+             (start-squote (save-excursion
+                           (search-backward "'" nil t)))
+             (end-squote (when start-squote
+                          (save-excursion
+                            (goto-char start-squote)
+                            (forward-char 1)
+                            (search-forward "'" nil t)))))
+        (cond
+         ;; If we found both types, pick the closer one
+         ((and start-dquote start-squote)
+          (if (> start-dquote start-squote)
+              (progn
+                (goto-char (1+ start-dquote))
+                (push-mark (1- end-dquote))
+                (activate-mark))
+            (goto-char (1+ start-squote))
+            (push-mark (1- end-squote))
+            (activate-mark)))
+         ;; Handle double quotes only
+         (start-dquote
+          (goto-char (1+ start-dquote))
+          (push-mark (1- end-dquote))
+          (activate-mark))
+         ;; Handle single quotes only
+         (start-squote
+          (goto-char (1+ start-squote))
+          (push-mark (1- end-squote))
+          (activate-mark))
+         ;; No quotes found
+         (t
+          (message "No quotes found"))))))))
+
 (defun meow-find-and-select-inner (n ch)
   "Find the next N occurrence of CH and select its inner content within current line only.
 If no forward match is found, search backward."
@@ -386,6 +441,94 @@ If no forward match is found, search backward."
                 (backward-char))
             (meow-inner-of-thing thing-char))))))))
 
+(defun meow-find-and-select-outer (n ch)
+  "Find the next N occurrence of CH and select its outer content within current line only.
+If no forward match is found, search backward."
+  (interactive "p\ncFind and select outer:")
+  (let* ((case-fold-search nil)
+         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
+         (line-start (line-beginning-position))
+         (line-end (line-end-position))
+         (pos (point))
+         forward-pos
+         backward-pos
+         (pair-char (cond
+                     ((eq ch ?\() ?\))
+                     ((eq ch ?\)) ?\()
+                     ((eq ch ?\[) ?\])
+                     ((eq ch ?\]) ?\[)
+                     ((eq ch ?\{) ?\})
+                     ((eq ch ?\}) ?\{)
+                     ((memq ch '(?' ?\" ?`)) ch)
+                     (t nil))))
+    ;; Try forward search first
+    (save-excursion
+      (setq forward-pos (search-forward ch-str line-end t n)))
+    
+    ;; If forward search fails, try backward search
+    (when (not forward-pos)
+      (save-excursion
+        (setq backward-pos (search-backward ch-str line-start t n))))
+    
+    (cond
+     ((not (or forward-pos backward-pos))
+      (message "char %s not found in current line" ch-str))
+     (forward-pos
+      (goto-char forward-pos)
+      (if (memq ch '(?' ?\" ?`))
+          (let ((end-pos (save-excursion
+                           (when (search-forward ch-str line-end t)
+                             (point)))))
+            (if end-pos
+                (progn
+                  (set-mark (1- forward-pos))
+                  (goto-char end-pos))
+              (message "No closing %s found in current line" ch-str)))
+        (when pair-char
+          (if (memq ch '(?\) ?\] ?\}))
+              (progn
+                (set-mark (point))
+                (condition-case nil
+                    (backward-sexp)
+                  (scan-error (goto-char line-start)))
+                (when (< (point) line-start)
+                  (goto-char line-start)))
+            (progn
+              (backward-char)
+              (set-mark (point))
+              (condition-case nil
+                  (forward-sexp)
+                (scan-error (goto-char line-end)))
+              (when (> (point) line-end)
+                (goto-char line-end)))))))
+     (backward-pos
+      (goto-char backward-pos)
+      (if (memq ch '(?' ?\" ?`))
+          (let ((start-pos (save-excursion
+                             (when (search-backward ch-str line-start t)
+                               (point)))))
+            (if start-pos
+                (progn
+                  (set-mark (1+ backward-pos))
+                  (goto-char start-pos))
+              (message "No opening %s found in current line" ch-str)))
+        (when pair-char
+          (if (memq ch '(?\) ?\] ?\}))
+              (progn
+                (forward-char)
+                (set-mark (point))
+                (condition-case nil
+                    (backward-sexp)
+                  (scan-error (goto-char line-start)))
+                (when (< (point) line-start)
+                  (goto-char line-start)))
+            (progn
+              (set-mark (point))
+              (condition-case nil
+                  (forward-sexp)
+                (scan-error (goto-char line-end)))
+              (when (> (point) line-end)
+                (goto-char line-end))))))))))
 
 (defun meow--parse-inside-whitespace (inner)
   "Parse the bounds for inside whitespace selection."
@@ -563,7 +706,82 @@ If no forward match is found, search backward."
                        (point))))
       (cons outer-start outer-end))))
 
+(defun meow--parse-inside-quotes (inner)
+  "Parse the bounds for inside quotes selection."
+  (save-excursion
+    (let* ((line-start (line-beginning-position))
+           (line-end (line-end-position))
+           (start-dquote (save-excursion
+                         (search-backward "\"" line-start t)))
+           (end-dquote (when start-dquote
+                        (save-excursion
+                          (goto-char start-dquote)
+                          (forward-char 1)
+                          (search-forward "\"" line-end t))))
+           (start-squote (save-excursion
+                         (search-backward "'" line-start t)))
+           (end-squote (when start-squote
+                        (save-excursion
+                          (goto-char start-squote)
+                          (forward-char 1)
+                          (search-forward "'" line-end t)))))
+      (cond
+       ;; If we found both types, pick the closer one
+       ((and start-dquote end-dquote start-squote end-squote)
+        (if (> start-dquote start-squote)
+            (cons (1+ start-dquote) (1- end-dquote))
+          (cons (1+ start-squote) (1- end-squote))))
+       ;; Handle double quotes only
+       ((and start-dquote end-dquote)
+        (cons (1+ start-dquote) (1- end-dquote)))
+       ;; Handle single quotes only
+       ((and start-squote end-squote)
+        (cons (1+ start-squote) (1- end-squote)))
+       ;; No quotes found
+       (t nil)))))
+
+(defun meow--parse-outside-quotes (inner)
+  "Parse the bounds for outside quotes selection."
+  (save-excursion
+    (let* ((line-start (line-beginning-position))
+           (line-end (line-end-position))
+           (start-dquote (save-excursion
+                         (search-backward "\"" line-start t)))
+           (end-dquote (when start-dquote
+                        (save-excursion
+                          (goto-char start-dquote)
+                          (forward-char 1)
+                          (search-forward "\"" line-end t))))
+           (start-squote (save-excursion
+                         (search-backward "'" line-start t)))
+           (end-squote (when start-squote
+                        (save-excursion
+                          (goto-char start-squote)
+                          (forward-char 1)
+                          (search-forward "'" line-end t)))))
+      (cond
+       ;; If we found both types, pick the closer one
+       ((and start-dquote end-dquote start-squote end-squote)
+        (if (> start-dquote start-squote)
+            (cons start-dquote end-dquote)
+          (cons start-squote end-squote)))
+       ;; Handle double quotes only
+       ((and start-dquote end-dquote)
+        (cons start-dquote end-dquote))
+       ;; Handle single quotes only
+       ((and start-squote end-squote)
+        (cons start-squote end-squote))
+       ;; No quotes found
+       (t nil)))))
+
+;; Delete the 'window' option for selection
+(setq meow-char-thing-table (assq-delete-all ?\. meow-char-thing-table))
+(setq meow-char-thing-table (assq-delete-all ?w meow-char-thing-table))
+(setq meow-char-thing-table (assq-delete-all ?g meow-char-thing-table))
+(setq meow-char-thing-table (assq-delete-all ?\' meow-char-thing-table))
+
 (add-to-list 'meow-char-thing-table '(?m . sentence))
+(add-to-list 'meow-char-thing-table '(?g . string))
 ;; (add-to-list 'meow-char-thing-table '(?\. . my-sentence))
 (add-to-list 'meow-char-thing-table '(?w . whitespace))
 (add-to-list 'meow-char-thing-table '(?/ . comment))
@@ -574,6 +792,7 @@ If no forward match is found, search backward."
                ;; ((eq ch ?\.) (meow--parse-inside-sentence t))
                ((eq ch ?m) (meow--parse-inside-sentence t))
                ((eq ch ?w) (meow--parse-inside-whitespace t))
+               ((eq ch ?g) (meow--parse-inside-quotes t))
                ((eq ch ?/) (meow--parse-inside-comment t))
                (t (funcall orig-fun ch)))))
 
@@ -582,6 +801,7 @@ If no forward match is found, search backward."
               (cond
                ((eq ch ?w) (meow--parse-outside-whitespace t))
                ((eq ch ?m) (meow--parse-outside-sentence t))
+               ((eq ch ?g) (meow--parse-outside-quotes t))
                ((eq ch ?/) (meow--parse-outside-comment t))
                (t (funcall orig-fun ch)))))
 
@@ -628,24 +848,6 @@ If no forward match is found, search backward."
         (if outer
             (cons start end)
           (cons (1+ start) (1- end)))))))
-
-(add-to-list 'meow-char-thing-table '(?' . single-quote))
-
-(advice-add 'meow--parse-inner-of-thing-char :around
-            (lambda (orig-fun ch)
-              (cond
-               ((eq ch ?w)
-                (meow--parse-inside-whitespace t))
-               ((eq ch ?')
-                (meow--parse-single-quote nil))
-               (t
-                (funcall orig-fun ch)))))
-
-(advice-add 'meow--parse-bounds-of-thing-char :around
-            (lambda (orig-fun ch)
-              (if (eq ch ?')
-                  (meow--parse-single-quote t)
-                (funcall orig-fun ch))))
 
 (defun select-inside-single-quote ()
   "Select the text inside single quotes."
@@ -843,9 +1045,10 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (meow-insert))
 
 (defun my/generic-append ()
-  "Like Vim's append: move forward one character then enter insert mode."
+  "Like Vim's append: move forward one character then enter insert mode, without crossing lines."
   (interactive)
-  (forward-char)
+  (unless (eolp)
+    (forward-char))
   (meow-insert))
 
 (defun my/meow-append ()
@@ -952,10 +1155,11 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
        
        ;; Handle M-{ (backward-paragraph)
        ((eq motion-cmd 'backward-paragraph)
-        (cons (progn
-                (backward-paragraph count)
-                (line-beginning-position))
-              (line-end-position)))
+        (let ((start (save-excursion
+                       (backward-paragraph count)
+                       (line-beginning-position)))
+              (end (line-end-position))) ; Ensure the current line is included
+          (cons start end)))
 
        ;; Handle M-} (forward-paragraph)
        ((eq motion-cmd 'forward-paragraph)
@@ -966,10 +1170,11 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
 
        ;; Handle C-M-a (beginning-of-defun)
        ((eq motion-cmd 'beginning-of-defun)
-        (cons (progn
-                (beginning-of-defun count)
-                (line-beginning-position))
-              (line-end-position)))
+        (let ((start (save-excursion
+                       (beginning-of-defun count)
+                       (line-beginning-position)))
+              (end (line-end-position))) ; Include the current line
+          (cons start end)))
 
        ;; Handle C-M-e (end-of-defun)
        ((eq motion-cmd 'end-of-defun)

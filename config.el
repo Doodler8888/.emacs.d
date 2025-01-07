@@ -223,9 +223,14 @@
 (add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
 
 (defun my-disable-auto-save-for-scratch ()
-(when (string= (buffer-name) "*scratch*")
-  (auto-save-mode -1)))
-(add-hook 'lisp-interaction-mode-hook 'my-disable-auto-save-for-scratch)
+  "Ensure auto-save is disabled in the *scratch* buffer."
+  (when (string= (buffer-name) "*scratch*")
+    (auto-save-mode -1)))
+
+(add-hook 'after-change-major-mode-hook
+          (lambda ()
+            (enable-auto-save-for-prog-and-text)
+            (my-disable-auto-save-for-scratch)))
 
 ;; (defun disable-auto-save-for-eshell ()
 ;;   "Disable auto-save for eshell buffers."
@@ -336,29 +341,9 @@
 
 (add-hook 'kill-emacs-hook #'my-tramp-cleanup)
 
-;; Save unexuted minibuffer input
-
-(defvar my-last-unexecuted-minibuffer-input nil
-  "Stores the last unexecuted minibuffer input.")
-
-(defun my-save-unexecuted-minibuffer-input ()
-  "Save the current minibuffer input if it's not empty."
-  (let ((input (minibuffer-contents)))
-    (when (and (not (string-empty-p input))
-               (not (eq input my-last-unexecuted-minibuffer-input)))
-      (setq my-last-unexecuted-minibuffer-input input))))
-
-(add-hook 'minibuffer-exit-hook #'my-save-unexecuted-minibuffer-input)
-
-(defun my-insert-last-unexecuted-minibuffer-input ()
-  "Insert the last unexecuted minibuffer input at point."
-  (interactive)
-  (when my-last-unexecuted-minibuffer-input
-    (insert my-last-unexecuted-minibuffer-input)))
-
-;; Bind it to C-r in minibuffer-local-map
-(define-key minibuffer-local-map (kbd "C-r") #'my-insert-last-unexecuted-minibuffer-input)
-
+;; I haven't tried them yet
+(setq isearch-lazy-count t)
+(setq isearch-lazy-highlight t)
 
 ;; Cursor
 
@@ -1029,19 +1014,48 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (defvar my/vertico-face-remap nil "Cookie for face remapping.")
 
+;; (defun my/vertico-handle-cmdline-face (&rest _)
+;;   "Toggle vertico-current face based on index."
+;;   (when (bound-and-true-p vertico--index)
+;;     (if (= vertico--index -1)
+;;         (when (null my/vertico-face-remap)
+;;           (setq my/vertico-face-remap
+;;                 (face-remap-add-relative 'vertico-current 'default)))
+;;       (when my/vertico-face-remap
+;;         (face-remap-remove-relative my/vertico-face-remap)
+;;         (setq my/vertico-face-remap nil)))))
+
+;; (advice-add 'vertico--exhibit :after #'my/vertico-handle-cmdline-face)
+
 (defun my/vertico-handle-cmdline-face (&rest _)
-  "Toggle vertico-current face based on index."
-  (when (bound-and-true-p vertico--index)
-    (if (= vertico--index -1)
-        (when (null my/vertico-face-remap)
-          (setq my/vertico-face-remap
-                (face-remap-add-relative 'vertico-current 'default)))
-      (when my/vertico-face-remap
-        (face-remap-remove-relative my/vertico-face-remap)
-        (setq my/vertico-face-remap nil)))))
+  "Toggle vertico-current face based on index.
+Prevents highlighting of the minibuffer command line itself."
+  (when (and (bound-and-true-p vertico--index)
+             (minibufferp))  ; Ensure we're in minibuffer
+    (cond
+     ;; Case 1: At command line (index -1) but no face remap active
+     ((and (= vertico--index -1)
+           (null my/vertico-face-remap))
+      (setq my/vertico-face-remap
+            (face-remap-add-relative 'vertico-current 'default)))
 
+     ;; Case 2: Not at command line but face remap still active
+     ((and (/= vertico--index -1)
+           my/vertico-face-remap)
+      (face-remap-remove-relative my/vertico-face-remap)
+      (setq my/vertico-face-remap nil)))))
+
+;; Clean up face remap when exiting minibuffer
+(defun my/vertico-cleanup-face-remap ()
+  "Clean up face remapping when exiting minibuffer."
+  (when (and (minibufferp)
+             my/vertico-face-remap)
+    (face-remap-remove-relative my/vertico-face-remap)
+    (setq my/vertico-face-remap nil)))
+
+;; Add our advice and hooks
 (advice-add 'vertico--exhibit :after #'my/vertico-handle-cmdline-face)
-
+(add-hook 'minibuffer-exit-hook #'my/vertico-cleanup-face-remap)
 
 (use-package marginalia
   :ensure t
@@ -1582,26 +1596,26 @@ If an eshell buffer for the directory already exists, switch to it."
   :config
   (envrc-global-mode))
 
-;; Flymake
+;; ;; Flymake
 
-;; (setq flymake-show-diagnostics-at-end-of-line t)
+;; ;; (setq flymake-show-diagnostics-at-end-of-line t)
 
-(use-package flymake-ansible-lint
-  :hook (((yaml-ts-mode yaml-mode) . flymake-ansible-lint-setup)
-         ((yaml-ts-mode yaml-mode) . flymake-mode)))
+;; (use-package flymake-ansible-lint
+;;   :hook (((yaml-ts-mode yaml-mode) . flymake-ansible-lint-setup)
+;;          ((yaml-ts-mode yaml-mode) . flymake-mode)))
 
-;; (defun enable-flymake-mode ()
-;;   "Enable flymake-mode in dockerfile-mode."
-;;   (if (string-equal major-mode "dockerfile-mode")
-;;       (flymake-mode 1)))
+;; ;; (defun enable-flymake-mode ()
+;; ;;   "Enable flymake-mode in dockerfile-mode."
+;; ;;   (if (string-equal major-mode "dockerfile-mode")
+;; ;;       (flymake-mode 1)))
 
-;; ;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
-;; (add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
+;; ;; ;;   ;; Add the hook to enable flymake-mode when entering dockerfile-mode
+;; ;; (add-hook 'dockerfile-mode-hook 'enable-flymake-mode)
 
-(use-package flymake-hadolint
-  :ensure t)
+;; (use-package flymake-hadolint
+;;   :ensure t)
 
-(add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
+;; (add-hook 'dockerfile-mode-hook #'flymake-hadolint-setup)
 
 ;; If i need to run hadolint with dockerfile-ts-mode
 ;; (defun my/dockerfile-ts-mode-setup ()
@@ -1616,11 +1630,11 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; ;; Optional: Ensure flymake is enabled
 ;; (add-hook 'dockerfile-ts-mode-hook 'flymake-mode)
 
-(use-package flymake-shellcheck
-  :ensure t
-  :commands flymake-shellcheck-load
-  :init
-  (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
+;; (use-package flymake-shellcheck
+;;   :ensure t
+;;   :commands flymake-shellcheck-load
+;;   :init
+;;   (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
 
 
 ;; Modes
@@ -1685,17 +1699,6 @@ If an eshell buffer for the directory already exists, switch to it."
     (setq compile-command (concat loc ansiblelint_command buffer-file-name)))
   )
 (add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
-
-;; (use-package markdown-mode
-;;   :ensure t
-;;   :mode ("README\\.md\\'" . gfm-mode)
-;;   :init (setq markdown-command "multimarkdown")
-;;   :bind (:map markdown-mode-map
-;;         ("C-c C-e" . markdown-do)))
-
-(add-to-list 'auto-mode-alist '("\\.hs\\'" . haskell-mode))
-(add-to-list 'auto-mode-alist '("\\.hls\\'" . haskell-mode))
-(add-to-list 'auto-mode-alist '("\\.cabal\\'" . haskell-cabal-mode))
 
 
 ;; ;; Flycheck
@@ -1811,6 +1814,21 @@ If an eshell buffer for the directory already exists, switch to it."
 (setq org-yank-image-save-method "~/.secret_dotfiles/pictures/org/")
 
 
+;; A code that potentially can help me to update incorrect image links, but i
+;; haven't tried it.
+(defun update-image-links (old-dir new-dir)
+  (interactive "DEnter old directory: \nDEnter new directory: ")
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "file:\\([^]]+\\)" nil t)
+      (let* ((old-path (match-string 1))
+             (new-path (replace-regexp-in-string
+                       (regexp-quote old-dir)
+                       new-dir
+                       old-path)))
+        (replace-match (concat "file:" new-path))))))
+
+
 ;; Prevent org-meta-return from folding images
 (defun my/preserve-images-advice (orig-fun &rest args)
   "Preserve inline image display when inserting new items."
@@ -1920,7 +1938,6 @@ Otherwise, create a same-level heading (M-RET)."
 (require 'org-tempo)
 (add-to-list 'org-structure-template-alist '("sb" . "src bash-ts"))
 (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
-(add-to-list 'org-structure-template-alist '("sr" . "src raku"))
 (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
 (add-to-list 'org-structure-template-alist '("st" . "src text"))
 (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
@@ -2263,6 +2280,11 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (find-file "~/.config"))
 
+(defun tmux ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/tmux/.tmux.conf"))
+
 (defun evil ()
   "Open a specific file."
   (interactive)
@@ -2276,7 +2298,7 @@ Otherwise, create a same-level heading (M-RET)."
 (defun todo ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.secret_dotfiles/org/emacs/todo/todo.org"))
+  (find-file "~/.secret_dotfiles/org/emacs/todo/todo-emacs.org"))
 
 (defun templates ()
   "Open a specific file."
@@ -2288,3 +2310,38 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
+
+;; (use-package icomplete
+;;   :bind (:map icomplete-minibuffer-map
+;;               ("C-n" . icomplete-forward-completions)
+;;               ("C-p" . icomplete-backward-completions)
+;;               ("M-RET" . icomplete-fido-exit)
+;;               ;; ("C-v" . icomplete-vertical-toggle)
+;;               ("RET" . icomplete-force-complete-and-exit))
+;;   :hook
+;;   (after-init . (lambda ()
+;;                   (fido-mode -1)
+;;                   (icomplete-mode 1)
+;;                   ;; (icomplete-vertical-mode 1)
+;;                   ))
+;;   :config
+;;   ;; (setq tab-always-indent 'complete)  ;; Starts completion with TAB
+;;   (setq icomplete-delay-completions-threshold 0)
+;;   (setq icomplete-compute-delay 0)
+;;   (setq icomplete-show-matches-on-no-input t)
+;;   ;; (setq icomplete-hide-common-prefix nil)
+;;   (setq icomplete-prospects-height 10)
+;;   ;; (setq icomplete-separator " . ")
+;;   ;; (setq icomplete-with-completion-tables t)
+;;   ;; (setq icomplete-in-buffer t)
+;;   (setq icomplete-max-delay-chars 0)
+;;   (setq icomplete-scroll t))
+  ;; (advice-add 'completion-at-point
+  ;;             :after #'minibuffer-hide-completions))
+
+
+;; ;; Highlight Trailing Whitespace
+;; (setq-default show-trailing-whitespace t)
+;; (add-hook 'prog-mode-hook
+;;           (lambda () (font-lock-add-keywords nil '(("\\s-+$" 0 'trailing-whitespace)))))

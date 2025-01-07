@@ -9,10 +9,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (my-bind-keys "C-c "
   '(
     ;; ("ff" . project-find-file)
+    
     ("ff" . project-find-file-all)
     ("fd" . project-find-dir)
     ("fb" . ido-switch-buffer)
-    ("fy" my/copy-kill-ring-to-clipboard)
+    ("fy" . my/copy-kill-ring-to-clipboard)
     ;; ("ff" . ivy-fzf-project)
     ;; ("fh" . ivy-fzf-home)
     ;; ("fc" . ivy-fzf-current-directory)
@@ -67,6 +68,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("m" . toggle-messages-buffer)
 
+    ("cc" . Cp)
+
     ("uu" . tramp-revert-buffer-with-sudo)
     ("ud" . tramp-revert-buffer-with-doas)
     ("ue" . my-tramp-cleanup)
@@ -111,42 +114,53 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
 (global-set-key (kbd "C-x 2") 'winner-undo)
 (define-key occur-mode-map (kbd "C-x C-q") 'occur-edit-mode)
+(define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy)
 
-(defun my/setup-global-window-keys ()
-  "Set up global window management keybindings."
-  (define-prefix-command 'my-window-map)
-  (global-set-key (kbd "C-w") 'my-window-map)
+;; Can't use it, because i have C-w binding for the insert mode
+;; (defun my/setup-global-window-keys ()
+;;   "Set up global window management keybindings."
+;;   (define-prefix-command 'my-window-map)
+;;   (global-set-key (kbd "C-w") 'my-window-map)
 
-  (global-set-key (kbd "C-w C-l") 'windmove-right)
-  (global-set-key (kbd "C-w C-h") 'windmove-left)
-  (global-set-key (kbd "C-w C-k") 'windmove-up)
-  (global-set-key (kbd "C-w C-j") 'windmove-down)
+;;   (global-set-key (kbd "C-w C-l") 'windmove-right)
+;;   (global-set-key (kbd "C-w C-h") 'windmove-left)
+;;   (global-set-key (kbd "C-w C-k") 'windmove-up)
+;;   (global-set-key (kbd "C-w C-j") 'windmove-down)
 
-  (global-set-key (kbd "C-w C-s") 'split-window-below)
-  (global-set-key (kbd "C-w C-v") 'split-window-right)
-  (global-set-key (kbd "C-w C-c") 'delete-window)
-  (global-set-key (kbd "C-w c") 'delete-window)
-  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
+;;   (global-set-key (kbd "C-w C-s") 'split-window-below)
+;;   (global-set-key (kbd "C-w C-v") 'split-window-right)
+;;   (global-set-key (kbd "C-w C-c") 'delete-window)
+;;   (global-set-key (kbd "C-w c") 'delete-window)
+;;   (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
-;; Call the setup function
-(my/setup-global-window-keys)
+;; ;; Call the setup function
+;; (my/setup-global-window-keys)
 
 (defun my/setup-window-keys (mode-map)
   "Set up window management keybindings for the given MODE-MAP."
   (define-prefix-command 'my-window-map)
   (define-key mode-map (kbd "C-w") 'my-window-map)
 
+  ;; Move between windows
   (define-key mode-map (kbd "C-w C-l") 'windmove-right)
   (define-key mode-map (kbd "C-w C-h") 'windmove-left)
   (define-key mode-map (kbd "C-w C-k") 'windmove-up)
   (define-key mode-map (kbd "C-w C-j") 'windmove-down)
 
+  ;; Split and delete windows
   (define-key mode-map (kbd "C-w C-s") 'split-window-below)
   (define-key mode-map (kbd "C-w C-v") 'split-window-right)
   (define-key mode-map (kbd "C-w C-c") 'delete-window)
   (define-key mode-map (kbd "C-w c") 'delete-window)
-  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
+  ;; Swap windows
+  (define-key mode-map (kbd "C-w H") 'windmove-swap-states-left)
+  (define-key mode-map (kbd "C-w J") 'windmove-swap-states-down)
+  (define-key mode-map (kbd "C-w K") 'windmove-swap-states-up)
+  (define-key mode-map (kbd "C-w L") 'windmove-swap-states-right)
+
+  ;; Select windows by number
+  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
 (with-eval-after-load 'magit
   (my/setup-window-keys magit-mode-map))
@@ -154,7 +168,11 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (my/setup-window-keys dired-mode-map))
 (with-eval-after-load 'daemons
   (my/setup-window-keys daemons-mode-map))
-
+;; Added through the hook, because the compilation package probably loads
+;; dynamically in some way
+(add-hook 'compilation-mode-hook
+          (lambda ()
+            (my/setup-window-keys compilation-mode-map)))
 
 ;; Without the condition i might get an error about an undefined binding
 (with-eval-after-load 'eshell
