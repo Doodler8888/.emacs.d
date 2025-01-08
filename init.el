@@ -1,7 +1,6 @@
 ;; -*- lexical-binding: t -*-
 
 (add-to-list 'load-path "~/.source/org-mode/lisp")
-(add-to-list 'load-path "~/.source/emacs-pcre/")
 
 (require 'package)
 (setq use-package-always-ensure t)
@@ -10,7 +9,7 @@
 (package-initialize)
 
 (unless (package-installed-p 'use-package)
-  (package-refresh-contents)
+  (pcakage-refresh-contents)
   (package-install 'use-package))
 
 (eval-when-compile
@@ -44,11 +43,7 @@
  '(auth-source-save-behavior nil)
  '(package-selected-packages nil)
  '(package-vc-selected-packages
-   '((pcre :url "https://github.com/syohex/emacs-pcre")
-     (hop :url "https://github.com/Animeshz/hop.el")
-     (eat :url "https://github.com/kephale/emacs-eat")
-     (zoxide :url "https://gitlab.com/Vonfry/zoxide.el")
-     (fish-completion :url
+   '((fish-completion :url
                       "https://github.com/LemonBreezes/emacs-fish-completion.git"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

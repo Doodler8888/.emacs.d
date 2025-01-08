@@ -211,26 +211,18 @@
 
 ;; First, disable auto-save globally
 (setq auto-save-default nil)
+(auto-save-mode -1)
 
 ;; Then enable only for programming and text modes
 (defun enable-auto-save-for-prog-and-text ()
-  "Enable auto-save for programming and text modes."
-  (when (or (derived-mode-p 'prog-mode)
+  "Enable auto-save for programming and text modes, except lisp-interaction-mode."
+  (when (or (and (derived-mode-p 'prog-mode)
+                 (not (derived-mode-p 'lisp-interaction-mode)))
             (derived-mode-p 'text-mode))
     (setq-local auto-save-default t)
     (auto-save-mode 1)))
 
 (add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
-
-(defun my-disable-auto-save-for-scratch ()
-  "Ensure auto-save is disabled in the *scratch* buffer."
-  (when (string= (buffer-name) "*scratch*")
-    (auto-save-mode -1)))
-
-(add-hook 'after-change-major-mode-hook
-          (lambda ()
-            (enable-auto-save-for-prog-and-text)
-            (my-disable-auto-save-for-scratch)))
 
 ;; (defun disable-auto-save-for-eshell ()
 ;;   "Disable auto-save for eshell buffers."
@@ -1125,6 +1117,14 @@ Prevents highlighting of the minibuffer command line itself."
 (use-package embark-consult
   :ensure t)
 
+(defun consult-line-visible-windows ()
+  "Search for a matching line in all buffers displayed in current windows."
+  (interactive)
+  (let* ((buffers (delete-dups (mapcar #'window-buffer (window-list))))
+         (names (mapcar #'buffer-name buffers)))
+    (consult-line-multi 
+     `(:predicate ,(lambda (buf) (member (buffer-name buf) names))))))
+
 (defun consult-line-visible-region ()
   "Search for a matching line only in the visible portion of the current buffer."
   (interactive)
@@ -1773,7 +1773,7 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; General
 
 
-(defvar browse-url-default-browser-executable "/usr/bin/vivaldi"
+(defvar browse-url-default-browser-executable "/usr/bin/vivaldi-stable"
   "Path to the default browser executable.")
 
 (defun my/browse-url-default-browser (url &rest _args)

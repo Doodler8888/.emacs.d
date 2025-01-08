@@ -1626,6 +1626,30 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key daemons-mode-map (kbd "?") 'my/show-daemon-bindings))
 
+
+;; Conciliate meow with the rectangle mode
+(define-minor-mode my-rectangle-override-mode
+  "Override Meow keybindings in `rectangle-mark-mode`."
+  :lighter " Rect-Override"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "e") 'forward-word)
+            (define-key map (kbd "b") 'backward-word)
+            (define-key map (kbd "i") 'string-rectangle)
+            map))
+
+(defun my-toggle-rectangle-overrides ()
+  "Enable or disable overrides based on rectangle-mark-mode."
+  (if rectangle-mark-mode
+      (progn
+        (meow-global-mode -1)
+        (my-rectangle-override-mode 1))
+    (progn
+      (meow-global-mode 1)
+      (my-rectangle-override-mode -1))))
+
+(add-hook 'rectangle-mark-mode-hook #'my-toggle-rectangle-overrides)
+
+
 (setq meow-paren-keymap (make-keymap))
 (meow-define-state paren
   "meow state for interacting with smartparens"

@@ -101,7 +101,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-s C-l") 'load-desktop-with-name)
 ;; (global-set-key (kbd "C-s C-s") 'my-occur-like)
 (global-set-key (kbd "C-s C-s") 'consult-line)
-(global-set-key (kbd "C-s C-c") 'consult-line-visible-region)
+(global-set-key (kbd "C-s C-w") 'consult-line-visible-region)
+(global-set-key (kbd "C-s C-t") 'consult-line-visible-windows)
+(global-set-key (kbd "C-s C-t") 'consult-line-multi)
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
 ;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
@@ -115,6 +117,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-x 2") 'winner-undo)
 (define-key occur-mode-map (kbd "C-x C-q") 'occur-edit-mode)
 (define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy)
+(global-set-key (kbd "C-x C-o") 'so)
 
 ;; Can't use it, because i have C-w binding for the insert mode
 ;; (defun my/setup-global-window-keys ()
