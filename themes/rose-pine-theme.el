@@ -50,6 +50,8 @@
    `(fringe ((,class (:foreground ,rose-pine-blendedbg :foreground ,rose-pine-blendedbg))))
 
    ;; Font lock
+   
+   ;; `(show-paren-match ((,class (:foreground ,rose-pine-fg :weight bold :background ,rose-pine-subtle))))
    `(font-lock-builtin-face ((,class (:foreground ,rose-pine-love))))
    ;; `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
    `(font-lock-function-name-face ((,class (:foreground ,rose-pine-rose))))

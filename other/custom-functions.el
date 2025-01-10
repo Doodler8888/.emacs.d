@@ -418,3 +418,19 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
 
 (define-key prog-mode-map (kbd "C-<backspace>") #'delete-two-chars-back)
 
+
+(defun dired-goto-last-line ()
+  "Move to the last line of the Dired buffer, preserving the current column position."
+  (interactive)
+  (let ((current-col (current-column)))
+    (goto-char (point-max))       ;; Move to the end of the buffer
+    (forward-line -1)            ;; Move to the last line
+    (move-to-column current-col))) ;; Restore the column position
+
+
+(defun compile-last ()
+  "Run the last compile command stored in `compile-command`."
+  (interactive)
+  (if compile-command
+      (compile compile-command)
+    (message "No previous compile command found.")))

@@ -209,47 +209,47 @@
       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
 
-;; First, disable auto-save globally
-(setq auto-save-default nil)
-(auto-save-mode -1)
+;; ;; First, disable auto-save globally
+;; (setq auto-save-default nil)
+;; (auto-save-mode -1)
 
-;; Then enable only for programming and text modes
-(defun enable-auto-save-for-prog-and-text ()
-  "Enable auto-save for programming and text modes, except lisp-interaction-mode."
-  (when (or (and (derived-mode-p 'prog-mode)
-                 (not (derived-mode-p 'lisp-interaction-mode)))
-            (derived-mode-p 'text-mode))
-    (setq-local auto-save-default t)
-    (auto-save-mode 1)))
+;; ;; Then enable only for programming and text modes
+;; (defun enable-auto-save-for-prog-and-text ()
+;;   "Enable auto-save for programming and text modes, except lisp-interaction-mode."
+;;   (when (or (and (derived-mode-p 'prog-mode)
+;;                  (not (derived-mode-p 'lisp-interaction-mode)))
+;;             (derived-mode-p 'text-mode))
+;;     (setq-local auto-save-default t)
+;;     (auto-save-mode 1)))
 
-(add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
+;; (add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
 
-;; (defun disable-auto-save-for-eshell ()
-;;   "Disable auto-save for eshell buffers."
-;;   (when (eq major-mode 'eshell-mode)
-;;     (setq-local auto-save-default nil)))
-;; (add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
+;; ;; (defun disable-auto-save-for-eshell ()
+;; ;;   "Disable auto-save for eshell buffers."
+;; ;;   (when (eq major-mode 'eshell-mode)
+;; ;;     (setq-local auto-save-default nil)))
+;; ;; (add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
 
-;; (defun disable-auto-save-for-messages-buffer ()
-;;   "Disable auto-save for the *Messages* buffer."
-;;   (when (string= (buffer-name) "*Messages*")
-;;     (setq-local auto-save-default nil)
-;;     (auto-save-mode -1)))
-;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
+;; ;; (defun disable-auto-save-for-messages-buffer ()
+;; ;;   "Disable auto-save for the *Messages* buffer."
+;; ;;   (when (string= (buffer-name) "*Messages*")
+;; ;;     (setq-local auto-save-default nil)
+;; ;;     (auto-save-mode -1)))
+;; ;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
 
-;; (defun disable-auto-save-for-non-file-buffers ()
-;;   "Disable auto-save for buffers not associated with a file."
-;;   (unless (buffer-file-name)
-;;     (setq-local auto-save-default nil)
-;;     (auto-save-mode -1)))
-;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
+;; ;; (defun disable-auto-save-for-non-file-buffers ()
+;; ;;   "Disable auto-save for buffers not associated with a file."
+;; ;;   (unless (buffer-file-name)
+;; ;;     (setq-local auto-save-default nil)
+;; ;;     (auto-save-mode -1)))
+;; ;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
 
-;; (defun disable-auto-save-for-ediff ()
-;;   "Disable auto-save for ediff merge buffers."
-;;   (when (string-match-p "\\`ediff" (buffer-name))
-;;     (setq-local auto-save-default nil)
-;;     (auto-save-mode -1)))
-;; (add-hook 'ediff-prepare-buffer-hook #'disable-auto-save-for-ediff)
+;; ;; (defun disable-auto-save-for-ediff ()
+;; ;;   "Disable auto-save for ediff merge buffers."
+;; ;;   (when (string-match-p "\\`ediff" (buffer-name))
+;; ;;     (setq-local auto-save-default nil)
+;; ;;     (auto-save-mode -1)))
+;; ;; (add-hook 'ediff-prepare-buffer-hook #'disable-auto-save-for-ediff)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -260,10 +260,12 @@
 (setq desktop-auto-save-timeout 30)
 (setq desktop-auto-save-timeout nil)
 
-;; (auto-save-mode 1)
-(setq auto-save-interval 1)  ; Auto-save every 1 second
-(setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
-(setq auto-save-no-message t)
+(auto-save-mode -1)
+;; (auto-save-visited-mode 1)
+;; (setq auto-save-visited-interval 30)
+;; (setq auto-save-interval 1)  ; Auto-save every 1 second
+;; (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
+;; (setq auto-save-no-message t)
 
 (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -828,30 +830,27 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
 
-(defun my/dabbrev-capf ()
-  (let* ((bounds (or (bounds-of-thing-at-point 'filename)  ; try filename first
-                     (bounds-of-thing-at-point 'word)))     ; fallback to word
-         (start (if bounds (car bounds) (point)))
-         (end (if bounds (cdr bounds) (point)))
-         (current-word (when bounds (buffer-substring-no-properties start end)))
-         ;; Get all words from current buffer, excluding the exact current word
-         (words (when current-word
-                 (let ((case-fold-search t)
-                       (words-list '()))
-                   (save-excursion
-                     (goto-char (point-min))
-                     (while (re-search-forward (concat "\\<" (regexp-quote current-word) "\\w*") nil t)
-                       (let ((found-word (match-string-no-properties 0)))
-                         ;; Only add if it's not exactly the same as current-word
-                         (unless (string= found-word current-word)
-                           (push found-word words-list)))))
-                   (delete-dups words-list)))))
-    (when current-word
-      (list start
-            end
-            (completion-table-in-turn
-             (lambda (string pred action)
-               (complete-with-action action words string pred)))))))
+;; (defun my/dabbrev-capf ()
+;;   (let* ((bounds (or (bounds-of-thing-at-point 'filename)
+;;                      (bounds-of-thing-at-point 'word)))
+;;          (start (if bounds (car bounds) (point)))
+;;          (end (if bounds (cdr bounds) (point)))
+;;          (current-word (when bounds (buffer-substring-no-properties start end))))
+;;     (when current-word
+;;       (list start
+;;             end
+;;             (completion-table-dynamic
+;;              (lambda (prefix)
+;;                (let ((case-fold-search t)
+;;                      (words-list '()))
+;;                  (save-excursion
+;;                    (goto-char (point-min))
+;;                    (while (re-search-forward (concat "\\<" (regexp-quote prefix) "\\w*") nil t)
+;;                      (let ((found-word (match-string-no-properties 0)))
+;;                        (unless (string= found-word current-word)
+;;                          (push found-word words-list)))))
+;;                  (delete-dups words-list))))))))
+
 
 (use-package cape
   :ensure t
@@ -872,7 +871,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                 (setq-local completion-at-point-functions
                             (list #'tempel-complete  ; or #'tempel-expand
                                   #'cape-file
-                                  #'my/dabbrev-capf)))))
+                                  ;; #'my/dabbrev-capf)))))
+                                  ;; #'dabbrev-capf)))))
+                                  #'cape-dabbrev)))))
 
   ;; For Elisp modes
   (dolist (mode '(emacs-lisp-mode
@@ -1637,6 +1638,69 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;   (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
 
 
+;; Compilation mode
+
+(require 'compile)
+
+(setq display-buffer-alist
+      '(("\\*compilation\\*"
+         (display-buffer-reuse-window display-buffer-pop-up-window)
+         (reusable-frames . visible))))
+
+
+(defun my-keep-compilation-window ()
+  "Prevent the `*compilation*` window from being reused during error navigation."
+  (let ((window (get-buffer-window (compilation-find-buffer))))
+    (when window
+      (set-window-dedicated-p window t))))
+
+(add-hook 'compilation-mode-hook 'my-keep-compilation-window)
+
+
+(add-to-list 'compilation-error-regexp-alist
+             'yaml)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
+             )
+
+; Replace make -k with ansible-lint, with an UTF-8 locale to avoid crashes
+(defun ansible-lint-errors ()
+  (make-local-variable 'compile-command)
+  (let ((ansiblelint_command "ansible-lint ") (loc "LANG=C.UTF-8 "))
+    (setq compile-command (concat loc ansiblelint_command buffer-file-name)))
+  )
+(add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
+
+
+(add-to-list 'compilation-error-regexp-alist 'shellcheck)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(shellcheck
+               "^In \\(.*\\) line \\([0-9]+\\):" ;; Matches "In <file> line <line-number>:"
+               1 2)) ;; 1=file path, 2=line number
+
+(defun shellcheck-errors ()
+  "Set up `compile-command` to use shellcheck for the current buffer."
+  (make-local-variable 'compile-command)
+  (let ((file (buffer-file-name)))
+    (setq default-directory (file-name-directory file))
+    (setq compile-command (concat "LANG=C.UTF-8 shellcheck "
+                                  (shell-quote-argument file)))))
+
+;; Add the hook for shell script mode
+(add-hook 'bash-ts-mode-hook 'shellcheck-errors)
+
+(defun my-compilation-highlight-errors-shellcheck ()
+  "Add custom font-lock rules for highlighting (info), (error), and (warning) in compilation buffers."
+  (font-lock-add-keywords
+   nil
+   '(("^.*\\(\\^--\\|\\^------\\).*\\((info)\\):.*$" . 'compilation-info)
+     ("^.*\\(\\^--\\|\\^------\\).*\\((error)\\):.*$" . 'compilation-error)
+     ("^.*\\(\\^--\\|\\^------\\).*\\((warning)\\):.*$" . 'compilation-warning))))
+
+;; Hook the custom highlighting into `compilation-mode`
+(add-hook 'compilation-mode-hook 'my-compilation-highlight-errors-shellcheck)
+
+
 ;; Modes
 
 (use-package raku-mode
@@ -1684,22 +1748,6 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; (use-package ansible
 ;;   :config
 ;;   (add-hook 'yaml-ts-mode-hook '(lambda () (ansible 1))))
-
-(require 'compile)
-(add-to-list 'compilation-error-regexp-alist
-             'yaml)
-(add-to-list 'compilation-error-regexp-alist-alist
-             '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
-             )
-
-                                        ; Replace make -k with ansible-lint, with an UTF-8 locale to avoid crashes
-(defun ansible-lint-errors ()
-  (make-local-variable 'compile-command)
-  (let ((ansiblelint_command "ansible-lint ") (loc "LANG=C.UTF-8 "))
-    (setq compile-command (concat loc ansiblelint_command buffer-file-name)))
-  )
-(add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
-
 
 ;; ;; Flycheck
 
@@ -2221,6 +2269,11 @@ Otherwise, create a same-level heading (M-RET)."
   "Open a specific file."
   (interactive)
   (find-file "~/.dotfiles/alacritty/alacritty.toml"))
+
+(defun foot ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/foot/foot.ini"))
 
 (defun zsh ()
   "Open a specific file."

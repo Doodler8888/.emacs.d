@@ -42,6 +42,20 @@
       (remove 'org-mode meow-expand-exclude-mode-list))
 
 
+(defun my-forward-char-with-selection (&optional arg)
+  "Move forward ARG characters, activating the region."
+  (interactive "p")
+  (unless (region-active-p)
+    (set-mark (point)))  ; Start selection if region is not active
+  (forward-char arg))
+
+(defun my-backward-char-with-selection (&optional arg)
+  "Move forward ARG characters, activating the region."
+  (interactive "p")
+  (unless (region-active-p)
+    (set-mark (point)))  ; Start selection if region is not active
+  (backward-char arg))
+
 (defun my/forward-list ()
   "Move forward over a balanced group with mark."
   (interactive)
@@ -1280,11 +1294,20 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
       (kill-new my/last-deleted-text)
       (setq my/last-deleted-text nil))))
 
+;; I found a bug that after using rectangle mode with my current settings,
+;; meow-change stops going into the insert mode.
+(defun my/meow-change ()
+  "Delete the active region and enter `meow-insert` mode."
+  (interactive)
+  (when (region-active-p)
+    (delete-region (region-beginning) (region-end)))
+  (meow-insert))
+
 (defun my/meow-smart-change ()
   "Enhanced change command with Vim-like behavior."
   (interactive)
   (if (region-active-p)
-      (meow-change)
+      (my/meow-change)
     (my/handle-operator 'my/change-operator #'my/change-special-handler)))
 
 (defun my/change-operator (start end)
@@ -1406,6 +1429,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("w" . meow-mark-word)
    '("W" . meow-mark-symbol)
    '("y" . my/meow-smart-save)
+   '("Y" . my/copy-to-end-of-line)
    '("'" . meow-find-and-select-inner)
    '("\"" . meow-find-and-select-outer)
    '("C-y" . my/yank-with-selection)
@@ -1489,9 +1513,9 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("g g" . beginning-of-buffer)
    '("g z" . my/zoxide-switch)
    '("G" . end-of-buffer)
-   '("S s" . surround-region-with-symbol)
-   '("S c" . change-surrounding-symbol)
-   '("S d" . delete-surrounding-symbol)
+   '("s s" . surround-region-with-symbol)
+   '("s c" . change-surrounding-symbol)
+   '("s d" . delete-surrounding-symbol)
    '("h" . meow-left)
    '("H" . meow-left-expand)
    '("i" . meow-insert)
@@ -1520,7 +1544,7 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("r" . my/meow-replace-char)
    '("R" . dot-mode-execute)
    ;; '("s" . meow-kill)
-   '("s" . my/meow-delete-insert)
+   '("z" . my/meow-delete-insert)
    ;; '("S" . meow-kill-whole-line)
    '("u" . meow-undo)
    '("U" . meow-undo-in-selection)
@@ -1555,6 +1579,8 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
    '("C-v" . scroll-down-and-recenter)
    '("C-M-y" . save-and-paste)
    '("C-y" . my/yank-with-selection)
+   '("C-f" . my-forward-char-with-selection)
+   '("C-b" . my-backward-char-with-selection)
    '("=" . my/meow-smart-indent)
    ;; '(":" . execute-extended-command)
    ;; '("C-d" . scroll-half-up-and-recenter)
@@ -1604,7 +1630,8 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
   (define-key dired-mode-map (kbd "g") 'my-dired-g-map)
   (define-key my-dired-g-map (kbd "z") 'zoxide-travel)
   (define-key my-dired-g-map (kbd "g") 'beginning-of-buffer)
-  (define-key dired-mode-map (kbd "G") 'end-of-buffer)
+  ;; (define-key dired-mode-map (kbd "G") 'end-of-buffer)
+  (define-key dired-mode-map (kbd "G") 'dired-goto-last-line)
   (define-key dired-mode-map (kbd "j") 'dired-next-line)
   (define-key dired-mode-map (kbd "k") 'dired-previous-line)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
@@ -1635,6 +1662,8 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
             (define-key map (kbd "e") 'forward-word)
             (define-key map (kbd "b") 'backward-word)
             (define-key map (kbd "i") 'string-rectangle)
+            (define-key map (kbd "j") 'next-line)
+            (define-key map (kbd "k") 'previous-line)
             map))
 
 (defun my-toggle-rectangle-overrides ()
@@ -1695,6 +1724,16 @@ With raw prefix argument (C-u without a number), paste from the kill ring."
             (define-key keymap [remap self-insert-command] #'my/meow-always-c-c-dispatch)
             keymap))
 
+
+;; Meow has an advice that puts emacs into the motion state, but i need the
+;; magit state instead.
+(defun my-wdired-finish-edit-advice (&rest _)
+  "Switch to the appropriate Meow state after exiting wdired."
+  (if (derived-mode-p 'dired-mode)
+      (meow--switch-state 'magit) ;; Switch to magit state for dired
+    (meow--switch-state 'motion))) ;; Default to motion otherwise
+
+(advice-add 'meow--switch-to-motion :around #'my-wdired-finish-edit-advice)
 
 ;; ;; Used for making 'symbol' movements to ignore slashes. But i'm not use i like it.
 ;; (defun my-forward-symbol (&optional arg)

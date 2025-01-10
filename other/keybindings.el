@@ -70,6 +70,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("cc" . Cp)
 
+    ;; ("cn" . next-error)
+    ;; ("cp" . previous-error)
+
     ("uu" . tramp-revert-buffer-with-sudo)
     ("ud" . tramp-revert-buffer-with-doas)
     ("ue" . my-tramp-cleanup)
@@ -118,6 +121,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (define-key occur-mode-map (kbd "C-x C-q") 'occur-edit-mode)
 (define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy)
 (global-set-key (kbd "C-x C-o") 'so)
+(define-key prog-mode-map (kbd "M-n") 'next-error)
+(define-key prog-mode-map (kbd "M-p") 'previous-error)
+(define-key prog-mode-map (kbd "C-x cc") 'compile-last)
 
 ;; Can't use it, because i have C-w binding for the insert mode
 ;; (defun my/setup-global-window-keys ()
