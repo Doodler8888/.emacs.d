@@ -42,6 +42,15 @@
       (remove 'org-mode meow-expand-exclude-mode-list))
 
 
+(defun my/smart-replace ()
+  (interactive)
+  (unless (region-active-p)
+    (call-interactively 'replace-regexp)
+    (call-interactively query-replace)))
+
+(global-set-key (kbd "M-%") 'my/smart-replace)
+
+
 (defun my-forward-char-with-selection (&optional arg)
   "Move forward ARG characters, activating the region."
   (interactive "p")
@@ -936,18 +945,25 @@ If no forward match is found, search backward."
 (defun my/meow-smart-paste (&optional arg)
   "Paste like Vim, handling both line-wise and regular pastes.
 With numeric prefix ARG, paste that many times.
-With raw prefix argument (C-u without a number), paste from the kill ring."
+With raw prefix argument (C-u without a number), paste from the kill ring.
+When pasting over a selection, the replaced text is saved to the kill ring."
   (interactive "P")
   (if (region-active-p)
-      (meow-replace)  ; Just use meow-replace for selections
+      (let ((begin (region-beginning))
+            (end (region-end)))
+        ;; Save the current region's text to kill ring before replacing
+        (kill-ring-save begin end)
+        (delete-region begin end)
+        (let ((text (current-kill 1 t))) ;; Get the text we want to paste (which is now at index 1)
+          (insert text)))
     (let* ((raw-prefix (equal arg '(4)))
            (numeric-prefix (and (integerp arg) (> arg 0)))
            (text (if raw-prefix
                      (current-kill (if (listp last-command-event)
-                                       0
-                                     (mod (- (aref (this-command-keys) 0) ?0)
-                                          kill-ring-max))
-                                   t)
+                                     0
+                                   (mod (- (aref (this-command-keys) 0) ?0)
+                                        kill-ring-max))
+                                 t)
                    (current-kill 0 t)))
            (repeat-count (if numeric-prefix arg 1)))
       (dotimes (_ repeat-count)

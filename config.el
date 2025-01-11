@@ -1513,7 +1513,6 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
                (display-buffer-reuse-window display-buffer-pop-up-window)
                (post-command-select-window . t)))
 
-
 ;; Eshell buffer
 
 (defun open-eshell-in-current-directory ()
@@ -1631,21 +1630,16 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; ;; Optional: Ensure flymake is enabled
 ;; (add-hook 'dockerfile-ts-mode-hook 'flymake-mode)
 
-;; (use-package flymake-shellcheck
-;;   :ensure t
-;;   :commands flymake-shellcheck-load
-;;   :init
-;;   (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
-
 
 ;; Compilation mode
 
 (require 'compile)
 
-(setq display-buffer-alist
-      '(("\\*compilation\\*"
-         (display-buffer-reuse-window display-buffer-pop-up-window)
-         (reusable-frames . visible))))
+;; ;; It makes the moving pointer to the new window functionality to not work.
+;; (setq display-buffer-alist
+;;       '(("\\*compilation\\*"
+;;          (display-buffer-reuse-window display-buffer-pop-up-window)
+;;          (reusable-frames . visible))))
 
 
 (defun my-keep-compilation-window ()
