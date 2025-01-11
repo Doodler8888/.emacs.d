@@ -434,3 +434,12 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (if compile-command
       (compile compile-command)
     (message "No previous compile command found.")))
+
+
+(defun man-function-at-point ()
+  "Look up the man page for the function at point."
+  (interactive)
+  (let ((function (thing-at-point 'symbol t)))
+    (if function
+        (man function)
+      (message "No function at point."))))

@@ -45,7 +45,7 @@
    '(avy buffer-terminator cape clojure-ts-mode corfu docker dockerfile-mode
          embark-consult envrc exec-path-from-shell f fish-completion go-mode
          goto-chg haskell-mode hydra lua-mode magit marginalia meow nix-mode
-         orderless org-appear org-drill raku-mode systemd tempel-collection
+         orderless org-appear org-drill raku-mode tempel-collection
          terraform-mode transpose-frame treesit-auto undo-tree vertico wgrep
          yaml-mode))
  '(package-vc-selected-packages

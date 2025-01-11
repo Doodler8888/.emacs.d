@@ -123,7 +123,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-x C-o") 'so)
 (define-key prog-mode-map (kbd "M-n") 'next-error)
 (define-key prog-mode-map (kbd "M-p") 'previous-error)
-(define-key prog-mode-map (kbd "C-x cc") 'compile-last)
+(define-key prog-mode-map (kbd "C-x cc") 'compile)
+(define-key prog-mode-map (kbd "C-x cl") 'compile-last)
 
 ;; Can't use it, because i have C-w binding for the insert mode
 ;; (defun my/setup-global-window-keys ()

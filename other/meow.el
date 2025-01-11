@@ -942,39 +942,41 @@ If no forward match is found, search backward."
   (copy-whole-line)
   (yank))
 
+
 (defun my/meow-smart-paste (&optional arg)
   "Paste like Vim, handling both line-wise and regular pastes.
 With numeric prefix ARG, paste that many times.
 With raw prefix argument (C-u without a number), paste from the kill ring.
 When pasting over a selection, the replaced text is saved to the kill ring."
   (interactive "P")
-  (if (region-active-p)
-      (let ((begin (region-beginning))
-            (end (region-end)))
-        ;; Save the current region's text to kill ring before replacing
-        (kill-ring-save begin end)
-        (delete-region begin end)
-        (let ((text (current-kill 1 t))) ;; Get the text we want to paste (which is now at index 1)
-          (insert text)))
-    (let* ((raw-prefix (equal arg '(4)))
-           (numeric-prefix (and (integerp arg) (> arg 0)))
-           (text (if raw-prefix
-                     (current-kill (if (listp last-command-event)
-                                     0
-                                   (mod (- (aref (this-command-keys) 0) ?0)
-                                        kill-ring-max))
-                                 t)
-                   (current-kill 0 t)))
-           (repeat-count (if numeric-prefix arg 1)))
-      (dotimes (_ repeat-count)
-        (if (string-suffix-p "\n" text)
-            (progn
-              (forward-line)
-              (beginning-of-line)
-              (insert text)
-              (forward-line -1)
-              (beginning-of-line))
-          (insert text))))))
+  (let* ((raw-prefix (equal arg '(4)))
+         (numeric-prefix (and (integerp arg) (> arg 0)))
+         (repeat-count (if numeric-prefix arg 1))
+         ;; Get system clipboard content if available, otherwise fall back to kill ring
+         (text-to-paste (if raw-prefix
+                           (current-kill (if (listp last-command-event)
+                                           0
+                                         (mod (- (aref (this-command-keys) 0) ?0)
+                                              kill-ring-max))
+                                       t)
+                         (or (gui-get-selection 'CLIPBOARD)
+                             (current-kill 0 t)))))
+    
+    (when (region-active-p)
+      ;; Save the region to kill ring before deleting
+      (kill-ring-save (region-beginning) (region-end))
+      (delete-region (region-beginning) (region-end)))
+    
+    (dotimes (_ repeat-count)
+      (if (string-suffix-p "\n" text-to-paste)
+          (progn
+            (forward-line)
+            (beginning-of-line)
+            (insert text-to-paste)
+            (forward-line -1)
+            (beginning-of-line))
+        (insert text-to-paste)))))
+
 
 ;; ;; Work like in vim
 ;; (defun my/meow-replace-char ()
@@ -1542,7 +1544,9 @@ When pasting over a selection, the replaced text is saved to the kill ring."
    '("j" . meow-next)
    '("J" . meow-next-expand)
    '("k" . meow-prev)
-   '("K" . meow-prev-expand)
+   ;; '("K" . meow-prev-expand)
+   ;; '("K" . eldoc-print-current-symbol-info)
+   '("K" . my-eldoc-print-and-switch)
    '("l" . meow-right)
    '("L" . meow-right-expand)
    '("m" . meow-join)
@@ -1677,6 +1681,9 @@ When pasting over a selection, the replaced text is saved to the kill ring."
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "e") 'forward-word)
             (define-key map (kbd "b") 'backward-word)
+            (define-key map (kbd "l") 'forward-char)
+            (define-key map (kbd "h") 'backward-char)
+            (define-key map (kbd "d") 'backward-delete-char-untabify)
             (define-key map (kbd "i") 'string-rectangle)
             (define-key map (kbd "j") 'next-line)
             (define-key map (kbd "k") 'previous-line)

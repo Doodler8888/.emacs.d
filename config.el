@@ -288,6 +288,13 @@
 (global-auto-revert-mode 1)
 
 (set-default 'truncate-lines t)
+;; List of modes that should have word-wrap enabled
+(dolist (mode '(compilation-mode
+                ;; Add other modes here
+                ))
+  (add-hook (intern (concat (symbol-name mode) "-hook"))
+            (lambda () (setq-local truncate-lines nil))))
+
 ;; (add-hook 'prog-mode-hook (lambda ()
 ;;                            ;; (setq-local truncate-lines t)
 ;;                            (toggle-truncate-lines 1)))
@@ -1493,25 +1500,49 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
 ;; ;; Buffers
 ;; ;; Spawn and Pointer
 
-;; ;; If i refactor this, then corfu might start to work incorrectly when i
-;; ;; invoke a popup, then wait for an echo popup and press C-n
+;; This parameter makes these buffers to spawn at the current window
 (setq display-buffer-alist
       (mapcar (lambda (name)
                 `(,name display-buffer-same-window (nil)))
               '("*Faces*"
                 "*info*"
                 "*helpful*"
-                "*Help*"
+                ;; "*Help*"
                 "*Warnings*"
                 "*Async Shell Command*"
                 "*vc-git*"
                 "*compilation*"
                 "*debug*")))
 
-(add-to-list 'display-buffer-alist
-             '("\\*\\(Man\\|Help\\) "
-               (display-buffer-reuse-window display-buffer-pop-up-window)
-               (post-command-select-window . t)))
+;; (add-to-list 'display-buffer-alist
+;;              '("\\*\\(Man\\|Help*\\|special\\) "
+;;                (display-buffer-reuse-window display-buffer-pop-up-window)
+;;                (post-command-select-window . t)))
+
+
+(setq display-buffer-alist
+      `(("\\*compilation\\*"
+         (display-buffer-reuse-window display-buffer-pop-up-window)
+         (reusable-frames . visible))
+        
+        ("\\*Man "
+         (display-buffer-reuse-window display-buffer-pop-up-window)
+         (post-command-select-window . t))
+
+        ("\\*Help\\*"
+         (display-buffer-reuse-window display-buffer-pop-up-window)
+         (post-command-select-window . t))))
+
+
+(defun my-eldoc-print-and-switch ()
+  "Print eldoc info and switch to its buffer."
+  (interactive)
+  (eldoc 1)
+  (eldoc-print-current-symbol-info)
+  (run-with-timer 0.01 nil
+                  (lambda ()
+                    (when (get-buffer "*eldoc*")
+                      (switch-to-buffer-other-window "*eldoc*")))))
 
 ;; Eshell buffer
 
@@ -1635,8 +1666,8 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (require 'compile)
 
-;; ;; It makes the moving pointer to the new window functionality to not work.
-;; (setq display-buffer-alist
+;; ;; ;; It makes the moving pointer to the new window functionality to not work.
+;; (add-to-list 'display-buffer-alist
 ;;       '(("\\*compilation\\*"
 ;;          (display-buffer-reuse-window display-buffer-pop-up-window)
 ;;          (reusable-frames . visible))))
@@ -1713,8 +1744,8 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 (use-package nix-mode
   :ensure t)
-(use-package systemd
-  :ensure t)
+;; (use-package systemd
+;;   :ensure t)
 ;; (use-package markdown-mode ;; can't be found by the package installer
 ;;   :ensure t)
 
@@ -1779,6 +1810,9 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
 (add-hook 'nix-mode-hook 'eglot-ensure)
+
+;; (add-to-list 'eglot-server-programs '((c-ts-mode) "clangd"))
+;; (add-hook 'c-ts-mode-hook 'eglot-ensure)
 
 (add-hook 'python-ts-mode-hook 'eglot-ensure)
 ;; I need to prevent a situation where ansible-lint and eglot work on the same buffer.
