@@ -148,11 +148,16 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
                         t))
 
 (defun toggle-messages-buffer ()
-  "Toggle the display of Messages buffer."
+  "Toggle the display of Messages buffer and move point to last line when showing buffer."
   (interactive)
   (toggle-special-buffer "\\*Messages\\*"
                         (lambda () 
-                          (display-buffer "*Messages*"))
+                          (let ((messages-window (display-buffer "*Messages*")))
+                            (when messages-window
+                              (with-selected-window messages-window
+                                (goto-char (point-max))
+                                (previous-line)
+                                (beginning-of-line)))))
                         t))
 
 (defun org-insert-row-with-floor ()

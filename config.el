@@ -507,6 +507,15 @@
   ;; Set directory for undo history files
   (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory
                                                             "undo-tree-history")))))
+
+(defun fov/disable-backups-for-gpg () 
+  "Disable backups and autosaving for files ending in \".gpg\"." 
+  (when (and (buffer-file-name) 
+             (s-ends-with-p ".gpg" (buffer-file-name) t)) 
+    (setq-local backup-inhibited t) 
+    (setq-local undo-tree-auto-save-history nil) 
+    (auto-save-mode -1))) 
+(add-hook 'find-file-hook #'fov/disable-backups-for-gpg) 
   
 ;; Create undo directory if it doesn't exist
 (make-directory "~/.emacs.d/undo-tree-history" t)
@@ -1673,13 +1682,13 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;          (reusable-frames . visible))))
 
 
-(defun my-keep-compilation-window ()
-  "Prevent the `*compilation*` window from being reused during error navigation."
-  (let ((window (get-buffer-window (compilation-find-buffer))))
-    (when window
-      (set-window-dedicated-p window t))))
+;; (defun my-keep-compilation-window ()
+;;   "Prevent the `*compilation*` window from being reused during error navigation."
+;;   (let ((window (get-buffer-window (compilation-find-buffer))))
+;;     (when window
+;;       (set-window-dedicated-p window t))))
 
-(add-hook 'compilation-mode-hook 'my-keep-compilation-window)
+;; (add-hook 'compilation-mode-hook 'my-keep-compilation-window)
 
 
 (add-to-list 'compilation-error-regexp-alist
@@ -1697,33 +1706,63 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-hook 'yaml-ts-mode-hook 'ansible-lint-errors)
 
 
-(add-to-list 'compilation-error-regexp-alist 'shellcheck)
+(add-to-list 'compilation-error-regexp-alist 'gcc-clang-col)
 (add-to-list 'compilation-error-regexp-alist-alist
-             '(shellcheck
-               "^In \\(.*\\) line \\([0-9]+\\):" ;; Matches "In <file> line <line-number>:"
-               1 2)) ;; 1=file path, 2=line number
+             '(gcc-clang-col
+               "^\\([^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\):.*\\(?:error\\|warning\\)"
+               1 2 3))
 
-(defun shellcheck-errors ()
-  "Set up `compile-command` to use shellcheck for the current buffer."
-  (make-local-variable 'compile-command)
-  (let ((file (buffer-file-name)))
-    (setq default-directory (file-name-directory file))
-    (setq compile-command (concat "LANG=C.UTF-8 shellcheck "
-                                  (shell-quote-argument file)))))
+;; If you want to keep the original gcc pattern as fallback
+;; but give priority to the new one that includes columns
+(setq compilation-error-regexp-alist
+      (cons 'gcc-clang-col
+            (delq 'gcc-clang-col compilation-error-regexp-alist)))
 
-;; Add the hook for shell script mode
-(add-hook 'bash-ts-mode-hook 'shellcheck-errors)
+(defun my/set-compile-command ()
+  "Set compilation command based on major mode"
+  (setq-local compile-command
+              (cond
+               ((eq major-mode 'bash-ts-mode)
+                (format "shellcheck -f gcc %s" buffer-file-name))
+               
+               ((eq major-mode 'c-ts-mode)
+                (format "clang %s" buffer-file-name))
+               
+               ;; Fallback to default compile command
+               (t compile-command))))
 
-(defun my-compilation-highlight-errors-shellcheck ()
-  "Add custom font-lock rules for highlighting (info), (error), and (warning) in compilation buffers."
-  (font-lock-add-keywords
-   nil
-   '(("^.*\\(\\^--\\|\\^------\\).*\\((info)\\):.*$" . 'compilation-info)
-     ("^.*\\(\\^--\\|\\^------\\).*\\((error)\\):.*$" . 'compilation-error)
-     ("^.*\\(\\^--\\|\\^------\\).*\\((warning)\\):.*$" . 'compilation-warning))))
+;; Add hook to set compile command when buffer is loaded
+(add-hook 'bash-ts-mode-hook #'my/set-compile-command)
+(add-hook 'c-ts-mode-hook #'my/set-compile-command)
 
-;; Hook the custom highlighting into `compilation-mode`
-(add-hook 'compilation-mode-hook 'my-compilation-highlight-errors-shellcheck)
+
+;; (add-to-list 'compilation-error-regexp-alist 'shellcheck)
+;; (add-to-list 'compilation-error-regexp-alist-alist
+;;              '(shellcheck
+;;                "^In \\(.*\\) line \\([0-9]+\\):" ;; Matches "In <file> line <line-number>:"
+;;                1 2)) ;; 1=file path, 2=line number
+
+;; (defun shellcheck-errors ()
+;;   "Set up `compile-command` to use shellcheck for the current buffer."
+;;   (make-local-variable 'compile-command)
+;;   (let ((file (buffer-file-name)))
+;;     (setq default-directory (file-name-directory file))
+;;     (setq compile-command (concat "LANG=C.UTF-8 shellcheck -f gcc "
+;;                                   (shell-quote-argument file)))))
+
+;; ;; Add the hook for shell script mode
+;; (add-hook 'bash-ts-mode-hook 'shellcheck-errors)
+
+;; (defun my-compilation-highlight-errors-shellcheck ()
+;;   "Add custom font-lock rules for highlighting (info), (error), and (warning) in compilation buffers."
+;;   (font-lock-add-keywords
+;;    nil
+;;    '(("^.*\\(\\^--\\|\\^------\\).*\\((info)\\):.*$" . 'compilation-info)
+;;      ("^.*\\(\\^--\\|\\^------\\).*\\((error)\\):.*$" . 'compilation-error)
+;;      ("^.*\\(\\^--\\|\\^------\\).*\\((warning)\\):.*$" . 'compilation-warning))))
+
+;; ;; Hook the custom highlighting into `compilation-mode`
+;; (add-hook 'compilation-mode-hook 'my-compilation-highlight-errors-shellcheck)
 
 
 ;; Modes
@@ -2426,3 +2465,38 @@ Otherwise, create a same-level heading (M-RET)."
 ;; (setq-default show-trailing-whitespace t)
 ;; (add-hook 'prog-mode-hook
 ;;           (lambda () (font-lock-add-keywords nil '(("\\s-+$" 0 'trailing-whitespace)))))
+
+
+;; (defvar my/last-repeatable-macro nil
+;;   "Stores the last repeatable macro for actions performed on a selection.")
+
+;; (defvar my/recording-macro nil
+;;   "Indicates whether a repeatable macro is being recorded.")
+
+;; (defun my/start-recording-macro ()
+;;   "Start recording a macro if a region is active and not already recording."
+;;   (when (and (region-active-p) (not my/recording-macro))
+;;     (setq my/recording-macro t)
+;;     (kmacro-start-macro nil)))
+
+;; (defun my/stop-recording-macro ()
+;;   "Stop recording the macro and save it when the region is deactivated."
+;;   (when my/recording-macro
+;;     (setq my/recording-macro nil)
+;;     (kmacro-end-macro nil)
+;;     (setq my/last-repeatable-macro (kmacro-ring-head))
+;;     (message "Macro recorded: %s" my/last-repeatable-macro)))
+
+;; (defun my/repeat-last-action ()
+;;   "Replay the last recorded macro."
+;;   (interactive)
+;;   (if my/last-repeatable-macro
+;;       (kmacro-call-macro my/last-repeatable-macro)
+;;     (message "No macro recorded yet!")))
+
+;; ;; Hooks for recording macros
+;; (add-hook 'activate-mark-hook #'my/start-recording-macro)
+;; (add-hook 'deactivate-mark-hook #'my/stop-recording-macro)
+
+;; ;; Example keybinding for repeating the last action
+;; (global-set-key (kbd "C-.") #'my/repeat-last-action)

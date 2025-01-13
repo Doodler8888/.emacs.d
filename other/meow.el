@@ -162,8 +162,9 @@ If not on a parenthesis, insert % or do nothing if in Meow mode."
 (defun my/delete-char-to-kill-ring ()
   "Delete the character at point and add it to the kill ring."
   (interactive)
-  (when (not (eobp))  ; Check if we're not at the end of the buffer
-    (kill-region (point) (+ (point) 1))))
+  (when (not (eobp))
+    (kill-new (buffer-substring-no-properties (point) (1+ (point))))
+    (delete-char 1)))
 
 (defun my/meow-setup-extra ()
   ;; Don't ignore cursor shape changes in minibuffer
@@ -1661,8 +1662,8 @@ When pasting over a selection, the replaced text is saved to the kill ring."
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
 
 (with-eval-after-load 'magit
-  (define-key magit-status-mode-map (kbd "j") 'magit-section-forward)
-  (define-key magit-mode-map (kbd "k") 'magit-section-backward)
+  ;; (define-key magit-status-mode-map (kbd "j") 'magit-section-forward)
+  ;; (define-key magit-mode-map (kbd "k") 'magit-section-backward)
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key magit-mode-map (kbd "SPC") 'my-space-as-ctrl-c))
 
