@@ -44,9 +44,9 @@
 
 (defun my/smart-replace ()
   (interactive)
-  (unless (region-active-p)
-    (call-interactively 'replace-regexp)
-    (call-interactively query-replace)))
+  (if (region-active-p)
+      (call-interactively 'query-replace)
+    (call-interactively 'replace-regexp)))
 
 (global-set-key (kbd "M-%") 'my/smart-replace)
 

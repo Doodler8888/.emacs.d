@@ -480,13 +480,19 @@
 
 ;; Treesitter
 
+(setq treesit-font-lock-level 4) ;; The default value is 3
+
 (use-package treesit-auto
   :ensure t
   :config
   (global-treesit-auto-mode))
 
-(use-package clojure-ts-mode
- :ensure t)
+(use-package clojure-ts-mode)
+
+(setq treesit-language-source-alist
+      '((c3 "https://github.com/c3lang/tree-sitter-c3")))
+(add-to-list 'load-path "~/.source/c3-ts-mode/")
+(require 'c3-ts-mode)
 
 (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
@@ -1537,6 +1543,10 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
         ("\\*Man "
          (display-buffer-reuse-window display-buffer-pop-up-window)
          (post-command-select-window . t))
+        
+        ("\\*Async Shell Command\\*"
+         (display-buffer-reuse-window display-buffer-pop-up-window)
+         (post-command-select-window . t))
 
         ("\\*Help\\*"
          (display-buffer-reuse-window display-buffer-pop-up-window)
@@ -1712,11 +1722,17 @@ If an eshell buffer for the directory already exists, switch to it."
                "^\\([^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\):.*\\(?:error\\|warning\\)"
                1 2 3))
 
-;; If you want to keep the original gcc pattern as fallback
-;; but give priority to the new one that includes columns
-(setq compilation-error-regexp-alist
-      (cons 'gcc-clang-col
-            (delq 'gcc-clang-col compilation-error-regexp-alist)))
+(add-to-list 'compilation-error-regexp-alist 'c3c)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(c3c
+               "\\(/[^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\).*\\(?:Error\\|Warning\\)"
+               1 2 3))
+
+;; ;; If you want to keep the original gcc pattern as fallback
+;; ;; but give priority to the new one that includes columns
+;; (setq compilation-error-regexp-alist
+;;       (cons 'gcc-clang-col
+;;             (delq 'gcc-clang-col compilation-error-regexp-alist)))
 
 (defun my/set-compile-command ()
   "Set compilation command based on major mode"
@@ -2414,6 +2430,11 @@ Otherwise, create a same-level heading (M-RET)."
   "Open a specific file."
   (interactive)
   (find-file "~/.emacs.d/other/meow.el"))
+
+(defun projects ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.projects/"))
 
 (defun todo ()
   "Open a specific file."
