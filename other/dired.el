@@ -57,56 +57,56 @@
 
 (defun my/dired-toggle-bak-extension ()
   "Toggle '.bak' extension for marked files/directories in Dired.
-If an item doesn't end with '.bak', add it; if it does, remove it.
-Prompts whether to keep the original or not."
+If an item doesn't end with '.bak', add it and prompt for copying;
+if it ends with '.bak', remove it by renaming."
   (interactive)
   (let* ((files (dired-get-marked-files t current-prefix-arg))
          (num-files (length files))
-         (msg-prefix (if (= num-files 1) "Item" "Items"))
-         (keep-original (y-or-n-p "Make copy? ")))
+         (msg-prefix (if (= num-files 1) "Item" "Items")))
     (dolist (file files)
       (let* ((dir (file-name-directory file))
              (name (file-name-nondirectory file))
              (ext (file-name-extension name t))
+             (is-bak (string= ext ".bak"))
+             (keep-original (and (not is-bak) 
+                               (y-or-n-p "Make copy? ")))
              new-name)
-        (if (string= ext ".bak")
+        (if is-bak
             (setq new-name (file-name-sans-extension name))
           (setq new-name (concat name ".bak")))
         (let ((new-file (expand-file-name new-name dir)))
           (when (or (not (file-exists-p new-file))
                     (yes-or-no-p (format "%s already exists. Overwrite? " new-file)))
             (if (file-directory-p file)
-                (if keep-original
+                (if (and (not is-bak) keep-original)
                     (copy-directory file new-file t t t)
                   (rename-file file new-file t))
-              (if keep-original
+              (if (and (not is-bak) keep-original)
                   (copy-file file new-file t)
                 (rename-file file new-file t)))))))
     (revert-buffer)
-    (message "%s %s." msg-prefix (if keep-original "copied" "renamed"))))
+    (message "%s %s." msg-prefix 
+             (if (and (not (string= (file-name-extension 
+                                    (car files) t) ".bak"))
+                      keep-original)
+                 "copied" "renamed"))))
 
 
 (defun my/dired-create-empty-files ()
-  "Create multiple empty files in current dired directory."
+  "Create multiple empty files in current dired directory.
+Creates each file immediately after it is entered."
   (interactive)
-  (let (files done)
+  (let (done)
     (while (not done)
       (condition-case nil
-          (let ((file (completing-read
-                      (format "File %s (C-g when done): "
-                             (if files
-                                 (format "[added: %s]"
-                                         (mapconcat #'identity files " "))
-                               ""))
-                      #'completion-file-name-table
-                      nil nil)))
-            (push file files))
-        (quit (setq done t))))
-    (when files
-      (dolist (file (nreverse files))
-        (let ((filepath (expand-file-name file default-directory)))
-          (dired-create-empty-file filepath)))
-      (revert-buffer))))
+          (let* ((file (completing-read
+                       (format "File to create (C-g when done): ")
+                       #'completion-file-name-table
+                       nil nil))
+                 (filepath (expand-file-name file default-directory)))
+            (dired-create-empty-file filepath)
+            (revert-buffer))
+        (quit (setq done t))))))
 
 
 (defun my/dired-get-size-with-du ()

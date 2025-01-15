@@ -82,7 +82,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
 
-    ("za" . my/zoxide-add)
+    ;; ("za" . my/zoxide-add)
+    ;; ("za" . my/dir-add)
     
     ;; ("mm" . messages)
     ;; ("mm" . toggle-messages-buffer)
@@ -119,13 +120,15 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-x s") (lambda () (interactive) (save-some-buffers t)))
 (global-set-key (kbd "C-x 2") 'winner-undo)
 (define-key occur-mode-map (kbd "C-x C-q") 'occur-edit-mode)
-(define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy)
 (global-set-key (kbd "C-x C-o") 'so)
 (define-key prog-mode-map (kbd "M-n") 'next-error)
 (define-key prog-mode-map (kbd "M-p") 'previous-error)
 (define-key prog-mode-map (kbd "C-x cc") 'compile)
 (define-key prog-mode-map (kbd "C-x cl") 'compile-last)
 
+(with-eval-after-load 'compilation
+  (define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy))
+    
 ;; Can't use it, because i have C-w binding for the insert mode
 ;; (defun my/setup-global-window-keys ()
 ;;   "Set up global window management keybindings."

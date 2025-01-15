@@ -15,6 +15,42 @@
       (dired selected-dir))))
 
 
+(defun my/dir-add (&optional dir)
+  "Add directory to ~/.dirs database using interactive selection.
+If DIR is nil, uses current directory."
+  (interactive)
+  (let* ((dir-file (expand-file-name "~/.dirs"))
+         (dir-to-add (if dir
+                         (expand-file-name dir)
+                       (expand-file-name 
+                        (read-directory-name "Add directory: " default-directory)))))
+    ;; Create .dirs if it doesn't exist
+    (unless (file-exists-p dir-file)
+      (write-region "" nil dir-file))
+    ;; Append directory to .dirs
+    (append-to-file (concat dir-to-add "\n") nil dir-file)
+    ;; Clean the file (remove duplicates and empty lines)
+    (call-process "sort" nil nil nil "-u" "-o" dir-file dir-file)
+    (with-temp-buffer
+      (insert-file-contents dir-file)
+      (goto-char (point-min))
+      (delete-matching-lines "^$")
+      (write-region (point-min) (point-max) dir-file))
+    (message "Added to directory database: %s" dir-to-add)))
+
+(defun my/dir-switch ()
+  "Switch to a directory from ~/.dirs database using completion."
+  (interactive)
+  (let* ((dir-file (expand-file-name "~/.dirs"))
+         (dirs (when (file-exists-p dir-file)
+                (with-temp-buffer
+                  (insert-file-contents dir-file)
+                  (split-string (buffer-string) "\n" t))))
+         (selected-dir (completing-read "Switch to directory: " dirs nil t)))
+    (when (and selected-dir (file-exists-p selected-dir))
+      (dired selected-dir))))
+
+
 (defun my/get-block-devices ()
   "Get list of block devices using lsblk."
   (let ((output (shell-command-to-string "lsblk --nodeps --output NAME,SIZE,TYPE,MOUNTPOINT")))

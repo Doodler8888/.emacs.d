@@ -187,7 +187,7 @@
   (add-to-list 'savehist-additional-variables 'search-ring)
   (add-to-list 'savehist-additional-variables 'regexp-search-ring))
 
-;; Executable on save if starts with '#!'
+;; ;; Executable on save if starts with '#!'
 (add-hook 'after-save-hook
         'executable-make-buffer-file-executable-if-script-p)
 
@@ -489,8 +489,12 @@
 
 (use-package clojure-ts-mode)
 
+
 (setq treesit-language-source-alist
-      '((c3 "https://github.com/c3lang/tree-sitter-c3")))
+      '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")))
+
+;; (setq treesit-language-source-alist
+;;       '((c3 "https://github.com/c3lang/tree-sitter-c3")))
 (add-to-list 'load-path "~/.source/c3-ts-mode/")
 (require 'c3-ts-mode)
 
@@ -1546,12 +1550,29 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
         
         ("\\*Async Shell Command\\*"
          (display-buffer-reuse-window display-buffer-pop-up-window)
-         (post-command-select-window . t))
-
-        ("\\*Help\\*"
-         (display-buffer-reuse-window display-buffer-pop-up-window)
          (post-command-select-window . t))))
 
+        ;; Causes a bug with corfu
+        ;; ("\\*Help\\*"
+        ;;  (display-buffer-reuse-window display-buffer-pop-up-window)
+        ;;  (post-command-select-window . t))))
+
+;; Function to focus help buffer after it's displayed
+(defun my/focus-help-buffer (&rest _)
+  "Focus the help buffer after it's displayed."
+  (when (get-buffer "*Help*")
+    (let ((help-window (get-buffer-window "*Help*")))
+      (when help-window
+        (select-window help-window)))))
+
+;; Add advice to help-related functions
+(advice-add 'help-buffer-toggle :after #'my/focus-help-buffer)
+(advice-add 'describe-function :after #'my/focus-help-buffer)
+(advice-add 'describe-variable :after #'my/focus-help-buffer)
+(advice-add 'describe-key :after #'my/focus-help-buffer)
+(advice-add 'describe-mode :after #'my/focus-help-buffer)
+(advice-add 'describe-package :after #'my/focus-help-buffer)
+(advice-add 'view-echo-area-messages :after #'my/focus-help-buffer)
 
 (defun my-eldoc-print-and-switch ()
   "Print eldoc info and switch to its buffer."
@@ -1719,7 +1740,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'compilation-error-regexp-alist 'gcc-clang-col)
 (add-to-list 'compilation-error-regexp-alist-alist
              '(gcc-clang-col
-               "^\\([^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\):.*\\(?:error\\|warning\\)"
+               "^\\([^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\):.*\\(?:error\\|warning\\|note\\)"
                1 2 3))
 
 (add-to-list 'compilation-error-regexp-alist 'c3c)
@@ -2451,35 +2472,6 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-
-;; (use-package icomplete
-;;   :bind (:map icomplete-minibuffer-map
-;;               ("C-n" . icomplete-forward-completions)
-;;               ("C-p" . icomplete-backward-completions)
-;;               ("M-RET" . icomplete-fido-exit)
-;;               ;; ("C-v" . icomplete-vertical-toggle)
-;;               ("RET" . icomplete-force-complete-and-exit))
-;;   :hook
-;;   (after-init . (lambda ()
-;;                   (fido-mode -1)
-;;                   (icomplete-mode 1)
-;;                   ;; (icomplete-vertical-mode 1)
-;;                   ))
-;;   :config
-;;   ;; (setq tab-always-indent 'complete)  ;; Starts completion with TAB
-;;   (setq icomplete-delay-completions-threshold 0)
-;;   (setq icomplete-compute-delay 0)
-;;   (setq icomplete-show-matches-on-no-input t)
-;;   ;; (setq icomplete-hide-common-prefix nil)
-;;   (setq icomplete-prospects-height 10)
-;;   ;; (setq icomplete-separator " . ")
-;;   ;; (setq icomplete-with-completion-tables t)
-;;   ;; (setq icomplete-in-buffer t)
-;;   (setq icomplete-max-delay-chars 0)
-;;   (setq icomplete-scroll t))
-  ;; (advice-add 'completion-at-point
-  ;;             :after #'minibuffer-hide-completions))
 
 
 ;; ;; Highlight Trailing Whitespace
