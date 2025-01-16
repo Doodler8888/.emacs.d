@@ -129,7 +129,7 @@ shows the command before execution, and runs it asynchronously with progress sta
             (recenter)))
       (message "No headings found in this buffer."))))
 
-(defun my-package-isolate ()
+(defun my/package-isolate ()
   "Isolate packages with better completion."
   (interactive)
   (let (packages done)
@@ -452,12 +452,12 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
 (define-key minibuffer-local-map (kbd "C-r") #'my-insert-last-unexecuted-minibuffer-input)
 
 
-(defun delete-two-chars-back ()
-  "Delete the previous two characters."
-  (interactive)
-  (delete-char -2))
+;; (defun delete-two-chars-back ()
+;;   "Delete the previous two characters."
+;;   (interactive)
+;;   (delete-char -2))
 
-(define-key prog-mode-map (kbd "C-<backspace>") #'delete-two-chars-back)
+;; (define-key prog-mode-map (kbd "C-<backspace>") #'delete-two-chars-back)
 
 
 (defun dired-goto-last-line ()

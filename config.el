@@ -2140,6 +2140,31 @@ Otherwise, create a same-level heading (M-RET)."
 
 ;; Custom commands
 
+(defun delete-to-indentation ()
+  "Delete characters on the current line to match the position of the first line
+above with less indentation. Keep the cursor aligned with the calculated column."
+  (interactive)
+  (let ((current-column (current-column)) ;; Save the cursor's column position
+        (current-indent (current-indentation)) ;; Current line's indentation
+        (found-line nil)
+        (found-indent 0)) ;; Indentation of the found line
+    (save-excursion
+      (while (and (not found-line) (not (bobp)))
+        (forward-line -1) ;; Move to the previous line
+        (let ((line-indent (current-indentation)))
+          (when (< line-indent current-indent)
+            (setq found-line t)
+            (setq found-indent line-indent)))))
+    (when found-line
+      (let ((delete-to-column (min current-column found-indent)))
+        ;; Perform deletion and align cursor
+        (delete-region (line-beginning-position)
+                       (+ (line-beginning-position) delete-to-column))
+        (move-to-column delete-to-column t)))))
+
+(define-key prog-mode-map (kbd "C-<backspace>") #'delete-to-indentation)
+
+
 (defun Cp ()
   "Copy full path of the current buffer"
   (interactive)
@@ -2513,3 +2538,22 @@ Otherwise, create a same-level heading (M-RET)."
 
 ;; ;; Example keybinding for repeating the last action
 ;; (global-set-key (kbd "C-.") #'my/repeat-last-action)
+
+;; It makes completion-on-point to behave simpler, so that it doesn't takes into
+;; account what goes after the pointer.
+(defun my-completion-at-point-advice (orig-fun &rest args)
+  "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
+  (let ((inserted-whitespace (not (eq (char-after) ?\s))))
+    (when inserted-whitespace
+      (save-excursion
+        (insert " ")))
+    (unwind-protect
+        (apply orig-fun args)
+      (when inserted-whitespace
+        (save-excursion
+          (delete-char 1))))))
+
+(advice-add 'completion-at-point :around #'my-completion-at-point-advice)
+
+
+

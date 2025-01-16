@@ -978,6 +978,38 @@ When pasting over a selection, the replaced text is saved to the kill ring."
             (beginning-of-line))
         (insert text-to-paste)))))
 
+(defun my/meow-smart-paste (&optional arg)
+  "Paste like Vim, handling both line-wise and regular pastes.
+With numeric prefix ARG, paste that many times.
+With raw prefix argument (C-u without a number), paste from the kill ring.
+When pasting over a selection, it's replaced without changing the kill ring."
+  (interactive "P")
+  (let* ((raw-prefix (equal arg '(4)))
+         (numeric-prefix (and (integerp arg) (> arg 0)))
+         (repeat-count (if numeric-prefix arg 1))
+         ;; Get system clipboard content if available, otherwise fall back to kill ring
+         (text-to-paste (if raw-prefix
+                           (current-kill (if (listp last-command-event)
+                                           0
+                                         (mod (- (aref (this-command-keys) 0) ?0)
+                                              kill-ring-max))
+                                       t)
+                         (or (gui-get-selection 'CLIPBOARD)
+                             (current-kill 0 t)))))
+    
+    ;; Just delete the region if active, without saving to kill ring
+    (when (region-active-p)
+      (delete-active-region))
+    
+    (dotimes (_ repeat-count)
+      (if (string-suffix-p "\n" text-to-paste)
+          (progn
+            (forward-line)
+            (beginning-of-line)
+            (insert text-to-paste)
+            (forward-line -1)
+            (beginning-of-line))
+        (insert text-to-paste)))))
 
 ;; ;; Work like in vim
 ;; (defun my/meow-replace-char ()
@@ -1562,6 +1594,7 @@ When pasting over a selection, the replaced text is saved to the kill ring."
    ;; '("O" . meow-to-block)
    ;; '("p" . meow-yank)
    '("p" . my/meow-smart-paste)
+   '("P" . my/meow-smart-paste-no-save)
    ;; '("P" . placeholder)
    ;; '("q" . meow-quit)
    '("Q" . meow-goto-line)
