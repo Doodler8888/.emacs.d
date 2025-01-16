@@ -484,3 +484,122 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
     (if function
         (man function)
       (message "No function at point."))))
+
+
+(defvar my-saved-window-configuration nil
+  "Variable to store the saved window configuration.")
+
+(defun my-toggle-window-layout ()
+  "Save the current window layout and close all other windows.
+When restoring the layout, preserve the current window and buffer."
+  (interactive)
+  (if my-saved-window-configuration
+      ;; Restore the layout while preserving the current window
+      (let ((current-window (selected-window))
+            (current-buffer (current-buffer)))
+        (set-window-configuration my-saved-window-configuration)
+        ;; Re-select the preserved window and buffer
+        (select-window current-window)
+        (set-window-buffer current-window current-buffer)
+        (setq my-saved-window-configuration nil)
+        (message "Window layout restored."))
+    ;; Save the current layout and close other windows
+    (progn
+      (setq my-saved-window-configuration (current-window-configuration))
+      (delete-other-windows)
+      (message "Window layout saved."))))
+
+
+(defun delete-to-indentation ()
+  "Delete characters on the current line to match the position of the first line
+above with less indentation. Keep the cursor aligned with the calculated column."
+  (interactive)
+  (let ((current-column (current-column)) ;; Save the cursor's column position
+        (current-indent (current-indentation)) ;; Current line's indentation
+        (found-line nil)
+        (found-indent 0)) ;; Indentation of the found line
+    (save-excursion
+      (while (and (not found-line) (not (bobp)))
+        (forward-line -1) ;; Move to the previous line
+        (let ((line-indent (current-indentation)))
+          (when (< line-indent current-indent)
+            (setq found-line t)
+            (setq found-indent line-indent)))))
+    (when found-line
+      (let ((delete-to-column (min current-column found-indent)))
+        ;; Perform deletion and align cursor
+        (delete-region (line-beginning-position)
+                       (+ (line-beginning-position) delete-to-column))
+        (move-to-column delete-to-column t)))))
+
+(define-key prog-mode-map (kbd "C-<backspace>") #'delete-to-indentation)
+
+
+(defvar my-window-buffer-mapping nil
+  "A mapping of window IDs to buffers for toggling.")
+
+(defun rotate-list (lst)
+  "Rotate LST to the left and return the result."
+  (if (and lst (cdr lst)) ; Check if the list has at least two elements
+      (append (cdr lst) (list (car lst)))
+    lst)) ; Return the original list if it can't be rotated
+
+(defun my/toggle-windows ()
+  (interactive)
+  (if (not my-window-buffer-mapping)
+      ;; Initialize window-buffer mapping
+      (progn
+        (setq my-window-buffer-mapping
+              (mapcar (lambda (w)
+                        (cons w (buffer-name (window-buffer w))))
+                      (window-list))))
+        ;; (message "Initialized window-buffer mapping: %s" my-window-buffer-mapping))
+    ;; Rotate buffers
+    (let* ((buffers (mapcar #'cdr my-window-buffer-mapping)))
+      ;; (message "Before rotation - Buffers: %s" buffers)
+      ;; Rotate the list of buffers
+      (setq buffers (rotate-list buffers))
+      ;; (message "After rotation - Buffers: %s" buffers)
+      ;; Update the mapping with rotated buffers
+      (setq my-window-buffer-mapping
+            (cl-mapcar #'cons
+                       (mapcar #'car my-window-buffer-mapping)
+                       buffers))
+      ;; Reassign buffers to their respective windows
+      (dolist (mapping my-window-buffer-mapping)
+        (let ((window (car mapping))
+              (buffer (cdr mapping)))
+          ;; (message "Assigning buffer %s to window %s" buffer window)
+          (set-window-buffer window buffer))))))
+
+(defun my/transpose-windows ()
+  "Custom window transposition command.
+If there are 2 windows:
+  - Toggles between vertical and horizontal split
+  - Preserves the active window's position.
+If there are more than 2 windows:
+  - Calls `my-toggle-windows`."
+  (interactive)
+  (let ((windows (window-list)))
+    (if (= (length windows) 2)
+        ;; Case 1: Exactly 2 windows - toggle split direction
+        (let* ((current-split-vertical-p (window-combined-p))
+               (first-win (car windows))
+               (second-win (cadr windows))
+               (active-win (selected-window))
+               (first-buf (window-buffer first-win))
+               (second-buf (window-buffer second-win))
+               (was-first-window-active (eq active-win first-win)))
+          (delete-other-windows first-win)
+          (if current-split-vertical-p
+              (split-window-horizontally)
+            (split-window-vertically))
+          (set-window-buffer (selected-window) first-buf)
+          (other-window 1)
+          (set-window-buffer (selected-window) second-buf)
+          ;; Restore active window position
+          (when was-first-window-active
+            (other-window -1)))
+      ;; Case 2: More than 2 windows - delegate to `my-toggle-windows`
+      (when (> (length windows) 2)
+        (my/toggle-windows)))))

@@ -274,9 +274,12 @@
   (make-directory (concat user-emacs-directory "saveplace/")))
 (save-place-mode 1)
 
+
 (setq scroll-conservatively 101)
 (setq scroll-margin 5)
-(setq scroll-step 1)
+;; (setq scroll-step 1)
+;; I disabled '(setq scroll-step 1)' because i don't know the exact point of
+;; why i was having this setting in the first place
 
 (scroll-bar-mode -1)
 (setq-default display-line-numbers-width 3)
@@ -308,7 +311,7 @@
 ;; ;;                      (lambda (sym val op where)
 ;; ;;                        (message "truncate-lines changed to %s in %s" val where)))
 
-(winner-mode 1)
+;; (winner-mode 1)
 
 (setq enable-local-variables t)
 (setq enable-dir-local-variables t)
@@ -794,8 +797,26 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
-  
-;; Corfu/Cape
+
+;; Completion
+
+;; It makes completion-on-point to behave simpler, so that it doesn't takes into
+;; account what goes after the pointer.
+(defun my-completion-at-point-advice (orig-fun &rest args)
+  "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
+  (let ((inserted-whitespace (not (eq (char-after) ?\s))))
+    (when inserted-whitespace
+      (save-excursion
+        (insert " ")))
+    (unwind-protect
+        (apply orig-fun args)
+      (when inserted-whitespace
+        (save-excursion
+          (delete-char 1))))))
+
+(advice-add 'completion-at-point :around #'my-completion-at-point-advice)
+
+;; ;; Corfu/Cape
 
 (defun my-eshell-has-argument-p ()
   "Check if the current Eshell input has an argument."
@@ -1265,7 +1286,8 @@ Prevents highlighting of the minibuffer command line itself."
     ("-" evil-window-decrease-height "decrease height")
     (">" evil-window-increase-width "increase width")
     ("<" evil-window-decrease-width "decrease width")
-    ("t" transpose-frame "transpose windows")
+    ;; ("t" transpose-frame "transpose windows")
+    ("t" my/transpose-windows "transpose windows")
     ("q" nil "quit")))
 
 
@@ -2140,31 +2162,6 @@ Otherwise, create a same-level heading (M-RET)."
 
 ;; Custom commands
 
-(defun delete-to-indentation ()
-  "Delete characters on the current line to match the position of the first line
-above with less indentation. Keep the cursor aligned with the calculated column."
-  (interactive)
-  (let ((current-column (current-column)) ;; Save the cursor's column position
-        (current-indent (current-indentation)) ;; Current line's indentation
-        (found-line nil)
-        (found-indent 0)) ;; Indentation of the found line
-    (save-excursion
-      (while (and (not found-line) (not (bobp)))
-        (forward-line -1) ;; Move to the previous line
-        (let ((line-indent (current-indentation)))
-          (when (< line-indent current-indent)
-            (setq found-line t)
-            (setq found-indent line-indent)))))
-    (when found-line
-      (let ((delete-to-column (min current-column found-indent)))
-        ;; Perform deletion and align cursor
-        (delete-region (line-beginning-position)
-                       (+ (line-beginning-position) delete-to-column))
-        (move-to-column delete-to-column t)))))
-
-(define-key prog-mode-map (kbd "C-<backspace>") #'delete-to-indentation)
-
-
 (defun Cp ()
   "Copy full path of the current buffer"
   (interactive)
@@ -2497,63 +2494,6 @@ above with less indentation. Keep the cursor aligned with the calculated column.
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-
-;; ;; Highlight Trailing Whitespace
-;; (setq-default show-trailing-whitespace t)
-;; (add-hook 'prog-mode-hook
-;;           (lambda () (font-lock-add-keywords nil '(("\\s-+$" 0 'trailing-whitespace)))))
-
-
-;; (defvar my/last-repeatable-macro nil
-;;   "Stores the last repeatable macro for actions performed on a selection.")
-
-;; (defvar my/recording-macro nil
-;;   "Indicates whether a repeatable macro is being recorded.")
-
-;; (defun my/start-recording-macro ()
-;;   "Start recording a macro if a region is active and not already recording."
-;;   (when (and (region-active-p) (not my/recording-macro))
-;;     (setq my/recording-macro t)
-;;     (kmacro-start-macro nil)))
-
-;; (defun my/stop-recording-macro ()
-;;   "Stop recording the macro and save it when the region is deactivated."
-;;   (when my/recording-macro
-;;     (setq my/recording-macro nil)
-;;     (kmacro-end-macro nil)
-;;     (setq my/last-repeatable-macro (kmacro-ring-head))
-;;     (message "Macro recorded: %s" my/last-repeatable-macro)))
-
-;; (defun my/repeat-last-action ()
-;;   "Replay the last recorded macro."
-;;   (interactive)
-;;   (if my/last-repeatable-macro
-;;       (kmacro-call-macro my/last-repeatable-macro)
-;;     (message "No macro recorded yet!")))
-
-;; ;; Hooks for recording macros
-;; (add-hook 'activate-mark-hook #'my/start-recording-macro)
-;; (add-hook 'deactivate-mark-hook #'my/stop-recording-macro)
-
-;; ;; Example keybinding for repeating the last action
-;; (global-set-key (kbd "C-.") #'my/repeat-last-action)
-
-;; It makes completion-on-point to behave simpler, so that it doesn't takes into
-;; account what goes after the pointer.
-(defun my-completion-at-point-advice (orig-fun &rest args)
-  "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
-  (let ((inserted-whitespace (not (eq (char-after) ?\s))))
-    (when inserted-whitespace
-      (save-excursion
-        (insert " ")))
-    (unwind-protect
-        (apply orig-fun args)
-      (when inserted-whitespace
-        (save-excursion
-          (delete-char 1))))))
-
-(advice-add 'completion-at-point :around #'my-completion-at-point-advice)
 
 
 
