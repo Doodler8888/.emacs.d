@@ -492,12 +492,10 @@
 
 (use-package clojure-ts-mode)
 
-
 (setq treesit-language-source-alist
-      '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")))
+      '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")
+        (c3 "https://github.com/c3lang/tree-sitter-c3")))
 
-;; (setq treesit-language-source-alist
-;;       '((c3 "https://github.com/c3lang/tree-sitter-c3")))
 (add-to-list 'load-path "~/.source/c3-ts-mode/")
 (require 'c3-ts-mode)
 
@@ -1661,7 +1659,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (defun kill-all-eshell-buffers ()
   "Kill all Eshell buffers."
-  (interactive)
+ (interactive)
   (dolist (buffer (buffer-list))
     (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
       (kill-buffer buffer))))

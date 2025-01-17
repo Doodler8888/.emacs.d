@@ -42,12 +42,12 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(package-selected-packages
-   '(avy buffer-terminator c3-ts-mode cape clojure-ts-mode corfu docker
-         dockerfile-mode embark-consult envrc exec-path-from-shell f
-         fish-completion go-mode goto-chg haskell-mode hydra lua-mode magit
-         marginalia meow nix-mode orderless org-appear org-drill raku-mode
-         tempel-collection terraform-mode transpose-frame treesit-auto undo-tree
-         vertico wgrep yaml-mode))
+   '(avy buffer-terminator cape clojure-ts-mode corfu docker dockerfile-mode
+         embark-consult envrc exec-path-from-shell f fish-completion go-mode
+         goto-chg haskell-mode hydra lua-mode magit marginalia meow nix-mode
+         orderless org-appear org-drill raku-mode tempel-collection
+         terraform-mode transpose-frame treesit-auto undo-tree vertico wgrep
+         yaml-mode))
  '(package-vc-selected-packages
    '((fish-completion :url
                       "https://github.com/LemonBreezes/emacs-fish-completion.git"))))

@@ -535,6 +535,7 @@ above with less indentation. Keep the cursor aligned with the calculated column.
 (define-key prog-mode-map (kbd "C-<backspace>") #'delete-to-indentation)
 
 
+
 (defvar my-window-buffer-mapping nil
   "A mapping of window IDs to buffers for toggling.")
 
@@ -546,31 +547,26 @@ above with less indentation. Keep the cursor aligned with the calculated column.
 
 (defun my/toggle-windows ()
   (interactive)
-  (if (not my-window-buffer-mapping)
-      ;; Initialize window-buffer mapping
-      (progn
-        (setq my-window-buffer-mapping
-              (mapcar (lambda (w)
-                        (cons w (buffer-name (window-buffer w))))
-                      (window-list))))
-        ;; (message "Initialized window-buffer mapping: %s" my-window-buffer-mapping))
-    ;; Rotate buffers
-    (let* ((buffers (mapcar #'cdr my-window-buffer-mapping)))
-      ;; (message "Before rotation - Buffers: %s" buffers)
-      ;; Rotate the list of buffers
-      (setq buffers (rotate-list buffers))
-      ;; (message "After rotation - Buffers: %s" buffers)
-      ;; Update the mapping with rotated buffers
-      (setq my-window-buffer-mapping
-            (cl-mapcar #'cons
-                       (mapcar #'car my-window-buffer-mapping)
-                       buffers))
-      ;; Reassign buffers to their respective windows
-      (dolist (mapping my-window-buffer-mapping)
-        (let ((window (car mapping))
-              (buffer (cdr mapping)))
-          ;; (message "Assigning buffer %s to window %s" buffer window)
-          (set-window-buffer window buffer))))))
+  ;; Initialize window-buffer mapping if not already set
+  (unless my-window-buffer-mapping
+    (setq my-window-buffer-mapping
+          (mapcar (lambda (w)
+                    (cons w (buffer-name (window-buffer w))))
+                  (window-list))))
+  ;; Rotate buffers
+  (let* ((buffers (mapcar #'cdr my-window-buffer-mapping)))
+    ;; Rotate the list of buffers
+    (setq buffers (rotate-list buffers))
+    ;; Update the mapping with rotated buffers
+    (setq my-window-buffer-mapping
+          (cl-mapcar #'cons
+                     (mapcar #'car my-window-buffer-mapping)
+                     buffers))
+    ;; Reassign buffers to their respective windows
+    (dolist (mapping my-window-buffer-mapping)
+      (let ((window (car mapping))
+            (buffer (cdr mapping)))
+        (set-window-buffer window buffer)))))
 
 (defun my/transpose-windows ()
   "Custom window transposition command.
@@ -582,24 +578,6 @@ If there are more than 2 windows:
   (interactive)
   (let ((windows (window-list)))
     (if (= (length windows) 2)
-        ;; Case 1: Exactly 2 windows - toggle split direction
-        (let* ((current-split-vertical-p (window-combined-p))
-               (first-win (car windows))
-               (second-win (cadr windows))
-               (active-win (selected-window))
-               (first-buf (window-buffer first-win))
-               (second-buf (window-buffer second-win))
-               (was-first-window-active (eq active-win first-win)))
-          (delete-other-windows first-win)
-          (if current-split-vertical-p
-              (split-window-horizontally)
-            (split-window-vertically))
-          (set-window-buffer (selected-window) first-buf)
-          (other-window 1)
-          (set-window-buffer (selected-window) second-buf)
-          ;; Restore active window position
-          (when was-first-window-active
-            (other-window -1)))
-      ;; Case 2: More than 2 windows - delegate to `my-toggle-windows`
+        (transpose-frame))
       (when (> (length windows) 2)
-        (my/toggle-windows)))))
+        (my/toggle-windows))))

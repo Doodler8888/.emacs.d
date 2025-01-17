@@ -944,7 +944,7 @@ If no forward match is found, search backward."
   (yank))
 
 
-(defun my/meow-smart-paste (&optional arg)
+(defun my/meow-smart-paste-no-save (&optional arg)
   "Paste like Vim, handling both line-wise and regular pastes.
 With numeric prefix ARG, paste that many times.
 With raw prefix argument (C-u without a number), paste from the kill ring.
@@ -982,25 +982,24 @@ When pasting over a selection, the replaced text is saved to the kill ring."
   "Paste like Vim, handling both line-wise and regular pastes.
 With numeric prefix ARG, paste that many times.
 With raw prefix argument (C-u without a number), paste from the kill ring.
-When pasting over a selection, it's replaced without changing the kill ring."
+When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
   (interactive "P")
   (let* ((raw-prefix (equal arg '(4)))
          (numeric-prefix (and (integerp arg) (> arg 0)))
          (repeat-count (if numeric-prefix arg 1))
          ;; Get system clipboard content if available, otherwise fall back to kill ring
          (text-to-paste (if raw-prefix
-                           (current-kill (if (listp last-command-event)
-                                           0
-                                         (mod (- (aref (this-command-keys) 0) ?0)
-                                              kill-ring-max))
-                                       t)
-                         (or (gui-get-selection 'CLIPBOARD)
-                             (current-kill 0 t)))))
-    
-    ;; Just delete the region if active, without saving to kill ring
+                            (current-kill (if (listp last-command-event)
+                                              0
+                                            (mod (- (aref (this-command-keys) 0) ?0)
+                                                 kill-ring-max))
+                                        t)
+                          (or (gui-get-selection 'CLIPBOARD)
+                              (current-kill 0 t)))))
+    ;; Replace region text with the kill ring update
     (when (region-active-p)
-      (delete-active-region))
-    
+      (kill-region (region-beginning) (region-end)))
+
     (dotimes (_ repeat-count)
       (if (string-suffix-p "\n" text-to-paste)
           (progn
