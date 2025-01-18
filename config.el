@@ -2409,6 +2409,11 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (find-file "~/.dotfiles/bash/.bashrc"))
 
+(defun sh ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/scripts/sh/"))
+
 (defun scr ()
   "Open a specific file."
   (interactive)
@@ -2492,6 +2497,3 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-
-

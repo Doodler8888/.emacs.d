@@ -297,18 +297,18 @@ If the file doesn't exist, display an error message."
                 (apply orig-fun args))))
 
 
-;; Allows to use zoxide
-(defun eshell/z (q)
-  "Query zoxide and change directory in Eshell."
-  (if-let*
-      ((zoxide (executable-find "zoxide"))
-       (target
-        (with-temp-buffer
-          (if (= 0 (call-process zoxide nil t nil "query" q))
-              (string-trim (buffer-string))))))
-      (eshell/cd target)
-    (unless zoxide (error "Install zoxide"))
-    (unless target (error "No Match"))))
+;; ;; Allows to use zoxide
+;; (defun eshell/z (q)
+;;   "Query zoxide and change directory in Eshell."
+;;   (if-let*
+;;       ((zoxide (executable-find "zoxide"))
+;;        (target
+;;         (with-temp-buffer
+;;           (if (= 0 (call-process zoxide nil t nil "query" q))
+;;               (string-trim (buffer-string))))))
+;;       (eshell/cd target)
+;;     (unless zoxide (error "Install zoxide"))
+;;     (unless target (error "No Match"))))
 
 
 (defun eshell/insert-pwd-at-point ()
