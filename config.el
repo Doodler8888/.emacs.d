@@ -209,6 +209,15 @@
       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
 
+(defun fov/disable-backups-for-gpg () 
+  "Disable backups and autosaving for files ending in \".gpg\"." 
+  (when (and (buffer-file-name) 
+             (s-ends-with-p ".gpg" (buffer-file-name) t)) 
+    (setq-local backup-inhibited t) 
+    (setq-local undo-tree-auto-save-history nil) 
+    (auto-save-mode -1))) 
+(add-hook 'find-file-hook #'fov/disable-backups-for-gpg)
+
 ;; ;; First, disable auto-save globally
 ;; (setq auto-save-default nil)
 ;; (auto-save-mode -1)
@@ -350,6 +359,11 @@
 (setq isearch-lazy-highlight t)
 
 ;; Cursor
+
+;; No delay when deleting pairs (i don't know what it does really, just testing)
+(setopt delete-pair-blink-delay 0)
+;; Same here
+(setopt show-paren-context-when-offscreen 'overlay) ; Emacs 29
 
 (blink-cursor-mode 0)
 (setq show-paren-delay 0)
@@ -506,28 +520,67 @@
   (auto-fill-mode -1)))
 
 
-;; Undo tree
-
-(use-package undo-tree
-  :ensure t
-  :init
-  (global-undo-tree-mode)
+;; Undo fu
+(use-package undo-fu
   :config
-  ;; Save history
-  (setq undo-tree-auto-save-history t)
-  ;; Set directory for undo history files
+  (setq undo-limit 67108864)
   (setq undo-tree-history-directory-alist `(("." . ,(concat user-emacs-directory
                                                             "undo-tree-history")))))
 
-(defun fov/disable-backups-for-gpg () 
-  "Disable backups and autosaving for files ending in \".gpg\"." 
-  (when (and (buffer-file-name) 
-             (s-ends-with-p ".gpg" (buffer-file-name) t)) 
-    (setq-local backup-inhibited t) 
-    (setq-local undo-tree-auto-save-history nil) 
-    (auto-save-mode -1))) 
-(add-hook 'find-file-hook #'fov/disable-backups-for-gpg) 
-  
+(use-package undo-fu-session
+  :config
+  (undo-fu-session-global-mode))
+
+
+(defun inspect-undo-list ()
+  "Print the first few entries of buffer-undo-list"
+  (interactive)
+  (cond 
+   ((eq buffer-undo-list t)
+    (message "buffer-undo-list is t (disabled)"))
+   (buffer-undo-list
+    (message "Buffer undo list exists. First 5 entries:")
+    (let ((count 0))
+      (dolist (entry (seq-take buffer-undo-list 5))
+        (message "Entry %d: %S" count entry)
+        (setq count (1+ count)))))
+   (t 
+    (message "buffer-undo-list is nil"))))
+
+(defun get-last-undo-position ()
+  "Get the most recent position from the undo list."
+  (interactive)
+  (if (eq buffer-undo-list t)
+      (message "Undo is disabled")
+    (let ((pos nil))
+      (catch 'found
+        (dolist (entry (seq-take buffer-undo-list 10))
+          (when (and (consp entry)
+                     (numberp (car entry))
+                     (numberp (cdr entry)))
+            (setq pos entry)
+            (throw 'found t))))
+      (if pos
+          (message "Last change position: %d-%d" (car pos) (cdr pos))
+        (message "No change position found in recent history")))))
+
+(defun goto-last-change ()
+  "Move cursor to the position of last change."
+  (interactive)
+  (if (eq buffer-undo-list t)
+      (message "Undo is disabled")
+    (let ((pos nil))
+      (catch 'found
+        (dolist (entry buffer-undo-list)
+          (when (and (consp entry)
+                     (numberp (car entry))
+                     (numberp (cdr entry)))
+            (setq pos (car entry))  ; Use start position of the change
+            (throw 'found t))))
+      (if pos
+          (goto-char pos)
+        (message "No change position found")))))
+
 ;; Create undo directory if it doesn't exist
 (make-directory "~/.emacs.d/undo-tree-history" t)
 
@@ -2147,15 +2200,6 @@ Otherwise, create a same-level heading (M-RET)."
 ;; Visuals
 
 (setq org-hide-emphasis-markers t)
-
-(defun toggle-org-emphasis-markers ()
-  "Toggle the visibility of Org emphasis markers."
-  (interactive)
-  (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
-  (org-mode-restart))
-
-(define-key org-mode-map (kbd "M-o t m") 'toggle-org-emphasis-markers)
-(define-key org-mode-map (kbd "M-o t l") 'org-toggle-link-display)
 
 
 ;; Custom commands

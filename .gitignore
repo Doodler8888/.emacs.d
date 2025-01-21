@@ -49,6 +49,7 @@ test.el
 \#meow.el\#
 \#config.el\#
 meow.el.bak
+/undo-fu-session/
 
 .config.org.~undo-tree~
 ielm-history.eld
