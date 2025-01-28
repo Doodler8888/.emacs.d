@@ -25,7 +25,11 @@
 ;; (with-eval-after-load 'meow
 ;;   (define-key rectangle-mark-mode-map [remap meow-insert] 'string-rectangle))
 
-(setq-default indent-line-function nil)
+;; This settings causes me an error message when auto-fill-line is triggered and
+;; probably the same thing with using meow-open-above in the text-mode. So i
+;; don't know why i enabled it in the first place.
+;; (setq-default indent-line-function nil)
+
 (global-set-key (kbd "TAB") #'completion-at-point)
 
 ;; Argument count doesn't get reset right away when i use meow-next/prev
@@ -40,6 +44,21 @@
 ;; For number hints to work in org mode
 (setq meow-expand-exclude-mode-list 
       (remove 'org-mode meow-expand-exclude-mode-list))
+
+
+;; ;; Using meow-open-above in the text-mode gives an error message regarding
+;; ;; applying indentation. This is an attempt to disable this message by removing
+;; ;; the (indent-according-to-mode) function that is used there.
+;; ;; But i probably don't need this advice because the error was caused by
+;; ;; using '(setq-default indent-line-function nil)'
+;; (advice-add 'meow-open-above :around
+;;             (lambda (orig-fun &rest args)
+;;               "Disable indentation in `text-mode` for `meow-open-above`."
+;;               (let ((indent-inhibit (derived-mode-p 'text-mode)))
+;;                 (cl-letf (((symbol-function 'indent-according-to-mode)
+;;                            (lambda () (unless indent-inhibit
+;;                                         (funcall (symbol-function 'indent-according-to-mode))))))
+;;                   (apply orig-fun args)))))
 
 
 (defun my/smart-replace ()
@@ -692,10 +711,12 @@ If no forward match is found, search backward."
       
       (cons block-start block-end))))
 
+
 (defun meow--parse-inside-sentence (inner)
   "Parse the bounds for inside sentence selection across multiple lines."
   (save-excursion
     (let* ((start (progn
+                    (forward-char) ;; Move forward 1 char to handle Emacs cursor behavior
                     (if (eq major-mode 'org-mode)
                         (org-backward-sentence)
                       (backward-sentence))

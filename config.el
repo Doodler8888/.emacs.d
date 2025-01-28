@@ -521,6 +521,7 @@
 
 
 ;; Undo fu
+
 (use-package undo-fu
   :config
   (setq undo-limit 67108864)
@@ -531,58 +532,54 @@
   :config
   (undo-fu-session-global-mode))
 
-
-(defun inspect-undo-list ()
-  "Print the first few entries of buffer-undo-list"
-  (interactive)
-  (cond 
-   ((eq buffer-undo-list t)
-    (message "buffer-undo-list is t (disabled)"))
-   (buffer-undo-list
-    (message "Buffer undo list exists. First 5 entries:")
-    (let ((count 0))
-      (dolist (entry (seq-take buffer-undo-list 5))
-        (message "Entry %d: %S" count entry)
-        (setq count (1+ count)))))
-   (t 
-    (message "buffer-undo-list is nil"))))
-
-(defun get-last-undo-position ()
-  "Get the most recent position from the undo list."
-  (interactive)
-  (if (eq buffer-undo-list t)
-      (message "Undo is disabled")
-    (let ((pos nil))
-      (catch 'found
-        (dolist (entry (seq-take buffer-undo-list 10))
-          (when (and (consp entry)
-                     (numberp (car entry))
-                     (numberp (cdr entry)))
-            (setq pos entry)
-            (throw 'found t))))
-      (if pos
-          (message "Last change position: %d-%d" (car pos) (cdr pos))
-        (message "No change position found in recent history")))))
-
-(defun goto-last-change ()
-  "Move cursor to the position of last change."
-  (interactive)
-  (if (eq buffer-undo-list t)
-      (message "Undo is disabled")
-    (let ((pos nil))
-      (catch 'found
-        (dolist (entry buffer-undo-list)
-          (when (and (consp entry)
-                     (numberp (car entry))
-                     (numberp (cdr entry)))
-            (setq pos (car entry))  ; Use start position of the change
-            (throw 'found t))))
-      (if pos
-          (goto-char pos)
-        (message "No change position found")))))
-
 ;; Create undo directory if it doesn't exist
 (make-directory "~/.emacs.d/undo-tree-history" t)
+
+
+(defvar-local change-history nil
+  "Ring of change positions for this buffer, most recent first.")
+
+(defvar-local change-history-index 0
+  "Current index in change history for navigation.")
+
+(defconst change-history-max 100
+  "Maximum number of change positions to remember.")
+
+(defun record-change-position (beg end length)
+  "Record change position in history.
+Added to `after-change-functions'."
+  (let ((pos (if (= length 0) end beg))) ; end for insertions, beg for deletions
+    (unless (and change-history
+                 (= pos (car change-history)))
+      (push pos change-history)
+      (when (> (length change-history) change-history-max)
+        (setq change-history (butlast change-history)))
+      (setq change-history-index 0))))
+
+(add-hook 'after-change-functions #'record-change-position)
+
+(defun my/goto-last-change (&optional n)
+  "Move cursor through change history.
+Without argument: go to previous change
+With numeric prefix: 
+  - Positive N: go N steps back in history
+  - Negative N: go N steps forward in history"
+  (interactive "P")
+  (if (null change-history)
+      (message "No change history available.")
+    (let* ((len (length change-history))
+           (n (or n 1))
+           (new-index (+ change-history-index n))
+           (new-index (max 0 (min new-index (1- len)))))
+      (setq change-history-index new-index)
+      (goto-char (nth new-index change-history))
+      (message "Position %d/%d" (1+ new-index) len))))
+
+(defun goto-next-change ()
+  "Move forward through change history."
+  (interactive)
+  (my/goto-last-change -1))
+
 
 
 (use-package goto-chg)
@@ -1954,6 +1951,9 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (require 'eglot)
 
+;; This is to make lua-language-server to not stutter when i execute the
+;; 'newline' command
+(setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
 
 ;; (setq eglot-events-buffer-size 0)
 
@@ -2530,6 +2530,11 @@ Otherwise, create a same-level heading (M-RET)."
   "Open a specific file."
   (interactive)
   (find-file "~/.secret_dotfiles/org/emacs/todo/todo-emacs.org"))
+
+(defun steam ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.local/share/Steam/steamapps/common/"))
 
 (defun templates ()
   "Open a specific file."
