@@ -1708,7 +1708,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 (with-eval-after-load 'dired
   (define-prefix-command 'my-dired-g-map)
   (define-key dired-mode-map (kbd "g") 'my-dired-g-map)
-  (define-key my-dired-g-map (kbd "z") 'my/zoxide-switch)
+  (define-key my-dired-g-map (kbd "z") 'my/dir-switch)
   (define-key my-dired-g-map (kbd "g") 'beginning-of-buffer)
   ;; (define-key dired-mode-map (kbd "G") 'end-of-buffer)
   (define-key dired-mode-map (kbd "G") 'dired-goto-last-line)

@@ -41,7 +41,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages '(zig-ts-mode))
  '(package-vc-selected-packages
    '((fish-completion :url
                       "https://github.com/LemonBreezes/emacs-fish-completion.git"))))

@@ -508,10 +508,12 @@
 
 (setq treesit-language-source-alist
       '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")
+        (zig "https://github.com/maxxnino/tree-sitter-zig")
         (c3 "https://github.com/c3lang/tree-sitter-c3")))
 
-(add-to-list 'load-path "~/.source/c3-ts-mode/")
-(require 'c3-ts-mode)
+(use-package zig-ts-mode
+  :vc (:url "https://codeberg.org/meow_king/zig-ts-mode"
+            :rev :newest))
 
 (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
@@ -946,6 +948,24 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 ;;                          (push found-word words-list)))))
 ;;                  (delete-dups words-list))))))))
 
+(defun buffer-words-completion ()
+  "Generate completion candidates from words of 4+ characters in the buffer."
+  (let ((words (list)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "\\_<[[:alnum:]_]\\{4,\\}\\_>" nil t)
+        (push (match-string-no-properties 0) words)))
+    (delete-dups words)))
+
+(defun my/buffer-words-capf ()
+  "Native CAPF for buffer words (4+ chars)."
+  (let ((bounds (bounds-of-thing-at-point 'word))) ; Get word boundaries
+    (when bounds
+      (list (car bounds)          ; Start position
+            (cdr bounds)          ; End position
+            (buffer-words-completion) ; Completion table
+            :exclusive 'no))))    ; Allow combining with other CAPFs
+
 
 (use-package cape
   :ensure t
@@ -968,7 +988,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                   #'cape-file
                                   ;; #'my/dabbrev-capf)))))
                                   ;; #'dabbrev-capf)))))
-                                  #'cape-dabbrev)))))
+                                  ;; #'cape-dabbrev)))))
+                                  #'my/buffer-words-capf)))))
 
   ;; For Elisp modes
   (dolist (mode '(emacs-lisp-mode
