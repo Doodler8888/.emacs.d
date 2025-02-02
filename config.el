@@ -170,6 +170,7 @@
 (auto-fill-mode 1)
 (setq-default fill-column 80)
 (add-hook 'text-mode-hook 'auto-fill-mode)
+(add-hook 'go-ts-mode-hook 'auto-fill-mode)
 
 
 (setq python-shell-interpreter "/usr/bin/python3")
@@ -300,6 +301,7 @@
 (global-auto-revert-mode 1)
 
 (set-default 'truncate-lines t)
+(add-hook 'special-mode-hook (lambda () (setq truncate-lines nil)))
 ;; List of modes that should have word-wrap enabled
 (dolist (mode '(compilation-mode
                 ;; Add other modes here
@@ -327,6 +329,7 @@
 
 (let ((paths '("/home/wurfkreuz/.nix-profile/bin"
               "/home/wurfkreuz/.ghcup/bin"
+              "/home/wurfkreuz/go/bin/"
               "/home/wurfkreuz/test-dir/"
               "/usr/bin")))
   ;; (setq exec-path (append paths exec-path))
@@ -850,21 +853,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Completion
 
-;; It makes completion-on-point to behave simpler, so that it doesn't takes into
-;; account what goes after the pointer.
-(defun my-completion-at-point-advice (orig-fun &rest args)
-  "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
-  (let ((inserted-whitespace (not (eq (char-after) ?\s))))
-    (when inserted-whitespace
-      (save-excursion
-        (insert " ")))
-    (unwind-protect
-        (apply orig-fun args)
-      (when inserted-whitespace
-        (save-excursion
-          (delete-char 1))))))
+;; ;; It makes completion-on-point to behave simpler, so that it doesn't takes into
+;; ;; account what goes after the pointer.
+;; (defun my-completion-at-point-advice (orig-fun &rest args)
+;;   "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
+;;   (let ((inserted-whitespace (not (eq (char-after) ?\s))))
+;;     (when inserted-whitespace
+;;       (save-excursion
+;;         (insert " ")))
+;;     (unwind-protect
+;;         (apply orig-fun args)
+;;       (when inserted-whitespace
+;;         (save-excursion
+;;           (delete-char 1))))))
 
-(advice-add 'completion-at-point :around #'my-completion-at-point-advice)
+;; (advice-add 'completion-at-point :around #'my-completion-at-point-advice)
 
 ;; ;; Corfu/Cape
 
@@ -953,19 +956,18 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (let ((words (list)))
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward "\\_<[[:alnum:]_]\\{4,\\}\\_>" nil t)
+      (while (re-search-forward "\\_<[[:alnum:]_\\-]\\{4,\\}\\_>" nil t)
         (push (match-string-no-properties 0) words)))
     (delete-dups words)))
 
 (defun my/buffer-words-capf ()
   "Native CAPF for buffer words (4+ chars)."
-  (let ((bounds (bounds-of-thing-at-point 'word))) ; Get word boundaries
+  (let ((bounds (bounds-of-thing-at-point 'symbol))) ; Use 'symbol' instead of 'word', otherwise it will complete prematurely if there is an underscore.
     (when bounds
       (list (car bounds)          ; Start position
             (cdr bounds)          ; End position
             (buffer-words-completion) ; Completion table
             :exclusive 'no))))    ; Allow combining with other CAPFs
-
 
 (use-package cape
   :ensure t
@@ -1797,6 +1799,10 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (require 'compile)
 
+;; It's specifically set for go compilation. Maybe it makes compilation mode to
+;; work incorrectly in other cases
+(setq compilation-error-screen-columns nil)
+
 ;; ;; ;; It makes the moving pointer to the new window functionality to not work.
 ;; (add-to-list 'display-buffer-alist
 ;;       '(("\\*compilation\\*"
@@ -1839,6 +1845,45 @@ If an eshell buffer for the directory already exists, switch to it."
              '(c3c
                "\\(/[^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\).*\\(?:Error\\|Warning\\)"
                1 2 3))
+
+
+(add-to-list 'compilation-error-regexp-alist 'go)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(go
+               "^\\(.+?\\):\\([0-9]+\\):\\([0-9]+\\):\\s-"
+               1  ; File name group
+               2  ; Line number group
+               3  ; Column number group
+               ))
+
+
+
+(defun my/next-error-with-column ()
+  "Move to the next error and jump to the correct column."
+  (interactive)
+  (let ((error-info (compilation-next-error 1 t)))  ;; Get the next error
+    (when error-info
+      (let ((line (nth 0 error-info))      ;; Get the line number from the error
+            (column (nth 2 error-info)))   ;; Get the column number from the error
+        (goto-line line)
+        (move-to-column column)))))
+
+;; Essential column handling configuration
+;; (setq compilation-error-screen-columns t)  ; Account for tab characters
+;; (setq compilation-auto-jump-to-first-error nil)  ; Prevent interference
+
+;; (add-to-list 'compilation-error-regexp-alist 'go)
+;; (add-to-list 'compilation-error-regexp-alist-alist
+;;              '(go
+;;                "^\\(.+?\\):\\([0-9]+\\):\\([0-9]+\\): "  ; Matches file:line:column:
+;;                ;; "^\\(?:[^0]\\|0\\(?:[^/]\\|$\\)\\)\\(.+?\\):\\([0-9]+\\):\\([0-9]+\\): "
+;;                ;; "^\\(?!2025/\\).+?:\\([0-9]+\\):\\([0-9]+\\): "  ; Exclude dates at start
+;;                ;; "^\\([^:\n]+\\):\\([0-9]+\\):\\([0-9]+\\):.*\\(?:cannot\\|warning\\|note\\)"
+;;                1  ; File name group
+;;                2  ; Line number group
+;;                3  ; Column number group
+;;                ))
+
 
 ;; ;; If you want to keep the original gcc pattern as fallback
 ;; ;; but give priority to the new one that includes columns
@@ -1913,8 +1958,8 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 ;; (use-package systemd
 ;;   :ensure t)
-;; (use-package markdown-mode ;; can't be found by the package installer
-;;   :ensure t)
+(use-package markdown-mode ;; can't be found by the package installer
+  :ensure t)
 
 (define-generic-mode kdl-mode
   ;; Comment style
@@ -2019,7 +2064,7 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; General
 
 
-(defvar browse-url-default-browser-executable "/usr/bin/vivaldi-stable"
+(defvar browse-url-default-browser-executable "/usr/bin/librewolf"
   "Path to the default browser executable.")
 
 (defun my/browse-url-default-browser (url &rest _args)
@@ -2567,3 +2612,4 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+

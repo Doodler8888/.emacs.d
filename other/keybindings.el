@@ -124,9 +124,6 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (define-key prog-mode-map (kbd "M-p") 'previous-error)
 (define-key prog-mode-map (kbd "C-x cc") 'compile)
 (define-key prog-mode-map (kbd "C-x cl") 'compile-last)
-
-(with-eval-after-load 'compilation
-  (define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy))
     
 ;; Can't use it, because i have C-w binding for the insert mode
 ;; (defun my/setup-global-window-keys ()

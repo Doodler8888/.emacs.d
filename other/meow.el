@@ -360,6 +360,7 @@ Adds spaces when using right brackets."
   (interactive "p\ncTill backward:")
   (meow-till (- arg) ch))
 
+
 (defun select-inside-quotes ()
   "Select text inside the closest set of double or single quotes."
   (interactive)
@@ -999,6 +1000,7 @@ When pasting over a selection, the replaced text is saved to the kill ring."
             (beginning-of-line))
         (insert text-to-paste)))))
 
+
 (defun my/meow-smart-paste (&optional arg)
   "Paste like Vim, handling both line-wise and regular pastes.
 With numeric prefix ARG, paste that many times.
@@ -1010,17 +1012,24 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
          (repeat-count (if numeric-prefix arg 1))
          ;; Get system clipboard content if available, otherwise fall back to kill ring
          (text-to-paste (if raw-prefix
-                            (current-kill (if (listp last-command-event)
-                                              0
-                                            (mod (- (aref (this-command-keys) 0) ?0)
-                                                 kill-ring-max))
-                                        t)
-                          (or (gui-get-selection 'CLIPBOARD)
-                              (current-kill 0 t)))))
-    ;; Replace region text with the kill ring update
+                           (current-kill (if (listp last-command-event)
+                                           0
+                                         (mod (- (aref (this-command-keys) 0) ?0)
+                                              kill-ring-max))
+                                       t)
+                         (or (gui-get-selection 'CLIPBOARD)
+                             (current-kill 0 t))))
+         ;; Store the region bounds before we modify anything
+         (region-beg (when (region-active-p) (region-beginning)))
+         (region-end (when (region-active-p) (region-end))))
+    
+    ;; Handle region replacement
     (when (region-active-p)
-      (kill-region (region-beginning) (region-end)))
-
+      (delete-region region-beg region-end)
+      ;; After deletion, we're at the right position to paste
+      (set-marker (mark-marker) region-beg))
+    
+    ;; Do the paste
     (dotimes (_ repeat-count)
       (if (string-suffix-p "\n" text-to-paste)
           (progn
@@ -1030,6 +1039,34 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
             (forward-line -1)
             (beginning-of-line))
         (insert text-to-paste)))))
+
+(defun my/meow-smart-paste (&optional arg)
+  "Paste like Vim, handling both line-wise and regular pastes.
+With numeric prefix ARG, paste that many times.
+With raw prefix argument (C-u without a number), paste from the kill ring.
+When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
+  (interactive "P")
+  (let* ((raw-prefix (equal arg '(4)))
+         (numeric-prefix (and (integerp arg) (> arg 0)))
+         (repeat-count (if numeric-prefix arg 1))
+         (text-to-paste (if raw-prefix
+                           (current-kill (if (listp last-command-event)
+                                           0
+                                         (mod (- (aref (this-command-keys) 0) ?0)
+                                              kill-ring-max))
+                                       t)
+                         (or (gui-get-selection 'CLIPBOARD)
+                             (current-kill 0 t)))))
+    ;; If region is active, kill it first to update the kill ring
+    (when (region-active-p)
+      (let ((region-text (buffer-substring (region-beginning) (region-end))))
+        (delete-region (region-beginning) (region-end))
+        (kill-new region-text)))
+    
+    ;; Do the paste
+    (dotimes (_ repeat-count)
+      (insert text-to-paste))))
+
 
 ;; ;; Work like in vim
 ;; (defun my/meow-replace-char ()
@@ -1102,6 +1139,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Delete from the current cursor position to the end of the line, add to kill ring, and enter insert mode."
   (interactive)
   (kill-region (point) (line-end-position))
+  (deactivate-mark)
   (meow-insert))
 
 (defun my/meow-line-up (&optional arg)
@@ -1734,6 +1772,9 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key daemons-mode-map (kbd "?") 'my/show-daemon-bindings))
 
+(add-hook 'compilation-mode-hook
+          (lambda ()
+            (define-key compilation-mode-map (kbd "/") 'my/conditional-search-or-avy)))
 
 ;; Conciliate meow with the rectangle mode
 (define-minor-mode my-rectangle-override-mode
