@@ -54,6 +54,41 @@
           (file-error
            (message "Error creating symlink: %s" (error-message-string err))))))))
 
+(defun my/dired-sudo-delete (&optional arg)
+  "Delete files with sudo if needed, with proper absolute path handling."
+  (interactive "P")
+  (let* ((files (mapcar #'expand-file-name (dired-get-marked-files t arg)))
+         (needs-sudo (cl-some 
+                      (lambda (f)
+                        (let ((dir (file-name-directory f)))
+                          (and dir (not (file-writable-p dir)))))
+                      files)))
+    (when (or (not needs-sudo)
+              (yes-or-no-p "Insufficient permissions. Use sudo? "))
+      (dolist (abs-file files)
+        (let* ((dir (file-name-directory abs-file))
+               (use-sudo (and dir (not (file-writable-p dir))))
+               (tramp-file (if use-sudo
+                               (format "/sudo::%s" abs-file)
+                             abs-file)))
+          (condition-case err
+              (progn
+                (delete-file tramp-file)
+                (dired-remove-entry abs-file))  ; Use original absolute path
+            (error 
+             (message "Error deleting %s: %s" abs-file (error-message-string err))))))
+      (revert-buffer))))
+
+(defun my/delete-file (file use-sudo)
+  "Delete FILE using sudo if USE-SUDO is non-nil."
+  (let ((target (if use-sudo
+                    (format "/sudo::%s" (expand-file-name file))
+                  file)))
+    (condition-case err
+        (delete-file target)
+      (error (message "Error deleting %s: %s" file (error-message-string
+                                                    err))))))
+
 
 (defun my/dired-toggle-bak-extension ()
   "Toggle '.bak' extension for marked files/directories in Dired.
