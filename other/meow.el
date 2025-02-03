@@ -1056,7 +1056,12 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
                                               kill-ring-max))
                                        t)
                          (or (gui-get-selection 'CLIPBOARD)
-                             (current-kill 0 t)))))
+                             (current-kill 0 t))))
+         (ends-with-newline (string-suffix-p "\n" text-to-paste))
+         (full-line-p (and ends-with-newline 
+                          (string-match-p "^\n*.*\n$" text-to-paste)
+                          (or (bolp) (not (region-active-p))))))
+    
     ;; If region is active, kill it first to update the kill ring
     (when (region-active-p)
       (let ((region-text (buffer-substring (region-beginning) (region-end))))
@@ -1065,7 +1070,13 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     
     ;; Do the paste
     (dotimes (_ repeat-count)
-      (insert text-to-paste))))
+      (if full-line-p
+          (progn
+            (unless (bolp) (forward-line) (beginning-of-line))
+            (insert text-to-paste)
+            (when (and (not (bolp)) (> repeat-count 1))
+              (forward-line)))
+        (insert text-to-paste)))))
 
 
 ;; ;; Work like in vim

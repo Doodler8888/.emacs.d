@@ -412,6 +412,11 @@
                                   ;; :foreground "#8bc34a"  ; Adjust the color as desired
                                   :weight 'normal))))
 
+;; Emoji support
+(when (member "Noto Color Emoji" (font-family-list))
+  (set-fontset-font t 'symbol (font-spec :family "Noto Color Emoji") nil 'prepend))
+
+
 ;; This is a code that tries to fix a sitaution where commented characters
 ;; inside single quotes have their own face
 (defun in-string-or-sexp-or-keyword-p (pos)
@@ -962,11 +967,17 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (defun my/buffer-words-capf ()
   "Native CAPF for buffer words (4+ chars)."
-  (let ((bounds (bounds-of-thing-at-point 'symbol))) ; Use 'symbol' instead of 'word', otherwise it will complete prematurely if there is an underscore.
+  (let* ((bounds (bounds-of-thing-at-point 'symbol))
+         (current-input (when bounds (buffer-substring-no-properties (car bounds) (cdr bounds)))))
     (when bounds
       (list (car bounds)          ; Start position
             (cdr bounds)          ; End position
-            (buffer-words-completion) ; Completion table
+            (lambda (string pred action)
+              (complete-with-action
+               action
+               (remove current-input (buffer-words-completion)) ; Remove self from completion list
+               string
+               pred))
             :exclusive 'no))))    ; Allow combining with other CAPFs
 
 (use-package cape
@@ -2612,4 +2623,5 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
 
