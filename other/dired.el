@@ -55,16 +55,28 @@
            (message "Error creating symlink: %s" (error-message-string err))))))))
 
 (defun my/dired-sudo-delete (&optional arg)
-  "Delete files with sudo if needed, with proper absolute path handling."
+  "Delete files in Dired, using sudo if needed and respecting the trash settings.
+If any file isn\u2019t writable, prompt with a sudo message.
+If not using sudo, prompt normally.
+When `delete-by-moving-to-trash' is non-nil, files are moved to trash rather than
+being deleted permanently. For sudo files, the remote trash directory is used."
   (interactive "P")
   (let* ((files (mapcar #'expand-file-name (dired-get-marked-files t arg)))
-         (needs-sudo (cl-some 
-                      (lambda (f)
-                        (let ((dir (file-name-directory f)))
-                          (and dir (not (file-writable-p dir)))))
-                      files)))
-    (when (or (not needs-sudo)
-              (yes-or-no-p "Insufficient permissions. Use sudo? "))
+         (needs-sudo (cl-some (lambda (f)
+                                (let ((dir (file-name-directory f)))
+                                  (and dir (not (file-writable-p dir)))))
+                              files))
+         (do-delete (if needs-sudo
+                        (yes-or-no-p "Insufficient permissions. Use sudo? ")
+                      (yes-or-no-p "Proceed with deletion? ")))
+         ;; The remote trash directory value is assumed to be set via
+         ;; (connection-local-set-profile-variables
+         ;;  'remote-trash-directory
+         ;;  '((trash-directory . "/sudo::~/.local/share/trash/")))
+         ;; while local trash-directory is already set, e.g.,
+         ;; (setq trash-directory "~/.local/share/Trash/files/")
+         )
+    (when do-delete
       (dolist (abs-file files)
         (let* ((dir (file-name-directory abs-file))
                (use-sudo (and dir (not (file-writable-p dir))))
@@ -73,9 +85,15 @@
                              abs-file)))
           (condition-case err
               (progn
-                (delete-file tramp-file)
-                (dired-remove-entry abs-file))  ; Use original absolute path
-            (error 
+                (if delete-by-moving-to-trash
+                    (if use-sudo
+                        ;; When using sudo, let-bind trash-directory to the remote trash directory.
+                        (let ((trash-directory "/sudo::~/.local/share/trash/"))
+                          (move-file-to-trash tramp-file))
+                      (move-file-to-trash tramp-file))
+                  (delete-file tramp-file))
+                (dired-remove-entry abs-file))
+            (error
              (message "Error deleting %s: %s" abs-file (error-message-string err))))))
       (revert-buffer))))
 

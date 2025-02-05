@@ -1377,6 +1377,8 @@ Prevents highlighting of the minibuffer command line itself."
 
 ;; Basic trash settings
 (setq delete-by-moving-to-trash t)
+(setq trash-directory "~/.local/share/Trash/files/")
+
 (setq dired-recursive-copies 'always)
 
 ;; Configure connection-local variables for sudo operations
