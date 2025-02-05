@@ -2447,7 +2447,7 @@ Otherwise, create a same-level heading (M-RET)."
 (defun zellij ()
   "Open sway config file."
   (interactive)
-  (find-file (expand-file-name "~/.dotfiles/zellij")))
+  (find-file (expand-file-name "~/.dotfiles/zellij/config.kdl")))
 
 (defun nix ()
   "Open sway config file."
@@ -2623,5 +2623,3 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-

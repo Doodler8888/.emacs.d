@@ -251,3 +251,5 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-s C-o") 'my-org-outline))
+
+

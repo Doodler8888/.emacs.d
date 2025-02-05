@@ -310,23 +310,46 @@ Numbered from top-left to bottom-right."
 (define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
 
 
-(defun surround-region-with-symbol (start end)
-  "Surround the region with a symbol input by the user.
+;; (defun surround-region-with-symbol (start end)
+;;   "Surround the region with a symbol input by the user.
+;; Adds spaces when using right brackets."
+;;   (interactive "r")
+;;   (let* ((input (read-char "Enter symbol: "))
+;;          (char (char-to-string input))
+;;          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
+;;          (left-char (or (car (rassoc char pairs)) char))
+;;          (right-char (or (cdr (assoc left-char pairs)) char))
+;;          (add-spaces (member char '(")" "]" "}" ">"))))
+;;     (save-excursion
+;;       (goto-char end)
+;;       (when add-spaces (insert " "))
+;;       (insert right-char)
+;;       (goto-char start)
+;;       (insert left-char)
+;;       (when add-spaces (insert " ")))))
+
+(defun surround-region-with-symbol (&optional char)
+  "Surround the currently active region with a symbol input by the user.
 Adds spaces when using right brackets."
-  (interactive "r")
-  (let* ((input (read-char "Enter symbol: "))
-         (char (char-to-string input))
+  (interactive (list (read-char "Enter symbol: ")))
+  (unless (use-region-p)
+    (error "No active region to surround"))
+  (let* ((start (region-beginning))
+         (end (region-end))
+         (char-str (char-to-string char))
          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
-         (left-char (or (car (rassoc char pairs)) char))
-         (right-char (or (cdr (assoc left-char pairs)) char))
-         (add-spaces (member char '(")" "]" "}" ">"))))
+         (left-char (or (car (rassoc char-str pairs)) char-str))
+         (right-char (or (cdr (assoc left-char pairs)) char-str))
+         (add-spaces (member char-str '(")" "]" "}" ">"))))
     (save-excursion
       (goto-char end)
       (when add-spaces (insert " "))
       (insert right-char)
       (goto-char start)
       (insert left-char)
-      (when add-spaces (insert " ")))))
+      (when add-spaces (insert " "))))
+  ;; Return only the command name and the character to store in history
+  (list 'surround-region-with-symbol char))
 
 (defun change-surrounding-symbol (start end)
   "Change the symbols surrounding the region."
@@ -970,24 +993,23 @@ If no forward match is found, search backward."
   "Paste like Vim, handling both line-wise and regular pastes.
 With numeric prefix ARG, paste that many times.
 With raw prefix argument (C-u without a number), paste from the kill ring.
-When pasting over a selection, the replaced text is saved to the kill ring."
+When pasting over a selection, the replaced text is NOT saved to the kill ring."
   (interactive "P")
   (let* ((raw-prefix (equal arg '(4)))
          (numeric-prefix (and (integerp arg) (> arg 0)))
          (repeat-count (if numeric-prefix arg 1))
          ;; Get system clipboard content if available, otherwise fall back to kill ring
          (text-to-paste (if raw-prefix
-                           (current-kill (if (listp last-command-event)
-                                           0
-                                         (mod (- (aref (this-command-keys) 0) ?0)
-                                              kill-ring-max))
-                                       t)
-                         (or (gui-get-selection 'CLIPBOARD)
-                             (current-kill 0 t)))))
+                            (current-kill (if (listp last-command-event)
+                                              0
+                                            (mod (- (aref (this-command-keys) 0) ?0)
+                                                 kill-ring-max))
+                                          t)
+                          (or (gui-get-selection 'CLIPBOARD)
+                              (current-kill 0 t)))))
     
     (when (region-active-p)
-      ;; Save the region to kill ring before deleting
-      (kill-ring-save (region-beginning) (region-end))
+      ;; Simply delete the region without saving it to the kill ring
       (delete-region (region-beginning) (region-end)))
     
     (dotimes (_ repeat-count)
@@ -1506,6 +1528,48 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     ;; (call-interactively 'meow-mark-word)))
 
 
+;; Define a variable to store the command history
+(defvar my-command-history nil
+  "List to store the last two commands with their arguments.")
+
+(defun my-store-command (cmd args)
+  "Store a command and its arguments in the history."
+  (let ((command-entry (cons cmd args)))
+    (setq my-command-history 
+          (if (< (length my-command-history) 2)
+              (append my-command-history (list command-entry))
+            (append (cdr my-command-history) (list command-entry))))))
+
+(defun my-replay-commands ()
+  "Replay the stored sequence of commands."
+  (interactive)
+  (dolist (cmd-entry my-command-history)
+    (let ((cmd (car cmd-entry))
+          (args (cdr cmd-entry)))
+      (when (commandp cmd)
+        (apply cmd args)))))
+
+;; Advice function to track command execution
+(defun my-track-command (orig-fun &rest args)
+  "Advice function to track command execution."
+  (my-store-command orig-fun args)
+  (apply orig-fun args))
+
+;; Function to see current command history
+(defun my-show-command-history ()
+  "Display the current command history in the messages buffer."
+  (interactive)
+  (message "Current command history: %S" my-command-history))
+
+;; Add advice to the specific commands
+(advice-add 'meow-till :around #'my-track-command)
+(advice-add 'my/meow-smart-delete :around #'my-track-command)
+(advice-add 'meow-inner-of-thing :around #'my-track-command)
+(advice-add 'meow-mark-word :around #'my-track-command)
+(advice-add 'meow-next-word :around #'my-track-command)
+(advice-add 'meow-next-symbol :around #'my-track-command)
+(advice-add 'surround-region-with-symbol :around #'my-track-command)
+
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
   (meow-motion-overwrite-define-key
@@ -1693,6 +1757,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
+   '("q" . my-replay-commands)
    ;; '("C-r" . undo-tree-redo)
    '("C-r" . undo-fu-only-redo)
    ;; '("C-r" . undo-redo)
