@@ -275,7 +275,8 @@ Numbered from top-left to bottom-right."
       (select-window (nth index windows)))))
 
 
-(define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-word)
+;; (define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-word)
+(define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-sexp)
 
 (define-prefix-command 'my-window-map)
 (define-key meow-normal-state-keymap (kbd "C-w") 'my-window-map)
@@ -352,7 +353,7 @@ Adds spaces when using right brackets."
   (list 'surround-region-with-symbol char))
 
 (defun change-surrounding-symbol (start end)
-  "Change the symbols surrounding the region."
+  "Change the symbols surrounding the region, handling both left and right inputs."
   (interactive "r")
   (let* ((region-text (buffer-substring-no-properties start end))
          (first-char (substring region-text 0 1))
@@ -360,9 +361,16 @@ Adds spaces when using right brackets."
          (content (substring region-text 1 -1))
          (new-symbol (char-to-string (read-char "Enter new symbol: ")))
          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
-         (closing (cdr (assoc new-symbol pairs))))
-    (delete-region start end)
-    (insert new-symbol content (or closing new-symbol))))
+         (reverse-pairs (mapcar (lambda (p) (cons (cdr p) (car p))) pairs))
+         (is-opening (assoc new-symbol pairs))
+         (is-closing (assoc new-symbol reverse-pairs))
+         (new-open (or (car is-opening) (cdr is-closing) new-symbol))
+         (new-close (or (cdr is-opening) (car is-closing) new-symbol)))
+
+    (when (and (equal first-char (car (assoc first-char pairs)))
+               (equal last-char (cdr (assoc first-char pairs))))
+      (delete-region start end)
+      (insert new-open content new-close))))
 
 (defun delete-surrounding-symbol (start end)
   "Delete the symbols surrounding the region."
@@ -445,7 +453,8 @@ Adds spaces when using right brackets."
 
 (defun meow-find-and-select-inner (n ch)
   "Find the next N occurrence of CH and select its inner content within current line only.
-If no forward match is found, search backward."
+If no forward match is found, search backward.
+Even-numbered occurrences (pairs) are skipped, so that you only count odd-numbered pairs."
   (interactive "p\ncFind and select inner:")
   (let* ((case-fold-search nil)
          (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
@@ -460,13 +469,25 @@ If no forward match is found, search backward."
                       ((memq ch '(?\{ ?\})) ?c)
                       ((memq ch '(?' ?\" ?`)) ?g)
                       (t nil))))
-    ;; Try forward search first
+    ;; Try forward search first, counting only odd occurrences.
     (save-excursion
-      (setq forward-pos (search-forward ch-str line-end t n)))
+      (let ((found 0)
+            pos)
+        (goto-char line-start)
+        (while (and (< (point) line-end) (not forward-pos))
+          (setq pos (search-forward ch-str line-end t 1))
+          (if pos
+              (progn
+                (setq found (1+ found))
+                (when (and (= (mod found 2) 1)
+                           (= (/ (+ found 1) 2) n))
+                  (setq forward-pos pos)))
+            (setq forward-pos nil)))))
     
-    ;; If forward search fails, try backward search
+    ;; If forward search fails, try backward search (you can implement a similar odd-occurrence loop)
     (when (not forward-pos)
       (save-excursion
+        ;; For brevity, using a single call. You could similarly loop backward.
         (setq backward-pos (search-backward ch-str line-start t n))))
     
     (cond
@@ -1528,9 +1549,58 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     ;; (call-interactively 'meow-mark-word)))
 
 
+;; ;; ;; == Original code for dot-repeat == ;; ;; ;;
+;; ;; Define a variable to store the command history
+;; (defvar my-command-history nil
+;;   "List to store the last two commands with their arguments.")
+
+;; (defun my-store-command (cmd args)
+;;   "Store a command and its arguments in the history."
+;;   (let ((command-entry (cons cmd args)))
+;;     (setq my-command-history 
+;;           (if (< (length my-command-history) 2)
+;;               (append my-command-history (list command-entry))
+;;             (append (cdr my-command-history) (list command-entry))))))
+
+;; (defun my-replay-commands ()
+;;   "Replay the stored sequence of commands."
+;;   (interactive)
+;;   (dolist (cmd-entry my-command-history)
+;;     (let ((cmd (car cmd-entry))
+;;           (args (cdr cmd-entry)))
+;;       (when (commandp cmd)
+;;         (apply cmd args)))))
+
+;; ;; Advice function to track command execution
+;; (defun my-track-command (orig-fun &rest args)
+;;   "Advice function to track command execution."
+;;   (my-store-command orig-fun args)
+;;   (apply orig-fun args))
+
+;; ;; Function to see current command history
+;; (defun my-show-command-history ()
+;;   "Display the current command history in the messages buffer."
+;;   (interactive)
+;;   (message "Current command history: %S" my-command-history))
+
+;; ;; Add advice to the specific commands
+;; ;; (advice-add 'meow-till :around #'my-track-command)
+;; (advice-add 'my/meow-smart-delete :around #'my-track-command)
+;; (advice-add 'meow-inner-of-thing :around #'my-track-command)
+;; (advice-add 'meow-mark-word :around #'my-track-command)
+;; (advice-add 'meow-next-word :around #'my-track-command)
+;; (advice-add 'meow-next-symbol :around #'my-track-command)
+;; (advice-add 'surround-region-with-symbol :around #'my-track-command)
+
 ;; Define a variable to store the command history
 (defvar my-command-history nil
   "List to store the last two commands with their arguments.")
+
+(defvar my-insert-history ""
+  "Stores the last text typed in insert mode.")
+
+(defvar my-last-action 'command
+  "Tracks whether the last action was 'insert or 'command.")
 
 (defun my-store-command (cmd args)
   "Store a command and its arguments in the history."
@@ -1538,31 +1608,45 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     (setq my-command-history 
           (if (< (length my-command-history) 2)
               (append my-command-history (list command-entry))
-            (append (cdr my-command-history) (list command-entry))))))
+            (append (cdr my-command-history) (list command-entry))))
+    (setq my-last-action 'command)))  ;; Mark last action as a command
 
 (defun my-replay-commands ()
-  "Replay the stored sequence of commands."
+  "Replay the stored sequence of commands or insert typed text."
   (interactive)
-  (dolist (cmd-entry my-command-history)
-    (let ((cmd (car cmd-entry))
-          (args (cdr cmd-entry)))
-      (when (commandp cmd)
-        (apply cmd args)))))
+  (if (eq my-last-action 'insert)
+      ;; If last action was insert mode typing, insert only
+      (when (not (string-empty-p my-insert-history))
+        (insert my-insert-history))
+    ;; Otherwise, execute stored commands
+    (dolist (cmd-entry my-command-history)
+      (let ((cmd (car cmd-entry))
+            (args (cdr cmd-entry)))
+        (when (commandp cmd)
+          (apply cmd args))))))
 
-;; Advice function to track command execution
 (defun my-track-command (orig-fun &rest args)
   "Advice function to track command execution."
   (my-store-command orig-fun args)
   (apply orig-fun args))
 
-;; Function to see current command history
-(defun my-show-command-history ()
-  "Display the current command history in the messages buffer."
-  (interactive)
-  (message "Current command history: %S" my-command-history))
+(defun my-reset-insert-history ()
+  "Reset the insert history when entering insert mode."
+  (setq my-insert-history "")
+  (setq my-last-action 'insert))  ;; Mark last action as insert
 
-;; Add advice to the specific commands
-(advice-add 'meow-till :around #'my-track-command)
+(defun my-track-typed-text ()
+  "Append the last typed character to `my-insert-history`."
+  (setq my-insert-history
+        (concat my-insert-history (string last-command-event)))
+  (setq my-last-action 'insert))  ;; Ensure last action stays as insert
+
+;; Hooks for insert mode tracking
+(add-hook 'post-self-insert-hook #'my-track-typed-text)
+(add-hook 'meow-insert-enter-hook #'my-reset-insert-history)
+(add-hook 'meow-insert-exit-hook (lambda () (message "Stored insert: %s" my-insert-history)))
+
+;; Advice specific Meow commands for tracking
 (advice-add 'my/meow-smart-delete :around #'my-track-command)
 (advice-add 'meow-inner-of-thing :around #'my-track-command)
 (advice-add 'meow-mark-word :around #'my-track-command)
@@ -1738,6 +1822,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("S" . meow-kill-whole-line)
    ;; '("u" . meow-undo)
    ;; '("U" . meow-undo-in-selection)
+   '("U" . my/toggle-case-based-on-first)
    '("u" . undo-fu-only-undo)
    ;; '("v" . meow-visit)
    ;; '("v" . my/meow-line-up)
@@ -1861,10 +1946,13 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
             (define-key map (kbd "b") 'backward-word)
             (define-key map (kbd "l") 'forward-char)
             (define-key map (kbd "h") 'backward-char)
-            (define-key map (kbd "d") 'backward-delete-char-untabify)
+            ;; (define-key map (kbd "d") 'backward-delete-char-untabify)
+            (define-key map (kbd "d") 'kill-rectangle)
             (define-key map (kbd "i") 'string-rectangle)
             (define-key map (kbd "j") 'next-line)
             (define-key map (kbd "k") 'previous-line)
+            (define-key map (kbd "G") 'end-of-buffer)
+            (define-key map (kbd "g g") 'beginning-of-buffer)
             map))
 
 (defun my-toggle-rectangle-overrides ()
@@ -1887,6 +1975,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   :keymap meow-paren-keymap)
 
 ;; meow-define-state creates the variable
+;; This variable probably doesn't exist. I took this code from the repo of the
+;; package.
 (setq meow-cursor-type-paren 'hollow)
 
 (meow-define-keys 'paren
@@ -1936,20 +2026,23 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 
 (advice-add 'meow--switch-to-motion :around #'my-wdired-finish-edit-advice)
 
-;; ;; Used for making 'symbol' movements to ignore slashes. But i'm not use i like it.
-;; (defun my-forward-symbol (&optional arg)
-;;   "Move forward across one balanced expression.
-;; Treats slashes as part of the symbol."
-;;   (interactive "^p")
-;;   (let ((arg (or arg 1))
-;;         (sym-syntax (string-to-syntax "_")))  ; treat slash as symbol constituent
-;;     (with-syntax-table (copy-syntax-table (syntax-table))
-;;       (modify-syntax-entry ?/ "_")  ; make slash a symbol constituent
-;;       (forward-symbol arg))))
-;; ;; Register our new symbol movement function
-;; (put 'my-symbol 'forward-op #'my-forward-symbol)
-;; ;; Tell Meow to use our custom symbol definition
-;; (setq meow-symbol-thing 'my-symbol)
+;; Used for making 'symbol' movements to ignore slashes. But i don't think i
+;; like it.
+;; It shoulnd't be a function in the first place, i don't use it as a function
+;; at all.
+(defun my-forward-symbol (&optional arg)
+  "Move forward across one balanced expression.
+Treats slashes as part of the symbol."
+  (interactive "^p")
+  (let ((arg (or arg 1))
+        (sym-syntax (string-to-syntax "_")))  ; treat slash as symbol constituent
+    (with-syntax-table (copy-syntax-table (syntax-table))
+      (modify-syntax-entry ?/ "_")  ; make slash a symbol constituent
+      (forward-symbol arg))))
+;; Register our new symbol movement function
+(put 'my-symbol 'forward-op #'my-forward-symbol)
+;; Tell Meow to use our custom symbol definition
+(setq meow-symbol-thing 'my-symbol)
 
 
 (meow-setup)
