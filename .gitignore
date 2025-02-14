@@ -52,6 +52,8 @@ meow.el.bak
 /undo-fu-session/
 multisession/
 
+.bookmarks
+
 .config.org.~undo-tree~
 ielm-history.eld
 .ielm_history
