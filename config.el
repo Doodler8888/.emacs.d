@@ -71,9 +71,12 @@
 
 (defun my-vc-branch ()
   "Get the current Git branch name, if any."
-  (unless (or (eq major-mode 'eshell-mode)
-              (eq major-mode 'special-mode)  ; for *scratch*, *Messages*, etc
-              (string-prefix-p "*" (buffer-name)))  ; any special buffer
+  (when (and (buffer-file-name)
+             ;; This line is very important, otherwise i will have problems with tramp
+             (not (file-remote-p (buffer-file-name)))
+             (not (or (eq major-mode 'eshell-mode)
+                      (eq major-mode 'special-mode)
+                      (string-prefix-p "*" (buffer-name)))))
     (with-temp-buffer
       (condition-case nil
           (when (zerop (call-process "git" nil t nil "branch" "--show-current"))
@@ -93,7 +96,7 @@
 (setq-default mode-line-format
               '("%e"
                 (:eval (my-window-number))
-                ""  ; Single space after the window number
+                ""
                 mode-line-front-space
                 (:eval (if (buffer-file-name)
                            (abbreviate-file-name (buffer-file-name))
@@ -105,8 +108,7 @@
                 (:eval (propertize " " 'display '(space :align-to (- right 12))))
                 mode-line-end-spaces))
 
-
-;; ;; Tabs
+;; Tabs
 
 (setq tab-bar-tab-name-format-function #'my-tab-bar-vim-name-format-function)
 (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator))
@@ -144,6 +146,9 @@
 (global-set-key (kbd "C-x u") 'windmove-up)
 (save-some-buffers t)
 
+(setq-default tab-width 4)
+(setq-default indent-tabs-mode t)
+
 (recentf-mode)
 
 (setq vc-follow-symlinks t)
@@ -154,6 +159,10 @@
 (setq backup-inhibited t)
 
 (add-hook 'prog-mode-hook (show-paren-mode t))
+
+;; Bookmarks
+(setq bookmark-default-file "~/.emacs.d/.bookmarks")
+(setq bookmark-save-flag 1)
 
 ;; Auto pairing
 (add-hook 'prog-mode-hook (electric-pair-mode t))
@@ -170,14 +179,13 @@
 (auto-fill-mode 1)
 (setq-default fill-column 80)
 (add-hook 'text-mode-hook 'auto-fill-mode)
-(add-hook 'go-ts-mode-hook 'auto-fill-mode)
+;; (add-hook 'go-ts-mode-hook 'auto-fill-mode)
 
 
 (setq python-shell-interpreter "/usr/bin/python3")
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
-(setq-default indent-tabs-mode nil)
 (use-package savehist
   :ensure nil
   :hook
@@ -491,7 +499,6 @@
 
 (add-to-list 'auto-mode-alist '("sshd_config\\'" . conf-mode))
 (add-to-list 'auto-mode-alist '("ssh_config\\'" . conf-mode))
-
 
 ;; Cron
 
@@ -858,21 +865,21 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; Completion
 
-;; ;; It makes completion-on-point to behave simpler, so that it doesn't takes into
-;; ;; account what goes after the pointer.
-;; (defun my-completion-at-point-advice (orig-fun &rest args)
-;;   "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
-;;   (let ((inserted-whitespace (not (eq (char-after) ?\s))))
-;;     (when inserted-whitespace
-;;       (save-excursion
-;;         (insert " ")))
-;;     (unwind-protect
-;;         (apply orig-fun args)
-;;       (when inserted-whitespace
-;;         (save-excursion
-;;           (delete-char 1))))))
+;; It makes completion-on-point to behave simpler, so that it doesn't takes into
+;; account what goes after the pointer.
+(defun my-completion-at-point-advice (orig-fun &rest args)
+  "Insert a whitespace after the cursor before showing completion candidates, and clean it up afterward."
+  (let ((inserted-whitespace (not (eq (char-after) ?\s))))
+    (when inserted-whitespace
+      (save-excursion
+        (insert " ")))
+    (unwind-protect
+        (apply orig-fun args)
+      (when inserted-whitespace
+        (save-excursion
+          (delete-char 1))))))
 
-;; (advice-add 'completion-at-point :around #'my-completion-at-point-advice)
+(advice-add 'completion-at-point :around #'my-completion-at-point-advice)
 
 ;; ;; Corfu/Cape
 
@@ -1390,7 +1397,7 @@ Prevents highlighting of the minibuffer command line itself."
  `(:application tramp :protocol "sudo" :machine ,(system-name))
  'remote-trash-directory)
 
-;; Auto-revert for sudo files
+;; ;; Auto-revert for sudo files
 (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
 
 ;; This setting isn't about the ability to change permission bits, but about
@@ -1438,6 +1445,8 @@ Prevents highlighting of the minibuffer command line itself."
   (define-key magit-mode-map (kbd "M-6") nil)
   )
 
+;; Icons
+(setopt magit-format-file-function #'magit-format-file-nerd-icons)
 
 ;; Custom option of stash, because i don't know how else to execute 'stash
 ;; apply' without the '--index' flag.
@@ -2196,15 +2205,6 @@ Otherwise, create a same-level heading (M-RET)."
 (define-key org-mode-map (kbd "M-RET") #'my/org-smart-heading)
 
 
-;; Org appear
-(use-package org-appear
-  :hook (org-mode . org-appear-mode)
-  :custom
-  (org-appear-autoemphasis t)
-  (org-appear-autolinks t)
-  (org-appear-autosubmarkers t))
-
-
 ;; Org-drill
 
 (use-package org-drill
@@ -2279,6 +2279,20 @@ Otherwise, create a same-level heading (M-RET)."
 ;; Visuals
 
 (setq org-hide-emphasis-markers t)
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c n")
+    (lambda () (interactive)
+      (setq org-hide-emphasis-markers (not org-hide-emphasis-markers))
+      (org-mode-restart))))
+
+
+;; ;; Org appear
+;; (use-package org-appear
+;;   :hook (org-mode . org-appear-mode)
+;;   :custom
+;;   (org-appear-autoemphasis t)
+;;   (org-appear-autolinks t)
+;;   (org-appear-autosubmarkers t))
 
 
 ;; Custom commands
