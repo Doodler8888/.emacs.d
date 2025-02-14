@@ -532,7 +532,7 @@ above with less indentation. Keep the cursor aligned with the calculated column.
                        (+ (line-beginning-position) delete-to-column))
         (move-to-column delete-to-column t)))))
 
-(define-key prog-mode-map (kbd "C-<backspace>") #'delete-to-indentation)
+;; (define-key prog-mode-map (kbd "C-<backspace>") #'delete-to-indentation)
 
 
 
@@ -581,3 +581,16 @@ If there are more than 2 windows:
         (transpose-frame))
       (when (> (length windows) 2)
         (my/toggle-windows))))
+
+
+(defun my/toggle-case-based-on-first (start end)
+  "Toggle the case of the selected region based on its first character.
+If the first character is uppercase, convert the entire region to lowercase.
+If it is lowercase, convert the entire region to uppercase."
+  (interactive "r")
+  (if (< (- end start) 1)
+      (message "Region is empty!")
+    (let ((first (buffer-substring-no-properties start (1+ start))))
+      (if (string= first (upcase first))
+          (downcase-region start end)
+        (upcase-region start end)))))
