@@ -1549,58 +1549,59 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     ;; (call-interactively 'meow-mark-word)))
 
 
-;; ;; ;; == Original code for dot-repeat == ;; ;; ;;
-;; ;; Define a variable to store the command history
-;; (defvar my-command-history nil
-;;   "List to store the last two commands with their arguments.")
+;; Store the last valid combination (selection + action)
+(defvar my-last-combination nil
+  "Stores the last valid combination of selection and action commands.")
 
-;; (defun my-store-command (cmd args)
-;;   "Store a command and its arguments in the history."
-;;   (let ((command-entry (cons cmd args)))
-;;     (setq my-command-history 
-;;           (if (< (length my-command-history) 2)
-;;               (append my-command-history (list command-entry))
-;;             (append (cdr my-command-history) (list command-entry))))))
-
-;; (defun my-replay-commands ()
-;;   "Replay the stored sequence of commands."
-;;   (interactive)
-;;   (dolist (cmd-entry my-command-history)
-;;     (let ((cmd (car cmd-entry))
-;;           (args (cdr cmd-entry)))
-;;       (when (commandp cmd)
-;;         (apply cmd args)))))
-
-;; ;; Advice function to track command execution
-;; (defun my-track-command (orig-fun &rest args)
-;;   "Advice function to track command execution."
-;;   (my-store-command orig-fun args)
-;;   (apply orig-fun args))
-
-;; ;; Function to see current command history
-;; (defun my-show-command-history ()
-;;   "Display the current command history in the messages buffer."
-;;   (interactive)
-;;   (message "Current command history: %S" my-command-history))
-
-;; ;; Add advice to the specific commands
-;; ;; (advice-add 'meow-till :around #'my-track-command)
-;; (advice-add 'my/meow-smart-delete :around #'my-track-command)
-;; (advice-add 'meow-inner-of-thing :around #'my-track-command)
-;; (advice-add 'meow-mark-word :around #'my-track-command)
-;; (advice-add 'meow-next-word :around #'my-track-command)
-;; (advice-add 'meow-next-symbol :around #'my-track-command)
-;; (advice-add 'surround-region-with-symbol :around #'my-track-command)
-
-;; Define a variable to store the command history
+;; Store last two executed commands (for building combinations)
 (defvar my-command-history nil
   "List to store the last two commands with their arguments.")
 
+;; Store last typed text in insert mode
 (defvar my-insert-history ""
   "Stores the last text typed in insert mode.")
 
-(defvar my-last-action 'command
-  "Tracks whether the last action was 'insert or 'command.")
+;; Track whether the last action was a command or insert
+(defvar my-last-action 'command)
+
+;; Expansion count (set via my-meow-digit)
+(defvar my-meow-expand-count nil
+  "Stores the number of times to expand the selection.")
+
+;; Define groups for selection and action commands using command names
+(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till)
+  "Commands that create selections.")
+
+(defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete surround-region-with-symbol)
+  "Commands that operate on a selection.")
+
+(defun my-command-name (cmd)
+  "Get the command name from a command object."
+  (cond
+   ((symbolp cmd) cmd)
+   ((subrp cmd)
+    (intern (replace-regexp-in-string "#<subr \\(.+?\\)>" "\\1" 
+                                      (prin1-to-string cmd))))
+   ((functionp cmd)
+    (let ((cmd-string (prin1-to-string cmd)))
+      (cond
+       ((string-match-p "my/generic-meow-smart-delete" cmd-string)
+        'my/meow-smart-delete)
+       ((and (string-match-p "meow-kill" cmd-string)
+             (string-match-p "meow-delete" cmd-string))
+        'my/meow-smart-delete)
+       ((string-match-p "surround-region-with-symbol" cmd-string)
+        'surround-region-with-symbol)
+       (t 'unknown-command))))
+   (t 'unknown-command)))
+
+(defun my-valid-combination-p (history)
+  "Check if the command history forms a valid combination."
+  (when (>= (length history) 2)
+    (let* ((first-cmd (my-command-name (caar history)))
+           (last-cmd (my-command-name (caar (last history)))))
+      (and (member first-cmd my-selection-commands)
+           (member last-cmd my-action-commands)))))
 
 (defun my-store-command (cmd args)
   "Store a command and its arguments in the history."
@@ -1609,21 +1610,33 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
           (if (< (length my-command-history) 2)
               (append my-command-history (list command-entry))
             (append (cdr my-command-history) (list command-entry))))
-    (setq my-last-action 'command)))  ;; Mark last action as a command
+    
+    (when (my-valid-combination-p my-command-history)
+      (setq my-last-combination 
+            (list (car my-command-history)
+                  my-meow-expand-count
+                  (cadr my-command-history))))
+    
+    (when (member (my-command-name cmd) my-selection-commands)
+      (setq my-meow-expand-count nil))
+    (setq my-last-action 'command)))
 
 (defun my-replay-commands ()
-  "Replay the stored sequence of commands or insert typed text."
+  "Replay the last valid combination or insert history."
   (interactive)
   (if (eq my-last-action 'insert)
-      ;; If last action was insert mode typing, insert only
       (when (not (string-empty-p my-insert-history))
         (insert my-insert-history))
-    ;; Otherwise, execute stored commands
-    (dolist (cmd-entry my-command-history)
-      (let ((cmd (car cmd-entry))
-            (args (cdr cmd-entry)))
-        (when (commandp cmd)
-          (apply cmd args))))))
+    (when my-last-combination
+      (let ((selection (nth 0 my-last-combination))
+            (expand-count (nth 1 my-last-combination))
+            (action (nth 2 my-last-combination)))
+        (when selection
+          (apply (car selection) (cdr selection)))
+        (when expand-count
+          (meow-expand expand-count))
+        (when action
+          (apply (car action) (cdr action)))))))
 
 (defun my-track-command (orig-fun &rest args)
   "Advice function to track command execution."
@@ -1633,26 +1646,41 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 (defun my-reset-insert-history ()
   "Reset the insert history when entering insert mode."
   (setq my-insert-history "")
-  (setq my-last-action 'insert))  ;; Mark last action as insert
+  (setq my-last-action 'insert))
 
 (defun my-track-typed-text ()
-  "Append the last typed character to `my-insert-history`."
+  "Append the last typed character to my-insert-history."
   (setq my-insert-history
         (concat my-insert-history (string last-command-event)))
-  (setq my-last-action 'insert))  ;; Ensure last action stays as insert
+  (setq my-last-action 'insert))
+
+(defun my-track-meow-expand (digit)
+  "Store expansion count for later replay."
+  (setq my-meow-expand-count digit))
 
 ;; Hooks for insert mode tracking
 (add-hook 'post-self-insert-hook #'my-track-typed-text)
 (add-hook 'meow-insert-enter-hook #'my-reset-insert-history)
-(add-hook 'meow-insert-exit-hook (lambda () (message "Stored insert: %s" my-insert-history)))
+(add-hook 'meow-insert-exit-hook (lambda ()))
 
 ;; Advice specific Meow commands for tracking
-(advice-add 'my/meow-smart-delete :around #'my-track-command)
-(advice-add 'meow-inner-of-thing :around #'my-track-command)
-(advice-add 'meow-mark-word :around #'my-track-command)
-(advice-add 'meow-next-word :around #'my-track-command)
-(advice-add 'meow-next-symbol :around #'my-track-command)
-(advice-add 'surround-region-with-symbol :around #'my-track-command)
+(dolist (cmd my-selection-commands)
+  (advice-add cmd :around #'my-track-command))
+(dolist (cmd my-action-commands)
+  (advice-add cmd :around #'my-track-command))
+
+;; Advice to track expansion count
+(advice-add 'my-meow-digit :after (lambda (&rest args)
+                                   (my-track-meow-expand (car args))))
+
+;; Reset expansion count for selection commands
+(defun my-reset-expand-count (&rest args)
+  "Reset the expansion count for selection commands."
+  (setq my-meow-expand-count nil))
+
+(dolist (cmd my-selection-commands)
+  (advice-add cmd :before #'my-reset-expand-count))
+
 
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -1739,13 +1767,13 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("1" . meow-expand-1)
    '("1" . (lambda () (interactive) (my-meow-digit 1)))
    '("2" . (lambda () (interactive) (my-meow-digit 2)))
-   '("3" . (lambda () (interactive) (my-meow-digit 3)))  ;; was 2, fixed to 3
-   '("4" . (lambda () (interactive) (my-meow-digit 4)))  ;; was 2, fixed to 4
-   '("5" . (lambda () (interactive) (my-meow-digit 5)))  ;; was 2, fixed to 5
-   '("6" . (lambda () (interactive) (my-meow-digit 6)))  ;; was 2, fixed to 6
-   '("7" . (lambda () (interactive) (my-meow-digit 7)))  ;; was 2, fixed to 7
-   '("8" . (lambda () (interactive) (my-meow-digit 8)))  ;; was 2, fixed to 8
-   '("9" . (lambda () (interactive) (my-meow-digit 9)))  ;; was 2, fixed to 9
+   '("3" . (lambda () (interactive) (my-meow-digit 3)))  
+   '("4" . (lambda () (interactive) (my-meow-digit 4)))  
+   '("5" . (lambda () (interactive) (my-meow-digit 5)))  
+   '("6" . (lambda () (interactive) (my-meow-digit 6)))  
+   '("7" . (lambda () (interactive) (my-meow-digit 7)))  
+   '("8" . (lambda () (interactive) (my-meow-digit 8)))  
+   '("9" . (lambda () (interactive) (my-meow-digit 9)))  
    '("0" . (lambda () (interactive) (my-meow-digit 0)))
    ;; '("0" . (lambda () (interactive) (my-meow-line-or-digit-0)))
    ;; '("-" . negative-argument)
@@ -1842,6 +1870,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
+   ;; '("C-." . my-replay-sequence)
    '("C-." . my-replay-commands)
    ;; '("C-r" . undo-tree-redo)
    '("C-r" . undo-fu-only-redo)

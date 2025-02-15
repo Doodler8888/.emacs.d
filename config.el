@@ -2639,3 +2639,23 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
+
+(defvar my-command-log '()
+  "Stores recently executed commands with their numeric arguments.")
+
+(defun my-command-tracker ()
+  "Log executed command and its numeric argument."
+  (let ((cmd this-command)
+        (numeric-arg (if (numberp current-prefix-arg) current-prefix-arg nil)))
+    (when (commandp cmd)
+      (setq my-command-log
+            (append my-command-log
+                    (list (list cmd numeric-arg))))
+      (when (> (length my-command-log) 10)
+        (setq my-command-log (last my-command-log 10))))))
+
+(add-hook 'pre-command-hook #'my-command-tracker)
+
+
+
