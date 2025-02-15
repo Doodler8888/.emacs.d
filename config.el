@@ -174,6 +174,7 @@
       `(lambda (c)
         (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
 
+
 ;; Break lines after a certain length
 (setq sentence-end-double-space nil)
 (auto-fill-mode 1)
@@ -933,35 +934,14 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; (corfu-auto nil)
   ;; (corfu-min-length 2)
   :config
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
   (corfu-echo-mode)
-  (corfu-history-mode)
+  ;; (corfu-history-mode)
   (corfu-popupinfo-mode))
 
 (with-eval-after-load 'corfu
   (define-key corfu-map (kbd "RET") nil))
-
-;; (defun my/dabbrev-capf ()
-;;   (let* ((bounds (or (bounds-of-thing-at-point 'filename)
-;;                      (bounds-of-thing-at-point 'word)))
-;;          (start (if bounds (car bounds) (point)))
-;;          (end (if bounds (cdr bounds) (point)))
-;;          (current-word (when bounds (buffer-substring-no-properties start end))))
-;;     (when current-word
-;;       (list start
-;;             end
-;;             (completion-table-dynamic
-;;              (lambda (prefix)
-;;                (let ((case-fold-search t)
-;;                      (words-list '()))
-;;                  (save-excursion
-;;                    (goto-char (point-min))
-;;                    (while (re-search-forward (concat "\\<" (regexp-quote prefix) "\\w*") nil t)
-;;                      (let ((found-word (match-string-no-properties 0)))
-;;                        (unless (string= found-word current-word)
-;;                          (push found-word words-list)))))
-;;                  (delete-dups words-list))))))))
 
 (defun buffer-words-completion ()
   "Generate completion candidates from words of 4+ characters in the buffer."
@@ -991,7 +971,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :ensure t
   :after corfu
   :config
-  (setq cape-dabbrev-check-other-buffers nil)
+  ;; (setq cape-dabbrev-check-other-buffers nil)
   
   ;; Default for all buffers
   (setq completion-at-point-functions
@@ -1039,23 +1019,23 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (global-fish-completion-mode))
 
 
-;; Access to ENV variables
+;; ;; Access to ENV variables
 
-(use-package exec-path-from-shell
-  :ensure t
-  :config
-  (setq exec-path-from-shell-arguments nil) ; Remove -i for faster startup
-  (setq exec-path-from-shell-variables
-        '("PATH"
-          "FZF_DEFAULT_COMMAND"
-          "SSH_AUTH_SOCK"
-          "NOTIFY_TOKEN"
-          "SHELF_TOKEN"
-          "SHELF_DB_USER"
-          "SHELF_DB_NAME"
-          "SHELF_DB_PASS"
-          "SHELF_DB_PORT"))
-  (exec-path-from-shell-initialize))
+;; (use-package exec-path-from-shell
+;;   :ensure t
+;;   :config
+;;   (setq exec-path-from-shell-arguments nil) ; Remove -i for faster startup
+;;   (setq exec-path-from-shell-variables
+;;         '("PATH"
+;;           "FZF_DEFAULT_COMMAND"
+;;           "SSH_AUTH_SOCK"
+;;           "NOTIFY_TOKEN"
+;;           "SHELF_TOKEN"
+;;           "SHELF_DB_USER"
+;;           "SHELF_DB_NAME"
+;;           "SHELF_DB_PASS"
+;;           "SHELF_DB_PORT"))
+;;   (exec-path-from-shell-initialize))
 
 
 ;; Project.el
@@ -1186,10 +1166,10 @@ Prevents highlighting of the minibuffer command line itself."
 (advice-add 'vertico--exhibit :after #'my/vertico-handle-cmdline-face)
 (add-hook 'minibuffer-exit-hook #'my/vertico-cleanup-face-remap)
 
-(use-package marginalia
-  :ensure t
-  :init
-  (marginalia-mode))
+;; (use-package marginalia
+;;   :ensure t
+;;   :init
+;;   (marginalia-mode))
 
 (use-package consult)
   ;; :ensure t
@@ -1774,6 +1754,7 @@ If an eshell buffer for the directory already exists, switch to it."
   (buffer-terminator-verbose nil)
   :config
   (buffer-terminator-mode 1))
+
 
 ;; Envrc
 
@@ -2639,23 +2620,5 @@ Otherwise, create a same-level heading (M-RET)."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
-
-
-(defvar my-command-log '()
-  "Stores recently executed commands with their numeric arguments.")
-
-(defun my-command-tracker ()
-  "Log executed command and its numeric argument."
-  (let ((cmd this-command)
-        (numeric-arg (if (numberp current-prefix-arg) current-prefix-arg nil)))
-    (when (commandp cmd)
-      (setq my-command-log
-            (append my-command-log
-                    (list (list cmd numeric-arg))))
-      (when (> (length my-command-log) 10)
-        (setq my-command-log (last my-command-log 10))))))
-
-(add-hook 'pre-command-hook #'my-command-tracker)
-
 
 

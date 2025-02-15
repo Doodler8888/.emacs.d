@@ -1053,45 +1053,6 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (let* ((raw-prefix (equal arg '(4)))
          (numeric-prefix (and (integerp arg) (> arg 0)))
          (repeat-count (if numeric-prefix arg 1))
-         ;; Get system clipboard content if available, otherwise fall back to kill ring
-         (text-to-paste (if raw-prefix
-                           (current-kill (if (listp last-command-event)
-                                           0
-                                         (mod (- (aref (this-command-keys) 0) ?0)
-                                              kill-ring-max))
-                                       t)
-                         (or (gui-get-selection 'CLIPBOARD)
-                             (current-kill 0 t))))
-         ;; Store the region bounds before we modify anything
-         (region-beg (when (region-active-p) (region-beginning)))
-         (region-end (when (region-active-p) (region-end))))
-    
-    ;; Handle region replacement
-    (when (region-active-p)
-      (delete-region region-beg region-end)
-      ;; After deletion, we're at the right position to paste
-      (set-marker (mark-marker) region-beg))
-    
-    ;; Do the paste
-    (dotimes (_ repeat-count)
-      (if (string-suffix-p "\n" text-to-paste)
-          (progn
-            (forward-line)
-            (beginning-of-line)
-            (insert text-to-paste)
-            (forward-line -1)
-            (beginning-of-line))
-        (insert text-to-paste)))))
-
-(defun my/meow-smart-paste (&optional arg)
-  "Paste like Vim, handling both line-wise and regular pastes.
-With numeric prefix ARG, paste that many times.
-With raw prefix argument (C-u without a number), paste from the kill ring.
-When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
-  (interactive "P")
-  (let* ((raw-prefix (equal arg '(4)))
-         (numeric-prefix (and (integerp arg) (> arg 0)))
-         (repeat-count (if numeric-prefix arg 1))
          (text-to-paste (if raw-prefix
                            (current-kill (if (listp last-command-event)
                                            0
@@ -1121,20 +1082,6 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
               (forward-line)))
         (insert text-to-paste)))))
 
-
-;; ;; Work like in vim
-;; (defun my/meow-replace-char ()
-;;   "Replace character(s) with input character, like Vim's r."
-;;   (interactive)
-;;   (let ((char (read-char "Replace with: ")))
-;;     (if (region-active-p)
-;;         (let ((start (region-beginning))
-;;               (end (region-end)))
-;;           (delete-region start end)
-;;           (insert (make-string (- end start) char)))
-;;       (delete-char 1)
-;;       (insert-char char)
-;;       (backward-char))))
 
 ;; It's a simplified version that doesn't work on a selection
 (defun my/meow-replace-char ()
@@ -1621,6 +1568,18 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       (setq my-meow-expand-count nil))
     (setq my-last-action 'command)))
 
+(defun my-open-below ()
+  "Open a newline below and switch to INSERT state."
+  (interactive)
+  (if meow--temp-normal
+      (progn
+        (message "Quit temporary normal mode")
+        (meow--switch-state 'motion))
+    (goto-char (line-end-position))
+    (my-reset-insert-history)  ;; Reset before any changes
+    (meow--execute-kbd-macro "RET")
+    (meow--switch-state 'insert)))
+
 (defun my-replay-commands ()
   "Replay the last valid combination or insert history."
   (interactive)
@@ -1638,21 +1597,57 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
         (when action
           (apply (car action) (cdr action)))))))
 
+;; --- Command Tracking (Unchanged) ---
 (defun my-track-command (orig-fun &rest args)
   "Advice function to track command execution."
   (my-store-command orig-fun args)
   (apply orig-fun args))
 
+;; --- Insert Mode History Reset ---
 (defun my-reset-insert-history ()
-  "Reset the insert history when entering insert mode."
+  "Reset the insert history when entering insert mode.
+This records the starting point for subsequent insertions."
   (setq my-insert-history "")
-  (setq my-last-action 'insert))
+  (setq my-last-action 'insert)
+  (setq my-insert-start-point (point)))
 
+;; --- Update Insert History from Buffer ---
+(defun my-update-insert-history-from-buffer ()
+  "Update `my-insert-history` based on the actual text in the buffer.
+It takes the substring from `my-insert-start-point` to the current point.
+If electric-pair mode has auto-inserted a closing quote right after point,
+it includes that as well."
+  (let* ((start my-insert-start-point)
+         (end (point))
+         (inserted (buffer-substring-no-properties start end)))
+    (when (and (boundp 'electric-pair-mode) electric-pair-mode
+               (eq (char-after end) ?\"))
+      (setq inserted (concat inserted (string (char-after end)))))
+    (setq my-insert-history inserted)))
+    ;; (message "Updated Insert History: %s" my-insert-history)))
+
+;; --- Tracking Typed Text via Buffer Snapshot ---
 (defun my-track-typed-text ()
-  "Append the last typed character to my-insert-history."
-  (setq my-insert-history
-        (concat my-insert-history (string last-command-event)))
-  (setq my-last-action 'insert))
+  "Update insert history by reading directly from the buffer.
+This function is intended to be run in `post-self-insert-hook`."
+  (when (eq meow--current-state 'insert)  ; Use the variable directly
+    (my-update-insert-history-from-buffer)
+    (setq my-last-action 'insert)))
+
+;; Add our tracking function to the post-self-insert-hook with high priority.
+(add-hook 'post-self-insert-hook #'my-track-typed-text 100)
+
+;; --- Custom Backspace Handling in Insert Mode ---
+(defun my-handle-backspace ()
+  "Handle backspace correctly in insert mode.
+Deletes a character and updates the insert history from the buffer."
+  (interactive)
+  (delete-backward-char 1)
+  (my-update-insert-history-from-buffer))
+  ;; (message "After backspace, Insert History: %s" my-insert-history))
+
+;; Bind our custom backspace function in the meow insert state keymap.
+(define-key meow-insert-state-keymap (kbd "DEL") #'my-handle-backspace)
 
 (defun my-track-meow-expand (digit)
   "Store expansion count for later replay."
@@ -1833,7 +1828,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("m" . meow-join)
    '("n" . my/search-next)
    '("N" . my/search-previous)
-   '("o" . meow-open-below)
+   ;; '("o" . meow-open-below)
+   '("o" . my-open-below)
    '("O" . meow-open-above)
    ;; '("o" . meow-block)
    ;; '("O" . meow-to-block)
