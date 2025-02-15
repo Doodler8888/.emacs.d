@@ -632,67 +632,67 @@ With numeric prefix:
           (setq my-jump-index 0))))))
 
 
-;; Avy
+;; ;; Avy
 
-(use-package avy
-  :ensure t
-  )
+;; (use-package avy
+;;   :ensure t
+;;   )
 
-(defun avy-jump-to-window ()
-  "Use avy to jump to a specific window."
-  (interactive)
-  (let ((avy-all-windows 'all-frames))
-    (avy-with avy-jump-to-window
-      (avy--process
-       (mapcar (lambda (w)
-                 (cons (window-start w) w))
-               (avy-window-list))
-       #'avy--overlay-post))))
+;; (defun avy-jump-to-window ()
+;;   "Use avy to jump to a specific window."
+;;   (interactive)
+;;   (let ((avy-all-windows 'all-frames))
+;;     (avy-with avy-jump-to-window
+;;       (avy--process
+;;        (mapcar (lambda (w)
+;;                  (cons (window-start w) w))
+;;                (avy-window-list))
+;;        #'avy--overlay-post))))
 
-(with-eval-after-load 'avy
-  (defun avy-action-copy-word (pt)
-    "Copy word at PT and paste at current point (like evil's iw)."
-    (let ((original-window (selected-window))
-          (original-point (point)))
-      (save-excursion
-        (goto-char pt)
-        (let ((bounds (evil-inner-word)))
-          (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
-      (select-window original-window)
-      (goto-char original-point)
-      (yank))
-    t)
+;; (with-eval-after-load 'avy
+;;   (defun avy-action-copy-word (pt)
+;;     "Copy word at PT and paste at current point (like evil's iw)."
+;;     (let ((original-window (selected-window))
+;;           (original-point (point)))
+;;       (save-excursion
+;;         (goto-char pt)
+;;         (let ((bounds (evil-inner-word)))
+;;           (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
+;;       (select-window original-window)
+;;       (goto-char original-point)
+;;       (yank))
+;;     t)
 
-  (defun avy-action-copy-WORD (pt)
-    "Copy WORD at PT and paste at current point (like evil's iW)."
-    (let ((original-window (selected-window))
-          (original-point (point)))
-      (save-excursion
-        (goto-char pt)
-        (let ((bounds (evil-inner-WORD)))
-          (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
-      (select-window original-window)
-      (goto-char original-point)
-      (yank))
-    t)
+;;   (defun avy-action-copy-WORD (pt)
+;;     "Copy WORD at PT and paste at current point (like evil's iW)."
+;;     (let ((original-window (selected-window))
+;;           (original-point (point)))
+;;       (save-excursion
+;;         (goto-char pt)
+;;         (let ((bounds (evil-inner-WORD)))
+;;           (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
+;;       (select-window original-window)
+;;       (goto-char original-point)
+;;       (yank))
+;;     t)
 
-  (defun avy-action-copy-quoted (pt)
-    "Copy quoted text at PT and paste at current point."
-    (let ((original-window (selected-window))
-          (original-point (point)))
-      (save-excursion
-        (goto-char pt)
-        (let ((bounds (evil-select-quote ?\" t t)))
-          (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
-      (select-window original-window)
-      (goto-char original-point)
-      (yank))
-    t)
+;;   (defun avy-action-copy-quoted (pt)
+;;     "Copy quoted text at PT and paste at current point."
+;;     (let ((original-window (selected-window))
+;;           (original-point (point)))
+;;       (save-excursion
+;;         (goto-char pt)
+;;         (let ((bounds (evil-select-quote ?\" t t)))
+;;           (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
+;;       (select-window original-window)
+;;       (goto-char original-point)
+;;       (yank))
+;;     t)
 
-  ;; Add to dispatch alist
-  (setf (alist-get ?w avy-dispatch-alist) 'avy-action-copy-word
-        (alist-get ?W avy-dispatch-alist) 'avy-action-copy-WORD
-        (alist-get ?\" avy-dispatch-alist) 'avy-action-copy-quoted))
+;;   ;; Add to dispatch alist
+;;   (setf (alist-get ?w avy-dispatch-alist) 'avy-action-copy-word
+;;         (alist-get ?W avy-dispatch-alist) 'avy-action-copy-WORD
+;;         (alist-get ?\" avy-dispatch-alist) 'avy-action-copy-quoted))
 
 
 ;; Docker
@@ -1010,13 +1010,13 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                 #'elisp-completion-at-point
                                 #'cape-file)))))
 
-(use-package fish-completion
-  :vc (:url "https://github.com/LemonBreezes/emacs-fish-completion.git"
-       :rev :newest))
+;; (use-package fish-completion
+;;   :vc (:url "https://github.com/LemonBreezes/emacs-fish-completion.git"
+;;        :rev :newest))
 
-(when (and (executable-find "fish")
-         (require 'fish-completion nil t))
-(global-fish-completion-mode))
+;; (when (and (executable-find "fish")
+;;          (require 'fish-completion nil t))
+;; (global-fish-completion-mode))
 
 
 ;; ;; Access to ENV variables
@@ -1179,7 +1179,7 @@ Prevents highlighting of the minibuffer command line itself."
 
 ;; Variable to store the last search string
 (defvar my/last-search-pattern nil
-  "Stores the last search pattern from consult-line or consult-ripgrep.")
+  "Stores the last search pattern from consult-line, consult-ripgrep, or isearch.")
 
 (defun my/store-search-string-line (&rest args)
   "Store the search string used in consult-line."
@@ -1194,8 +1194,15 @@ Prevents highlighting of the minibuffer command line itself."
     (setq my/last-search-pattern clean-pattern)
     (message "Ripgrep pattern stored: %s" clean-pattern)))
 
+(defun my/store-search-string-isearch ()
+  "Store the last Isearch string."
+  (when (and (not isearch-regexp) isearch-string)
+    (setq my/last-search-pattern isearch-string)
+    (message "Isearch pattern stored: %s" isearch-string)))
+
 (advice-add 'consult-line :after #'my/store-search-string-line)
 (advice-add 'consult-ripgrep :after #'my/store-search-string-ripgrep)
+(add-hook 'isearch-mode-end-hook #'my/store-search-string-isearch)
 
 (defun my/search-next ()
   "Search forward using last search pattern."
