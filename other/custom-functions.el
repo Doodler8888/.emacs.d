@@ -613,3 +613,10 @@ If it is lowercase, convert the entire region to uppercase."
 
 (add-hook 'pre-command-hook #'my-command-tracker)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun my/smart-backspace ()
+  "Delete characters backward until beginning of line."
+  (interactive)
+  (while (and (not (bolp))            ; while not at beginning of line
+              (not (input-pending-p))) ; and no new input waiting
+    (delete-backward-char 1)))   

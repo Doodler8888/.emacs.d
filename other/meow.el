@@ -275,6 +275,8 @@ Numbered from top-left to bottom-right."
       (select-window (nth index windows)))))
 
 
+(define-key meow-insert-state-keymap (kbd "C-u") 'my/smart-backspace)
+
 ;; (define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-word)
 (define-key meow-insert-state-keymap (kbd "C-w") 'backward-kill-sexp)
 
@@ -1626,6 +1628,8 @@ it includes that as well."
     (setq my-insert-history inserted)))
     ;; (message "Updated Insert History: %s" my-insert-history)))
 
+(add-hook 'meow-insert-exit-hook #'my-update-insert-history-from-buffer)
+
 ;; --- Tracking Typed Text via Buffer Snapshot ---
 (defun my-track-typed-text ()
   "Update insert history by reading directly from the buffer.
@@ -1877,8 +1881,9 @@ Deletes a character and updates the insert history from the buffer."
    '("'" . meow-find-and-select-inner)
    '("\"" . meow-find-and-select-outer)
    ;; '("/" . my/conditional-search-or-avy)
-   '("/" . avy-goto-char-all-windows)
-   '("?" . isearch-forward)
+   ;; '("/" . avy-goto-char-all-windows)
+   '("/" . isearch-forward)
+   '("?" . isearch-backward)
    '("M-v" . scroll-up-and-recenter)
    '("C-v" . scroll-down-and-recenter)
    '("C-M-y" . save-and-paste)

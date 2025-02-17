@@ -111,7 +111,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (global-set-key (kbd "C-s C-q") 'my-sql-connect-with-buffer)
 (global-set-key (kbd "C-s C-b") 'sql-send-buffer)
 ;; (global-set-key (kbd "C-S C-k") 'kill-whole-line)
-(define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
+;; (define-key minibuffer-local-map (kbd "C-S C-k") 'backward-kill-sentence)  ; Example function
 ;; (define-key minibuffer-local-map (kbd "C-S C-k") 'kill-whole-line)
 (global-set-key (kbd "C-h M-f") 'describe-face)(global-set-key (kbd "C-s C-y") 'yank-pop)
 (global-set-key (kbd "M-<f1>") 'tab-bar-move-tab-backward)
@@ -124,7 +124,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (define-key prog-mode-map (kbd "M-p") 'previous-error)
 (define-key prog-mode-map (kbd "C-x cc") 'compile)
 (define-key prog-mode-map (kbd "C-x cl") 'compile-last)
-    
+;; (global-set-key (kbd "C-<backspace>") 'my/smart-backspace)
+
 ;; Can't use it, because i have C-w binding for the insert mode
 ;; (defun my/setup-global-window-keys ()
 ;;   "Set up global window management keybindings."
