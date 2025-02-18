@@ -167,7 +167,7 @@
 ;; Auto pairing
 (add-hook 'prog-mode-hook (electric-pair-mode t))
 ;; I don't know what it does exactly, it's more like a test
-(setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
+;; (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
 ;; Don't pair '<'
 (setq electric-pair-inhibit-predicate
@@ -2640,13 +2640,13 @@ Otherwise, create a same-level heading (M-RET)."
   (kill-emacs))
 
 
-
 (use-package icomplete
   :bind (:map icomplete-minibuffer-map
               ("C-n" . icomplete-forward-completions)
               ("C-p" . icomplete-backward-completions)
               ("C-v" . icomplete-vertical-toggle)
 			  ("<tab>" . icomplete-force-complete)
+			  ("SPC" . self-insert-command)
               ("RET" . icomplete-force-complete-and-exit))
   :hook
   (after-init . (lambda ()
@@ -2676,7 +2676,7 @@ list.  It can be further customized by the face
     :group 'icomplete
     :version "31")
 
-  (defcustom icomplete-vertical-unselected-prefix-marker ""
+  (defcustom icomplete-vertical-unselected-prefix-marker "  "
     "Prefix string used on the unselected completion candidates.
 If `icomplete-vertical-render-prefix-marker' is t, the string
 setted here is used as a prefix for all unselected entries in the list.
@@ -2696,7 +2696,7 @@ the default behaviour."
     :group 'icomplete
     :version "31")
 
-  (defcustom icomplete-vertical-render-prefix-marker nil
+  (defcustom icomplete-vertical-render-prefix-marker t
     "Control whether a marker is added as a prefix to each candidate.
 If this is t and `icomplete-vertical-mode' is activated, a marker,
 controlled by `icomplete-vertical-selected-prefix-marker' is shown
@@ -2708,7 +2708,7 @@ by `icomplete-vertical-unselected-prefix-marker'."
     :version "31")
 
   (defface icomplete-vertical-selected-prefix-face
-    '((t :inherit font-lock-keyword-face :weight bold :foreground "cyan"))
+    '((t :inherit font-lock-keyword-face :weight bold :foreground "#c4a7e7"))
     "Face used for the prefix set by `icomplete-vertical-selected-prefix-marker'."
     :group 'icomplete
     :version "31")

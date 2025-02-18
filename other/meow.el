@@ -1643,14 +1643,30 @@ This function is intended to be run in `post-self-insert-hook`."
 
 ;; --- Custom Backspace Handling in Insert Mode ---
 (defun my-handle-backspace ()
-  "Handle backspace correctly in insert mode.
-Deletes a character and updates the insert history from the buffer."
+  "Handle backspace in insert mode with electric-pair-mode support.
+Maintains proper paired deletion while updating insert history."
   (interactive)
-  (delete-backward-char 1)
-  (my-update-insert-history-from-buffer))
-  ;; (message "After backspace, Insert History: %s" my-insert-history))
+  (if (and electric-pair-mode
+           (or
+            ;; Check for parentheses
+            (and (eq (char-before) ?\() 
+                 (eq (char-after) ?\)))
+            ;; Check for double quotes
+            (and (eq (char-before) ?\") 
+                 (eq (char-after) ?\"))
+            ;; Check for single quotes
+            (and (eq (char-before) ?\') 
+                 (eq (char-after) ?\'))))
+      ;; If we're between paired characters, delete both
+      (progn
+        (delete-char 1)      ; Delete the closing character first
+        (delete-backward-char 1) ; Then delete the opening character
+        (my-update-insert-history-from-buffer))
+    ;; Otherwise just do normal backward deletion
+    (delete-backward-char 1)
+    (my-update-insert-history-from-buffer)))
 
-;; Bind our custom backspace function in the meow insert state keymap.
+;; Bind our enhanced backspace function in the meow insert state keymap
 (define-key meow-insert-state-keymap (kbd "DEL") #'my-handle-backspace)
 
 (defun my-track-meow-expand (digit)
@@ -1829,7 +1845,7 @@ Deletes a character and updates the insert history from the buffer."
    '("K" . my-eldoc-print-and-switch)
    '("l" . meow-right)
    '("L" . meow-right-expand)
-   '("m" . meow-join)
+   ;; '("m" . meow-join)
    '("n" . my/search-next)
    '("N" . my/search-previous)
    ;; '("o" . meow-open-below)
@@ -1866,7 +1882,7 @@ Deletes a character and updates the insert history from the buffer."
    '("Y" . meow-sync-grab)
    '(">" . my/indent-region-right)
    '("<" . my/indent-region-left)
-   '("M" . mc/edit-lines)
+   ;; '("M" . mc/edit-lines)
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
