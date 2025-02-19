@@ -1012,10 +1012,47 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                 #'elisp-completion-at-point
                                 #'cape-file)))))
 
+(defun my/cape-file-with-env ()
+  "Complete file paths with environment variable expansion."
+  (when-let* ((bounds (bounds-of-thing-at-point 'filename))
+              (start (car bounds))
+              (end (cdr bounds))
+              (path (buffer-substring start end))
+              (var (and (string-prefix-p "$" path)
+                        (string-match "\\$\\([A-Za-z_]+\\)" path)
+                        (match-string 1 path)))
+              (value (getenv var)))
+    (let* ((subpath (substring path (match-end 0)))
+           ;; Remove leading slash from subpath if present
+           (subpath (if (and (> (length subpath) 0) (eq (aref subpath 0) ?/))
+                        (substring subpath 1)
+                      subpath))
+           ;; Split subpath into directory and file components
+           (subdir (file-name-directory subpath))
+           (file (file-name-nondirectory subpath))
+           ;; Expand the directory part of the subpath
+           (expanded-dir (expand-file-name (or subdir "") value))
+           ;; Get completions for the file part
+           (completions (file-name-all-completions file expanded-dir)))
+      (when completions
+        (list start end
+              (mapcar (lambda (c)
+                        (let* (;; Replace subdir with completion candidate
+                               (full-path (concat "$" var "/" (or subdir "") c))
+                               ;; Add trailing slash if directory
+                               (full-path (if (file-directory-p (expand-file-name c expanded-dir))
+                                              (file-name-as-directory full-path)
+                                            full-path)))
+                          full-path))
+                      completions)
+              :exclusive 'no
+              :category 'file)))))
+
 (defun my/force-completions ()
   (when (derived-mode-p 'bash-ts-mode 'sh-mode)
     (setq-local completion-at-point-functions
                 (list #'tempel-complete
+                      #'my/cape-file-with-env
                       #'cape-file
                       #'my/buffer-words-capf))))
 
@@ -2640,12 +2677,20 @@ Otherwise, create a same-level heading (M-RET)."
   (kill-emacs))
 
 
+(defun my/icomplete-force-complete-wrapper ()
+  "Wrap `icomplete-force-complete` to quit minibuffer and trigger `completion-at-point` after."
+  (interactive)
+  (icomplete-force-complete)
+  (keyboard-quit)  ;; Quit the minibuffer
+  (run-at-time 0.1 nil #'completion-at-point))
+
 (use-package icomplete
   :bind (:map icomplete-minibuffer-map
               ("C-n" . icomplete-forward-completions)
               ("C-p" . icomplete-backward-completions)
               ("C-v" . icomplete-vertical-toggle)
-			  ("<tab>" . icomplete-force-complete)
+			  ;; ("<tab>" . icomplete-force-complete)
+			  ("<tab>" . my/icomplete-force-complete-wrapper)
 			  ("SPC" . self-insert-command)
               ("RET" . icomplete-force-complete-and-exit))
   :hook
@@ -2849,3 +2894,17 @@ by `icomplete-vertical-unselected-prefix-marker'."
       ;; kick out lines at the end.
       (concat " \n"
               (cl-loop for l in lines repeat total-space concat l concat "\n")))))
+
+
+;; Add environment variable completion
+(defun my/expand-env-vars-in-file-name (filename)
+  "Expand environment variables in FILENAME."
+  (replace-regexp-in-string
+   "\\$\\([A-Za-z0-9_]+\\)\\|${\\([A-Za-z0-9_]+\\)}"
+   (lambda (match)
+     (let ((var (or (match-string 1 match)
+                    (match-string 2 match))))
+       (or (getenv var) match)))
+   filename))
+
+
