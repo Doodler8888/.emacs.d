@@ -115,7 +115,9 @@ if it ends with '.bak', remove it by renaming."
   (interactive)
   (let* ((files (dired-get-marked-files t current-prefix-arg))
          (num-files (length files))
-         (msg-prefix (if (= num-files 1) "Item" "Items")))
+         (msg-prefix (if (= num-files 1) "Item" "Items"))
+         any-copied) ; Declare any-copied in the outer scope
+    (setq any-copied nil) ; Initialize to nil
     (dolist (file files)
       (let* ((dir (file-name-directory file))
              (name (file-name-nondirectory file))
@@ -132,17 +134,18 @@ if it ends with '.bak', remove it by renaming."
                     (yes-or-no-p (format "%s already exists. Overwrite? " new-file)))
             (if (file-directory-p file)
                 (if (and (not is-bak) keep-original)
-                    (copy-directory file new-file t t t)
+                    (progn
+                      (copy-directory file new-file t t t)
+                      (setq any-copied t)) ; Update any-copied when copying
                   (rename-file file new-file t))
               (if (and (not is-bak) keep-original)
-                  (copy-file file new-file t)
+                  (progn
+                    (copy-file file new-file t)
+                    (setq any-copied t)) ; Update any-copied here as well
                 (rename-file file new-file t)))))))
     (revert-buffer)
     (message "%s %s." msg-prefix 
-             (if (and (not (string= (file-name-extension 
-                                    (car files) t) ".bak"))
-                      keep-original)
-                 "copied" "renamed"))))
+             (if any-copied "copied" "renamed")))) ; Use any-copied to determine message
 
 
 (defun my/dired-create-empty-files ()

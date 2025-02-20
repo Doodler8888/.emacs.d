@@ -1497,7 +1497,6 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     (avy-goto-char-all-windows)))
     ;; (call-interactively 'meow-mark-word)))
 
-
 ;; Store the last valid combination (selection + action)
 (defvar my-last-combination nil
   "Stores the last valid combination of selection and action commands.")
@@ -1640,34 +1639,6 @@ This function is intended to be run in `post-self-insert-hook`."
 
 ;; Add our tracking function to the post-self-insert-hook with high priority.
 (add-hook 'post-self-insert-hook #'my-track-typed-text 100)
-
-;; --- Custom Backspace Handling in Insert Mode ---
-(defun my-handle-backspace ()
-  "Handle backspace in insert mode with electric-pair-mode support.
-Maintains proper paired deletion while updating insert history."
-  (interactive)
-  (if (and electric-pair-mode
-           (or
-            ;; Check for parentheses
-            (and (eq (char-before) ?\() 
-                 (eq (char-after) ?\)))
-            ;; Check for double quotes
-            (and (eq (char-before) ?\") 
-                 (eq (char-after) ?\"))
-            ;; Check for single quotes
-            (and (eq (char-before) ?\') 
-                 (eq (char-after) ?\'))))
-      ;; If we're between paired characters, delete both
-      (progn
-        (delete-char 1)      ; Delete the closing character first
-        (delete-backward-char 1) ; Then delete the opening character
-        (my-update-insert-history-from-buffer))
-    ;; Otherwise just do normal backward deletion
-    (delete-backward-char 1)
-    (my-update-insert-history-from-buffer)))
-
-;; Bind our enhanced backspace function in the meow insert state keymap
-(define-key meow-insert-state-keymap (kbd "DEL") #'my-handle-backspace)
 
 (defun my-track-meow-expand (digit)
   "Store expansion count for later replay."
