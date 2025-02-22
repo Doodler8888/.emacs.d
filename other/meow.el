@@ -38,8 +38,10 @@
   (setq prefix-arg nil)
   (setq current-prefix-arg nil))
 
-(advice-add 'meow-next :after #'my/reset-prefix-arg)
-(advice-add 'meow-prev :after #'my/reset-prefix-arg)
+;; (advice-add 'meow-next :after #'my/reset-prefix-arg)
+(advice-add 'my/next-line-close-selection :after #'my/reset-prefix-arg)
+;; (advice-add 'meow-prev :after #'my/reset-prefix-arg)
+(advice-add 'my/previous-line-close-selection :after #'my/reset-prefix-arg)
 
 ;; For number hints to work in org mode
 (setq meow-expand-exclude-mode-list 
@@ -98,6 +100,22 @@
 
 (global-set-key (kbd "C-M-n") #'my/forward-list)
 (global-set-key (kbd "C-M-p") #'my/backward-list)
+
+(defun my/next-line-close-selection (&optional arg)
+  "Move to the next line and cancel any active selection.
+With prefix ARG, move that many lines."
+  (interactive "p")
+  (when (region-active-p)
+    (deactivate-mark))
+  (next-line (or arg 1)))
+
+(defun my/previous-line-close-selection (&optional arg)
+  "Move to the previous line and cancel any active selection.
+With prefix ARG, move that many lines."
+  (interactive "p")
+  (when (region-active-p)
+    (deactivate-mark))
+  (previous-line (or arg 1)))
 
 (defun my/yank-with-selection ()
   "Yank text, replacing the active region if one exists."
@@ -1505,10 +1523,6 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 (defvar my-command-history nil
   "List to store the last two commands with their arguments.")
 
-;; Store last typed text in insert mode
-(defvar my-insert-history ""
-  "Stores the last text typed in insert mode.")
-
 ;; Track whether the last action was a command or insert
 (defvar my-last-action 'command)
 
@@ -1569,85 +1583,29 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       (setq my-meow-expand-count nil))
     (setq my-last-action 'command)))
 
-(defun my-open-below ()
-  "Open a newline below and switch to INSERT state."
-  (interactive)
-  (if meow--temp-normal
-      (progn
-        (message "Quit temporary normal mode")
-        (meow--switch-state 'motion))
-    (goto-char (line-end-position))
-    (my-reset-insert-history)  ;; Reset before any changes
-    (meow--execute-kbd-macro "RET")
-    (meow--switch-state 'insert)))
-
 (defun my-replay-commands ()
-  "Replay the last valid combination or insert history."
+  "Replay the last valid combination."
   (interactive)
-  (if (eq my-last-action 'insert)
-      (when (not (string-empty-p my-insert-history))
-        (insert my-insert-history))
-    (when my-last-combination
-      (let ((selection (nth 0 my-last-combination))
-            (expand-count (nth 1 my-last-combination))
-            (action (nth 2 my-last-combination)))
-        (when selection
-          (apply (car selection) (cdr selection)))
-        (when expand-count
-          (meow-expand expand-count))
-        (when action
-          (apply (car action) (cdr action)))))))
+  (when my-last-combination
+    (let ((selection (nth 0 my-last-combination))
+          (expand-count (nth 1 my-last-combination))
+          (action (nth 2 my-last-combination)))
+      (when selection
+        (apply (car selection) (cdr selection)))
+      (when expand-count
+        (meow-expand expand-count))
+      (when action
+        (apply (car action) (cdr action))))))
 
-;; --- Command Tracking (Unchanged) ---
+;; --- Command Tracking ---
 (defun my-track-command (orig-fun &rest args)
   "Advice function to track command execution."
   (my-store-command orig-fun args)
   (apply orig-fun args))
 
-;; --- Insert Mode History Reset ---
-(defun my-reset-insert-history ()
-  "Reset the insert history when entering insert mode.
-This records the starting point for subsequent insertions."
-  (setq my-insert-history "")
-  (setq my-last-action 'insert)
-  (setq my-insert-start-point (point)))
-
-;; --- Update Insert History from Buffer ---
-(defun my-update-insert-history-from-buffer ()
-  "Update `my-insert-history` based on the actual text in the buffer.
-It takes the substring from `my-insert-start-point` to the current point.
-If electric-pair mode has auto-inserted a closing quote right after point,
-it includes that as well."
-  (let* ((start my-insert-start-point)
-         (end (point))
-         (inserted (buffer-substring-no-properties start end)))
-    (when (and (boundp 'electric-pair-mode) electric-pair-mode
-               (eq (char-after end) ?\"))
-      (setq inserted (concat inserted (string (char-after end)))))
-    (setq my-insert-history inserted)))
-    ;; (message "Updated Insert History: %s" my-insert-history)))
-
-(add-hook 'meow-insert-exit-hook #'my-update-insert-history-from-buffer)
-
-;; --- Tracking Typed Text via Buffer Snapshot ---
-(defun my-track-typed-text ()
-  "Update insert history by reading directly from the buffer.
-This function is intended to be run in `post-self-insert-hook`."
-  (when (eq meow--current-state 'insert)  ; Use the variable directly
-    (my-update-insert-history-from-buffer)
-    (setq my-last-action 'insert)))
-
-;; Add our tracking function to the post-self-insert-hook with high priority.
-(add-hook 'post-self-insert-hook #'my-track-typed-text 100)
-
 (defun my-track-meow-expand (digit)
   "Store expansion count for later replay."
   (setq my-meow-expand-count digit))
-
-;; Hooks for insert mode tracking
-(add-hook 'post-self-insert-hook #'my-track-typed-text)
-(add-hook 'meow-insert-enter-hook #'my-reset-insert-history)
-(add-hook 'meow-insert-exit-hook (lambda ()))
 
 ;; Advice specific Meow commands for tracking
 (dolist (cmd my-selection-commands)
@@ -1666,7 +1624,6 @@ This function is intended to be run in `post-self-insert-hook`."
 
 (dolist (cmd my-selection-commands)
   (advice-add cmd :before #'my-reset-expand-count))
-
 
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -1808,9 +1765,11 @@ This function is intended to be run in `post-self-insert-hook`."
    ;; '("I" . meow-open-above)
    '("A" . meow-append-line-end)
    '("I" . meow-insert-line-start)
-   '("j" . meow-next)
+   ;; '("j" . meow-next)
+   '("j" . my/next-line-close-selection)
    '("J" . meow-next-expand)
-   '("k" . meow-prev)
+   ;; '("k" . meow-prev)
+   '("k" . my/previous-line-close-selection)
    ;; '("K" . meow-prev-expand)
    ;; '("K" . eldoc-print-current-symbol-info)
    '("K" . my-eldoc-print-and-switch)
@@ -1819,8 +1778,7 @@ This function is intended to be run in `post-self-insert-hook`."
    ;; '("m" . meow-join)
    '("n" . my/search-next)
    '("N" . my/search-previous)
-   ;; '("o" . meow-open-below)
-   '("o" . my-open-below)
+   '("o" . meow-open-below)
    '("O" . meow-open-above)
    ;; '("o" . meow-block)
    ;; '("O" . meow-to-block)
@@ -1966,6 +1924,9 @@ This function is intended to be run in `post-self-insert-hook`."
             ;; (define-key map (kbd "d") 'backward-delete-char-untabify)
             (define-key map (kbd "d") 'kill-rectangle)
             (define-key map (kbd "i") 'string-rectangle)
+            (define-key map (kbd "Y") 'my/copy-rectangle-to-eol)
+            (define-key map (kbd "D") 'my/delete-rectangle-to-eol)
+            (define-key map (kbd "C") 'my/insert-string-rectangle-to-eol)
             (define-key map (kbd "j") 'next-line)
             (define-key map (kbd "k") 'previous-line)
             (define-key map (kbd "G") 'end-of-buffer)
