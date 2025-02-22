@@ -214,7 +214,8 @@
     `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
     `(org-date ((,class (:foreground ,rose-pine-gold))))
     `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
-    `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
+    ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :box (:line-width 1 :color ,rose-pine-fg2)))))
+    `(org-verbatim ((,class (:foreground ,rose-pine-fg2 ))))
 
     ;; Python ts mode
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))

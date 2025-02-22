@@ -116,8 +116,8 @@ if it ends with '.bak', remove it by renaming."
   (let* ((files (dired-get-marked-files t current-prefix-arg))
          (num-files (length files))
          (msg-prefix (if (= num-files 1) "Item" "Items"))
-         any-copied) ; Declare any-copied in the outer scope
-    (setq any-copied nil) ; Initialize to nil
+         any-copied)
+    (setq any-copied nil)
     (dolist (file files)
       (let* ((dir (file-name-directory file))
              (name (file-name-nondirectory file))
@@ -125,28 +125,44 @@ if it ends with '.bak', remove it by renaming."
              (is-bak (string= ext ".bak"))
              (keep-original (and (not is-bak) 
                                (y-or-n-p "Make copy? ")))
-             new-name)
-        (if is-bak
-            (setq new-name (file-name-sans-extension name))
-          (setq new-name (concat name ".bak")))
-        (let ((new-file (expand-file-name new-name dir)))
-          (when (or (not (file-exists-p new-file))
-                    (yes-or-no-p (format "%s already exists. Overwrite? " new-file)))
-            (if (file-directory-p file)
-                (if (and (not is-bak) keep-original)
-                    (progn
-                      (copy-directory file new-file t t t)
-                      (setq any-copied t)) ; Update any-copied when copying
-                  (rename-file file new-file t))
-              (if (and (not is-bak) keep-original)
-                  (progn
-                    (copy-file file new-file t)
-                    (setq any-copied t)) ; Update any-copied here as well
-                (rename-file file new-file t)))))))
+             (new-name (if is-bak
+                          (file-name-sans-extension name)
+                        (concat name ".bak")))
+             (new-file (expand-file-name new-name dir)))
+        (when (or (not (file-exists-p new-file))
+                  (yes-or-no-p (format "%s already exists. Overwrite? " new-file)))
+          (if (and (not is-bak) keep-original)
+              (progn
+                (if (file-directory-p file)
+                    (copy-directory file new-file t t t)
+                  (copy-file file new-file t))
+                (setq any-copied t))
+            (progn
+              ;; First, rename the actual file
+              (rename-file file new-file t)
+              
+              ;; Update any buffer visiting this file
+              (let ((buffer (get-file-buffer file)))
+                (when buffer
+                  (with-current-buffer buffer
+                    (set-visited-file-name new-file nil t))))
+              
+              ;; If it's a directory, update all buffers within that directory
+              (when (file-directory-p new-file)
+                (let ((old-path (file-truename file))
+                      (new-path (file-truename new-file)))
+                  (dolist (buf (buffer-list))
+                    (let ((buf-file (buffer-file-name buf)))
+                      (when (and buf-file 
+                               (string-prefix-p old-path buf-file))
+                        (with-current-buffer buf
+                          (let ((relative-path (substring buf-file (length old-path))))
+                            (set-visited-file-name 
+                             (concat new-path relative-path) nil t)))))))))))))
+    ;; Update dired buffer
     (revert-buffer)
     (message "%s %s." msg-prefix 
-             (if any-copied "copied" "renamed")))) ; Use any-copied to determine message
-
+             (if any-copied "copied" "renamed"))))
 
 (defun my/dired-create-empty-files ()
   "Create multiple empty files in current dired directory.

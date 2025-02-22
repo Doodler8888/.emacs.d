@@ -184,7 +184,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
                         t))
 
 (defun toggle-messages-buffer ()
-  "Toggle the display of Messages buffer and move point to last non-whitespace character when showing buffer."
+  "Toggle the display of Messages buffer and move point to penultimate non-whitespace character when showing buffer."
   (interactive)
   (toggle-special-buffer "\\*Messages\\*"
                         (lambda () 
@@ -192,7 +192,9 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
                             (when messages-window
                               (with-selected-window messages-window
                                 (goto-char (point-max))
-                                (skip-chars-backward " \t\n\r")))))
+                                (skip-chars-backward " \t\n\r")
+                                (when (> (point) (point-min))
+                                  (backward-char 1))))))
                         t))
 
 (defun org-insert-row-with-floor ()
@@ -619,3 +621,114 @@ If it is lowercase, convert the entire region to uppercase."
   (while (and (not (bolp))            ; while not at beginning of line
               (not (input-pending-p))) ; and no new input waiting
     (delete-backward-char 1)))   
+
+
+(defun execute-buffer-as-shell-script ()
+  "Execute the current buffer as a shell script asynchronously."
+  (interactive)
+  (let ((file-path (buffer-file-name))
+        (display-buffer-alist-original display-buffer-alist))
+    (if file-path
+        (progn
+          (save-buffer)
+          ;; Temporarily remove the async shell command buffer settings
+          (setq display-buffer-alist 
+                (cl-remove-if (lambda (entry) 
+                                (string= (car entry) "\\*Async Shell Command\\*"))
+                              display-buffer-alist))
+          (async-shell-command (concat "sh " (shell-quote-argument file-path)))
+          ;; Restore original display-buffer-alist
+          (setq display-buffer-alist display-buffer-alist-original))
+      (message "Buffer is not visiting a file"))))
+
+(global-set-key (kbd "C-x c s") 'execute-buffer-as-shell-script)
+
+
+(defun my/copy-rectangle-to-eol (start end)
+  "Copy from rectangle's leftmost column to EOL for each line in region.
+The text from each line (starting at the leftmost column of the marked region)
+is concatenated (with newline separators) and saved to the kill ring."
+  (interactive "r")
+  (let (start-col end-col left-col start-line end-line lines-result)
+    ;; Determine the columns and line numbers at both region endpoints.
+    (save-excursion
+      (goto-char start)
+      (setq start-col (current-column)
+            start-line (line-number-at-pos)))
+    (save-excursion
+      (goto-char end)
+      (setq end-col (current-column)
+            end-line (line-number-at-pos)))
+    ;; Use the smaller of the two columns as the left edge.
+    (setq left-col (min start-col end-col))
+    ;; Process each line from the beginning of the first line.
+    (save-excursion
+      (goto-char start)
+      (goto-char (line-beginning-position))
+      (while (<= (line-number-at-pos) end-line)
+        (let* ((beg (line-beginning-position))
+               (line-content (buffer-substring beg (line-end-position))))
+          (if (< (length line-content) left-col)
+              (push "" lines-result)
+            (push (substring line-content left-col) lines-result))
+          (forward-line 1)))
+      (setq lines-result (nreverse lines-result))
+      (kill-new (mapconcat 'identity lines-result "\n"))
+      (message "Copied %d lines." (length lines-result)))))
+
+(defun my/delete-rectangle-to-eol (start end)
+  "Delete from rectangle's leftmost column to EOL for each line in region.
+For each line within the marked region, text starting at the leftmost column
+(from the two endpoints) is removed up to the end of the line."
+  (interactive "r")
+  (let (start-col end-col left-col start-line end-line)
+    ;; Determine the columns and line numbers at both region endpoints.
+    (save-excursion
+      (goto-char start)
+      (setq start-col (current-column)
+            start-line (line-number-at-pos)))
+    (save-excursion
+      (goto-char end)
+      (setq end-col (current-column)
+            end-line (line-number-at-pos)))
+    ;; Use the smaller of the two columns as the left edge.
+    (setq left-col (min start-col end-col))
+    ;; Process each line starting from the beginning of the first line.
+    (save-excursion
+      (goto-char start)
+      (goto-char (line-beginning-position))
+      (while (<= (line-number-at-pos) end-line)
+        (let* ((beg (line-beginning-position))
+               (line-end (line-end-position))
+               (line-length (- line-end beg)))
+          (when (< left-col line-length)
+            (delete-region (+ beg left-col) line-end))
+          (forward-line 1))))))
+
+(defun my/insert-string-rectangle-to-eol (start end)
+  "Insert a string in a rectangle from the computed left column to the end-of-line.
+The rectangle is defined by taking the minimum column of the region's endpoints
+as the left boundary and the end-of-line of the last line as the right boundary.
+Prompts for the string to insert, and then calls `string-rectangle` on that region."
+  (interactive "r")
+  (let (start-col end-col left-col new-start new-end)
+    ;; Determine the columns at the region endpoints.
+    (save-excursion
+      (goto-char start)
+      (setq start-col (current-column)))
+    (save-excursion
+      (goto-char end)
+      (setq end-col (current-column)))
+    (setq left-col (min start-col end-col))
+    ;; Compute the new starting point: beginning of the first line plus left-col.
+    (save-excursion
+      (goto-char start)
+      (goto-char (line-beginning-position))
+      (setq new-start (+ (point) left-col)))
+    ;; Compute the new ending point: end-of-line of the last line.
+    (save-excursion
+      (goto-char end)
+      (goto-char (line-end-position))
+      (setq new-end (point)))
+    ;; Prompt for a string and insert it into the rectangle.
+    (string-rectangle new-start new-end (read-string "String for rectangle: "))))
