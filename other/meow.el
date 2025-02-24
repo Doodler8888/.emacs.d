@@ -87,16 +87,22 @@
   (backward-char arg))
 
 (defun my/forward-list ()
-  "Move forward over a balanced group with mark."
+  "Mark text within the next balanced group of parentheses/brackets.
+   Cursor ends at the closing bracket."
   (interactive)
-  (set-mark (point))
-  (forward-list))
+  (when (re-search-forward "\\s(" nil t)
+    (backward-char)
+    (set-mark (point))
+    (forward-list)))
 
 (defun my/backward-list ()
-  "Move backward over a balanced group with mark."
+  "Mark text within the previous balanced group of parentheses/brackets.
+   Cursor ends at the opening bracket."
   (interactive)
-  (set-mark (point))
-  (backward-list))
+  (when (re-search-backward "\\s)" nil t)
+    (forward-char)
+    (set-mark (point))
+    (backward-list)))
 
 (global-set-key (kbd "C-M-n") #'my/forward-list)
 (global-set-key (kbd "C-M-p") #'my/backward-list)
@@ -372,25 +378,31 @@ Adds spaces when using right brackets."
   ;; Return only the command name and the character to store in history
   (list 'surround-region-with-symbol char))
 
-(defun change-surrounding-symbol (start end)
+(defun change-surrounding-symbol (&optional char)
   "Change the symbols surrounding the region, handling both left and right inputs."
-  (interactive "r")
-  (let* ((region-text (buffer-substring-no-properties start end))
+  (interactive (list (read-char "Enter new symbol: ")))
+  (let* ((start (region-beginning))
+         (end (region-end))
+         (region-text (buffer-substring-no-properties start end))
          (first-char (substring region-text 0 1))
          (last-char (substring region-text -1))
          (content (substring region-text 1 -1))
-         (new-symbol (char-to-string (read-char "Enter new symbol: ")))
-         (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
+         (new-symbol (char-to-string char))
+         (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")
+                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*")))
          (reverse-pairs (mapcar (lambda (p) (cons (cdr p) (car p))) pairs))
          (is-opening (assoc new-symbol pairs))
          (is-closing (assoc new-symbol reverse-pairs))
          (new-open (or (car is-opening) (cdr is-closing) new-symbol))
          (new-close (or (cdr is-opening) (car is-closing) new-symbol)))
-
-    (when (and (equal first-char (car (assoc first-char pairs)))
-               (equal last-char (cdr (assoc first-char pairs))))
+    (when (or 
+           (and (equal first-char (car (assoc first-char pairs)))
+                (equal last-char (cdr (assoc first-char pairs))))
+           (and (member first-char '("\"" "'" "`"))
+                (equal first-char last-char)))
       (delete-region start end)
-      (insert new-open content new-close))))
+      (insert new-open content new-close))
+    (list 'change-surrounding-symbol char)))
 
 (defun delete-surrounding-symbol (start end)
   "Delete the symbols surrounding the region."
@@ -817,70 +829,122 @@ If no forward match is found, search backward."
       (cons outer-start outer-end))))
 
 (defun meow--parse-inside-quotes (inner)
-  "Parse the bounds for inside quotes selection."
+  "Parse the bounds for inside quotes selection. Supports multi-line strings."
   (save-excursion
-    (let* ((line-start (line-beginning-position))
-           (line-end (line-end-position))
+    (let* ((buffer-end (point-max))
+           (buffer-start (point-min))
            (start-dquote (save-excursion
-                         (search-backward "\"" line-start t)))
+                          (search-backward "\"" buffer-start t)))
            (end-dquote (when start-dquote
-                        (save-excursion
-                          (goto-char start-dquote)
-                          (forward-char 1)
-                          (search-forward "\"" line-end t))))
+                         (save-excursion
+                           (goto-char start-dquote)
+                           (forward-char 1)
+                           (search-forward "\"" buffer-end t))))
            (start-squote (save-excursion
-                         (search-backward "'" line-start t)))
+                          (search-backward "'" buffer-start t)))
            (end-squote (when start-squote
-                        (save-excursion
-                          (goto-char start-squote)
-                          (forward-char 1)
-                          (search-forward "'" line-end t)))))
+                         (save-excursion
+                           (goto-char start-squote)
+                           (forward-char 1)
+                           (search-forward "'" buffer-end t))))
+           (start-bquote (save-excursion
+                          (search-backward "`" buffer-start t)))
+           (end-bquote (when start-bquote
+                         (save-excursion
+                           (goto-char start-bquote)
+                           (forward-char 1)
+                           (search-forward "`" buffer-end t)))))
       (cond
-       ;; If we found both types, pick the closer one
+       ;; Find the closest quote among all three types
+       ((and start-dquote end-dquote start-squote end-squote start-bquote end-bquote)
+        (let ((closest (max start-dquote start-squote start-bquote)))
+          (cond
+           ((= closest start-dquote) (cons (1+ start-dquote) (1- end-dquote)))
+           ((= closest start-squote) (cons (1+ start-squote) (1- end-squote)))
+           ((= closest start-bquote) (cons (1+ start-bquote) (1- end-bquote))))))
+       
+       ;; Two types of quotes found
        ((and start-dquote end-dquote start-squote end-squote)
         (if (> start-dquote start-squote)
             (cons (1+ start-dquote) (1- end-dquote))
           (cons (1+ start-squote) (1- end-squote))))
-       ;; Handle double quotes only
+       ((and start-dquote end-dquote start-bquote end-bquote)
+        (if (> start-dquote start-bquote)
+            (cons (1+ start-dquote) (1- end-dquote))
+          (cons (1+ start-bquote) (1- end-bquote))))
+       ((and start-squote end-squote start-bquote end-bquote)
+        (if (> start-squote start-bquote)
+            (cons (1+ start-squote) (1- end-squote))
+          (cons (1+ start-bquote) (1- end-bquote))))
+       
+       ;; Single quote type found
        ((and start-dquote end-dquote)
         (cons (1+ start-dquote) (1- end-dquote)))
-       ;; Handle single quotes only
        ((and start-squote end-squote)
         (cons (1+ start-squote) (1- end-squote)))
+       ((and start-bquote end-bquote)
+        (cons (1+ start-bquote) (1- end-bquote)))
+       
        ;; No quotes found
        (t nil)))))
 
 (defun meow--parse-outside-quotes (inner)
-  "Parse the bounds for outside quotes selection."
+  "Parse the bounds for outside quotes selection. Supports multi-line strings."
   (save-excursion
-    (let* ((line-start (line-beginning-position))
-           (line-end (line-end-position))
+    (let* ((buffer-end (point-max))
+           (buffer-start (point-min))
            (start-dquote (save-excursion
-                         (search-backward "\"" line-start t)))
+                          (search-backward "\"" buffer-start t)))
            (end-dquote (when start-dquote
-                        (save-excursion
-                          (goto-char start-dquote)
-                          (forward-char 1)
-                          (search-forward "\"" line-end t))))
+                         (save-excursion
+                           (goto-char start-dquote)
+                           (forward-char 1)
+                           (search-forward "\"" buffer-end t))))
            (start-squote (save-excursion
-                         (search-backward "'" line-start t)))
+                          (search-backward "'" buffer-start t)))
            (end-squote (when start-squote
-                        (save-excursion
-                          (goto-char start-squote)
-                          (forward-char 1)
-                          (search-forward "'" line-end t)))))
+                         (save-excursion
+                           (goto-char start-squote)
+                           (forward-char 1)
+                           (search-forward "'" buffer-end t))))
+           (start-bquote (save-excursion
+                          (search-backward "`" buffer-start t)))
+           (end-bquote (when start-bquote
+                         (save-excursion
+                           (goto-char start-bquote)
+                           (forward-char 1)
+                           (search-forward "`" buffer-end t)))))
       (cond
-       ;; If we found both types, pick the closer one
+       ;; Find the closest quote among all three types
+       ((and start-dquote end-dquote start-squote end-squote start-bquote end-bquote)
+        (let ((closest (max start-dquote start-squote start-bquote)))
+          (cond
+           ((= closest start-dquote) (cons start-dquote end-dquote))
+           ((= closest start-squote) (cons start-squote end-squote))
+           ((= closest start-bquote) (cons start-bquote end-bquote)))))
+       
+       ;; Two types of quotes found
        ((and start-dquote end-dquote start-squote end-squote)
         (if (> start-dquote start-squote)
             (cons start-dquote end-dquote)
           (cons start-squote end-squote)))
-       ;; Handle double quotes only
+       ((and start-dquote end-dquote start-bquote end-bquote)
+        (if (> start-dquote start-bquote)
+            (cons start-dquote end-dquote)
+          (cons start-bquote end-bquote)))
+       ((and start-squote end-squote start-bquote end-bquote)
+        (if (> start-squote start-bquote)
+            (cons start-squote end-squote)
+          (cons start-bquote end-bquote)))
+       
+       ;; Single quote type found
        ((and start-dquote end-dquote)
         (cons start-dquote end-dquote))
-       ;; Handle single quotes only
        ((and start-squote end-squote)
         (cons start-squote end-squote))
+       ((and start-bquote end-bquote)
+        (cons start-bquote end-bquote))
+       
        ;; No quotes found
        (t nil)))))
 
@@ -1531,10 +1595,11 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Stores the number of times to expand the selection.")
 
 ;; Define groups for selection and action commands using command names
-(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till)
+(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection)
   "Commands that create selections.")
 
-(defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete surround-region-with-symbol)
+(defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete
+  surround-region-with-symbol change-surrounding-symbol)
   "Commands that operate on a selection.")
 
 (defun my-command-name (cmd)
@@ -1553,6 +1618,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
              (string-match-p "meow-delete" cmd-string))
         'my/meow-smart-delete)
        ((string-match-p "surround-region-with-symbol" cmd-string)
+        'surround-region-with-symbol)
+       ((string-match-p "change-surrounding-symbol" cmd-string)
         'surround-region-with-symbol)
        (t 'unknown-command))))
    (t 'unknown-command)))
@@ -1775,7 +1842,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("K" . my-eldoc-print-and-switch)
    '("l" . meow-right)
    '("L" . meow-right-expand)
-   '("m" . meow-block)
+   ;; '("m" . meow-block)
+   '("m" . rectangle-mark-mode)
    ;; '("m" . meow-join)
    '("n" . my/search-next)
    '("N" . my/search-previous)

@@ -191,7 +191,10 @@
     ;; Ansible mode
     `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
     `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
- 
+
+	;; Perl mode
+    `(perl-non-scalar-variable ((,class (:foreground ,rose-pine-fg))))
+	
     ;; Org mode
     ;; `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
     `(org-block ((t (:background unspecified))))  ; Set background color for org blocks
@@ -213,9 +216,11 @@
     `(org-document-title ((,class (:foreground ,rose-pine-gold))))
     `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
     `(org-date ((,class (:foreground ,rose-pine-gold))))
-    `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg))))
+    `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :weight regular))))
+    ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,"#2a2c2d" :weight regular))))
+	
     ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :box (:line-width 1 :color ,rose-pine-fg2)))))
-    `(org-verbatim ((,class (:foreground ,rose-pine-fg2 ))))
+    `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
 
     ;; Python ts mode
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))

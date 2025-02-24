@@ -71,12 +71,13 @@
 
 (defun my-vc-branch ()
   "Get the current Git branch name, if any."
-  (when (and (buffer-file-name)
-             ;; This line is very important, otherwise i will have problems with tramp
-             (not (file-remote-p (buffer-file-name)))
+  (when (and (or (buffer-file-name)
+                 (eq major-mode 'dired-mode))  ; Allow dired buffers
+             (not (file-remote-p (or (buffer-file-name) ;; ;; This line is very important, otherwise i will have problems with tramp
+                                    default-directory)))  ; Use default-directory for dired
              (not (or (eq major-mode 'eshell-mode)
-                      (eq major-mode 'special-mode)
-                      (string-prefix-p "*" (buffer-name)))))
+                     (eq major-mode 'special-mode)
+                     (string-prefix-p "*" (buffer-name)))))
     (with-temp-buffer
       (condition-case nil
           (when (zerop (call-process "git" nil t nil "branch" "--show-current"))
@@ -229,8 +230,11 @@
 (add-hook 'find-file-hook #'fov/disable-backups-for-gpg)
 
 ;; ;; First, disable auto-save globally
-;; (setq auto-save-default nil)
-;; (auto-save-mode -1)
+(setq auto-save-default nil)
+(setq auto-save-timer 360)
+(setq auto-save-interval 3000)
+(auto-save-mode -1)
+
 
 ;; ;; Then enable only for programming and text modes
 ;; (defun enable-auto-save-for-prog-and-text ()
@@ -336,10 +340,13 @@
 (setq enable-local-variables t)
 (setq enable-dir-local-variables t)
 
+(setenv "PERL5LIB" (concat (getenv "HOME") "/perl5/lib/perl5"))
+(setenv "PATH" (concat (getenv "HOME") "/perl5/bin:" (getenv "PATH")))
 (let ((paths '("/home/wurfkreuz/.nix-profile/bin"
               "/home/wurfkreuz/.ghcup/bin"
               "/home/wurfkreuz/go/bin/"
               "/home/wurfkreuz/test-dir/"
+			  "/home/wurfkreuz/perl5/bin"
               "/usr/bin")))
   ;; (setq exec-path (append paths exec-path))
   (setenv "PATH" (concat (string-join paths ":")
@@ -984,9 +991,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                             (list #'tempel-complete  ; or #'tempel-expand
                                   #'cape-file
 								  ;; These one are probably for icomplete
-								  (add-hook 'completion-at-point-functions #'tempel-complete nil t)
-								  (add-hook 'completion-at-point-functions #'cape-file nil t)
-								  (add-hook 'completion-at-point-functions #'my/buffer-words-capf nil t)
+								  ;; (add-hook 'completion-at-point-functions #'tempel-complete nil t)
+								  ;; (add-hook 'completion-at-point-functions #'cape-file nil t)
+								  ;; (add-hook 'completion-at-point-functions #'my/buffer-words-capf nil t)
                                   ;; ;; #'my/dabbrev-capf)))))
                                   ;; #'dabbrev-capf)))))
                                   ;; #'cape-dabbrev)))))
@@ -1446,7 +1453,8 @@ Prevents highlighting of the minibuffer command line itself."
 ;; Icons
 (setopt magit-format-file-function #'magit-format-file-nerd-icons)
 
-;; Custom option of stash, because i don't know how else to execute 'stash
+
+;; Custom option for stash, because i don't know how else to execute 'stash
 ;; apply' without the '--index' flag.
 (transient-define-suffix magit-stash-apply-no-index (stash)
   "Apply a stash to the working tree without --index."
@@ -1553,8 +1561,8 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
   "Load a desktop session by name."
   (let ((desktop-dir (concat user-emacs-directory "desktop/")))
     (setq current-desktop-session-name session-name)
-    (desktop-change-dir (concat desktop-dir session-name "/"))
-    (setup-desktop-autosave-timer)))
+    (desktop-change-dir (concat desktop-dir session-name "/"))))
+    ;; (setup-desktop-autosave-timer)))
 
 (defun load-desktop-with-name ()
   "Load a desktop session by name, chosen from available sessions."
@@ -1607,20 +1615,7 @@ If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls wheth
         (setq current-desktop-session-name new-name)
         (message "Session renamed to '%s'." new-name)))))
 
-;; I need a better check
-;; (defun exit-docker-layout-if-active ()
-;;   "Switch from docker layout to previous layout if docker layout is active."
-;;   (condition-case nil
-;;       (when (and (get-register ?d)
-;;                  (seq-some (lambda (window)
-;;                             (string-match-p "docker"
-;;                                           (symbol-name (with-current-buffer (window-buffer window)
-;;                                                        major-mode))))
-;;                           (window-list)))
-;;         (jump-to-register ?p))
-;;     (error nil)))
 
-;; (add-hook 'kill-emacs-hook #'exit-docker-layout-if-active)
 ;; (add-hook 'kill-emacs-hook 'clean-buffer-list)
 (add-hook 'kill-emacs-hook 'save-current-desktop-session)
 
@@ -1917,6 +1912,9 @@ If an eshell buffer for the directory already exists, switch to it."
               (cond
                ((eq major-mode 'bash-ts-mode)
                 (format "shellcheck -f gcc %s" buffer-file-name))
+			   
+               ((eq major-mode 'python-ts-mode)
+                (format "python %s" buffer-file-name))
                
                ((eq major-mode 'c-ts-mode)
                 (format "clang %s" buffer-file-name))
@@ -1926,6 +1924,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Add hook to set compile command when buffer is loaded
 (add-hook 'bash-ts-mode-hook #'my/set-compile-command)
+(add-hook 'python-ts-mode-hook #'my/set-compile-command)
 (add-hook 'c-ts-mode-hook #'my/set-compile-command)
 
 
@@ -1957,20 +1956,28 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; ;; Hook the custom highlighting into `compilation-mode`
 ;; (add-hook 'compilation-mode-hook 'my-compilation-highlight-errors-shellcheck)
 
+(defun my-perl-set-compile-command ()
+  "Set `compile-command` to run `perl -c && perlcritic` on the current file when in `perl-mode`."
+  (when (eq major-mode 'perl-mode)
+    (setq-local compile-command
+                ;; (format "perl -c %s && perlcritic %s"
+                ;; (format "perlcritic %s && perl %s"
+                (format "perl %s && perlcritic %s"
+                        (shell-quote-argument (buffer-file-name))
+                        (shell-quote-argument (buffer-file-name))))))
+
+(add-hook 'perl-mode-hook #'my-perl-set-compile-command)
+
 
 ;; Modes
 
-(use-package raku-mode
-  :ensure t)
-(use-package go-mode
+(use-package perl-mode
   :ensure t)
 (use-package lua-mode
   :ensure t)
 (use-package terraform-mode
   :ensure t)
 (use-package dockerfile-mode
-  :ensure t)
-(use-package haskell-mode
   :ensure t)
 (use-package yaml-mode
   :ensure t)
@@ -2190,17 +2197,53 @@ If an eshell buffer for the directory already exists, switch to it."
             (insert (concat "\n  " line)))))
     (message "No region active")))
 
-(defun my/org-smart-heading ()
-  "Create a new heading intelligently:
-If on a heading line, create a subheading (M-S-RET).
-Otherwise, create a same-level heading (M-RET)."
+(defun my/org-smart-meta-return ()
+  "Intelligently create a new heading or list item.
+If on a heading line, create a subheading (like M-S-RET).
+Otherwise, if the previous line is blank, simply insert a new line at point.
+In all other cases, behave like `org-meta-return` (M-RET)."
   (interactive)
   (if (org-at-heading-p)
       (org-insert-subheading nil)
-    (org-meta-return)))
+    (if (save-excursion
+          (forward-line -1)
+          (looking-at-p "^[[:space:]]*$"))
+        (progn
+          (org-meta-return)
+          (back-to-indentation)
+          (newline)
+          (move-end-of-line 1))
+      (org-meta-return))))
 
-;; Bind it to a key of your choice, for example:
-(define-key org-mode-map (kbd "M-RET") #'my/org-smart-heading)
+(define-key org-mode-map (kbd "M-RET") #'my/org-smart-meta-return)
+
+;; (defun my/org-smart-heading ()
+;;   "Create a new heading intelligently:
+;; If on a heading line, create a subheading (M-S-RET).
+;; Otherwise, create a same-level heading (M-RET)."
+;;   (interactive)
+;;   (if (org-at-heading-p)
+;;       (org-insert-subheading nil)
+;;     (org-meta-return)))
+
+;; ;; Bind it to a key of your choice, for example:
+;; (define-key org-mode-map (kbd "M-RET") #'my/org-smart-heading)
+
+;; (defun my-org-meta-return ()
+;;   "Custom version of `org-meta-return' that, when the previous line is blank,
+;; simply inserts a new line at point instead of moving the cursor and inserting
+;; a new list item."
+;;   (interactive)
+;;   (if (save-excursion
+;;         (forward-line -1)
+;;         (looking-at-p "^[[:space:]]*$"))
+;;       (progn
+;; 		(org-meta-return)
+;;         (back-to-indentation)
+;;         (newline)
+;;         (move-end-of-line 1))
+;;     (progn
+;;       (org-meta-return))))
 
 
 ;; Org-drill
@@ -2284,13 +2327,14 @@ Otherwise, create a same-level heading (M-RET)."
       (org-mode-restart))))
 
 
-;; ;; Org appear
-;; (use-package org-appear
-;;   :hook (org-mode . org-appear-mode)
-;;   :custom
-;;   (org-appear-autoemphasis t)
-;;   (org-appear-autolinks t)
-;;   (org-appear-autosubmarkers t))
+;; Org appear
+
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :custom
+  (org-appear-autoemphasis t)
+  (org-appear-autolinks t)
+  (org-appear-autosubmarkers t))
 
 
 ;; Custom commands

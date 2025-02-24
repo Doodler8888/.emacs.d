@@ -641,7 +641,36 @@ If it is lowercase, convert the entire region to uppercase."
           (setq display-buffer-alist display-buffer-alist-original))
       (message "Buffer is not visiting a file"))))
 
-(global-set-key (kbd "C-x c s") 'execute-buffer-as-shell-script)
+
+(defvar last-async-command nil
+  "Stores the last command executed via async-shell-command.")
+
+(defun async-repeat-last-command ()
+  "Re-execute the last command that was run using async-shell-command.
+If no command was previously executed, displays an error message.
+Creates a new async process each time, allowing multiple instances to run."
+  (interactive)
+  (if last-async-command
+      (progn
+        (let* ((command last-async-command)
+               (buffer-name (generate-new-buffer-name 
+                           (concat "*Async Command: " command "*"))))
+          ;; Create new buffer for this instance
+          (async-shell-command command buffer-name)
+          (message "Re-running async command: %s" command)))
+    (error "No previous async command found. Use M-& first")))
+
+;; Advice to store the last async command
+(defun store-last-async-command (orig-fun &rest args)
+  "Advice to store the command passed to async-shell-command."
+  (when (car args)  ; When first argument (the command) exists
+    (setq last-async-command (car args)))
+  (apply orig-fun args))
+
+;; Add the advice to async-shell-command
+(advice-add 'async-shell-command :around #'store-last-async-command)
+
+(global-set-key (kbd "C-x c s") 'async-repeat-last-command)
 
 
 (defun my/copy-rectangle-to-eol (start end)
