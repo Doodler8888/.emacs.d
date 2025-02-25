@@ -387,28 +387,30 @@
 (setq show-paren-delay 0)
 (show-paren-mode 1)
 
-;; Enable Completion Preview mode in code buffers
-(add-hook 'prog-mode-hook #'completion-preview-mode)
-;; also in text buffers
-(add-hook 'text-mode-hook #'completion-preview-mode)
-;; and in \\[shell] and friends
-(with-eval-after-load 'comint
-  (add-hook 'comint-mode-hook #'completion-preview-mode))
+;; ;; Enable Completion Preview mode in code buffers
+;; (add-hook 'prog-mode-hook #'completion-preview-mode)
+;; ;; also in text buffers
+;; (add-hook 'text-mode-hook #'completion-preview-mode)
+;; ;; and in \\[shell] and friends
+;; (with-eval-after-load 'comint
+;;   (add-hook 'comint-mode-hook #'completion-preview-mode))
 
-(with-eval-after-load 'completion-preview
-  ;; Show the preview already after two symbol characters
-  (setq completion-preview-minimum-symbol-length 2)
-  ;; Non-standard commands to that should show the preview:
-  ;; Org mode has a custom `self-insert-command'
-  (push 'org-self-insert-command completion-preview-commands)
-  ;; Paredit has a custom `delete-backward-char' command
-  (push 'paredit-backward-delete completion-preview-commands)
-  ;; Bindings that take effect when the preview is shown:
-  ;; Cycle the completion candidate that the preview shows
-  (keymap-set completion-preview-active-mode-map "M-n" #'completion-preview-next-candidate)
-  (keymap-set completion-preview-active-mode-map "M-p" #'completion-preview-prev-candidate)
-  ;; Convenient alternative to C-i after typing one of the above
-  (keymap-set completion-preview-active-mode-map "M-i" #'completion-preview-insert))
+;; ;; (global-completion-preview-mode 1)
+
+;; (with-eval-after-load 'completion-preview
+;;   ;; Show the preview already after two symbol characters
+;;   (setq completion-preview-minimum-symbol-length 2)
+;;   ;; Non-standard commands to that should show the preview:
+;;   ;; Org mode has a custom `self-insert-command'
+;;   (push 'org-self-insert-command completion-preview-commands)
+;;   ;; Paredit has a custom `delete-backward-char' command
+;;   (push 'paredit-backward-delete completion-preview-commands)
+;;   ;; Bindings that take effect when the preview is shown:
+;;   ;; Cycle the completion candidate that the preview shows
+;;   (keymap-set completion-preview-active-mode-map "M-n" #'completion-preview-next-candidate)
+;;   (keymap-set completion-preview-active-mode-map "M-p" #'completion-preview-prev-candidate)
+;;   ;; Convenient alternative to C-i after typing one of the above
+;;   (keymap-set completion-preview-active-mode-map "M-i" #'completion-preview-insert))
 
 
 ;; Theme
@@ -995,7 +997,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package cape
   :ensure t
-  :after corfu
+  ;; :after corfu
   :config
   ;; (setq cape-dabbrev-check-other-buffers nil)
   
@@ -1040,15 +1042,15 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                 #'elisp-completion-at-point
                                 #'cape-file)))))
 
-;; ;; For icomplete (?)
-(defun my/force-completions ()
-  (when (derived-mode-p 'bash-ts-mode 'sh-mode)
-    (setq-local completion-at-point-functions
-                (list #'tempel-complete
-                      #'cape-file
-                      #'my/buffer-words-capf))))
+;; ;; ;; For icomplete (?)
+;; (defun my/force-completions ()
+;;   (when (derived-mode-p 'bash-ts-mode 'sh-mode)
+;;     (setq-local completion-at-point-functions
+;;                 (list #'tempel-complete
+;;                       #'cape-file
+;;                       #'my/buffer-words-capf))))
 
-(add-hook 'after-change-major-mode-hook #'my/force-completions)
+;; (add-hook 'after-change-major-mode-hook #'my/force-completions)
 
 ;; (use-package fish-completion
 ;;   :vc (:url "https://github.com/LemonBreezes/emacs-fish-completion.git"

@@ -30,6 +30,8 @@
 ;; don't know why i enabled it in the first place.
 ;; (setq-default indent-line-function nil)
 
+;; (with-eval-after-load 'completion-preview
+;;   (define-key completion-preview-active-mode-map (kbd "TAB") #'completion-at-point))
 (global-set-key (kbd "TAB") #'completion-at-point)
 
 ;; Argument count doesn't get reset right away when i use meow-next/prev
