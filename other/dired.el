@@ -63,19 +63,13 @@ being deleted permanently. For sudo files, the remote trash directory is used."
   (interactive "P")
   (let* ((files (mapcar #'expand-file-name (dired-get-marked-files t arg)))
          (needs-sudo (cl-some (lambda (f)
-                                (let ((dir (file-name-directory f)))
-                                  (and dir (not (file-writable-p dir)))))
-                              files))
+                               (let ((dir (file-name-directory f)))
+                                 (and dir (not (file-writable-p dir)))))
+                             files))
          (do-delete (if needs-sudo
                         (yes-or-no-p "Insufficient permissions. Use sudo? ")
                       (yes-or-no-p "Proceed with deletion? ")))
-         ;; The remote trash directory value is assumed to be set via
-         ;; (connection-local-set-profile-variables
-         ;;  'remote-trash-directory
-         ;;  '((trash-directory . "/sudo::~/.local/share/trash/")))
-         ;; while local trash-directory is already set, e.g.,
-         ;; (setq trash-directory "~/.local/share/Trash/files/")
-         )
+         (window-start (window-start)))  ;; Save the current window position
     (when do-delete
       (dolist (abs-file files)
         (let* ((dir (file-name-directory abs-file))
@@ -95,7 +89,10 @@ being deleted permanently. For sudo files, the remote trash directory is used."
                 (dired-remove-entry abs-file))
             (error
              (message "Error deleting %s: %s" abs-file (error-message-string err))))))
+      ;; Restore the window's start position to keep focus in the same part of the buffer
+      (set-window-start (selected-window) window-start)
       (revert-buffer))))
+
 
 (defun my/delete-file (file use-sudo)
   "Delete FILE using sudo if USE-SUDO is non-nil."

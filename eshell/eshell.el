@@ -1,5 +1,6 @@
 (require 'esh-cmd)  ;; Ensure that eshell command functions are loaded
 (require 'em-tramp) ; to load eshell’s sudo
+(require 'eshell) ; to load eshell’s sudo
 
 
 ;; Eshell
@@ -21,10 +22,12 @@
         eshell-banner-message ""
         eshell-visual-commands'("htop" "ssh" "top" "gpg" "paru" "ngrok"))
   (add-to-list 'eshell-modules-list 'eshell-elecslash)
-  (define-key eshell-mode-map (kbd "C-f C-z") 'my/eshell-zoxide-cd)
-  (define-key eshell-mode-map (kbd "M-l") 'my/eshell-clear)
-  (define-key eshell-mode-map (kbd "C-s C-o") 'my-eshell-outline))
-  ;; (define-key eshell-mode-map (kbd "M-r") 'my-eshell-history-choose))
+ (with-eval-after-load 'esh-mode
+   ;; (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)
+   ;; (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)
+    (define-key eshell-mode-map (kbd "C-f C-z") #'my/eshell-zoxide-cd)
+    (define-key eshell-mode-map (kbd "M-l") #'my/eshell-clear)
+    (define-key eshell-mode-map (kbd "C-s C-o") #'my-eshell-outline)))
 
 (global-set-key (kbd "M-r") 'my-eshell-history-choose)
 

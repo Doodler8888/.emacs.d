@@ -185,7 +185,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
             (my/setup-window-keys compilation-mode-map)))
 
 ;; Without the condition i might get an error about an undefined binding
-(with-eval-after-load 'eshell
+(with-eval-after-load 'eshell-mode
   (define-key eshell-mode-map (kbd "q") #'quit-window))
 
 (with-eval-after-load 'help-mode

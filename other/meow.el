@@ -389,7 +389,7 @@ Adds spaces when using right brackets."
          (content (substring region-text 1 -1))
          (new-symbol (char-to-string char))
          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")
-                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*")))
+                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*") ("/" . "/")))
          (reverse-pairs (mapcar (lambda (p) (cons (cdr p) (car p))) pairs))
          (is-opening (assoc new-symbol pairs))
          (is-closing (assoc new-symbol reverse-pairs))
@@ -398,7 +398,7 @@ Adds spaces when using right brackets."
     (when (or 
            (and (equal first-char (car (assoc first-char pairs)))
                 (equal last-char (cdr (assoc first-char pairs))))
-           (and (member first-char '("\"" "'" "`"))
+           (and (member first-char '("\"" "'" "`" "/"))
                 (equal first-char last-char)))
       (delete-region start end)
       (insert new-open content new-close))
@@ -948,6 +948,82 @@ If no forward match is found, search backward."
        ;; No quotes found
        (t nil)))))
 
+(defun meow--parse-inside-org (inner)
+  "Parse the bounds for inside org emphasis selection.
+Returns a cons cell (BEGIN . END) for the text inside the emphasis markers,
+excluding the markers themselves, or nil if no valid emphasis is found."
+  (when (derived-mode-p 'org-mode)
+    (let* ((element (org-element-context))
+           (type (org-element-type element))
+           (begin (org-element-property :begin element))
+           (end (org-element-property :end element))
+           (contents-begin (org-element-property :contents-begin element))
+           (contents-end (org-element-property :contents-end element)))
+      (cond
+       ;; Special handling for code/verbatim elements
+       ((memq type '(code verbatim))
+        (when (and begin end)
+          ;; Get the raw text to examine what's happening
+          (let* ((raw-text (buffer-substring-no-properties begin end))
+                 (first-tilde (string-match "~" raw-text))
+                 (last-tilde (string-match "~" raw-text (1+ first-tilde))))
+            (when (and first-tilde last-tilde)
+              ;; Calculate proper boundaries excluding both markers
+              (cons (+ begin (1+ first-tilde))
+                    (+ begin last-tilde))))))
+       
+       ;; Regular handling for other emphasis types
+       ((memq type '(bold italic strike-through underline))
+        (when (and contents-begin contents-end)
+          (cons contents-begin contents-end)))
+       
+       ;; No valid emphasis found
+       (t nil)))))
+
+(defun meow--parse-outside-org (inner)
+  "Parse the bounds for outside org emphasis selection.
+Returns a cons cell (BEGIN . END) for the text including the emphasis markers,
+or nil if no valid emphasis is found."
+  (when (derived-mode-p 'org-mode)
+    (let* ((element (org-element-context))
+           (type (org-element-type element))
+           (begin (org-element-property :begin element))
+           (end (org-element-property :end element)))
+      (cond
+       ;; Special handling for code/verbatim elements
+       ((memq type '(code verbatim))
+        (when (and begin end)
+          ;; Get the raw text to examine what's happening
+          (let* ((raw-text (buffer-substring-no-properties begin end))
+                 (first-tilde (string-match "~" raw-text))
+                 (last-tilde (string-match "~" raw-text (1+ first-tilde))))
+            (when (and first-tilde last-tilde)
+              ;; Calculate proper boundaries including both markers
+              ;; but excluding any trailing whitespace
+              (cons begin (+ begin (1+ last-tilde)))))))
+       
+       ;; Regular handling for other emphasis types
+       ((memq type '(bold italic strike-through underline))
+        (when (and begin end)
+          (cons begin end)))
+       
+       ;; No valid emphasis found
+       (t nil)))))
+
+;; Optional helper function for debugging
+(defun meow-org-emphasis-info ()
+  "Display information about the org emphasis at point."
+  (interactive)
+  (let* ((element (org-element-context))
+         (type (org-element-type element))
+         (begin (org-element-property :begin element))
+         (end (org-element-property :end element))
+         (raw-text (when (and begin end) 
+                     (buffer-substring-no-properties begin end))))
+    (message "Type: %s, Begin: %s, End: %s, Raw text: %s"
+             type begin end raw-text)))
+
+
 ;; Delete the 'window' option for selection
 (setq meow-char-thing-table (assq-delete-all ?\. meow-char-thing-table))
 (setq meow-char-thing-table (assq-delete-all ?w meow-char-thing-table))
@@ -959,6 +1035,7 @@ If no forward match is found, search backward."
 ;; (add-to-list 'meow-char-thing-table '(?\. . my-sentence))
 (add-to-list 'meow-char-thing-table '(?w . whitespace))
 (add-to-list 'meow-char-thing-table '(?/ . comment))
+(add-to-list 'meow-char-thing-table '(?o . org))
 
 (advice-add 'meow--parse-inner-of-thing-char :around
             (lambda (orig-fun ch)
@@ -968,6 +1045,7 @@ If no forward match is found, search backward."
                ((eq ch ?w) (meow--parse-inside-whitespace t))
                ((eq ch ?g) (meow--parse-inside-quotes t))
                ((eq ch ?/) (meow--parse-inside-comment t))
+               ((eq ch ?o) (meow--parse-inside-org t))
                (t (funcall orig-fun ch)))))
 
 (advice-add 'meow--parse-bounds-of-thing-char :around
@@ -977,6 +1055,7 @@ If no forward match is found, search backward."
                ((eq ch ?m) (meow--parse-outside-sentence t))
                ((eq ch ?g) (meow--parse-outside-quotes t))
                ((eq ch ?/) (meow--parse-outside-comment t))
+               ((eq ch ?o) (meow--parse-outside-org t))
                (t (funcall orig-fun ch)))))
 
 
@@ -1290,6 +1369,15 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (if (region-active-p)
       (deactivate-mark)
     (push-mark (point) t t)))
+
+(defun my/meow-find (char)
+  "Enhanced meow-find that handles the case when cursor is already at CHAR."
+  (interactive (list (read-char "Find: " t)))
+  (if (and (char-after) (= (char-after) char))
+      ;; If cursor is already on the character, pass the expand flag.
+      (meow-find 2 char t)
+    ;; Otherwise, just call meow-find normally.
+    (meow-find 1 char)))
 
 (defun my/meow-search-backward ()
   "Search backward for the last search string."
@@ -1706,7 +1794,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("B" . meow-back-symbol)
    '("e" . meow-next-word)
    '("E" . meow-next-symbol)
-   '("f" . meow-find)
+   ;; '("f" . meow-find)
+   '("f" . my/meow-find)
    '("t" . meow-till)
    '("T" . my/meow-till-backward)
    '("F" . my/meow-find-backward)
@@ -1804,7 +1893,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("D" . meow-backward-delete)
    '("e" . meow-next-word)
    '("E" . meow-next-symbol)
-   '("f" . meow-find)
+   ;; '("f" . meow-find)
+   '("f" . my/meow-find)
    '("t" . meow-till)
    '("T" . my/meow-till-backward)
    '("F" . my/meow-find-backward)

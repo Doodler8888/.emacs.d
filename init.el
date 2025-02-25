@@ -42,13 +42,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages
-   '(annalist buffer-terminator cape clojure-ts-mode corfu cursor-undo docker
-			  dockerfile-mode embark-consult envrc f go-mode goto-chg
-			  haskell-mode hydra lua-mode magit marginalia markdown-mode meow
-			  nix-mode orderless org-appear org-drill queue raku-mode
-			  tempel-collection terraform-mode transpose-frame treesit-auto
-			  undo-fu undo-fu-session vertico wgrep yaml-mode zig-ts-mode))
+ '(package-selected-packages nil)
  '(package-vc-selected-packages
    '((fish-completion :url
 					  "https://github.com/LemonBreezes/emacs-fish-completion.git"))))
@@ -59,3 +53,4 @@
  ;; If there is more than one, they won't work right.
  )
 (put 'downcase-region 'disabled nil)
+
