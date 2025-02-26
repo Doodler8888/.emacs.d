@@ -231,48 +231,9 @@
 
 ;; ;; First, disable auto-save globally
 (setq auto-save-default nil)
-(setq auto-save-timer 360)
-(setq auto-save-interval 3000)
+(setq auto-save-timer 36000)
+(setq auto-save-interval 300000)
 (auto-save-mode -1)
-
-
-;; ;; Then enable only for programming and text modes
-;; (defun enable-auto-save-for-prog-and-text ()
-;;   "Enable auto-save for programming and text modes, except lisp-interaction-mode."
-;;   (when (or (and (derived-mode-p 'prog-mode)
-;;                  (not (derived-mode-p 'lisp-interaction-mode)))
-;;             (derived-mode-p 'text-mode))
-;;     (setq-local auto-save-default t)
-;;     (auto-save-mode 1)))
-
-;; (add-hook 'after-change-major-mode-hook #'enable-auto-save-for-prog-and-text)
-
-;; ;; (defun disable-auto-save-for-eshell ()
-;; ;;   "Disable auto-save for eshell buffers."
-;; ;;   (when (eq major-mode 'eshell-mode)
-;; ;;     (setq-local auto-save-default nil)))
-;; ;; (add-hook 'eshell-mode-hook #'disable-auto-save-for-eshell)
-
-;; ;; (defun disable-auto-save-for-messages-buffer ()
-;; ;;   "Disable auto-save for the *Messages* buffer."
-;; ;;   (when (string= (buffer-name) "*Messages*")
-;; ;;     (setq-local auto-save-default nil)
-;; ;;     (auto-save-mode -1)))
-;; ;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-messages-buffer)
-
-;; ;; (defun disable-auto-save-for-non-file-buffers ()
-;; ;;   "Disable auto-save for buffers not associated with a file."
-;; ;;   (unless (buffer-file-name)
-;; ;;     (setq-local auto-save-default nil)
-;; ;;     (auto-save-mode -1)))
-;; ;; (add-hook 'after-change-major-mode-hook #'disable-auto-save-for-non-file-buffers)
-
-;; ;; (defun disable-auto-save-for-ediff ()
-;; ;;   "Disable auto-save for ediff merge buffers."
-;; ;;   (when (string-match-p "\\`ediff" (buffer-name))
-;; ;;     (setq-local auto-save-default nil)
-;; ;;     (auto-save-mode -1)))
-;; ;; (add-hook 'ediff-prepare-buffer-hook #'disable-auto-save-for-ediff)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -280,14 +241,7 @@
 (desktop-save-mode 1)
 (setq desktop-save 't)
 (setq desktop-path (list desktop-dirname))
-(setq desktop-auto-save-timeout 360)
-
-(auto-save-mode -1)
-;; (auto-save-visited-mode 1)
-;; (setq auto-save-visited-interval 30)
-;; (setq auto-save-interval 1)  ; Auto-save every 1 second
-;; (setq auto-save-timeout 10)  ; Auto-save after 10 seconds of idle time
-;; (setq auto-save-no-message t)
+(setq desktop-auto-save-timeout 36000)
 
 (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -1522,130 +1476,6 @@ Prevents highlighting of the minibuffer command line itself."
 
 (with-eval-after-load 'shell
   (add-hook 'shell-mode-hook 'async-shell-command-filter-hook))
-
-
-;; Sessions
-
-(defvar current-desktop-session-name nil
-  "The name of the currently loaded desktop session.")
-
-(defvar desktop-autosave-timer nil
-  "Timer object for desktop autosave, to avoid multiple timers running.")
-
-(defun save-eshell-buffer (desktop-dirname)
-  ;; Save the current working directory.
-  default-directory)
-
-(defun restore-eshell-buffer (_file-name buffer-name misc)
-  "MISC is the value returned by `save-eshell-buffer'.
-                _FILE-NAME is nil."
-  (let ((default-directory misc))
-    ;; Create an eshell buffer named BUFFER-NAME in directory MISC.
-    (eshell buffer-name)))
-
-;; Save all eshell-mode buffers.
-(add-hook 'eshell-mode-hook
-          (lambda ()
-            (setq-local desktop-save-buffer #'save-eshell-buffer)))
-
-;; Restore all eshell-mode buffers.
-(add-to-list 'desktop-buffer-mode-handlers '(eshell-mode . restore-eshell-buffer))
-
-(defun save-current-desktop-session (&optional show-message)
-  "Save the current desktop session using the current session name.
-If no session is loaded, prompt to create a new one. SHOW-MESSAGE controls whether a save message is displayed."
-  (interactive "p") ; "p" passes a prefix argument, which is non-nil when called interactively
-  (if (and current-desktop-session-name (not (string-empty-p current-desktop-session-name)))
-      (let ((desktop-dir (concat user-emacs-directory "desktop/" current-desktop-session-name "/")))
-        (unless (file-exists-p desktop-dir)
-          (make-directory desktop-dir t))
-        (desktop-save desktop-dir)
-        (when (and show-message (or (called-interactively-p 'any) (eq show-message 1)))
-          (message "Session '%s' saved." current-desktop-session-name)))
-    ;; No session is loaded or the session name is empty, prompt to create a new one (only when called interactively)
-    (when (called-interactively-p 'any)
-      (let ((new-session-name (read-string "Enter new session name: ")))
-        (if (string-empty-p new-session-name)
-            (message "Session name cannot be empty.")
-          (progn
-            (setq current-desktop-session-name new-session-name)
-            (let ((new-desktop-dir (concat user-emacs-directory "desktop/" new-session-name "/")))
-              (make-directory new-desktop-dir t)
-              (desktop-save new-desktop-dir)
-              (message "Session '%s' created and saved." new-session-name))))))))
-
-(defun setup-desktop-autosave-timer ()
-  "Set up or reset the desktop autosave timer."
-  (when desktop-autosave-timer
-    (cancel-timer desktop-autosave-timer))
-  ;; Pass nil to save-current-desktop-session to avoid showing the message during autosaves.
-  (setq desktop-autosave-timer (run-with-timer 30 30 (lambda () (save-current-desktop-session nil)))))
-
-(defun load-desktop-session (session-name)
-  "Load a desktop session by name."
-  (let ((desktop-dir (concat user-emacs-directory "desktop/")))
-    (setq current-desktop-session-name session-name)
-    (desktop-change-dir (concat desktop-dir session-name "/"))))
-    ;; (setup-desktop-autosave-timer)))
-
-(defun load-desktop-with-name ()
-  "Load a desktop session by name, chosen from available sessions."
-  (interactive)
-  (when current-desktop-session-name
-    ;; Save the current session before loading a new one, but only if a session is already loaded.
-    (save-current-desktop-session))
-  (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-         (session-name (completing-read "Choose desktop session: " session-dirs nil t)))
-    (setq current-desktop-session-name session-name)  ; Save the session name globally
-    (desktop-change-dir (concat desktop-dir session-name "/"))
-    (setup-desktop-autosave-timer)))
-
-;; Disable the default desktop save mode
-(desktop-save-mode 0)
-
-(setq desktop-files-not-to-save
-    (concat "\\(^/[^/:]*:\\|(ftp)$\\)\\|" desktop-files-not-to-save))
-
-(defun delete-desktop-session ()
-  "Delete a desktop session by name, chosen from available sessions."
-  (interactive)
-  (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
-         (session-dirs (directory-files desktop-dir nil "^[^.]"))  ; List directories excluding hidden ones
-         (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
-    (when (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name))
-      (let ((session-path (concat desktop-dir session-name)))
-        (if (file-directory-p session-path)
-            (progn
-              (delete-directory session-path t)  ; 't' for recursive delete
-              (message "Deleted desktop session '%s'." session-name))
-          (message "No such desktop session '%s'." session-name))))))
-
-(defun rename-desktop-session ()
-  "Renames the currently loaded desktop session."
-  (interactive)
-  ;; Check if there's a session loaded.
-  (if (not current-desktop-session-name)
-      (message "No desktop session is currently loaded.")
-    (let* ((new-name (read-string "New session name: "))
-           (old-dir (concat user-emacs-directory "desktop/" current-desktop-session-name))
-           (new-dir (concat user-emacs-directory "desktop/" new-name)))
-      ;; Check if the new session name is empty or the session already exists.
-      (if (or (string-empty-p new-name)
-              (file-exists-p new-dir))
-          (message "Invalid new session name or session already exists.")
-        ;; Rename the directory and update the session name.
-        (rename-file old-dir new-dir)
-        (setq current-desktop-session-name new-name)
-        (message "Session renamed to '%s'." new-name)))))
-
-
-;; (add-hook 'kill-emacs-hook 'clean-buffer-list)
-(add-hook 'kill-emacs-hook 'save-current-desktop-session)
-
-(advice-add 'save-current-desktop-session :before
-            (lambda (&rest _)
-              (save-some-buffers t)))
 
 
 ;; ;; Buffers

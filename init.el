@@ -23,6 +23,7 @@
 (load "~/.emacs.d/config.el")
 ;; (load "~/.emacs.d/other/icomplete.el")
 (load "~/.emacs.d/other/custom-functions.el")
+(load "~/.emacs.d/other/desktop-session.el")
 (load "~/.emacs.d/other/meow.el")
 (load "~/.emacs.d/eshell/eshell.el")
 (load "~/.emacs.d/other/dired.el")
