@@ -71,7 +71,8 @@
       (call-interactively 'query-replace)
     (call-interactively 'replace-regexp)))
 
-(global-set-key (kbd "M-%") 'my/smart-replace)
+;; (global-set-key (kbd "M-%") 'my/smart-replace)
+(global-set-key (kbd "M-%") 'query-replace)
 
 
 (defun my-forward-char-with-selection (&optional arg)
@@ -424,7 +425,6 @@ Adds spaces when using right brackets."
   "Combine negative argument with meow-till to search backward in one keybinding."
   (interactive "p\ncTill backward:")
   (meow-till (- arg) ch))
-
 
 (defun select-inside-quotes ()
   "Select text inside the closest set of double or single quotes."
@@ -830,125 +830,215 @@ If no forward match is found, search backward."
                        (point))))
       (cons outer-start outer-end))))
 
-(defun meow--parse-inside-quotes (inner)
+(defun meow--parse-inside-double-quotes (inner)
   "Parse the bounds for inside quotes selection. Supports multi-line strings."
   (save-excursion
     (let* ((buffer-end (point-max))
            (buffer-start (point-min))
-           (start-dquote (save-excursion
-                          (search-backward "\"" buffer-start t)))
-           (end-dquote (when start-dquote
-                         (save-excursion
-                           (goto-char start-dquote)
-                           (forward-char 1)
-                           (search-forward "\"" buffer-end t))))
-           (start-squote (save-excursion
-                          (search-backward "'" buffer-start t)))
-           (end-squote (when start-squote
-                         (save-excursion
-                           (goto-char start-squote)
-                           (forward-char 1)
-                           (search-forward "'" buffer-end t))))
-           (start-bquote (save-excursion
-                          (search-backward "`" buffer-start t)))
-           (end-bquote (when start-bquote
-                         (save-excursion
-                           (goto-char start-bquote)
-                           (forward-char 1)
-                           (search-forward "`" buffer-end t)))))
-      (cond
-       ;; Find the closest quote among all three types
-       ((and start-dquote end-dquote start-squote end-squote start-bquote end-bquote)
-        (let ((closest (max start-dquote start-squote start-bquote)))
-          (cond
-           ((= closest start-dquote) (cons (1+ start-dquote) (1- end-dquote)))
-           ((= closest start-squote) (cons (1+ start-squote) (1- end-squote)))
-           ((= closest start-bquote) (cons (1+ start-bquote) (1- end-bquote))))))
-       
-       ;; Two types of quotes found
-       ((and start-dquote end-dquote start-squote end-squote)
-        (if (> start-dquote start-squote)
-            (cons (1+ start-dquote) (1- end-dquote))
-          (cons (1+ start-squote) (1- end-squote))))
-       ((and start-dquote end-dquote start-bquote end-bquote)
-        (if (> start-dquote start-bquote)
-            (cons (1+ start-dquote) (1- end-dquote))
-          (cons (1+ start-bquote) (1- end-bquote))))
-       ((and start-squote end-squote start-bquote end-bquote)
-        (if (> start-squote start-bquote)
-            (cons (1+ start-squote) (1- end-squote))
-          (cons (1+ start-bquote) (1- end-bquote))))
-       
-       ;; Single quote type found
-       ((and start-dquote end-dquote)
-        (cons (1+ start-dquote) (1- end-dquote)))
-       ((and start-squote end-squote)
-        (cons (1+ start-squote) (1- end-squote)))
-       ((and start-bquote end-bquote)
-        (cons (1+ start-bquote) (1- end-bquote)))
-       
-       ;; No quotes found
-       (t nil)))))
+           (current-pos (point))
+           ;; Find all quote pairs that contain the current position
+           (pairs nil))
+      
+      ;; Find double quote pair containing current position
+      (when (save-excursion
+              (goto-char current-pos)
+              (when (search-backward "\"" buffer-start t)
+                (let ((start-pos (point))
+                      (end-pos (save-excursion
+                                 (goto-char (1+ (point)))
+                                 (search-forward "\"" buffer-end t))))
+                  (when (and end-pos (>= end-pos current-pos))
+                    (push (list 'double start-pos end-pos) pairs)))))
+        nil)
+      
+      ;; Find the innermost quote pair (the one with the highest start position)
+      (if pairs
+          (let* ((innermost (car (sort pairs (lambda (a b) (> (nth 1 a) (nth 1 b))))))
+                 (type (nth 0 innermost))
+                 (start (nth 1 innermost))
+                 (end (nth 2 innermost)))
+            (cons (1+ start) (1- end)))
+        nil))))
 
-(defun meow--parse-outside-quotes (inner)
-  "Parse the bounds for outside quotes selection. Supports multi-line strings."
+(defun meow--parse-inside-single-quotes (inner)
+  "Parse the bounds for inside quotes selection. Supports multi-line strings."
+  (save-excursion
+	(let* ((buffer-end (point-max))
+		   (buffer-start (point-min))
+		   (current-pos (point))
+		   ;; Find all quote pairs that contain the current position
+		   (pairs nil))
+
+	  ;; Find single quote pair containing current position
+	  (when (save-excursion
+	          (goto-char current-pos)
+	          (when (search-backward "'" buffer-start t)
+	            (let ((start-pos (point))
+	                  (end-pos (save-excursion
+	                             (goto-char (1+ (point)))
+	                             (search-forward "'" buffer-end t))))
+	              (when (and end-pos (>= end-pos current-pos))
+	                (push (list 'single start-pos end-pos) pairs)))))
+	    nil)
+
+	  ;; Find the innermost quote pair (the one with the highest start position)
+	  (if pairs
+		  (let* ((innermost (car (sort pairs (lambda (a b) (> (nth 1 a) (nth 1 b))))))
+				 (type (nth 0 innermost))
+				 (start (nth 1 innermost))
+				 (end (nth 2 innermost)))
+			(cons (1+ start) (1- end)))
+		nil))))
+
+(defun meow--parse-inside-backtick-quotes (inner)
+  "Parse the bounds for inside quotes selection. Supports multi-line strings."
+  (save-excursion
+	(let* ((buffer-end (point-max))
+		   (buffer-start (point-min))
+		   (current-pos (point))
+		   ;; Find all quote pairs that contain the current position
+		   (pairs nil))
+
+	  ;; Find backtick pair containing current position
+	  (when (save-excursion
+	          (goto-char current-pos)
+	          (when (search-backward "`" buffer-start t)
+	            (let ((start-pos (point))
+	                  (end-pos (save-excursion
+	                             (goto-char (1+ (point)))
+	                             (search-forward "`" buffer-end t))))
+	              (when (and end-pos (>= end-pos current-pos))
+	                (push (list 'backtick start-pos end-pos) pairs)))))
+	    nil)
+
+	  ;; Find the innermost quote pair (the one with the highest start position)
+	  (if pairs
+		  (let* ((innermost (car (sort pairs (lambda (a b) (> (nth 1 a) (nth 1 b))))))
+				 (type (nth 0 innermost))
+				 (start (nth 1 innermost))
+				 (end (nth 2 innermost)))
+			(cons (1+ start) (1- end)))
+		nil))))
+
+;; "aoirsetnoarise'oarisetn"
+
+;; (defun meow--parse-outside-double-quotes (inner)
+;;   "Parse the bounds for outside quotes selection. Supports multi-line strings."
+;;   (save-excursion
+;;     (let* ((buffer-end (point-max))
+;;            (buffer-start (point-min))
+;;            (start-dquote (save-excursion
+;;                           (search-backward "\"" buffer-start t)))
+;;            (end-dquote (when start-dquote
+;;                          (save-excursion
+;;                            (goto-char start-dquote)
+;;                            (forward-char 1)
+;;                            (search-forward "\"" buffer-end t))))
+;;            (start-squote (save-excursion
+;;                           (search-backward "'" buffer-start t)))
+;;            (end-squote (when start-squote
+;;                          (save-excursion
+;;                            (goto-char start-squote)
+;;                            (forward-char 1)
+;;                            (search-forward "'" buffer-end t))))
+;;            (start-bquote (save-excursion
+;;                           (search-backward "`" buffer-start t)))
+;;            (end-bquote (when start-bquote
+;;                          (save-excursion
+;;                            (goto-char start-bquote)
+;;                            (forward-char 1)
+;;                            (search-forward "`" buffer-end t)))))
+;;       (cond
+;;        ;; Find the closest quote among all three types
+;;        ((and start-dquote end-dquote start-squote end-squote start-bquote end-bquote)
+;;         (let ((closest (max start-dquote start-squote start-bquote)))
+;;           (cond
+;;            ((= closest start-dquote) (cons start-dquote end-dquote))
+;;            ((= closest start-squote) (cons start-squote end-squote))
+;;            ((= closest start-bquote) (cons start-bquote end-bquote)))))
+       
+;;        ;; Two types of quotes found
+;;        ((and start-dquote end-dquote start-squote end-squote)
+;;         (if (> start-dquote start-squote)
+;;             (cons start-dquote end-dquote)
+;;           (cons start-squote end-squote)))
+;;        ((and start-dquote end-dquote start-bquote end-bquote)
+;;         (if (> start-dquote start-bquote)
+;;             (cons start-dquote end-dquote)
+;;           (cons start-bquote end-bquote)))
+;;        ((and start-squote end-squote start-bquote end-bquote)
+;;         (if (> start-squote start-bquote)
+;;             (cons start-squote end-squote)
+;;           (cons start-bquote end-bquote)))
+       
+;;        ;; Single quote type found
+;;        ((and start-dquote end-dquote)
+;;         (cons start-dquote end-dquote))
+;;        ((and start-squote end-squote)
+;;         (cons start-squote end-squote))
+;;        ((and start-bquote end-bquote)
+;;         (cons start-bquote end-bquote))
+       
+;;        ;; No quotes found
+;;        (t nil)))))
+
+(defun meow--parse-outside-double-quotes (inner)
+  "Parse the bounds for outside double quotes selection. Supports multi-line strings."
   (save-excursion
     (let* ((buffer-end (point-max))
            (buffer-start (point-min))
-           (start-dquote (save-excursion
+           (start-quote (save-excursion
                           (search-backward "\"" buffer-start t)))
-           (end-dquote (when start-dquote
-                         (save-excursion
-                           (goto-char start-dquote)
-                           (forward-char 1)
-                           (search-forward "\"" buffer-end t))))
-           (start-squote (save-excursion
+           (end-quote (when start-quote
+                        (save-excursion
+                          (goto-char start-quote)
+                          (forward-char 1)
+                          (search-forward "\"" buffer-end t)))))
+      (when (and start-quote end-quote)
+        (cons start-quote end-quote)))))
+
+(defun meow--parse-outside-single-quotes (inner)
+  "Parse the bounds for outside single quotes selection. Supports multi-line strings."
+  (save-excursion
+    (let* ((buffer-end (point-max))
+           (buffer-start (point-min))
+           (start-quote (save-excursion
                           (search-backward "'" buffer-start t)))
-           (end-squote (when start-squote
-                         (save-excursion
-                           (goto-char start-squote)
-                           (forward-char 1)
-                           (search-forward "'" buffer-end t))))
-           (start-bquote (save-excursion
+           (end-quote (when start-quote
+                        (save-excursion
+                          (goto-char start-quote)
+                          (forward-char 1)
+                          (search-forward "'" buffer-end t)))))
+      (when (and start-quote end-quote)
+        (cons start-quote end-quote)))))
+
+(defun meow--parse-outside-backtick-quotes (inner)
+  "Parse the bounds for outside backtick quotes selection. Supports multi-line strings."
+  (save-excursion
+    (let* ((buffer-end (point-max))
+           (buffer-start (point-min))
+           (start-quote (save-excursion
                           (search-backward "`" buffer-start t)))
-           (end-bquote (when start-bquote
-                         (save-excursion
-                           (goto-char start-bquote)
-                           (forward-char 1)
-                           (search-forward "`" buffer-end t)))))
-      (cond
-       ;; Find the closest quote among all three types
-       ((and start-dquote end-dquote start-squote end-squote start-bquote end-bquote)
-        (let ((closest (max start-dquote start-squote start-bquote)))
-          (cond
-           ((= closest start-dquote) (cons start-dquote end-dquote))
-           ((= closest start-squote) (cons start-squote end-squote))
-           ((= closest start-bquote) (cons start-bquote end-bquote)))))
-       
-       ;; Two types of quotes found
-       ((and start-dquote end-dquote start-squote end-squote)
-        (if (> start-dquote start-squote)
-            (cons start-dquote end-dquote)
-          (cons start-squote end-squote)))
-       ((and start-dquote end-dquote start-bquote end-bquote)
-        (if (> start-dquote start-bquote)
-            (cons start-dquote end-dquote)
-          (cons start-bquote end-bquote)))
-       ((and start-squote end-squote start-bquote end-bquote)
-        (if (> start-squote start-bquote)
-            (cons start-squote end-squote)
-          (cons start-bquote end-bquote)))
-       
-       ;; Single quote type found
-       ((and start-dquote end-dquote)
-        (cons start-dquote end-dquote))
-       ((and start-squote end-squote)
-        (cons start-squote end-squote))
-       ((and start-bquote end-bquote)
-        (cons start-bquote end-bquote))
-       
-       ;; No quotes found
-       (t nil)))))
+           (end-quote (when start-quote
+                        (save-excursion
+                          (goto-char start-quote)
+                          (forward-char 1)
+                          (search-forward "`" buffer-end t)))))
+      (when (and start-quote end-quote)
+        (cons start-quote end-quote)))))
+
+;; You might also want a combined function that finds the closest quotes
+(defun meow--parse-outside-quotes (inner)
+  "Parse the bounds for outside quotes selection, finding the closest quote.
+Supports double quotes, single quotes, and backticks."
+  (save-excursion
+    (let* ((double-quotes (meow--parse-outside-double-quotes inner))
+           (single-quotes (meow--parse-outside-single-quotes inner))
+           (backtick-quotes (meow--parse-outside-backtick-quotes inner))
+           (quotes-list (remove nil (list double-quotes single-quotes backtick-quotes))))
+      (when quotes-list
+        ;; Find the quotes with the highest start position (closest to point)
+        (car (sort quotes-list (lambda (a b) (> (car a) (car b)))))))))
 
 (defun meow--parse-inside-org (inner)
   "Parse the bounds for inside org emphasis selection.
@@ -1033,7 +1123,8 @@ or nil if no valid emphasis is found."
 (setq meow-char-thing-table (assq-delete-all ?\' meow-char-thing-table))
 
 (add-to-list 'meow-char-thing-table '(?m . sentence))
-(add-to-list 'meow-char-thing-table '(?g . string))
+(add-to-list 'meow-char-thing-table '(?g . double-quotes))
+(add-to-list 'meow-char-thing-table '(?i . single-quotes))
 ;; (add-to-list 'meow-char-thing-table '(?\. . my-sentence))
 (add-to-list 'meow-char-thing-table '(?w . whitespace))
 (add-to-list 'meow-char-thing-table '(?/ . comment))
@@ -1042,10 +1133,11 @@ or nil if no valid emphasis is found."
 (advice-add 'meow--parse-inner-of-thing-char :around
             (lambda (orig-fun ch)
               (cond
-               ;; ((eq ch ?\.) (meow--parse-inside-sentence t))
                ((eq ch ?m) (meow--parse-inside-sentence t))
                ((eq ch ?w) (meow--parse-inside-whitespace t))
-               ((eq ch ?g) (meow--parse-inside-quotes t))
+			   ((eq ch ?g) (meow--parse-inside-double-quotes t))
+			   ((eq ch ?i) (meow--parse-inside-single-quotes t))
+			   ((eq ch ?a) (meow--parse-inside-backtick-quotes t))
                ((eq ch ?/) (meow--parse-inside-comment t))
                ((eq ch ?o) (meow--parse-inside-org t))
                (t (funcall orig-fun ch)))))
@@ -1055,7 +1147,9 @@ or nil if no valid emphasis is found."
               (cond
                ((eq ch ?w) (meow--parse-outside-whitespace t))
                ((eq ch ?m) (meow--parse-outside-sentence t))
-               ((eq ch ?g) (meow--parse-outside-quotes t))
+			   ((eq ch ?g) (meow--parse-outside-double-quotes t))
+			   ((eq ch ?i) (meow--parse-outside-single-quotes t))
+			   ((eq ch ?a) (meow--parse-outside-backtick-quotes t))
                ((eq ch ?/) (meow--parse-outside-comment t))
                ((eq ch ?o) (meow--parse-outside-org t))
                (t (funcall orig-fun ch)))))
@@ -2090,7 +2184,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
             (define-key map (kbd "i") 'string-rectangle)
             (define-key map (kbd "Y") 'my/copy-rectangle-to-eol)
             (define-key map (kbd "D") 'my/delete-rectangle-to-eol)
-            (define-key map (kbd "C") 'my/insert-string-rectangle-to-eol)
+            (define-key map (kbd "C") 'my/change-string-rectangle-to-eol)
+			(define-key map (kbd "A") 'my/insert-at-eol-rectangle)
             (define-key map (kbd "j") 'next-line)
             (define-key map (kbd "k") 'previous-line)
             (define-key map (kbd "G") 'end-of-buffer)

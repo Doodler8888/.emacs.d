@@ -56,20 +56,20 @@
 
 (defun my/dired-sudo-delete (&optional arg)
   "Delete files in Dired, using sudo if needed and respecting the trash settings.
-If any file isn\u2019t writable, prompt with a sudo message.
+If any file isn't writable, prompt with a sudo message.
 If not using sudo, prompt normally.
 When `delete-by-moving-to-trash' is non-nil, files are moved to trash rather than
 being deleted permanently. For sudo files, the remote trash directory is used."
   (interactive "P")
   (let* ((files (mapcar #'expand-file-name (dired-get-marked-files t arg)))
          (needs-sudo (cl-some (lambda (f)
-                               (let ((dir (file-name-directory f)))
-                                 (and dir (not (file-writable-p dir)))))
-                             files))
+                                (let ((dir (file-name-directory f)))
+                                  (and dir (not (file-writable-p dir)))))
+                              files))
          (do-delete (if needs-sudo
                         (yes-or-no-p "Insufficient permissions. Use sudo? ")
                       (yes-or-no-p "Proceed with deletion? ")))
-         (window-start (window-start)))  ;; Save the current window position
+         (current-point (point)))
     (when do-delete
       (dolist (abs-file files)
         (let* ((dir (file-name-directory abs-file))
@@ -86,13 +86,12 @@ being deleted permanently. For sudo files, the remote trash directory is used."
                           (move-file-to-trash tramp-file))
                       (move-file-to-trash tramp-file))
                   (delete-file tramp-file))
+                ;; Remove the entry from the buffer without full revert
                 (dired-remove-entry abs-file))
             (error
              (message "Error deleting %s: %s" abs-file (error-message-string err))))))
-      ;; Restore the window's start position to keep focus in the same part of the buffer
-      (set-window-start (selected-window) window-start)
-      (revert-buffer))))
-
+      ;; Restore exact point position
+      (goto-char current-point))))
 
 (defun my/delete-file (file use-sudo)
   "Delete FILE using sudo if USE-SUDO is non-nil."
@@ -108,7 +107,8 @@ being deleted permanently. For sudo files, the remote trash directory is used."
 (defun my/dired-toggle-bak-extension ()
   "Toggle '.bak' extension for marked files/directories in Dired.
 If an item doesn't end with '.bak', add it and prompt for copying;
-if it ends with '.bak', remove it by renaming."
+if it ends with '.bak', remove it by renaming.
+If the target file/directory exists, prompt to delete it before proceeding."
   (interactive)
   (let* ((files (dired-get-marked-files t current-prefix-arg))
          (num-files (length files))
@@ -120,14 +120,23 @@ if it ends with '.bak', remove it by renaming."
              (name (file-name-nondirectory file))
              (ext (file-name-extension name t))
              (is-bak (string= ext ".bak"))
-             (keep-original (and (not is-bak) 
-                               (y-or-n-p "Make copy? ")))
+             (keep-original (and (not is-bak) (y-or-n-p "Make copy? ")))
              (new-name (if is-bak
-                          (file-name-sans-extension name)
-                        (concat name ".bak")))
-             (new-file (expand-file-name new-name dir)))
-        (when (or (not (file-exists-p new-file))
-                  (yes-or-no-p (format "%s already exists. Overwrite? " new-file)))
+                           (file-name-sans-extension name)
+                         (concat name ".bak")))
+             (new-file (expand-file-name new-name dir))
+             (proceed t)
+             old-path)  ;; will hold the pre-rename path for directories
+        ;; If target exists, ask to delete it.
+        (when (file-exists-p new-file)
+          (if (yes-or-no-p (format "Target %s already exists. Delete it? " new-file))
+              (if (file-directory-p new-file)
+                  (delete-directory new-file t)
+                (delete-file new-file))
+            (progn
+              (message "Skipping %s because target exists." file)
+              (setq proceed nil))))
+        (when proceed
           (if (and (not is-bak) keep-original)
               (progn
                 (if (file-directory-p file)
@@ -135,32 +144,30 @@ if it ends with '.bak', remove it by renaming."
                   (copy-file file new-file t))
                 (setq any-copied t))
             (progn
-              ;; First, rename the actual file
+              ;; For directories, compute old-path before renaming.
+              (when (file-directory-p file)
+                (setq old-path (file-truename file)))
+              ;; Rename the file/directory
               (rename-file file new-file t)
-              
               ;; Update any buffer visiting this file
               (let ((buffer (get-file-buffer file)))
                 (when buffer
                   (with-current-buffer buffer
                     (set-visited-file-name new-file nil t))))
-              
               ;; If it's a directory, update all buffers within that directory
               (when (file-directory-p new-file)
-                (let ((old-path (file-truename file))
-                      (new-path (file-truename new-file)))
+                (let ((new-path (file-truename new-file)))
                   (dolist (buf (buffer-list))
                     (let ((buf-file (buffer-file-name buf)))
-                      (when (and buf-file 
-                               (string-prefix-p old-path buf-file))
+                      (when (and buf-file old-path (string-prefix-p old-path buf-file))
                         (with-current-buffer buf
                           (let ((relative-path (substring buf-file (length old-path))))
-                            (set-visited-file-name 
-                             (concat new-path relative-path) nil t)))))))))))))
-    ;; Update dired buffer
+                            (set-visited-file-name (concat new-path relative-path) nil t))))))))))))
+    ;; Refresh the dired buffer and show a summary message.
     (revert-buffer)
-    (message "%s %s." msg-prefix 
-             (if any-copied "copied" "renamed"))))
+    (message "%s %s." msg-prefix (if any-copied "copied" "renamed")))))
 
+	
 (defun my/dired-create-empty-files ()
   "Create multiple empty files in current dired directory.
 Creates each file immediately after it is entered."

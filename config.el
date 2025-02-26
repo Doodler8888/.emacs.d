@@ -955,19 +955,19 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (add-hook 'eshell-mode-hook 'my-eshell-setup)
 
 ;; ;; Corfu setup
-;; (use-package corfu
-;;   :ensure t
-;;   :init
-;;   (global-corfu-mode)
-;;   ;; :custom
-;;   ;; (corfu-auto nil)
-;;   ;; (corfu-min-length 2)
-;;   :config
-;;   ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-;;   ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
-;;   (corfu-echo-mode)
-;;   (corfu-history-mode)
-;;   (corfu-popupinfo-mode))
+(use-package corfu
+  :ensure t
+  :init
+  (global-corfu-mode)
+  ;; :custom
+  ;; (corfu-auto nil)
+  ;; (corfu-min-length 2)
+  :config
+  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+  ;; (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+  (corfu-echo-mode)
+  (corfu-history-mode)
+  (corfu-popupinfo-mode))
 
 ;; (with-eval-after-load 'corfu
 ;;   (define-key corfu-map (kbd "RET") nil))
@@ -2221,25 +2221,25 @@ If an eshell buffer for the directory already exists, switch to it."
             (insert (concat "\n  " line)))))
     (message "No region active")))
 
-(defun my/org-smart-meta-return ()
-  "Intelligently create a new heading or list item.
-If on a heading line, create a subheading (like M-S-RET).
-Otherwise, if the previous line is blank, simply insert a new line at point.
-In all other cases, behave like `org-meta-return` (M-RET)."
-  (interactive)
-  (if (org-at-heading-p)
-      (org-insert-subheading nil)
-    (if (save-excursion
-          (forward-line -1)
-          (looking-at-p "^[[:space:]]*$"))
-        (progn
-          (org-meta-return)
-          (back-to-indentation)
-          (newline)
-          (move-end-of-line 1))
-      (org-meta-return))))
+;; (defun my/org-smart-meta-return ()
+;;   "Intelligently create a new heading or list item.
+;; If on a heading line, create a subheading (like M-S-RET).
+;; Otherwise, if the previous line is blank, simply insert a new line at point.
+;; In all other cases, behave like `org-meta-return` (M-RET)."
+;;   (interactive)
+;;   (if (org-at-heading-p)
+;;       (org-insert-subheading nil)
+;;     (if (save-excursion
+;;           (forward-line -1)
+;;           (looking-at-p "^[[:space:]]*$"))
+;;         (progn
+;;           (org-meta-return)
+;;           (back-to-indentation)
+;;           (newline)
+;;           (move-end-of-line 1))
+;;       (org-meta-return))))
 
-(define-key org-mode-map (kbd "M-RET") #'my/org-smart-meta-return)
+;; (define-key org-mode-map (kbd "M-RET") #'my/org-smart-meta-return)
 
 ;; (defun my/org-smart-heading ()
 ;;   "Create a new heading intelligently:

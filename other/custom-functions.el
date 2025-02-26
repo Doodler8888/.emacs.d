@@ -734,7 +734,7 @@ For each line within the marked region, text starting at the leftmost column
             (delete-region (+ beg left-col) line-end))
           (forward-line 1))))))
 
-(defun my/insert-string-rectangle-to-eol (start end)
+(defun my/change-string-rectangle-to-eol (start end)
   "Insert a string in a rectangle from the computed left column to the end-of-line.
 The rectangle is defined by taking the minimum column of the region's endpoints
 as the left boundary and the end-of-line of the last line as the right boundary.
@@ -761,3 +761,31 @@ Prompts for the string to insert, and then calls `string-rectangle` on that regi
       (setq new-end (point)))
     ;; Prompt for a string and insert it into the rectangle.
     (string-rectangle new-start new-end (read-string "String for rectangle: "))))
+
+(defun my/insert-at-eol-rectangle (start end)
+  "Insert text at the end of each line in the region.
+Works on the lines from START to END (rectangle corners).
+Prompts for the string to insert at each line's end."
+  (interactive "r")
+  (let ((text (read-string "Text to insert at EOL: "))
+        (start-line (line-number-at-pos start))
+        (end-line (line-number-at-pos end)))
+    ;; Ensure start-line is before end-line
+    (when (> start-line end-line)
+      (let ((temp start-line))
+        (setq start-line end-line)
+        (setq end-line temp)))
+    
+    ;; Start at the beginning of the first line
+    (save-excursion
+      (goto-char (point-min))
+      (forward-line (1- start-line))
+      
+      ;; Process each line in the rectangle
+      (let ((lines-modified 0))
+        (while (<= (line-number-at-pos) end-line)
+          (end-of-line)
+          (insert text)
+          (setq lines-modified (1+ lines-modified))
+          (forward-line 1))
+        (message "Inserted text at the end of %d lines." lines-modified)))))
