@@ -347,16 +347,17 @@
 
 ))
 
-(defun my/set-flymake-faces ()
-  (with-eval-after-load 'flymake
-    (set-face-attribute 'flymake-error nil
-                        :underline `(:style line :color "#e0def4")) ; rose-pine-gold
-    (set-face-attribute 'flymake-warning nil
-                        :underline `(:style line :color "#f6c177")) ; rose-pine-gold
-    (set-face-attribute 'flymake-note nil
-                        :underline `(:style line :color "#c4a7e7")))) ; rose-pine-iris
+;; (defun my/set-flymake-faces ()
+;;   (with-eval-after-load 'flymake
+;;     (set-face-attribute 'flymake-error nil
+;;                         ;; :underline `(:style line :color "#e0def4")) ; rose-pine-gold
+;; 						:underline `(:style line :color "#e0def4" :underline undefined)) ; rose-pine-gold
+;;     (set-face-attribute 'flymake-warning nil
+;;                         :underline `(:style line :color "#f6c177" :underline undefined)) ; rose-pine-gold
+;;     (set-face-attribute 'flymake-note nil
+;;                         :underline `(:style line :color "#c4a7e7" :underline undefined)))) ; rose-pine-iris
 
-(add-hook 'after-init-hook 'my/set-flymake-faces)
+;; (add-hook 'after-init-hook 'my/set-flymake-faces)
 
 ;;;###autoload
 (when load-file-name

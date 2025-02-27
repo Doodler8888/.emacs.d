@@ -197,11 +197,11 @@ Creates each file immediately after it is entered."
 (with-eval-after-load 'dired
   (define-key dired-mode-map (kbd "S") 'my/dired-sudo-symlink)
   (define-key dired-mode-map (kbd "s") 'my/dired-get-size-with-du)
-  (define-key dired-mode-map (kbd "D") 'my/dired-sudo-delete)
+  ;; (define-key dired-mode-map (kbd "D") 'my/dired-sudo-delete)
   ;; Disabled, because my delete function doesn't work with the delete marks,
   ;; only on usual marks, and it creates accidental deletions of files i'm not
   ;; supposed to delete.
-  (define-key dired-mode-map (kbd "d") nil)
+  ;; (define-key dired-mode-map (kbd "d") nil)
   (define-key dired-mode-map (kbd "b") 'my/dired-toggle-bak-extension)
   (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))
 

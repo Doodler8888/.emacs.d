@@ -32,6 +32,13 @@
 ;; don't know why i enabled it in the first place.
 ;; (setq-default indent-line-function nil)
 
+
+(defun insert-literal-tab ()
+  "Insert a literal tab character."
+  (interactive)
+  (insert "\t"))
+(global-set-key (kbd "C-M-i") #'insert-literal-tab)
+
 ;; (with-eval-after-load 'completion-preview
 ;;   (define-key completion-preview-active-mode-map (kbd "TAB") #'completion-at-point))
 (global-set-key (kbd "TAB") #'completion-at-point)
@@ -1304,7 +1311,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Stores the number of times to expand the selection.")
 
 ;; Define groups for selection and action commands using command names
-(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection)
+(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection meow-back-word)
   "Commands that create selections.")
 
 (defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete

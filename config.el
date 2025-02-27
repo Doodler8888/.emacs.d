@@ -1200,33 +1200,67 @@ Prevents highlighting of the minibuffer command line itself."
 (advice-add 'consult-ripgrep :after #'my/store-search-string-ripgrep)
 (add-hook 'isearch-mode-end-hook #'my/store-search-string-isearch)
 
+;; Define a variable to track the original search direction
+(defvar my/search-direction 'forward
+  "Direction of the last search: 'forward or 'backward.")
+
+;; Advice to set the search direction when using isearch
+(defadvice isearch-forward (before my/set-search-direction activate)
+  "Set the search direction to forward before starting isearch."
+  (setq my/search-direction 'forward))
+
+(defadvice isearch-backward (before my/set-search-direction activate)
+  "Set the search direction to backward before starting isearch."
+  (setq my/search-direction 'backward))
+
+;; Modify your existing functions to respect the search direction
 (defun my/search-next ()
-  "Search forward using last search pattern."
+  "Search in the same direction as the last search."
   (interactive)
   (when my/last-search-pattern
     (let ((case-fold-search t)
           (current-point (point)))
-      ;; Move one character forward to avoid finding the current match
-      (forward-char)
-      (if (re-search-forward my/last-search-pattern nil t)
+      (if (eq my/search-direction 'forward)
           (progn
-            (goto-char (match-beginning 0))
-            (message "Match found: %s" (match-string 0)))
-        (goto-char current-point)
-        (message "No more matches")))))
+            ;; Move one character forward to avoid finding the current match
+            (forward-char)
+            (if (re-search-forward my/last-search-pattern nil t)
+                (progn
+                  (goto-char (match-beginning 0))
+                  (message "Match found: %s" (match-string 0)))
+              (goto-char current-point)
+              (message "No more matches")))
+        ;; If original direction was backward
+        (if (re-search-backward my/last-search-pattern nil t)
+            (progn
+              (goto-char (match-beginning 0))
+              (message "Match found: %s" (match-string 0)))
+          (goto-char current-point)
+          (message "No more matches"))))))
 
 (defun my/search-previous ()
-  "Search backward using last search pattern."
+  "Search in the opposite direction of the last search."
   (interactive)
   (when my/last-search-pattern
     (let ((case-fold-search t)
           (current-point (point)))
-      (if (re-search-backward my/last-search-pattern nil t)
-          (progn
-            (goto-char (match-beginning 0))
-            (message "Match found: %s" (match-string 0)))
-        (goto-char current-point)
-        (message "No more matches")))))
+      (if (eq my/search-direction 'forward)
+          ;; If original direction was forward, go backward
+          (if (re-search-backward my/last-search-pattern nil t)
+              (progn
+                (goto-char (match-beginning 0))
+                (message "Match found: %s" (match-string 0)))
+            (goto-char current-point)
+            (message "No more matches"))
+        ;; If original direction was backward, go forward
+        (progn
+          (forward-char)
+          (if (re-search-forward my/last-search-pattern nil t)
+              (progn
+                (goto-char (match-beginning 0))
+                (message "Match found: %s" (match-string 0)))
+            (goto-char current-point)
+            (message "No more matches")))))))
 
 ;; Disable preview for consult-recent-file
 (advice-add 'consult-recent-file :around
@@ -1631,6 +1665,12 @@ If an eshell buffer for the directory already exists, switch to it."
   (envrc-global-mode))
 
 ;; ;; Flymake
+
+(require 'flymake)
+
+(set-face-attribute 'flymake-error nil :underline nil)
+(set-face-attribute 'flymake-warning nil :underline nil)
+(set-face-attribute 'flymake-note nil :underline nil)
 
 ;; ;; (setq flymake-show-diagnostics-at-end-of-line t)
 
@@ -2136,6 +2176,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (require 'org-tempo)
 (add-to-list 'org-structure-template-alist '("sb" . "src bash-ts"))
+(add-to-list 'org-structure-template-alist '("sp" . "src python-ts"))
 (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
 (add-to-list 'org-structure-template-alist '("st" . "src text"))
@@ -2253,7 +2294,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (defun strash ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.secret_dotfiles/trash/emacs/"))
+  (find-file "~/.secret_dotfiles/trash/"))
 
 (defun ngrok ()
   "Open a terminal and execute 'ngrok http http://localhost:8080'."
@@ -2537,8 +2578,31 @@ If an eshell buffer for the directory already exists, switch to it."
   (kill-emacs))
 
 
-
 (kill-ring-deindent-mode 1)
 ;; try replace-regexp-as-diff
 ;; try eshell-history-append
 ;; set 'remote-file-name-access-timeout'
+
+
+(defun my/next-error ()
+  "Go to the next error.
+If Flymake is active, use its command interactively so that error messages
+are echoed; otherwise, fall back to `next-error'."
+  (interactive)
+  (if (and (bound-and-true-p flymake-mode)
+           (fboundp 'flymake-goto-next-error))
+      (call-interactively 'flymake-goto-next-error)
+    (next-error)))
+
+(defun my/previous-error ()
+  "Go to the previous error.
+If Flymake is active, use its command interactively so that error messages
+are echoed; otherwise, fall back to `previous-error'."
+  (interactive)
+  (if (and (bound-and-true-p flymake-mode)
+           (fboundp 'flymake-goto-prev-error))
+      (call-interactively 'flymake-goto-prev-error)
+    (previous-error)))
+
+(define-key prog-mode-map (kbd "M-n") 'my/next-error)
+(define-key prog-mode-map (kbd "M-p") 'my/previous-error)
