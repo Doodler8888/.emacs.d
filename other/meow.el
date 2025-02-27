@@ -132,7 +132,7 @@ With prefix ARG, move that many lines."
 With prefix ARG, move that many lines."
   (interactive "p")
   (when (region-active-p)
-    (deactivate-mark))
+	(deactivate-mark))
   (previous-line (or arg 1)))
 
 (defun my/yank-with-selection ()
@@ -834,6 +834,40 @@ When pasting over a selection, the replaced text is NOT saved to the kill ring."
             (beginning-of-line))
         (insert text-to-paste)))))
 
+(defun my/rectangle-smart-paste-alt ()
+  "Paste clipboard content over a rectangle selection.
+If a rectangle region is active, replace it with the clipboard content,
+preserving the start column position."
+  (interactive)
+  (if (not (use-region-p))
+      (yank)
+    (let* ((clipboard-text (or (gui-get-selection 'CLIPBOARD) (current-kill 0 t)))
+           (lines (split-string clipboard-text "\n"))
+           (start-col (save-excursion 
+                        (goto-char (region-beginning))
+                        (current-column)))
+           (start-line (line-number-at-pos (region-beginning)))
+           (end-line (line-number-at-pos (region-end)))
+           (num-lines (max 1 (- end-line start-line -1)))  ;; Ensure at least 1 line
+           (start-pos (region-beginning)))
+      
+      ;; Delete rectangle
+      (delete-rectangle (region-beginning) (region-end))
+      
+      ;; Go to starting position
+      (goto-char start-pos)
+      
+      ;; Insert each line at the correct position
+      (dotimes (i (min num-lines (length lines)))
+        (move-to-column start-col t)
+        (insert (nth i lines))
+        (when (and (< i (1- (min num-lines (length lines))))
+                   (< (line-number-at-pos) (+ start-line num-lines -1)))
+          (forward-line 1)))
+      
+      ;; Position cursor at the beginning of the pasted content
+      (goto-char start-pos)
+      (move-to-column start-col))))
 
 (defun my/meow-smart-paste (&optional arg)
   "Paste like Vim, handling both line-wise and regular pastes.
@@ -856,22 +890,66 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
          (full-line-p (and ends-with-newline 
                           (string-match-p "^\n*.*\n$" text-to-paste)
                           (or (bolp) (not (region-active-p))))))
-    
     ;; If region is active, kill it first to update the kill ring
     (when (region-active-p)
       (let ((region-text (buffer-substring (region-beginning) (region-end))))
         (delete-region (region-beginning) (region-end))
         (kill-new region-text)))
     
-    ;; Do the paste
-    (dotimes (_ repeat-count)
-      (if full-line-p
-          (progn
-            (unless (bolp) (forward-line) (beginning-of-line))
-            (insert text-to-paste)
-            (when (and (not (bolp)) (> repeat-count 1))
-              (forward-line)))
-        (insert text-to-paste)))))
+    ;; Record initial position for line pastes
+    (let ((paste-start-pos (point)))
+      ;; Do the paste
+      (dotimes (_ repeat-count)
+        (if full-line-p
+            (progn
+              (unless (bolp) (forward-line) (beginning-of-line))
+              (setq paste-start-pos (point))
+              (insert text-to-paste)
+              (when (and (not (bolp)) (> repeat-count 1))
+                (forward-line)))
+          (insert text-to-paste)))
+      
+      ;; Fix cursor position for line pastes to be more Vim-like
+      (when (and full-line-p ends-with-newline)
+        (goto-char paste-start-pos)))))
+
+;; (defun my/meow-smart-paste (&optional arg)
+;;   "Paste like Vim, handling both line-wise and regular pastes.
+;; With numeric prefix ARG, paste that many times.
+;; With raw prefix argument (C-u without a number), paste from the kill ring.
+;; When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
+;;   (interactive "P")
+;;   (let* ((raw-prefix (equal arg '(4)))
+;;          (numeric-prefix (and (integerp arg) (> arg 0)))
+;;          (repeat-count (if numeric-prefix arg 1))
+;;          (text-to-paste (if raw-prefix
+;;                            (current-kill (if (listp last-command-event)
+;;                                            0
+;;                                          (mod (- (aref (this-command-keys) 0) ?0)
+;;                                               kill-ring-max))
+;;                                        t)
+;;                          (or (gui-get-selection 'CLIPBOARD)
+;;                              (current-kill 0 t))))
+;;          (ends-with-newline (string-suffix-p "\n" text-to-paste))
+;;          (full-line-p (and ends-with-newline 
+;;                           (string-match-p "^\n*.*\n$" text-to-paste)
+;;                           (or (bolp) (not (region-active-p))))))
+    
+;;     ;; If region is active, kill it first to update the kill ring
+;;     (when (region-active-p)
+;;       (let ((region-text (buffer-substring (region-beginning) (region-end))))
+;;         (delete-region (region-beginning) (region-end))
+;;         (kill-new region-text)))
+    
+;;     ;; Do the paste
+;;     (dotimes (_ repeat-count)
+;;       (if full-line-p
+;;           (progn
+;;             (unless (bolp) (forward-line) (beginning-of-line))
+;;             (insert text-to-paste)
+;;             (when (and (not (bolp)) (> repeat-count 1))
+;;               (forward-line)))
+;;         (insert text-to-paste)))))
 
 
 ;; It's a simplified version that doesn't work on a selection
@@ -1711,7 +1789,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 			(define-key map (kbd "t") 'meow-till-expand)
             (define-key map (kbd "f") 'meow-find-expand)
             (define-key map (kbd "y") 'my/meow-smart-save)
-			(define-key map (kbd "p") 'my/meow-smart-paste)
+			(define-key map (kbd "p") 'my/rectangle-smart-paste-alt)
 			;; (define-key map (kbd "d") 'backward-delete-char-untabify)
             (define-key map (kbd "d") 'kill-rectangle)
             (define-key map (kbd "i") 'string-rectangle)
