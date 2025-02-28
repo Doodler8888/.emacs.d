@@ -258,10 +258,22 @@
 ;; why i was having this setting in the first place
 
 (scroll-bar-mode -1)
-(setq-default display-line-numbers-width 3)
+;; (setq-default display-line-numbers-width 0)
 
 (setq use-dialog-box nil)
-(fringe-mode '(1 . 1))
+
+;; Otherwise it will apply only partially leaving space between line numbers and the fringe area
+(run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
+;; (fringe-mode '(1 . 1))
+;; (fringe-mode 'minimal)
+;; (fringe-mode 0)
+
+(defun my-set-fringe-style (style-name)
+  "Set fringe style using a named style from fringe-styles."
+  (fringe-mode (cdr (assq style-name fringe-styles))))
+;; Then use it like:
+(my-set-fringe-style 'no-fringes)
+
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
@@ -975,7 +987,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                   ;; ;; #'my/dabbrev-capf)))))
                                   ;; #'dabbrev-capf)))))
                                   ;; #'cape-dabbrev)))))
-                                  #'my/buffer-words-capf)))))
+                                  #'my/buffer-words-capf
+								  #'eglot-completion-at-point)))))
 
   ;; For Elisp modes
   (dolist (mode '(emacs-lisp-mode
@@ -1388,10 +1401,10 @@ Prevents highlighting of the minibuffer command line itself."
   :config
   (defhydra hydra-window-size (:color red)
     "window size"
-    ("+" evil-window-increase-height "increase height")
-    ("-" evil-window-decrease-height "decrease height")
-    (">" evil-window-increase-width "increase width")
-    ("<" evil-window-decrease-width "decrease width")
+    ("+" enlarge-window "increase height")
+    ("-" shrink-window "decrease height")
+    (">" enlarge-window-horizontally "increase width")
+    ("<" shrink-window-horizontally "decrease width")
     ;; ("t" transpose-frame "transpose windows")
     ("t" my/transpose-windows "transpose windows")
     ("q" nil "quit")))
@@ -1575,10 +1588,10 @@ Prevents highlighting of the minibuffer command line itself."
   (interactive)
   (eldoc 1)
   (eldoc-print-current-symbol-info)
-  (run-with-timer 0.01 nil
-                  (lambda ()
-                    (when (get-buffer "*eldoc*")
-                      (switch-to-buffer-other-window "*eldoc*")))))
+  (sit-for 0.1) ;; Small delay to ensure buffer creation
+  (when (get-buffer "*eldoc*")
+    (switch-to-buffer-other-window "*eldoc*")))
+
 
 ;; Eshell buffer
 

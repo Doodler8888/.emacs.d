@@ -47,7 +47,8 @@
    ;; `(hl-line ((,class (:background ,rose-pine-highlight))))
 
    ;; Fringe
-   `(fringe ((,class (:foreground ,rose-pine-blendedbg :foreground ,rose-pine-blendedbg))))
+   ;; `(fringe ((,class (:foreground ,rose-pine-blendedbg :foreground ,rose-pine-blendedbg))))
+   `(fringe ((,class (:foreground ,rose-pine-blendedbg))))
 
    ;; Font lock
    
@@ -61,6 +62,7 @@
    `(font-lock-variable-name-face ((,class (:foreground ,rose-pine-fg))))
    `(font-lock-comment-face ((,class (:foreground ,rose-pine-subtext))))
    `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-subtext))))
+   `(font-lock-escape-face ((,class (:foreground ,rose-pine-gold))))
    `(sh-quoted-exec ((,class (:foreground ,rose-pine-iris))))
    `(sh-heredoc ((,class (:foreground ,rose-pine-iris))))
 

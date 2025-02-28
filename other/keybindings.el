@@ -161,7 +161,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   ;; Split and delete windows
   (define-key mode-map (kbd "C-w C-s") 'split-window-below)
   (define-key mode-map (kbd "C-w C-v") 'split-window-right)
-  (define-key mode-map (kbd "C-w C-c") 'delete-window)
+  ;; (define-key mode-map (kbd "C-w C-c") 'delete-window)
+  (define-key mode-map (kbd "C-w C-c") 'my/delete-window-or-close-tab)
   (define-key mode-map (kbd "C-w c") 'delete-window)
 
   ;; Swap windows

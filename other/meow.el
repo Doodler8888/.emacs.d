@@ -9,6 +9,12 @@
 
 (load "~/.emacs.d/other/meow-parse.el")
 
+(with-eval-after-load 'tempel
+  (add-hook 'meow-insert-exit-hook 
+            (lambda ()
+              (when tempel--active
+                (tempel-done)))))
+
 ;; (use-package meow-tree-sitter
 ;;   :init
 ;;   (meow-tree-sitter-register-defaults)
@@ -31,36 +37,6 @@
 ;; probably the same thing with using meow-open-above in the text-mode. So i
 ;; don't know why i enabled it in the first place.
 ;; (setq-default indent-line-function nil)
-
-
-;; Recording functionality for Meow - simplified version
-(defvar meow-last-insert-text nil
-  "Last text inserted in insert mode.")
-
-;; Function to capture text during insert mode
-(defun meow-record-insert-start ()
-  "Record the starting position when entering insert mode."
-  (setq meow-insert-start-marker (point-marker)))
-
-;; Function to save the inserted text when exiting insert mode
-(defun meow-record-insert-end ()
-  "Save the text that was inserted when exiting insert mode."
-  (when (and (boundp 'meow-insert-start-marker) meow-insert-start-marker)
-    (setq meow-last-insert-text 
-          (buffer-substring-no-properties meow-insert-start-marker (point)))
-    (set-marker meow-insert-start-marker nil)))
-
-;; Command to replay the last insertion
-(defun meow-repeat-last-insert ()
-  "Insert the text from the last insert operation."
-  (interactive)
-  (if meow-last-insert-text
-      (insert meow-last-insert-text)
-    (message "No previous insertion to repeat")))
-
-;; Hook the recording functions to Meow insert hooks
-(add-hook 'meow-insert-enter-hook 'meow-record-insert-start)
-(add-hook 'meow-insert-exit-hook 'meow-record-insert-end)
 
 
 (defun insert-literal-tab ()

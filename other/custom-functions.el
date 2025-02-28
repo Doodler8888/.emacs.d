@@ -789,3 +789,10 @@ Prompts for the string to insert at each line's end."
           (setq lines-modified (1+ lines-modified))
           (forward-line 1))
         (message "Inserted text at the end of %d lines." lines-modified)))))
+
+(defun my/delete-window-or-close-tab ()
+  "Delete the current window. If it's the only window in the tab, close the tab instead."
+  (interactive)
+  (if (= (length (window-list)) 1)
+      (tab-bar-close-tab)
+    (delete-window)))
