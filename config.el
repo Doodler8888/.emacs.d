@@ -143,6 +143,11 @@
 
 ;; System
 
+;; Deindent mode causes incorrect indentation on pasting (?)
+;; (kill-ring-deindent-mode 1)
+;; ;; try eshell-history-append
+;; ;; set 'remote-file-name-access-timeout'
+
 (setq erc-nick "wurfkreuz")
 (global-set-key (kbd "C-x u") 'windmove-up)
 (save-some-buffers t)
@@ -1677,7 +1682,7 @@ If an eshell buffer for the directory already exists, switch to it."
   :config
   (envrc-global-mode))
 
-;; ;; Flymake
+;; Flymake
 
 (require 'flymake)
 
@@ -2591,31 +2596,4 @@ If an eshell buffer for the directory already exists, switch to it."
   (kill-emacs))
 
 
-(kill-ring-deindent-mode 1)
-;; try replace-regexp-as-diff
-;; try eshell-history-append
-;; set 'remote-file-name-access-timeout'
 
-
-(defun my/next-error ()
-  "Go to the next error.
-If Flymake is active, use its command interactively so that error messages
-are echoed; otherwise, fall back to `next-error'."
-  (interactive)
-  (if (and (bound-and-true-p flymake-mode)
-           (fboundp 'flymake-goto-next-error))
-      (call-interactively 'flymake-goto-next-error)
-    (next-error)))
-
-(defun my/previous-error ()
-  "Go to the previous error.
-If Flymake is active, use its command interactively so that error messages
-are echoed; otherwise, fall back to `previous-error'."
-  (interactive)
-  (if (and (bound-and-true-p flymake-mode)
-           (fboundp 'flymake-goto-prev-error))
-      (call-interactively 'flymake-goto-prev-error)
-    (previous-error)))
-
-(define-key prog-mode-map (kbd "M-n") 'my/next-error)
-(define-key prog-mode-map (kbd "M-p") 'my/previous-error)

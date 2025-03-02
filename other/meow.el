@@ -55,10 +55,10 @@
   (setq prefix-arg nil)
   (setq current-prefix-arg nil))
 
+;; (advice-add 'my/next-line-close-selection :after #'my/reset-prefix-arg)
+;; (advice-add 'my/previous-line-close-selection :after #'my/reset-prefix-arg)
 ;; (advice-add 'meow-next :after #'my/reset-prefix-arg)
-(advice-add 'my/next-line-close-selection :after #'my/reset-prefix-arg)
 ;; (advice-add 'meow-prev :after #'my/reset-prefix-arg)
-(advice-add 'my/previous-line-close-selection :after #'my/reset-prefix-arg)
 
 ;; For number hints to work in org mode
 (setq meow-expand-exclude-mode-list 
@@ -125,21 +125,42 @@
 (global-set-key (kbd "C-M-n") #'my/forward-list)
 (global-set-key (kbd "C-M-p") #'my/backward-list)
 
+(defvar my/vertical-motion-goal-column 0
+  "The tracked column for vertical motion.")
+
 (defun my/next-line-close-selection (&optional arg)
-  "Move to the next line and cancel any active selection.
+  "Move to the next line while preserving the tracked column.
+If the point is not at the end of the line, update the tracked column.
 With prefix ARG, move that many lines."
   (interactive "p")
   (when (region-active-p)
     (deactivate-mark))
-  (next-line (or arg 1)))
+  ;; Update tracked column only if not at the end of the line.
+  (unless (eolp)
+    (setq my/vertical-motion-goal-column (current-column)))
+  ;; Move ARG lines down.
+  (let ((lines (or arg 1)))
+    (dotimes (_ lines)
+      (forward-line 1)))
+  ;; Move to the tracked column (defaulting to 0 if nil)
+  (move-to-column (or my/vertical-motion-goal-column 0)))
 
 (defun my/previous-line-close-selection (&optional arg)
-  "Move to the previous line and cancel any active selection.
+  "Move to the previous line while preserving the tracked column.
+If the point is not at the end of the line, update the tracked column.
 With prefix ARG, move that many lines."
   (interactive "p")
   (when (region-active-p)
-	(deactivate-mark))
-  (previous-line (or arg 1)))
+    (deactivate-mark))
+  ;; Update tracked column only if not at the end of the line.
+  (unless (eolp)
+    (setq my/vertical-motion-goal-column (current-column)))
+  ;; Move ARG lines up.
+  (let ((lines (or arg 1)))
+    (dotimes (_ lines)
+      (forward-line -1)))
+  ;; Move to the tracked column (defaulting to 0 if nil)
+  (move-to-column (or my/vertical-motion-goal-column 0)))
 
 (defun my/yank-with-selection ()
   "Yank text, replacing the active region if one exists."
@@ -843,7 +864,8 @@ When pasting over a selection, the replaced text is NOT saved to the kill ring."
 (defun my/rectangle-smart-paste-alt ()
   "Paste clipboard content over a rectangle selection.
 If a rectangle region is active, replace it with the clipboard content,
-preserving the start column position."
+preserving the start column position.
+If clipboard contains a single line, it pastes that line to all rows in the selected rectangle."
   (interactive)
   (if (not (use-region-p))
       (yank)
@@ -855,7 +877,9 @@ preserving the start column position."
            (start-line (line-number-at-pos (region-beginning)))
            (end-line (line-number-at-pos (region-end)))
            (num-lines (max 1 (- end-line start-line -1)))  ;; Ensure at least 1 line
-           (start-pos (region-beginning)))
+           (start-pos (region-beginning))
+           ;; Handle the single-line clipboard case
+           (single-line-mode (= 1 (length lines))))
       
       ;; Delete rectangle
       (delete-rectangle (region-beginning) (region-end))
@@ -864,11 +888,15 @@ preserving the start column position."
       (goto-char start-pos)
       
       ;; Insert each line at the correct position
-      (dotimes (i (min num-lines (length lines)))
+      (dotimes (i num-lines)
         (move-to-column start-col t)
-        (insert (nth i lines))
-        (when (and (< i (1- (min num-lines (length lines))))
-                   (< (line-number-at-pos) (+ start-line num-lines -1)))
+        ;; If single line mode, always insert the first line
+        ;; Otherwise, insert the corresponding line from clipboard (if available)
+        (if single-line-mode
+            (insert (car lines))
+          (when (< i (length lines))
+            (insert (nth i lines))))
+        (when (< i (1- num-lines))
           (forward-line 1)))
       
       ;; Position cursor at the beginning of the pasted content
@@ -1402,7 +1430,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Stores the number of times to expand the selection.")
 
 ;; Define groups for selection and action commands using command names
-(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection meow-back-word)
+(defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection meow-back-word my/forward-list my/backward-list)
   "Commands that create selections.")
 
 (defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete
@@ -1643,9 +1671,11 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("I" . meow-insert-line-start)
    ;; '("j" . meow-next)
    '("j" . my/next-line-close-selection)
+   ;; '("j" . next-line)
    '("J" . meow-next-expand)
    ;; '("k" . meow-prev)
    '("k" . my/previous-line-close-selection)
+   ;; '("k" . previous-line)
    ;; '("K" . meow-prev-expand)
    ;; '("K" . eldoc-print-current-symbol-info)
    '("K" . my-eldoc-print-and-switch)
@@ -1765,6 +1795,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (define-key my-dired-g-map (kbd "g") 'beginning-of-buffer)
   ;; (define-key dired-mode-map (kbd "G") 'end-of-buffer)
   (define-key dired-mode-map (kbd "G") 'dired-goto-last-line)
+  (define-key dired-mode-map (kbd "N") 'my/search-previous)
   (define-key dired-mode-map (kbd "j") 'dired-next-line)
   (define-key dired-mode-map (kbd "k") 'dired-previous-line)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)

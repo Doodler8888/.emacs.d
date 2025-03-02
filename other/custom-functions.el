@@ -796,3 +796,27 @@ Prompts for the string to insert at each line's end."
   (if (= (length (window-list)) 1)
       (tab-bar-close-tab)
     (delete-window)))
+
+
+(defun my/next-error ()
+  "Go to the next error.
+If Flymake is active, use its command interactively so that error messages
+are echoed; otherwise, fall back to `next-error'."
+  (interactive)
+  (if (and (bound-and-true-p flymake-mode)
+           (fboundp 'flymake-goto-next-error))
+      (call-interactively 'flymake-goto-next-error)
+    (next-error)))
+
+(defun my/previous-error ()
+  "Go to the previous error.
+If Flymake is active, use its command interactively so that error messages
+are echoed; otherwise, fall back to `previous-error'."
+  (interactive)
+  (if (and (bound-and-true-p flymake-mode)
+           (fboundp 'flymake-goto-prev-error))
+      (call-interactively 'flymake-goto-prev-error)
+    (previous-error)))
+
+(define-key prog-mode-map (kbd "M-n") 'my/next-error)
+(define-key prog-mode-map (kbd "M-p") 'my/previous-error)

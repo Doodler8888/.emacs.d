@@ -57,13 +57,13 @@ yaml-ts-mode
 python-ts-mode
 (srsc
 	"subprocess.run(\"" p "\", shell=True, check=True)"
-	(tempel-done))
+	)
 
 python-ts-mode
 (sr
 	"subprocess.run(\"" p "\", shell=True, check=True, capture_output=True)"
-	(tempel-done))
+	)
 
 python-ts-mode
-(srt
+(pt
   "print(f\"This is " p ": {" p "}\")")
