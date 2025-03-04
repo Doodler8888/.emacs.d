@@ -1843,6 +1843,7 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
             (define-key map (kbd "y") 'my/meow-smart-save)
 			(define-key map (kbd "p") 'my/rectangle-smart-paste-alt)
 			(define-key map (kbd "P") 'my/rectangle-smart-paste-alt)
+			(define-key map (kbd "R") 'my/rectangle-replace-with-numbers)
 			;; (define-key map (kbd "d") 'backward-delete-char-untabify)
             (define-key map (kbd "d") 'kill-rectangle)
             (define-key map (kbd "i") 'string-rectangle)

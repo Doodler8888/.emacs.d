@@ -820,3 +820,22 @@ are echoed; otherwise, fall back to `previous-error'."
 
 (define-key prog-mode-map (kbd "M-n") 'my/next-error)
 (define-key prog-mode-map (kbd "M-p") 'my/previous-error)
+
+
+(defun my/rectangle-replace-with-numbers (start end)
+  "Replace the content of the rectangle region with sequential numbers starting from 1."
+  (interactive "r")
+  (let* ((start-line (line-number-at-pos start))
+         (end-line (line-number-at-pos end))
+         (left-col (progn (goto-char start) (current-column)))
+         (right-col (progn (goto-char end) (current-column)))
+         (left-col (min left-col right-col))
+         (right-col (max left-col right-col))
+         (nlines (1+ (- end-line start-line))))
+    (delete-rectangle start end)
+    (goto-char (point-min))
+    (forward-line (1- start-line))
+    (dotimes (i nlines)
+      (move-to-column left-col t)
+      (insert (number-to-string (1+ i)))
+      (forward-line 1))))

@@ -2601,4 +2601,3 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (setq remote-file-name-access-timeout 120)
 (setq dired-movement-style 'bounded)
-
