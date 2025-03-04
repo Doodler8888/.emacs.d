@@ -443,13 +443,24 @@ Adds spaces when using right brackets."
       (insert new-open content new-close))
     (list 'change-surrounding-symbol char)))
 
-(defun delete-surrounding-symbol (start end)
-  "Delete the symbols surrounding the region."
+(defun delete-surrounding-symbol (&optional start end)
+  "Delete the symbols surrounding the region, with added debugging.
+START and END are optional boundaries (if nil, use current region)."
   (interactive "r")
-  (let* ((region-text (buffer-substring-no-properties start end))
-         (content (substring region-text 1 -1)))
-    (delete-region start end)
-    (insert content)))
+  (unless (use-region-p)
+    (error "No active region to delete surrounding symbols from"))
+  (let* ((actual-start (or start (region-beginning)))
+         (actual-end (or end (region-end)))
+         (region-text (buffer-substring-no-properties actual-start actual-end)))
+    (message "delete-surrounding-symbol: Initial region: %d - %d, text: \"%s\"" 
+             actual-start actual-end region-text)
+    (let ((content (substring region-text 1 -1)))
+      (message "delete-surrounding-symbol: Content after removing first and last char: \"%s\"" content)
+      (delete-region actual-start actual-end)
+      (insert content))
+    (message "delete-surrounding-symbol: Buffer after deletion: %s" (buffer-string))
+    ;; Return command info including boundaries for replay
+    (list 'delete-surrounding-symbol actual-start actual-end)))
 
 
 (defun my/meow-find-backward (arg ch)
@@ -1438,7 +1449,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Commands that create selections.")
 
 (defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete
-  surround-region-with-symbol change-surrounding-symbol)
+  surround-region-with-symbol change-surrounding-symbol delete-surrounding-symbol)
   "Commands that operate on a selection.")
 
 (defun my-command-name (cmd)
@@ -1460,6 +1471,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
         'surround-region-with-symbol)
        ((string-match-p "change-surrounding-symbol" cmd-string)
         'surround-region-with-symbol)
+       ((string-match-p "Delete the symbols surrounding" cmd-string)
+        'delete-surrounding-symbol)
        (t 'unknown-command))))
    (t 'unknown-command)))
 
@@ -1472,8 +1485,13 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
            (member last-cmd my-action-commands)))))
 
 (defun my-store-command (cmd args)
-  "Store a command and its arguments in the history."
+  "Store a command and its arguments in the history.
+For delete-surrounding-symbol, force ARGS to nil."
+  (when (eq (my-command-name cmd) 'delete-surrounding-symbol)
+    (setq args nil)
+    (message "my-store-command: Overriding args for delete-surrounding-symbol to nil"))
   (let ((command-entry (cons cmd args)))
+    (message "my-store-command: Storing command %S with args %S" (my-command-name cmd) args)
     (setq my-command-history 
           (if (< (length my-command-history) 2)
               (append my-command-history (list command-entry))
@@ -1490,24 +1508,44 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     (setq my-last-action 'command)))
 
 (defun my-replay-commands ()
-  "Replay the last valid combination."
+  "Replay the last valid combination with extensive debugging."
   (interactive)
   (when my-last-combination
-    (let ((selection (nth 0 my-last-combination))
-          (expand-count (nth 1 my-last-combination))
-          (action (nth 2 my-last-combination)))
-      (when selection
-        (apply (car selection) (cdr selection)))
+    (let* ((selection (nth 0 my-last-combination))
+           (expand-count (nth 1 my-last-combination))
+           (action (nth 2 my-last-combination)))
+      (message "REPLAY: About to apply selection command: %S with args: %S" 
+               (car selection) (cdr selection))
+      (apply (car selection) (cdr selection))
+      (message "REPLAY: After selection, region: %d - %d, text: \"%s\"" 
+               (region-beginning) (region-end)
+               (buffer-substring-no-properties (region-beginning) (region-end)))
       (when expand-count
-        (meow-expand expand-count))
-      (when action
-        (apply (car action) (cdr action))))))
+        (message "REPLAY: About to call meow-expand with count: %s" expand-count)
+        (meow-expand expand-count)
+        (message "REPLAY: After meow-expand, region: %d - %d, text: \"%s\""
+                 (region-beginning) (region-end)
+                 (buffer-substring-no-properties (region-beginning) (region-end))))
+      (message "REPLAY: About to apply action command: %S with args: %S"
+               (car action) (cdr action))
+      (apply (car action) (cdr action))
+      (message "REPLAY: After action, region: %d - %d" (region-beginning) (region-end))
+      (message "REPLAY: Final buffer state: %s" (buffer-string)))))
 
 ;; --- Command Tracking ---
 (defun my-track-command (orig-fun &rest args)
-  "Advice function to track command execution."
-  (my-store-command orig-fun args)
-  (apply orig-fun args))
+  "Advice function to track command execution.
+For delete-surrounding-symbol, store no arguments."
+  (let ((cmd (my-command-name orig-fun)))
+    (if (eq cmd 'delete-surrounding-symbol)
+        (progn
+          (message "my-track-command: Detected delete-surrounding-symbol, storing nil args")
+          (my-store-command orig-fun nil)
+          (apply orig-fun args))
+      (progn
+        (message "my-track-command: Storing command %S with args %S" cmd args)
+        (my-store-command orig-fun args)
+        (apply orig-fun args)))))
 
 (defun my-track-meow-expand (digit)
   "Store expansion count for later replay."
