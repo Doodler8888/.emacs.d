@@ -505,12 +505,9 @@
 
 ;; Cron
 
-;; For some reason doesn't want to load the downloaded package, so i donwloaded it with the macro, commented it out and then just load manually using add-to-list.
-;; (use-package emacs-crontab-mode
-;;   :vc (:url "https://gitlab.com/Bacaliu/emacs-crontab-mode"
-;;        :rev :newest))
-
-(add-to-list 'load-path (expand-file-name "emacs-crontab-mode" user-emacs-directory))
+(use-package crontab-mode
+  :vc (:url "https://gitlab.com/Bacaliu/emacs-crontab-mode"
+       :rev :newest))
 
 
 ;; Treesitter

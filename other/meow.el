@@ -573,14 +573,12 @@ Even-numbered occurrences (pairs) are skipped, so that you only count odd-number
        ;; Handle backticks explicitly
        ((eq ch ?`)
         (let ((start-pos (point)))
-          (backward-char)  ;; Move back to position before the backtick
+          (backward-char)  ;; Move back to the opening backtick
           (save-excursion
             ;; Find the matching backtick
-            (forward-sexp)   ;; Move to the matching closing backtick
-            (backward-char)  ;; Position before the closing backtick
-            (set-mark (point)))  ;; Set mark at end of inner content
-          ;; Now go to the beginning of inner content
-          (goto-char start-pos)))  ;; Move to position after opening backtick
+            (forward-sexp)   ;; Move to the position after the closing backtick
+            (set-mark (1- (point))))  ;; Set mark one char before, excluding the closing backtick
+          (goto-char start-pos)))  ;; Return to the inner content (after opening backtick)
        ;; Handle other paired delimiters
        (thing-char
         (if (memq ch '(?\) ?\] ?\}))
@@ -1527,6 +1525,41 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 (dolist (cmd my-selection-commands)
   (advice-add cmd :before #'my-reset-expand-count))
 
+
+(defun forward-symbol-no-dot (n)
+  "Move forward N symbols, treating dots as delimiters.
+This temporarily modifies the syntax table so that `.' is not a symbol constituent."
+  (with-syntax-table (copy-syntax-table (syntax-table))
+    (modify-syntax-entry ?. " ")  ; treat dot as whitespace
+    (forward-symbol n)))
+
+(defun backward-symbol-no-dot (n)
+  "Move backward N symbols, treating dots as delimiters.
+This temporarily modifies the syntax table so that `.' is not considered part of a symbol."
+  (with-syntax-table (copy-syntax-table (syntax-table))
+    (modify-syntax-entry ?. " ")  ; treat dot as whitespace
+    (forward-symbol (- n))))
+
+(put 'symbol-no-dot 'forward-op 'forward-symbol-no-dot)
+(put 'symbol-no-dot 'backward-op 'backward-symbol-no-dot)
+
+(defvar meow-symbol-no-dot-thing 'symbol-no-dot
+  "The thing used for marking and movement by symbols when ignoring dots.
+It uses `forward-symbol-no-dot' and `backward-symbol-no-dot' as its movement functions.")
+
+(defun meow-next-symbol-no-dot (n)
+  "Select to the end of the next Nth symbol, ignoring dots.
+This command works like `meow-next-symbol' but treats dots as delimiters."
+  (interactive "p")
+  (meow-next-thing meow-symbol-no-dot-thing 'symbol n))
+
+(defun meow-back-symbol-no-dot (n)
+  "Select to the beginning of the previous Nth symbol, ignoring dots.
+This command works like `meow-back-symbol' but treats dots as delimiters."
+  (interactive "p")
+  (meow-next-thing meow-symbol-no-dot-thing 'symbol (- n)))
+
+
 (defun meow-setup ()
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
   (meow-motion-overwrite-define-key
@@ -1538,9 +1571,11 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
    '("b" . meow-back-word)
-   '("B" . meow-back-symbol)
+   ;; '("B" . meow-back-symbol)
+   '("B" . meow-back-symbol-no-dot)
    '("e" . meow-next-word)
-   '("E" . meow-next-symbol)
+   ;; '("E" . meow-next-symbol)
+   '("E" . meow-next-symbol-no-dot)
    ;; '("f" . meow-find)
    '("f" . my/meow-find)
    '("t" . meow-till)
@@ -1631,7 +1666,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("%" . my-match-paren-with-selection)
    '("a" . my/meow-append)
    '("b" . meow-back-word)
-   '("B" . meow-back-symbol)
+   ;; '("B" . meow-back-symbol)
+   '("B" . meow-back-symbol-no-dot)
    ;; '("c" . meow-change)
    '("c" . my/meow-smart-change)
    ;; '("d" . meow-delete)
@@ -1639,7 +1675,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("d" . my/meow-smart-delete)
    '("D" . meow-backward-delete)
    '("e" . meow-next-word)
-   '("E" . meow-next-symbol)
+   ;; '("E" . meow-next-symbol)
+   '("E" . meow-next-symbol-no-dot)
    ;; '("f" . meow-find)
    '("f" . my/meow-find)
    '("t" . meow-till)
@@ -1920,23 +1957,20 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 
 (advice-add 'meow--switch-to-motion :around #'my-wdired-finish-edit-advice)
 
-;; Used for making 'symbol' movements to ignore slashes. But i don't think i
-;; like it.
-;; It shoulnd't be a function in the first place, i don't use it as a function
-;; at all.
-(defun my-forward-symbol (&optional arg)
-  "Move forward across one balanced expression.
-Treats slashes as part of the symbol."
-  (interactive "^p")
-  (let ((arg (or arg 1))
-        (sym-syntax (string-to-syntax "_")))  ; treat slash as symbol constituent
-    (with-syntax-table (copy-syntax-table (syntax-table))
-      (modify-syntax-entry ?/ "_")  ; make slash a symbol constituent
-      (forward-symbol arg))))
-;; Register our new symbol movement function
-(put 'my-symbol 'forward-op #'my-forward-symbol)
-;; Tell Meow to use our custom symbol definition
-(setq meow-symbol-thing 'my-symbol)
+;; ;; Ignore slashes 
+;; (defun my-forward-symbol (&optional arg)
+;;   "Move forward across one balanced expression.
+;; Treats slashes as part of the symbol."
+;;   (interactive "^p")
+;;   (let ((arg (or arg 1))
+;;         (sym-syntax (string-to-syntax "_")))  ; treat slash as symbol constituent
+;;     (with-syntax-table (copy-syntax-table (syntax-table))
+;;       (modify-syntax-entry ?/ "_")  ; make slash a symbol constituent
+;;       (forward-symbol arg))))
+;; ;; Register our new symbol movement function
+;; (put 'my-symbol 'forward-op #'my-forward-symbol)
+;; ;; Tell Meow to use our custom symbol definition
+;; (setq meow-symbol-thing 'my-symbol)
 
 
 (meow-setup)

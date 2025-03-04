@@ -43,9 +43,11 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages '(crontab-mode))
  '(package-vc-selected-packages
-   '((fish-completion :url
+   '((crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
+	 (emacs-crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
+	 (fish-completion :url
 					  "https://github.com/LemonBreezes/emacs-fish-completion.git"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
