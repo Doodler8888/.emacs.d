@@ -539,25 +539,31 @@ Even-numbered occurrences (pairs) are skipped, so that you only count odd-number
                       ((memq ch '(?\{ ?\})) ?c)
                       ((memq ch '(?' ?\" ?`)) ?g)
                       (t nil))))
-    ;; Try forward search first, counting only odd occurrences.
+    ;; Try forward search first
     (save-excursion
       (let ((found 0)
-            pos)
+            (limit line-end))
         (goto-char line-start)
-        (while (and (< (point) line-end) (not forward-pos))
-          (setq pos (search-forward ch-str line-end t 1))
-          (if pos
-              (progn
-                (setq found (1+ found))
-                (when (and (= (mod found 2) 1)
-                           (= (/ (+ found 1) 2) n))
-                  (setq forward-pos pos)))
-            (setq forward-pos nil)))))
-    ;; If forward search fails, try backward search (you can implement a similar odd-occurrence loop)
+        (while (and (< (point) limit)
+                    (search-forward ch-str limit t))
+          (setq found (1+ found))
+          (when (and (= (mod found 2) 1)
+                     (= (/ (+ found 1) 2) n))
+            (setq forward-pos (point))))))
+    
+    ;; If forward search fails, try backward search
     (when (not forward-pos)
       (save-excursion
-        ;; For brevity, using a single call. You could similarly loop backward.
-        (setq backward-pos (search-backward ch-str line-start t n))))
+        (let ((found 0)
+              (limit line-start))
+          (goto-char line-end)
+          (while (and (> (point) limit)
+                      (search-backward ch-str limit t))
+            (setq found (1+ found))
+            (when (and (= (mod found 2) 1)
+                       (= (/ (+ found 1) 2) n))
+              (setq backward-pos (point)))))))
+    
     (cond
      ((not (or forward-pos backward-pos))
       (message "char %s not found in current line" ch-str))
