@@ -268,7 +268,7 @@
 (setq use-dialog-box nil)
 
 ;; Otherwise it will apply only partially leaving space between line numbers and the fringe area
-(run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
+;; (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
 ;; (fringe-mode '(1 . 1))
 ;; (fringe-mode 'minimal)
 ;; (fringe-mode 0)
@@ -553,54 +553,55 @@
 (make-directory "~/.emacs.d/undo-tree-history" t)
 
 
-(defvar-local change-history nil
-  "Ring of change positions for this buffer, most recent first.")
+;; (defvar-local change-history nil
+;;   "Ring of change positions for this buffer, most recent first.")
 
-(defvar-local change-history-index 0
-  "Current index in change history for navigation.")
+;; (defvar-local change-history-index 0
+;;   "Current index in change history for navigation.")
 
-(defconst change-history-max 100
-  "Maximum number of change positions to remember.")
+;; (defconst change-history-max 100
+;;   "Maximum number of change positions to remember.")
 
-(defun record-change-position (beg end length)
-  "Record change position in history.
-Added to `after-change-functions'."
-  (let ((pos (if (= length 0) end beg))) ; end for insertions, beg for deletions
-    (unless (and change-history
-                 (= pos (car change-history)))
-      (push pos change-history)
-      (when (> (length change-history) change-history-max)
-        (setq change-history (butlast change-history)))
-      (setq change-history-index 0))))
+;; (defun record-change-position (beg end length)
+;;   "Record change position in history.
+;; Added to `after-change-functions'."
+;;   (let ((pos (if (= length 0) end beg))) ; end for insertions, beg for deletions
+;;     (unless (and change-history
+;;                  (= pos (car change-history)))
+;;       (push pos change-history)
+;;       (when (> (length change-history) change-history-max)
+;;         (setq change-history (butlast change-history)))
+;;       (setq change-history-index 0))))
 
-(add-hook 'after-change-functions #'record-change-position)
+;; (add-hook 'after-change-functions #'record-change-position)
 
-(defun my/goto-last-change (&optional n)
-  "Move cursor through change history.
-Without argument: go to previous change
-With numeric prefix: 
-  - Positive N: go N steps back in history
-  - Negative N: go N steps forward in history"
-  (interactive "P")
-  (if (null change-history)
-      (message "No change history available.")
-    (let* ((len (length change-history))
-           (n (or n 1))
-           (new-index (+ change-history-index n))
-           (new-index (max 0 (min new-index (1- len)))))
-      (setq change-history-index new-index)
-      (goto-char (nth new-index change-history))
-      (message "Position %d/%d" (1+ new-index) len))))
+;; (defun my/goto-last-change (&optional n)
+;;   "Move cursor through change history.
+;; Without argument: go to previous change
+;; With numeric prefix: 
+;;   - Positive N: go N steps back in history
+;;   - Negative N: go N steps forward in history"
+;;   (interactive "P")
+;;   (if (null change-history)
+;;       (message "No change history available.")
+;;     (let* ((len (length change-history))
+;;            (n (or n 1))
+;;            (new-index (+ change-history-index n))
+;;            (new-index (max 0 (min new-index (1- len)))))
+;;       (setq change-history-index new-index)
+;;       (goto-char (nth new-index change-history))
+;;       (message "Position %d/%d" (1+ new-index) len))))
 
-(defun goto-next-change ()
-  "Move forward through change history."
-  (interactive)
-  (my/goto-last-change -1))
+;; (defun goto-next-change ()
+;;   "Move forward through change history."
+;;   (interactive)
+;;   (my/goto-last-change -1))
 
 
 
 (use-package goto-chg)
 
+;; I've being using this code, but i don't remember why, so i commented it out.
 (defvar-local my-jump-ring '()
   "Ring of positions from goto-last-change jumps.")
 
@@ -2593,4 +2594,11 @@ If an eshell buffer for the directory already exists, switch to it."
   (kill-emacs))
 
 
+;; I probably must set it after enabling line numbers. Enabling it from the
+;; original position make it to not work in many modes.
+(run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
+
+
+(setq remote-file-name-access-timeout 120)
+(setq dired-movement-style 'bounded)
 

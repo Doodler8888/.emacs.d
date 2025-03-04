@@ -376,24 +376,6 @@ Numbered from top-left to bottom-right."
 (define-key minibuffer-local-map (kbd "M-p") 'my-previous-history-element)
 
 
-;; (defun surround-region-with-symbol (start end)
-;;   "Surround the region with a symbol input by the user.
-;; Adds spaces when using right brackets."
-;;   (interactive "r")
-;;   (let* ((input (read-char "Enter symbol: "))
-;;          (char (char-to-string input))
-;;          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")))
-;;          (left-char (or (car (rassoc char pairs)) char))
-;;          (right-char (or (cdr (assoc left-char pairs)) char))
-;;          (add-spaces (member char '(")" "]" "}" ">"))))
-;;     (save-excursion
-;;       (goto-char end)
-;;       (when add-spaces (insert " "))
-;;       (insert right-char)
-;;       (goto-char start)
-;;       (insert left-char)
-;;       (when add-spaces (insert " ")))))
-
 (defun surround-region-with-symbol (&optional char)
   "Surround the currently active region with a symbol input by the user.
 Adds spaces when using right brackets."
@@ -428,7 +410,7 @@ Adds spaces when using right brackets."
          (content (substring region-text 1 -1))
          (new-symbol (char-to-string char))
          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")
-                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*") ("/" . "/")))
+                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*") ("/" . "/") ("=" . "=")))
          (reverse-pairs (mapcar (lambda (p) (cons (cdr p) (car p))) pairs))
          (is-opening (assoc new-symbol pairs))
          (is-closing (assoc new-symbol reverse-pairs))
@@ -472,65 +454,6 @@ START and END are optional boundaries (if nil, use current region)."
   "Combine negative argument with meow-till to search backward in one keybinding."
   (interactive "p\ncTill backward:")
   (meow-till (- arg) ch))
-
-;; (defun select-inside-quotes ()
-;;   "Select text inside the closest set of double or single quotes."
-;;   (interactive)
-;;   (let ((syntax-string (string (char-syntax (following-char)))))
-;;     ;; First try to find quotes around point
-;;     (cond
-;;      ;; If we're already inside quotes, select the content
-;;      ((string= syntax-string "\"")
-;;       (let ((start (save-excursion
-;;                     (skip-syntax-backward "\"")
-;;                     (point)))
-;;             (end (save-excursion
-;;                   (skip-syntax-forward "\"")
-;;                   (point))))
-;;         (goto-char start)
-;;         (forward-char 1)
-;;         (push-mark (- end 1))
-;;         (activate-mark)))
-;;      ;; Otherwise, search for the nearest quotes
-;;      (t
-;;       (let* ((start-dquote (save-excursion
-;;                             (search-backward "\"" nil t)))
-;;              (end-dquote (when start-dquote
-;;                           (save-excursion
-;;                             (goto-char start-dquote)
-;;                             (forward-char 1)
-;;                             (search-forward "\"" nil t))))
-;;              (start-squote (save-excursion
-;;                            (search-backward "'" nil t)))
-;;              (end-squote (when start-squote
-;;                           (save-excursion
-;;                             (goto-char start-squote)
-;;                             (forward-char 1)
-;;                             (search-forward "'" nil t)))))
-;;         (cond
-;;          ;; If we found both types, pick the closer one
-;;          ((and start-dquote start-squote)
-;;           (if (> start-dquote start-squote)
-;;               (progn
-;;                 (goto-char (1+ start-dquote))
-;;                 (push-mark (1- end-dquote))
-;;                 (activate-mark))
-;;             (goto-char (1+ start-squote))
-;;             (push-mark (1- end-squote))
-;;             (activate-mark)))
-;;          ;; Handle double quotes only
-;;          (start-dquote
-;;           (goto-char (1+ start-dquote))
-;;           (push-mark (1- end-dquote))
-;;           (activate-mark))
-;;          ;; Handle single quotes only
-;;          (start-squote
-;;           (goto-char (1+ start-squote))
-;;           (push-mark (1- end-squote))
-;;           (activate-mark))
-;;          ;; No quotes found
-;;          (t
-;;           (message "No quotes found"))))))))
 
 (defun meow-find-and-select-inner (n ch)
   "Find the next N occurrence of CH and select its inner content within current line only.
@@ -1429,6 +1352,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     (avy-goto-char-all-windows)))
     ;; (call-interactively 'meow-mark-word)))
 
+
 ;; Store the last valid combination (selection + action)
 (defvar my-last-combination nil
   "Stores the last valid combination of selection and action commands.")
@@ -1457,7 +1381,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (cond
    ((symbolp cmd) cmd)
    ((subrp cmd)
-    (intern (replace-regexp-in-string "#<subr \\(.+?\\)>" "\\1" 
+    (intern (replace-regexp-in-string "#<subr \\(.+?\\)>" "\\1"
                                       (prin1-to-string cmd))))
    ((functionp cmd)
     (let ((cmd-string (prin1-to-string cmd)))
@@ -1875,6 +1799,8 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
   (define-key my-dired-g-map (kbd "z") 'my/dir-switch)
   (define-key my-dired-g-map (kbd "g") 'beginning-of-buffer)
   ;; (define-key dired-mode-map (kbd "G") 'end-of-buffer)
+  (define-key dired-mode-map (kbd "n") 'my/search-next)
+  (define-key dired-mode-map (kbd "N") 'my/search-previous)
   (define-key dired-mode-map (kbd "G") 'dired-goto-last-line)
   (define-key dired-mode-map (kbd "N") 'my/search-previous)
   (define-key dired-mode-map (kbd "j") 'dired-next-line)
