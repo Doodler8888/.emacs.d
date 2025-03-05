@@ -69,6 +69,23 @@
   (let ((mode (format "%s" major-mode)))
     (replace-regexp-in-string "-mode$" "" mode)))
 
+(defun my-window-number ()
+  "Get current window number (TRAMP-safe)."
+  (when (not (file-remote-p default-directory))
+    (let* ((windows (window-list-1 (frame-first-window) 'nomini t))
+           (num (cl-position (selected-window) windows)))
+      (format "%d " (1+ (or num 0))))))
+
+(defun my-buffer-name-display ()
+  "Get full path for files/dired, buffer name otherwise (TRAMP-safe)."
+  (if-let ((name (cond ((buffer-file-name)
+                        (buffer-file-name))
+                       ((eq major-mode 'dired-mode)
+                        (directory-file-name default-directory))
+                       (t nil))))
+      (propertize name 'face 'mode-line-buffer-id)
+    (propertize "%b" 'face 'mode-line-buffer-id)))
+
 (defun my-vc-branch ()
   "Get the current Git branch name, if any."
   (when (and (or (buffer-file-name)
@@ -88,26 +105,17 @@
                   branch))))
         (error nil)))))
 
-(defun my-window-number ()
-  "Get the current window number."
-  (let* ((windows (window-list-1 (frame-first-window) 'nomini t))
-         (num (cl-position (selected-window) windows)))
-    (format "%d" (1+ (or num 0)))))
-
 (setq-default mode-line-format
               '("%e"
                 (:eval (my-window-number))
-                ""
-                mode-line-front-space
-                (:eval (if (buffer-file-name)
-                           (abbreviate-file-name (buffer-file-name))
-                         "%b"))
-                " | "
+                (:eval (my-buffer-name-display))
+                "  "
                 (:eval (my-mode-line-major-mode))
-                " | "
+                "  "
                 (:eval (or (my-vc-branch) ""))
                 (:eval (propertize " " 'display '(space :align-to (- right 12))))
                 mode-line-end-spaces))
+
 
 ;; Tabs
 
