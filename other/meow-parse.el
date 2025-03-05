@@ -394,30 +394,32 @@ excluding the markers themselves, or nil if no valid emphasis is found."
 Returns a cons cell (BEGIN . END) for the text including the emphasis markers,
 or nil if no valid emphasis is found."
   (when (derived-mode-p 'org-mode)
-	(let* ((element (org-element-context))
-		   (type (org-element-type element))
-		   (begin (org-element-property :begin element))
-		   (end (org-element-property :end element)))
-	  (cond
-	   ;; Special handling for code/verbatim elements
-	   ((memq type '(code verbatim))
-		(when (and begin end)
-		  ;; Get the raw text to examine what's happening
-		  (let* ((raw-text (buffer-substring-no-properties begin end))
-				 (first-tilde (string-match "~" raw-text))
-				 (last-tilde (string-match "~" raw-text (1+ first-tilde))))
-			(when (and first-tilde last-tilde)
-			  ;; Calculate proper boundaries including both markers
-			  ;; but excluding any trailing whitespace
-			  (cons begin (+ begin (1+ last-tilde)))))))
-
-	   ;; Regular handling for other emphasis types
-	   ((memq type '(bold italic strike-through underline))
-		(when (and begin end)
-		  (cons begin end)))
-
-	   ;; No valid emphasis found
-	   (t nil)))))
+    (let* ((element (org-element-context))
+           (type (org-element-type element))
+           (begin (org-element-property :begin element))
+           (end (org-element-property :end element)))
+      (cond
+       ;; Special handling for code/verbatim elements
+       ((memq type '(code verbatim))
+        (when (and begin end)
+          ;; Get the raw text to examine what's happening
+          (let* ((raw-text (buffer-substring-no-properties begin end))
+                 (first-tilde (string-match "~" raw-text))
+                 (last-tilde (string-match "~" raw-text (1+ first-tilde))))
+            (when (and first-tilde last-tilde)
+              ;; Calculate proper boundaries including both markers
+              ;; but excluding any trailing whitespace
+              (cons begin (+ begin (1+ last-tilde)))))))
+       
+       ;; Regular handling for other emphasis types
+       ((memq type '(bold italic strike-through underline))
+        (when (and begin end)
+          (let* ((raw-text (buffer-substring-no-properties begin end))
+                 (trimmed-text (replace-regexp-in-string "[ \t\n]+\\'" "" raw-text)))
+            (cons begin (+ begin (length trimmed-text))))))
+       
+       ;; No valid emphasis found
+       (t nil)))))
 
 ;; Optional helper function for debugging
 (defun meow-org-emphasis-info ()

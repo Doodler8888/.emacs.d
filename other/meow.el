@@ -15,6 +15,40 @@
               (when tempel--active
                 (tempel-done)))))
 
+
+;; A variable to hold the change points
+(defvar my/last-change-points '()
+  "List of markers representing points before changes were made.")
+
+(defun my/record-change-point ()
+  "Record the current location in `my/last-change-points'.
+We use a marker so that if the buffer is modified, the position still tracks correctly."
+  (push (copy-marker (point)) my/last-change-points))
+
+(defun my/new-goto-last-change ()
+  "Go to the most recent change point."
+  (interactive)
+  (when my/last-change-points
+    (let ((marker (pop my/last-change-points))) ;; Get the last change point
+      (if (marker-position marker)
+          (goto-char marker) ;; Jump to the position
+        (message "Invalid marker position")))))
+
+(defun my/new-goto-next-change ()
+  "Go forward to the next change point if available."
+  (interactive)
+  (when my/forward-change-points
+    (let ((marker (pop my/forward-change-points))) ;; Get the forward point
+      (when (marker-position marker)
+        (push (copy-marker (point)) my/last-change-points) ;; Save current before moving
+        (goto-char marker)))))
+
+;; Add advice to record the position before these commands execute
+(advice-add 'my/meow-smart-delete :before #'my/record-change-point)
+(advice-add 'my/meow-smart-comment  :before #'my/record-change-point)
+(add-hook 'meow-insert-enter-hook #'my/record-change-point)
+
+
 ;; (use-package meow-tree-sitter
 ;;   :init
 ;;   (meow-tree-sitter-register-defaults)
@@ -434,13 +468,13 @@ START and END are optional boundaries (if nil, use current region)."
   (let* ((actual-start (or start (region-beginning)))
          (actual-end (or end (region-end)))
          (region-text (buffer-substring-no-properties actual-start actual-end)))
-    (message "delete-surrounding-symbol: Initial region: %d - %d, text: \"%s\"" 
-             actual-start actual-end region-text)
+    ;; (message "delete-surrounding-symbol: Initial region: %d - %d, text: \"%s\"" 
+    ;;          actual-start actual-end region-text)
     (let ((content (substring region-text 1 -1)))
-      (message "delete-surrounding-symbol: Content after removing first and last char: \"%s\"" content)
+      ;; (message "delete-surrounding-symbol: Content after removing first and last char: \"%s\"" content)
       (delete-region actual-start actual-end)
       (insert content))
-    (message "delete-surrounding-symbol: Buffer after deletion: %s" (buffer-string))
+    ;; (message "delete-surrounding-symbol: Buffer after deletion: %s" (buffer-string))
     ;; Return command info including boundaries for replay
     (list 'delete-surrounding-symbol actual-start actual-end)))
 
@@ -1412,10 +1446,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Store a command and its arguments in the history.
 For delete-surrounding-symbol, force ARGS to nil."
   (when (eq (my-command-name cmd) 'delete-surrounding-symbol)
-    (setq args nil)
-    (message "my-store-command: Overriding args for delete-surrounding-symbol to nil"))
+    (setq args nil))
   (let ((command-entry (cons cmd args)))
-    (message "my-store-command: Storing command %S with args %S" (my-command-name cmd) args)
     (setq my-command-history 
           (if (< (length my-command-history) 2)
               (append my-command-history (list command-entry))
@@ -1432,29 +1464,16 @@ For delete-surrounding-symbol, force ARGS to nil."
     (setq my-last-action 'command)))
 
 (defun my-replay-commands ()
-  "Replay the last valid combination with extensive debugging."
+  "Replay the last valid combination."
   (interactive)
   (when my-last-combination
     (let* ((selection (nth 0 my-last-combination))
            (expand-count (nth 1 my-last-combination))
            (action (nth 2 my-last-combination)))
-      (message "REPLAY: About to apply selection command: %S with args: %S" 
-               (car selection) (cdr selection))
       (apply (car selection) (cdr selection))
-      (message "REPLAY: After selection, region: %d - %d, text: \"%s\"" 
-               (region-beginning) (region-end)
-               (buffer-substring-no-properties (region-beginning) (region-end)))
       (when expand-count
-        (message "REPLAY: About to call meow-expand with count: %s" expand-count)
-        (meow-expand expand-count)
-        (message "REPLAY: After meow-expand, region: %d - %d, text: \"%s\""
-                 (region-beginning) (region-end)
-                 (buffer-substring-no-properties (region-beginning) (region-end))))
-      (message "REPLAY: About to apply action command: %S with args: %S"
-               (car action) (cdr action))
-      (apply (car action) (cdr action))
-      (message "REPLAY: After action, region: %d - %d" (region-beginning) (region-end))
-      (message "REPLAY: Final buffer state: %s" (buffer-string)))))
+        (meow-expand expand-count))
+      (apply (car action) (cdr action)))))
 
 ;; --- Command Tracking ---
 (defun my-track-command (orig-fun &rest args)
@@ -1463,11 +1482,9 @@ For delete-surrounding-symbol, store no arguments."
   (let ((cmd (my-command-name orig-fun)))
     (if (eq cmd 'delete-surrounding-symbol)
         (progn
-          (message "my-track-command: Detected delete-surrounding-symbol, storing nil args")
           (my-store-command orig-fun nil)
           (apply orig-fun args))
       (progn
-        (message "my-track-command: Storing command %S with args %S" cmd args)
         (my-store-command orig-fun args)
         (apply orig-fun args)))))
 
@@ -1554,8 +1571,10 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
    ;; '("0" . my/meow-line-start)
    ;; '("0" . my-meow-line-or-digit-0)
    '("g" . nil)
-   '("g ;" . goto-last-change)
-   '("g :" . goto-last-change-reverse)
+   '("g ;" . my/new-goto-last-change)
+   '("g :" . my/new-goto-next-changee)
+   ;; '("g ;" . goto-last-change)
+   ;; '("g :" . goto-last-change-reverse)
    '("g v" . (lambda () (interactive) (set-mark-command 4)))
    '("g c" . my/meow-smart-comment)
    '("g g" . beginning-of-buffer)
@@ -1655,8 +1674,10 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
    ;; '("$" . my/meow-line-end)
    ;; '("0" . my/meow-line-start)
    '("g" . nil)
-   '("g ;" . my-goto-last-change)
-   '("g :" . my-goto-last-change-reverse)
+   ;; '("g ;" . my-goto-last-change)
+   ;; '("g :" . my-goto-last-change-reverse)
+   '("g ;" . my/new-goto-last-change)
+   '("g :" . my/new-goto-next-change)
    '("g v" . (lambda () (interactive) (set-mark-command 4)))
    '("g c" . my/meow-smart-comment)
    '("g w" . my/meow-smart-fill)
@@ -1942,7 +1963,6 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
 ;; (put 'my-symbol 'forward-op #'my-forward-symbol)
 ;; ;; Tell Meow to use our custom symbol definition
 ;; (setq meow-symbol-thing 'my-symbol)
-
 
 (meow-setup)
 (meow-global-mode 1)

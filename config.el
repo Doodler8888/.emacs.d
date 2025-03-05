@@ -243,10 +243,10 @@
 (add-hook 'find-file-hook #'fov/disable-backups-for-gpg)
 
 ;; ;; First, disable auto-save globally
-(setq auto-save-default nil)
-(setq auto-save-timer 36000)
-(setq auto-save-interval 300000)
-(auto-save-mode -1)
+;; (setq auto-save-default nil)
+(setq auto-save-timer 360)
+(setq auto-save-interval 300)
+;; (auto-save-mode -1)
 
 ;; Save sessions
 (unless (file-exists-p desktop-dirname)
@@ -254,7 +254,7 @@
 (desktop-save-mode 1)
 (setq desktop-save 't)
 (setq desktop-path (list desktop-dirname))
-(setq desktop-auto-save-timeout 36000)
+(setq desktop-auto-save-timeout 360)
 
 (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -2609,3 +2609,45 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (setq remote-file-name-access-timeout 120)
 (setq dired-movement-style 'bounded)
+
+
+;; (defun my-minor-mode-status ()
+;;   "Return a string with only the statuses of eglot, flymake, and envrc."
+;;   (let ((status ""))
+;;     ;; Eglot: many setups use `eglot--managed-mode` as a flag.
+;;     (when (bound-and-true-p eglot--managed-mode)
+;;       (setq status (concat status " EGLOT")))
+;;     ;; Flymake: check if flymake-mode is enabled.
+;;     (when (and (boundp 'flymake-mode) flymake-mode)
+;;       (setq status (concat status " Flymake")))
+;;     ;; Envrc: assuming `envrc-mode` is defined.
+;;     (when (and (boundp 'envrc-mode) envrc-mode)
+;;       (setq status (concat status " Envrc")))
+;;     (string-trim status)))
+
+;; (setq-default mode-line-format
+;;   '("%e"
+;;     ;; Full file path at the very start with no extra leading spaces.
+;;     (:eval (if (buffer-file-name)
+;;                (buffer-file-name)
+;;              "%b"))
+;;     ;; Project information, if any.
+;;     (project-mode-line project-mode-line-format)
+;;     ;; Version control information.
+;;     (vc-mode vc-mode)
+;;     " "  ;; A space separator.
+;;     ;; Only display filtered minor mode status (eglot, flymake, envrc).
+;;     (:eval (my-minor-mode-status))
+;;     ;; Additional info (if any) that you want to keep.
+;;     mode-line-misc-info
+;;     mode-line-end-spaces))
+
+;; (setq-default mode-line-format
+;; ("%e" mode-line-front-space
+;;  (:propertize
+;;   ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote
+;;    mode-line-window-dedicated)
+;;   display (min-width (6.0)))
+;;  mode-line-frame-identification mode-line-buffer-identification "   "
+;;  mode-line-position (project-mode-line project-mode-line-format)
+;;  (vc-mode vc-mode) "  " mode-line-modes mode-line-misc-info mode-line-end-spaces))
