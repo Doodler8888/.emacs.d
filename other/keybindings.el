@@ -48,7 +48,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ;; ("du" . daemons-status)
     ;; ("dr" . daemons-restart)
 
-    ("dd" . daemons)
+    ("dd" . my-decrement-number-forward)
+    ("ii" . my-increment-number-forward)
     
     ("w"  . hydra-window-size/body)
 

@@ -891,23 +891,27 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
          (numeric-prefix (and (integerp arg) (> arg 0)))
          (repeat-count (if numeric-prefix arg 1))
          (text-to-paste (if raw-prefix
-                           (current-kill (if (listp last-command-event)
-                                           0
-                                         (mod (- (aref (this-command-keys) 0) ?0)
-                                              kill-ring-max))
-                                       t)
-                         (or (gui-get-selection 'CLIPBOARD)
-                             (current-kill 0 t))))
+                            (current-kill (if (listp last-command-event)
+                                              0
+                                            (mod (- (aref (this-command-keys) 0) ?0)
+                                                 kill-ring-max))
+                                          t)
+                          (or (gui-get-selection 'CLIPBOARD)
+                              (current-kill 0 t))))
          (ends-with-newline (string-suffix-p "\n" text-to-paste))
          (full-line-p (and ends-with-newline 
-                          (string-match-p "^\n*.*\n$" text-to-paste)
-                          (or (bolp) (not (region-active-p))))))
+                           (string-match-p "^\n*.*\n$" text-to-paste)
+                           (or (bolp) (not (region-active-p))))))
     ;; If region is active, kill it first to update the kill ring
     (when (region-active-p)
       (let ((region-text (buffer-substring (region-beginning) (region-end))))
         (delete-region (region-beginning) (region-end))
         (kill-new region-text)))
     
+    ;; Move forward only if at the start of a line and pasting something with a newline
+    (when (and (bolp) ends-with-newline) 
+      (forward-char))
+
     ;; Record initial position for line pastes
     (let ((paste-start-pos (point)))
       ;; Do the paste
@@ -924,7 +928,52 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       ;; Fix cursor position for line pastes to be more Vim-like
       (when (and full-line-p ends-with-newline)
         (goto-char paste-start-pos)
-		(back-to-indentation)))))
+        (back-to-indentation)))))
+
+;; (defun my/meow-smart-paste (&optional arg)
+;;   "Paste like Vim, handling both line-wise and regular pastes.
+;; With numeric prefix ARG, paste that many times.
+;; With raw prefix argument (C-u without a number), paste from the kill ring.
+;; When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
+;;   (interactive "P")
+;;   (let* ((raw-prefix (equal arg '(4)))
+;;          (numeric-prefix (and (integerp arg) (> arg 0)))
+;;          (repeat-count (if numeric-prefix arg 1))
+;;          (text-to-paste (if raw-prefix
+;;                            (current-kill (if (listp last-command-event)
+;;                                            0
+;;                                          (mod (- (aref (this-command-keys) 0) ?0)
+;;                                               kill-ring-max))
+;;                                        t)
+;;                          (or (gui-get-selection 'CLIPBOARD)
+;;                              (current-kill 0 t))))
+;;          (ends-with-newline (string-suffix-p "\n" text-to-paste))
+;;          (full-line-p (and ends-with-newline 
+;;                           (string-match-p "^\n*.*\n$" text-to-paste)
+;;                           (or (bolp) (not (region-active-p))))))
+;;     ;; If region is active, kill it first to update the kill ring
+;;     (when (region-active-p)
+;;       (let ((region-text (buffer-substring (region-beginning) (region-end))))
+;;         (delete-region (region-beginning) (region-end))
+;;         (kill-new region-text)))
+    
+;;     ;; Record initial position for line pastes
+;;     (let ((paste-start-pos (point)))
+;;       ;; Do the paste
+;;       (dotimes (_ repeat-count)
+;;         (if full-line-p
+;;             (progn
+;;               (unless (bolp) (forward-line) (beginning-of-line))
+;;               (setq paste-start-pos (point))
+;;               (insert text-to-paste)
+;;               (when (and (not (bolp)) (> repeat-count 1))
+;;                 (forward-line)))
+;;           (insert text-to-paste)))
+      
+;;       ;; Fix cursor position for line pastes to be more Vim-like
+;;       (when (and full-line-p ends-with-newline)
+;;         (goto-char paste-start-pos)
+;; 		(back-to-indentation)))))
 
 ;; (defun my/meow-smart-paste (&optional arg)
 ;;   "Paste like Vim, handling both line-wise and regular pastes.

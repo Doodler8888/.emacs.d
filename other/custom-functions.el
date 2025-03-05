@@ -839,3 +839,30 @@ are echoed; otherwise, fall back to `previous-error'."
       (move-to-column left-col t)
       (insert (number-to-string (1+ i)))
       (forward-line 1))))
+
+
+(defun my-increment-number-forward (&optional inc)
+  "Increment the first number found at or after point by INC (default 1)."
+  (interactive "P")
+  (let* ((inc (if (numberp inc) inc 1))
+         (start (point))
+         ;; Check if there's a number at point; if not, search forward.
+         (found (or (thing-at-point 'number)
+                    (re-search-forward "[0-9]+" nil t))))
+    (if (not found)
+        (progn
+          (goto-char start)
+          (message "No number found"))
+      (let* ((bounds (bounds-of-thing-at-point 'number))
+             (num (string-to-number (buffer-substring-no-properties (car bounds) (cdr bounds))))
+             (new-num (+ num inc)))
+        (delete-region (car bounds) (cdr bounds))
+        (insert (number-to-string new-num))
+        ;; Place cursor back at the beginning of the number.
+        (goto-char (car bounds))))))
+
+(defun my-decrement-number-forward (&optional dec)
+  "Decrement the first number found at or after point by DEC (default 1)."
+  (interactive "P")
+  (my-increment-number-forward (if (numberp dec) (- dec) -1)))
+

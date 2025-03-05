@@ -2259,7 +2259,7 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Custom commands
 
 (defun Cp ()
-  "Copy full path of the current buffer"
+  "Copy full path of the current buffer, stripping Tramp prefix if present."
   (interactive)
   (let ((path-to-copy nil))
     (cond
@@ -2269,11 +2269,14 @@ If an eshell buffer for the directory already exists, switch to it."
       (setq path-to-copy (eshell/pwd)))
      (t                              ; Default: Regular File buffer
       (setq path-to-copy (buffer-file-name))))
+    ;; Strip Tramp prefix if present
+    (when (and path-to-copy (tramp-tramp-file-p path-to-copy))
+      (setq path-to-copy (tramp-file-name-localname (tramp-dissect-file-name path-to-copy))))
     (if path-to-copy
         (progn
           (kill-new path-to-copy)
           (message "Copied path '%s' to the clipboard." path-to-copy))
-      (message "Current buffer has no associated path to copy.")))) ;
+      (message "Current buffer has no associated path to copy."))))
 
 (defun Cpn ()
   "Copy the full path of the current item under cursor"
