@@ -163,7 +163,7 @@ We use a marker so that if the buffer is modified, the position still tracks cor
   "The tracked column for vertical motion.")
 
 (defun my/next-line-close-selection (&optional arg)
-  "Move to the next line while preserving the tracked column.
+  "Move to the next visual line while preserving the tracked column.
 If the point is not at the end of the line, update the tracked column.
 With prefix ARG, move that many lines."
   (interactive "p")
@@ -172,15 +172,14 @@ With prefix ARG, move that many lines."
   ;; Update tracked column only if not at the end of the line.
   (unless (eolp)
     (setq my/vertical-motion-goal-column (current-column)))
-  ;; Move ARG lines down.
-  (let ((lines (or arg 1)))
-    (dotimes (_ lines)
-      (forward-line 1)))
+  ;; Move ARG visual lines down, handling wrapped lines
+  (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
+    (next-line (or arg 1)))
   ;; Move to the tracked column (defaulting to 0 if nil)
   (move-to-column (or my/vertical-motion-goal-column 0)))
 
 (defun my/previous-line-close-selection (&optional arg)
-  "Move to the previous line while preserving the tracked column.
+  "Move to the previous visual line while preserving the tracked column.
 If the point is not at the end of the line, update the tracked column.
 With prefix ARG, move that many lines."
   (interactive "p")
@@ -189,10 +188,9 @@ With prefix ARG, move that many lines."
   ;; Update tracked column only if not at the end of the line.
   (unless (eolp)
     (setq my/vertical-motion-goal-column (current-column)))
-  ;; Move ARG lines up.
-  (let ((lines (or arg 1)))
-    (dotimes (_ lines)
-      (forward-line -1)))
+  ;; Move ARG visual lines up, handling wrapped lines
+  (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
+    (previous-line (or arg 1)))
   ;; Move to the tracked column (defaulting to 0 if nil)
   (move-to-column (or my/vertical-motion-goal-column 0)))
 

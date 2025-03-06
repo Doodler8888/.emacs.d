@@ -244,8 +244,8 @@
 
 ;; ;; First, disable auto-save globally
 ;; (setq auto-save-default nil)
-(setq auto-save-timer 360)
-(setq auto-save-interval 300)
+(setq auto-save-timer 3600)
+(setq auto-save-interval 3000)
 ;; (auto-save-mode -1)
 
 ;; Save sessions
@@ -254,7 +254,7 @@
 (desktop-save-mode 1)
 (setq desktop-save 't)
 (setq desktop-path (list desktop-dirname))
-(setq desktop-auto-save-timeout 360)
+(setq desktop-auto-save-timeout 3600)
 
 (setq save-place-file (concat user-emacs-directory "saveplace/places"))
 
@@ -999,7 +999,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                   ;; #'dabbrev-capf)))))
                                   ;; #'cape-dabbrev)))))
                                   #'my/buffer-words-capf
-								  #'eglot-completion-at-point)))))
+								  (lambda ()
+									(when (and (boundp 'eglot--managed-mode) 
+                                               eglot--managed-mode)
+                                      (eglot-completion-at-point))))))))
 
   ;; For Elisp modes
   (dolist (mode '(emacs-lisp-mode
@@ -2614,43 +2617,23 @@ If an eshell buffer for the directory already exists, switch to it."
 (setq dired-movement-style 'bounded)
 
 
-;; (defun my-minor-mode-status ()
-;;   "Return a string with only the statuses of eglot, flymake, and envrc."
-;;   (let ((status ""))
-;;     ;; Eglot: many setups use `eglot--managed-mode` as a flag.
-;;     (when (bound-and-true-p eglot--managed-mode)
-;;       (setq status (concat status " EGLOT")))
-;;     ;; Flymake: check if flymake-mode is enabled.
-;;     (when (and (boundp 'flymake-mode) flymake-mode)
-;;       (setq status (concat status " Flymake")))
-;;     ;; Envrc: assuming `envrc-mode` is defined.
-;;     (when (and (boundp 'envrc-mode) envrc-mode)
-;;       (setq status (concat status " Envrc")))
-;;     (string-trim status)))
 
-;; (setq-default mode-line-format
-;;   '("%e"
-;;     ;; Full file path at the very start with no extra leading spaces.
-;;     (:eval (if (buffer-file-name)
-;;                (buffer-file-name)
-;;              "%b"))
-;;     ;; Project information, if any.
-;;     (project-mode-line project-mode-line-format)
-;;     ;; Version control information.
-;;     (vc-mode vc-mode)
-;;     " "  ;; A space separator.
-;;     ;; Only display filtered minor mode status (eglot, flymake, envrc).
-;;     (:eval (my-minor-mode-status))
-;;     ;; Additional info (if any) that you want to keep.
-;;     mode-line-misc-info
-;;     mode-line-end-spaces))
+(defun my-fixed-line-numbers-format (line-number)
+  "Format line numbers with exact width."
+  (let* ((width (length (number-to-string (line-number-at-pos (point-max)))))
+         (fmt (format "%%%dd" width)))
+    (propertize (format fmt line-number) 'face 'line-number)))
 
-;; (setq-default mode-line-format
-;; ("%e" mode-line-front-space
-;;  (:propertize
-;;   ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote
-;;    mode-line-window-dedicated)
-;;   display (min-width (6.0)))
-;;  mode-line-frame-identification mode-line-buffer-identification "   "
-;;  mode-line-position (project-mode-line project-mode-line-format)
-;;  (vc-mode vc-mode) "  " mode-line-modes mode-line-misc-info mode-line-end-spaces))
+(defun my-toggle-fixed-line-numbers ()
+  "Toggle line numbers with exact width formatting."
+  (interactive)
+  (if display-line-numbers
+      (setq-local display-line-numbers nil)
+    (setq-local display-line-numbers t)
+    (setq-local display-line-numbers-width-start t)
+    (setq-local display-line-numbers-grow-only nil)
+    (setq-local display-line-numbers-width 
+                (length (number-to-string 
+                       (line-number-at-pos (point-max)))))))
+
+(global-set-key (kbd "C-c l") 'my-toggle-fixed-line-numbers)
