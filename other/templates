@@ -57,7 +57,8 @@ yaml-ts-mode
 python-ts-mode
 (srsc
 	"subprocess.run(\"" p "\", shell=True, check=True)"
-	)
+)
+	
 
 python-ts-mode
 (sr
@@ -67,3 +68,8 @@ python-ts-mode
 python-ts-mode
 (pt
   "print(f\"This is " p ": {" p "}\")")
+
+(main
+    "if __name__ == \"__main__\":" n
+    "    main()"
+)

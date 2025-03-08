@@ -63,6 +63,9 @@
    `(font-lock-comment-face ((,class (:foreground ,rose-pine-subtext))))
    `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-subtext))))
    `(font-lock-escape-face ((,class (:foreground ,rose-pine-gold))))
+   `(font-lock-property-use-face ((,class (:foreground ,rose-pine-foam))))
+
+   
    `(sh-quoted-exec ((,class (:foreground ,rose-pine-iris))))
    `(sh-heredoc ((,class (:foreground ,rose-pine-iris))))
 

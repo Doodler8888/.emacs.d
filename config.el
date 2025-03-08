@@ -47,6 +47,7 @@
 (tool-bar-mode -1)
 (setq minibuffer-message-timeout 0)
 (setq inhibit-startup-screen t)
+
 (global-display-line-numbers-mode 1)
 (setq display-line-numbers 'visual
       display-line-numbers-type 'relative)
@@ -78,7 +79,7 @@
 
 (defun my-buffer-name-display ()
   "Get full path for files/dired, buffer name otherwise (TRAMP-safe)."
-  (if-let ((name (cond ((buffer-file-name)
+  (if-let* ((name (cond ((buffer-file-name)
                         (buffer-file-name))
                        ((eq major-mode 'dired-mode)
                         (directory-file-name default-directory))
@@ -165,9 +166,12 @@
 
 (recentf-mode)
 
+(setq remote-file-name-access-timeout 120)
+
 (setq vc-follow-symlinks t)
 
 (setq dired-recursive-deletes 'always)
+(setq dired-movement-style 'bounded)
 
 (setq desktop-load-locked-desktop t)
 (setq backup-inhibited t)
@@ -825,8 +829,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (use-package tempel
   :ensure t
   ;; Require trigger prefix before template name when completing.
-  :custom
-  (tempel-trigger-prefix "<")
+  ;; :custom
+  ;; (tempel-trigger-prefix "<")
 
   :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
          ("M-*" . tempel-insert))
@@ -1128,8 +1132,10 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (use-package vertico
   :ensure t
-  :bind (:map vertico-map
-              ("C-<backspace>" . vertico-directory-up))
+  ;; It's unset because it will change the keybinding for every minibuffer which
+  ;; isn't what i want.
+  ;; :bind (:map vertico-map
+  ;;             ("C-<backspace>" . vertico-directory-up))
   ;; :vertico
   ;; (custom-scroll-margin 0) ;; Different scroll margin
   ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
@@ -1420,7 +1426,8 @@ Prevents highlighting of the minibuffer command line itself."
     (">" enlarge-window-horizontally "increase width")
     ("<" shrink-window-horizontally "decrease width")
     ;; ("t" transpose-frame "transpose windows")
-    ("t" my/transpose-windows "transpose windows")
+    ;; ("t" my/transpose-windows "transpose windows")
+    ("r" rotate-windows "rotate windows")
     ("q" nil "quit")))
 
 
@@ -1666,12 +1673,6 @@ If an eshell buffer for the directory already exists, switch to it."
   (dolist (buffer (buffer-list))
     (when (string-match-p "^\\*eshell\\*" (buffer-name buffer))
       (kill-buffer buffer))))
-
-
-; Transpose frame
-
-(use-package transpose-frame
-  :ensure t)
 
 
 ;; Buffer termination
@@ -2463,6 +2464,11 @@ If an eshell buffer for the directory already exists, switch to it."
   (interactive)
   (find-file (expand-file-name "~/.secret_dotfiles/org")))
 
+(defun md ()
+  "Open org notes directory."
+  (interactive)
+  (find-file (expand-file-name "~/.secret_dotfiles/markdown/")))
+
 (defun org ()
   "Open org notes directory."
   (interactive)
@@ -2611,29 +2617,3 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; I probably must set it after enabling line numbers. Enabling it from the
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
-
-
-(setq remote-file-name-access-timeout 120)
-(setq dired-movement-style 'bounded)
-
-
-
-(defun my-fixed-line-numbers-format (line-number)
-  "Format line numbers with exact width."
-  (let* ((width (length (number-to-string (line-number-at-pos (point-max)))))
-         (fmt (format "%%%dd" width)))
-    (propertize (format fmt line-number) 'face 'line-number)))
-
-(defun my-toggle-fixed-line-numbers ()
-  "Toggle line numbers with exact width formatting."
-  (interactive)
-  (if display-line-numbers
-      (setq-local display-line-numbers nil)
-    (setq-local display-line-numbers t)
-    (setq-local display-line-numbers-width-start t)
-    (setq-local display-line-numbers-grow-only nil)
-    (setq-local display-line-numbers-width 
-                (length (number-to-string 
-                       (line-number-at-pos (point-max)))))))
-
-(global-set-key (kbd "C-c l") 'my-toggle-fixed-line-numbers)

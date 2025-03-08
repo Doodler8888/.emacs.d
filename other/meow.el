@@ -15,14 +15,19 @@
               (when tempel--active
                 (tempel-done)))))
 
+(define-key meow-insert-state-keymap (kbd "M-=") 'tempel-expand)
 
 ;; A variable to hold the change points
 (defvar my/last-change-points '()
   "List of markers representing points before changes were made.")
 
-(defun my/record-change-point ()
+(defvar my/forward-change-points '()
+  "List of markers representing points after changes were made.")
+
+(defun my/record-change-point (&rest _)
   "Record the current location in `my/last-change-points'.
-We use a marker so that if the buffer is modified, the position still tracks correctly."
+We use a marker so that if the buffer is modified, the position still tracks correctly.
+Accepts and ignores any arguments to work with advice."
   (push (copy-marker (point)) my/last-change-points))
 
 (defun my/new-goto-last-change ()
@@ -46,6 +51,8 @@ We use a marker so that if the buffer is modified, the position still tracks cor
 ;; Add advice to record the position before these commands execute
 (advice-add 'my/meow-smart-delete :before #'my/record-change-point)
 (advice-add 'my/meow-smart-comment  :before #'my/record-change-point)
+(advice-add 'my/meow-smart-paste  :before #'my/record-change-point)
+(advice-add 'my/meow-smart-paste-no-save  :before #'my/record-change-point)
 (add-hook 'meow-insert-enter-hook #'my/record-change-point)
 
 
@@ -907,9 +914,10 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
         (kill-new region-text)))
     
     ;; Move forward only if at the start of a line and pasting something with a newline
-    (when (and (bolp) ends-with-newline) 
+    ;; AND we're not at the end of the buffer
+    (when (and (bolp) ends-with-newline (not (eobp))) 
       (forward-char))
-
+    
     ;; Record initial position for line pastes
     (let ((paste-start-pos (point)))
       ;; Do the paste

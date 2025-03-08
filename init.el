@@ -43,7 +43,13 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(annalist buffer-terminator cape clojure-ts-mode corfu crontab-mode cursor-undo
+			  docker dockerfile-mode embark-consult envrc f go-mode goto-chg
+			  haskell-mode hydra lua-mode magit marginalia markdown-mode meow
+			  nix-mode orderless org-appear org-drill queue raku-mode
+			  tempel-collection terraform-mode treesit-auto undo-fu
+			  undo-fu-session vertico wgrep yaml-mode zig-ts-mode))
  '(package-vc-selected-packages
    '((crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
 	 (emacs-crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
