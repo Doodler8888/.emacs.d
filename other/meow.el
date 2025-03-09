@@ -1621,37 +1621,50 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 ;; (dolist (cmd my-selection-commands)
 ;;   (advice-add cmd :before #'my-reset-expand-count))
 
-
 (defun forward-symbol-no-dot (n)
-  "Move forward N symbols, treating dots as delimiters.
-This temporarily modifies the syntax table so that `.' is not a symbol constituent."
-  (with-syntax-table (copy-syntax-table (syntax-table))
-    (modify-syntax-entry ?. " ")  ; treat dot as whitespace
-    (forward-symbol n)))
+  "Move forward N symbols, treating standalone dots as delimiters
+but preserving dots within identifiers and strings."
+  (interactive "p")
+  (let ((count (abs n))
+        (direction (if (< n 0) -1 1)))
+    (dotimes (_ count)
+      (if (> direction 0)
+          ;; Moving forward
+          (progn
+            (skip-syntax-forward " ")
+            (when (and (eq (char-after) ?.)
+                       (looking-at "\\.\\s-")) ; dot followed by whitespace
+              (forward-char)
+              (skip-syntax-forward " "))
+            (unless (eobp)
+              (forward-symbol 1)))
+        ;; Moving backward
+        (progn
+          (skip-syntax-backward " ")
+          (when (and (eq (char-before) ?.)
+                     (looking-back "\\s-\\." (max (point-min) (- (point) 2))))
+            (backward-char)
+            (skip-syntax-backward " "))
+          (unless (bobp)
+            (forward-symbol -1)))))))
 
 (defun backward-symbol-no-dot (n)
-  "Move backward N symbols, treating dots as delimiters.
-This temporarily modifies the syntax table so that `.' is not considered part of a symbol."
-  (with-syntax-table (copy-syntax-table (syntax-table))
-    (modify-syntax-entry ?. " ")  ; treat dot as whitespace
-    (forward-symbol (- n))))
+  "Move backward N symbols, treating standalone dots as delimiters."
+  (forward-symbol-no-dot (- n)))
 
 (put 'symbol-no-dot 'forward-op 'forward-symbol-no-dot)
 (put 'symbol-no-dot 'backward-op 'backward-symbol-no-dot)
 
 (defvar meow-symbol-no-dot-thing 'symbol-no-dot
-  "The thing used for marking and movement by symbols when ignoring dots.
-It uses `forward-symbol-no-dot' and `backward-symbol-no-dot' as its movement functions.")
+  "The thing used for marking and movement by symbols when ignoring standalone dots.")
 
 (defun meow-next-symbol-no-dot (n)
-  "Select to the end of the next Nth symbol, ignoring dots.
-This command works like `meow-next-symbol' but treats dots as delimiters."
+  "Select to the end of the next Nth symbol, ignoring standalone dots."
   (interactive "p")
   (meow-next-thing meow-symbol-no-dot-thing 'symbol n))
 
 (defun meow-back-symbol-no-dot (n)
-  "Select to the beginning of the previous Nth symbol, ignoring dots.
-This command works like `meow-back-symbol' but treats dots as delimiters."
+  "Select to the beginning of the previous Nth symbol, ignoring standalone dots."
   (interactive "p")
   (meow-next-thing meow-symbol-no-dot-thing 'symbol (- n)))
 
