@@ -35,6 +35,7 @@
 
 (define-key meow-insert-state-keymap (kbd "M-=") 'tempel-expand)
 
+
 ;; A variable to hold the change points
 (defvar my/last-change-points '()
   "List of markers representing points before changes were made.")
@@ -1404,6 +1405,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       (kill-new my/last-deleted-text)
       (setq my/last-deleted-text nil))))
 
+
 ;; I found a bug that after using rectangle mode with my current settings,
 ;; meow-change stops going into the insert mode.
 (defun my/meow-change ()
@@ -1861,6 +1863,7 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
    '("D" . my/meow-delete-to-end-of-line)
    ;; '("C-." . my-replay-sequence)
    '("C-." . my-replay-commands)
+   '("C-." . my-replay-last-operation)
    ;; '("C-r" . undo-tree-redo)
    '("C-r" . undo-fu-only-redo)
    ;; '("C-r" . undo-redo)
@@ -1936,7 +1939,8 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
   (define-key dired-mode-map (kbd "j") 'dired-next-line)
   (define-key dired-mode-map (kbd "k") 'dired-previous-line)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
-  (define-key dired-mode-map (kbd "/") 'my/conditional-search-or-avy)
+  (define-key dired-mode-map (kbd "/") 'isearch-forward)
+  (define-key dired-mode-map (kbd "?") 'isearch-backward)
   ;; (define-key dired-mode-map (kbd "/") 'avy-goto-char-all-windows)
   (define-key dired-mode-map (kbd "W") 'Cpn)
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)

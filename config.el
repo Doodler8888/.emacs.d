@@ -48,22 +48,22 @@
 (setq minibuffer-message-timeout 0)
 (setq inhibit-startup-screen t)
 
-(global-display-line-numbers-mode 1)
-(setq display-line-numbers 'visual
-      display-line-numbers-type 'relative)
-(add-hook 'conf-mode-hook 'display-line-numbers-mode)
-(add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
-(add-hook 'text-mode-hook 'display-line-numbers-mode)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(defun enable-line-numbers-in-messages-buffer ()
-  (with-current-buffer "*Messages*"
-    (display-line-numbers-mode 1)))
-(add-hook 'after-init-hook 'enable-line-numbers-in-messages-buffer)
-(advice-add 'message :after 
-            (lambda (&rest _) 
-              (when (get-buffer "*Messages*")
-                (with-current-buffer "*Messages*"
-                  (display-line-numbers-mode 1)))))
+;; (global-display-line-numbers-mode 1)
+;; (setq display-line-numbers 'visual
+;;       display-line-numbers-type 'relative)
+;; (add-hook 'conf-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'text-mode-hook 'display-line-numbers-mode)
+;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;; (defun enable-line-numbers-in-messages-buffer ()
+;;   (with-current-buffer "*Messages*"
+;;     (display-line-numbers-mode 1)))
+;; (add-hook 'after-init-hook 'enable-line-numbers-in-messages-buffer)
+;; (advice-add 'message :after 
+;;             (lambda (&rest _) 
+;;               (when (get-buffer "*Messages*")
+;;                 (with-current-buffer "*Messages*"
+;;                   (display-line-numbers-mode 1)))))
 
 (defun my-mode-line-major-mode ()
   "Returns a clean name of the current major mode."
