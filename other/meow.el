@@ -2134,7 +2134,27 @@ but preserving dots within identifiers and strings."
 (advice-add 'my/meow-smart-change :around #'my/with-relative-line-numbers-advice)
 (advice-add 'my/meow-smart-comment :around #'my/with-relative-line-numbers-advice)
 
-;; Modified version of my-meow-digit to handle line numbers only for universal-argument
+
+(defvar my/line-numbers-timer nil
+  "Timer to revert line numbers after universal argument.")
+
+(defun my-cancel-line-numbers-timer ()
+  "Cancel any pending line numbers timer."
+  (when my/line-numbers-timer
+    (cancel-timer my/line-numbers-timer)
+    (setq my/line-numbers-timer nil)))
+
+(defun my-enable-line-numbers-with-timer ()
+  "Enable relative line numbers and schedule a timer to disable them."
+  (setq my/line-numbers-state-before display-line-numbers)
+  (setq-local display-line-numbers 'relative)
+  ;; Schedule the timer to revert the state after 2 seconds (adjust as needed)
+  (setq my/line-numbers-timer
+        (run-at-time "4 sec" nil
+                     (lambda ()
+                       (setq-local display-line-numbers my/line-numbers-state-before)
+                       (setq my/line-numbers-timer nil)))))
+
 (defun my-meow-digit-with-line-numbers (digit)
   "Modified version of my-meow-digit that enables line numbers only when using universal-argument."
   (interactive)
@@ -2142,17 +2162,17 @@ but preserving dots within identifiers and strings."
                 (region-active-p)
                 (meow--selection-type)))
       (progn
-        ;; This is the universal-argument case
-        (setq my/line-numbers-state-before display-line-numbers)
-        (setq-local display-line-numbers 'relative)
+        (my-enable-line-numbers-with-timer)
         (universal-argument)
         (meow-digit-argument))
-    ;; This is the meow-expand case, don't change line numbers
-    (meow-expand digit)))
+    (progn
+      (my-cancel-line-numbers-timer)
+      (meow-expand digit))))
 
 ;; Make sure selection commands explicitly disable line numbers
 (defun my/with-relative-line-numbers-and-disable-advice (orig-fun &rest args)
   "Enable relative line numbers during command and disable after."
+  (my-cancel-line-numbers-timer)
   (unwind-protect
       (apply orig-fun args)
     (setq-local display-line-numbers nil)))
@@ -2160,6 +2180,7 @@ but preserving dots within identifiers and strings."
 ;; Apply the advice to selection commands
 (advice-add 'my/select-line-for-up :around #'my/with-relative-line-numbers-and-disable-advice)
 (advice-add 'my/select-line-for-down :around #'my/with-relative-line-numbers-and-disable-advice)
+
 
 (meow-setup)
 (meow-global-mode 1)
