@@ -1621,6 +1621,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 ;; (dolist (cmd my-selection-commands)
 ;;   (advice-add cmd :before #'my-reset-expand-count))
 
+
 (defun forward-symbol-no-dot (n)
   "Move forward N symbols, treating standalone dots as delimiters
 but preserving dots within identifiers and strings."
@@ -1637,7 +1638,11 @@ but preserving dots within identifiers and strings."
               (forward-char)
               (skip-syntax-forward " "))
             (unless (eobp)
-              (forward-symbol 1)))
+              (if (derived-mode-p 'org-mode)
+                  (with-syntax-table (copy-syntax-table (syntax-table))
+                    (modify-syntax-entry ?. "w")
+                    (forward-symbol 1))
+                (forward-symbol 1))))
         ;; Moving backward
         (progn
           (skip-syntax-backward " ")
@@ -1646,7 +1651,11 @@ but preserving dots within identifiers and strings."
             (backward-char)
             (skip-syntax-backward " "))
           (unless (bobp)
-            (forward-symbol -1)))))))
+            (if (derived-mode-p 'org-mode)
+                (with-syntax-table (copy-syntax-table (syntax-table))
+                  (modify-syntax-entry ?. "w")
+                  (forward-symbol -1))
+              (forward-symbol -1))))))))
 
 (defun backward-symbol-no-dot (n)
   "Move backward N symbols, treating standalone dots as delimiters."
