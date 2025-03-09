@@ -9,6 +9,24 @@
 
 (load "~/.emacs.d/other/meow-parse.el")
 
+
+;; (defvar my/line-numbers-enabled-before nil
+;;   "Stores whether line numbers were enabled before command execution.")
+
+;; (defun my/with-line-numbers-advice (orig-fun &rest args)
+;;   "Advice to enable line numbers during command execution."
+;;   (let ((my/line-numbers-enabled-before display-line-numbers))
+;;     (unless display-line-numbers
+;;       (display-line-numbers-mode 1))
+;;     (unwind-protect
+;;         (apply orig-fun args)
+;;       (unless my/line-numbers-enabled-before
+;;         (display-line-numbers-mode -1)))))
+
+;; ;; Add the advice to your delete command
+;; (advice-add 'my/meow-smart-delete :around #'my/with-line-numbers-advice)
+
+
 (with-eval-after-load 'tempel
   (add-hook 'meow-insert-exit-hook 
             (lambda ()
@@ -2018,6 +2036,29 @@ This command works like `meow-back-symbol' but treats dots as delimiters."
 ;; (put 'my-symbol 'forward-op #'my-forward-symbol)
 ;; ;; Tell Meow to use our custom symbol definition
 ;; (setq meow-symbol-thing 'my-symbol)
+
+
+(defvar my/line-numbers-state-before nil
+  "Stores the state of line numbers before command execution.")
+
+(defun my/with-relative-line-numbers-advice (orig-fun &rest args)
+  "Advice to enable relative line numbers during command execution."
+  (let ((my/line-numbers-state-before display-line-numbers))
+    ;; Enable relative line numbers if not already enabled
+    (unless (eq display-line-numbers 'relative)
+      (setq-local display-line-numbers 'relative))
+    (unwind-protect
+        (apply orig-fun args)
+      ;; Restore previous state after command execution
+      (unless (eq my/line-numbers-state-before 'relative)
+        (setq-local display-line-numbers my/line-numbers-state-before)))))
+
+;; Add the advice to your delete command
+(advice-add 'my/meow-smart-delete :around #'my/with-relative-line-numbers-advice)
+(advice-add 'my/meow-smart-save :around #'my/with-relative-line-numbers-advice)
+(advice-add 'my/meow-smart-change :around #'my/with-relative-line-numbers-advice)
+(advice-add 'my/meow-smart-comment :around #'my/with-relative-line-numbers-advice)
+
 
 (meow-setup)
 (meow-global-mode 1)
