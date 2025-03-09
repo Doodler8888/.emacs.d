@@ -107,8 +107,8 @@ For delete-surrounding-symbol, force ARGS to nil."
   "Start recording keystrokes when entering insert mode."
   (setq my-is-recording t
         my-insert-recording nil
-        my-recording-start-point (point))
-  (message "Recording insert mode keystrokes..."))
+        my-recording-start-point (point)))
+  ;; (message "Recording insert mode keystrokes..."))
 
 ;; Function to stop recording when exiting insert mode
 (defun my-stop-recording ()
@@ -119,8 +119,8 @@ For delete-surrounding-symbol, force ARGS to nil."
           (buffer-substring-no-properties my-recording-start-point (point)))
     (setq my-is-recording nil)
     ;; Store as the last operation (insert)
-    (setq my-last-operation (list 'insert my-insert-recording))
-    (message "Recording stopped. Use my-replay-last-operation to replay.")))
+    (setq my-last-operation (list 'insert my-insert-recording))))
+    ;; (message "Recording stopped. Use my-replay-last-operation to replay.")))
 
 ;; Integrated replay function
 (defun my-replay-last-operation ()
