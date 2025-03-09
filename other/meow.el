@@ -187,48 +187,84 @@ Accepts and ignores any arguments to work with advice."
 (defvar my/vertical-motion-goal-column 0
   "The tracked column for vertical motion.")
 
+(defun my/buffer-has-word-wrap-p ()
+  "Return non-nil if the current buffer has word-wrap enabled."
+  (let ((truncate-lines-value truncate-lines)
+        (word-wrap-value word-wrap)
+        (visual-line-mode-value visual-line-mode)
+        (word-wrap-by-category (and (boundp 'word-wrap-by-category)
+                                    word-wrap-by-category))
+        (wrap-prefix-value (and (boundp 'wrap-prefix) wrap-prefix)))
+    
+    ;; Print debug info to message buffer
+  ;;   (message "Word wrap detection:
+  ;; truncate-lines: %s (nil means wrapping is ON)
+  ;; word-wrap: %s
+  ;; visual-line-mode: %s
+  ;; word-wrap-by-category: %s
+  ;; wrap-prefix: %s"
+  ;;            truncate-lines-value
+  ;;            word-wrap-value
+  ;;            visual-line-mode-value
+  ;;            word-wrap-by-category
+  ;;            wrap-prefix-value)
+    
+    ;; Logic: 
+    ;; - truncate-lines = nil means line wrapping is ON
+    ;; - visual-line-mode being active also means wrapping is ON
+    (or (not truncate-lines-value) 
+        word-wrap-value 
+        visual-line-mode-value)))
+
+(defun my/simple-next-line (&optional arg)
+  "Simple function to move to the next line and close selection if any."
+  (when (region-active-p)
+    (deactivate-mark))
+  (next-line (or arg 1)))
+
+(defun my/simple-previous-line (&optional arg)
+  "Simple function to move to the previous line and close selection if any."
+  (when (region-active-p)
+    (deactivate-mark))
+  (previous-line (or arg 1)))
+
 (defun my/next-line-close-selection (&optional arg)
   "Move to the next visual line while preserving the tracked column.
 If the point is not at the end of the line, update the tracked column.
 With prefix ARG, move that many lines."
   (interactive "p")
-  (when (region-active-p)
-    (deactivate-mark))
-  ;; Update tracked column only if not at the end of the line.
-  (unless (eolp)
-    (setq my/vertical-motion-goal-column (current-column)))
-  ;; Move ARG visual lines down, handling wrapped lines
-  (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
-    (next-line (or arg 1)))
-  ;; Move to the tracked column (defaulting to 0 if nil)
-  (move-to-column (or my/vertical-motion-goal-column 0)))
+  (if (my/buffer-has-word-wrap-p)
+      (my/simple-next-line arg)
+    ;; Original logic for non-wrapped buffers
+    (when (region-active-p)
+      (deactivate-mark))
+    ;; Update tracked column only if not at the end of the line.
+    (unless (eolp)
+      (setq my/vertical-motion-goal-column (current-column)))
+    ;; Move ARG visual lines down, handling wrapped lines
+    (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
+      (next-line (or arg 1)))
+    ;; Move to the tracked column (defaulting to 0 if nil)
+    (move-to-column (or my/vertical-motion-goal-column 0))))
 
 (defun my/previous-line-close-selection (&optional arg)
   "Move to the previous visual line while preserving the tracked column.
 If the point is not at the end of the line, update the tracked column.
 With prefix ARG, move that many lines."
   (interactive "p")
-  (when (region-active-p)
-    (deactivate-mark))
-  ;; Update tracked column only if not at the end of the line.
-  (unless (eolp)
-    (setq my/vertical-motion-goal-column (current-column)))
-  ;; Move ARG visual lines up, handling wrapped lines
-  (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
-    (previous-line (or arg 1)))
-  ;; Move to the tracked column (defaulting to 0 if nil)
-  (move-to-column (or my/vertical-motion-goal-column 0)))
-
-(defun my/yank-with-selection ()
-  "Yank text, replacing the active region if one exists."
-  (interactive)
-  (if (use-region-p)
-      (let ((region-beginning (region-beginning))
-            (region-end (region-end)))
-        (delete-region region-beginning region-end)
-        (goto-char region-beginning)
-        (yank))
-    (yank)))
+  (if (my/buffer-has-word-wrap-p)
+      (my/simple-previous-line arg)
+    ;; Original logic for non-wrapped buffers
+    (when (region-active-p)
+      (deactivate-mark))
+    ;; Update tracked column only if not at the end of the line.
+    (unless (eolp)
+      (setq my/vertical-motion-goal-column (current-column)))
+    ;; Move ARG visual lines up, handling wrapped lines
+    (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
+      (previous-line (or arg 1)))
+    ;; Move to the tracked column (defaulting to 0 if nil)
+    (move-to-column (or my/vertical-motion-goal-column 0))))
 
 
 (defun my-match-paren-with-selection (arg)
