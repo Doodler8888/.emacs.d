@@ -1766,18 +1766,28 @@ but preserving dots within identifiers and strings."
    ;; '("3" . meow-expand-3)
    ;; '("2" . meow-expand-2)
    ;; '("1" . meow-expand-1)
-   '("1" . (lambda () (interactive) (my-meow-digit 1)))
-   '("2" . (lambda () (interactive) (my-meow-digit 2)))
-   '("3" . (lambda () (interactive) (my-meow-digit 3)))  
-   '("4" . (lambda () (interactive) (my-meow-digit 4)))  
-   '("5" . (lambda () (interactive) (my-meow-digit 5)))  
-   '("6" . (lambda () (interactive) (my-meow-digit 6)))  
-   '("7" . (lambda () (interactive) (my-meow-digit 7)))  
-   '("8" . (lambda () (interactive) (my-meow-digit 8)))  
-   '("9" . (lambda () (interactive) (my-meow-digit 9)))  
-   '("0" . (lambda () (interactive) (my-meow-digit 0)))
+   '("1" . (lambda () (interactive) (my-meow-digit-with-line-numbers 1)))
+   '("2" . (lambda () (interactive) (my-meow-digit-with-line-numbers 2)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 3)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 4)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 5)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 6)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 7)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 8)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 9)))
+   '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 0)))
+   ;; '("1" . (lambda () (interactive) (my-meow-digit 1)))
+   ;; '("2" . (lambda () (interactive) (my-meow-digit 2)))
+   ;; '("3" . (lambda () (interactive) (my-meow-digit 3)))  
+   ;; '("4" . (lambda () (interactive) (my-meow-digit 4)))  
+   ;; '("5" . (lambda () (interactive) (my-meow-digit 5)))  
+   ;; '("6" . (lambda () (interactive) (my-meow-digit 6)))  
+   ;; '("7" . (lambda () (interactive) (my-meow-digit 7)))  
+   ;; '("8" . (lambda () (interactive) (my-meow-digit 8)))  
+   ;; '("9" . (lambda () (interactive) (my-meow-digit 9)))  
+   ;; '("0" . (lambda () (interactive) (my-meow-digit 0)))
    ;; '("0" . (lambda () (interactive) (my-meow-line-or-digit-0)))
-   ;; '("-" . negative-argument)
+   '("-" . negative-argument)
    '(";" . meow-reverse)
    '("," . meow-inner-of-thing)
    '("." . meow-bounds-of-thing)
@@ -2100,9 +2110,12 @@ but preserving dots within identifiers and strings."
 ;; (setq meow-symbol-thing 'my-symbol)
 
 
+
+;; Original variable to track line number state
 (defvar my/line-numbers-state-before nil
   "Stores the state of line numbers before command execution.")
 
+;; Advice for your original commands
 (defun my/with-relative-line-numbers-advice (orig-fun &rest args)
   "Advice to enable relative line numbers during command execution."
   (let ((my/line-numbers-state-before display-line-numbers))
@@ -2115,12 +2128,38 @@ but preserving dots within identifiers and strings."
       (unless (eq my/line-numbers-state-before 'relative)
         (setq-local display-line-numbers my/line-numbers-state-before)))))
 
-;; Add the advice to your delete command
+;; Add the advice to your original commands
 (advice-add 'my/meow-smart-delete :around #'my/with-relative-line-numbers-advice)
 (advice-add 'my/meow-smart-save :around #'my/with-relative-line-numbers-advice)
 (advice-add 'my/meow-smart-change :around #'my/with-relative-line-numbers-advice)
 (advice-add 'my/meow-smart-comment :around #'my/with-relative-line-numbers-advice)
 
+;; Modified version of my-meow-digit to handle line numbers only for universal-argument
+(defun my-meow-digit-with-line-numbers (digit)
+  "Modified version of my-meow-digit that enables line numbers only when using universal-argument."
+  (interactive)
+  (if (not (and meow--expand-nav-function
+                (region-active-p)
+                (meow--selection-type)))
+      (progn
+        ;; This is the universal-argument case
+        (setq my/line-numbers-state-before display-line-numbers)
+        (setq-local display-line-numbers 'relative)
+        (universal-argument)
+        (meow-digit-argument))
+    ;; This is the meow-expand case, don't change line numbers
+    (meow-expand digit)))
+
+;; Make sure selection commands explicitly disable line numbers
+(defun my/with-relative-line-numbers-and-disable-advice (orig-fun &rest args)
+  "Enable relative line numbers during command and disable after."
+  (unwind-protect
+      (apply orig-fun args)
+    (setq-local display-line-numbers nil)))
+
+;; Apply the advice to selection commands
+(advice-add 'my/select-line-for-up :around #'my/with-relative-line-numbers-and-disable-advice)
+(advice-add 'my/select-line-for-down :around #'my/with-relative-line-numbers-and-disable-advice)
 
 (meow-setup)
 (meow-global-mode 1)
