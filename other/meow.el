@@ -1893,6 +1893,14 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 ;; ;; Tell Meow to use our custom symbol definition
 ;; (setq meow-symbol-thing 'my-symbol)
 
+(defadvice my/meow-smart-comment (after make-trackable-for-goto-chg activate)
+  "Make commenting trackable by goto-chg by performing a small tracked operation."
+  (let ((pos (point)))
+    ;; Create a small change that goto-chg will detect
+    (insert " ")
+    (delete-char -1)
+    ;; Return to original position
+    (goto-char pos)))
 
 (meow-setup)
 (meow-global-mode 1)
