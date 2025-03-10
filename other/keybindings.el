@@ -170,10 +170,10 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (define-key mode-map (kbd "C-w H") 'windmove-swap-states-left)
   (define-key mode-map (kbd "C-w J") 'windmove-swap-states-down)
   (define-key mode-map (kbd "C-w K") 'windmove-swap-states-up)
-  (define-key mode-map (kbd "C-w L") 'windmove-swap-states-right)
+  (define-key mode-map (kbd "C-w L") 'windmove-swap-states-right))
 
   ;; Select windows by number
-  (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
+  ;; (define-key meow-normal-state-keymap (kbd "C-w C-w") 'my-select-window-by-number))
 
 (with-eval-after-load 'magit
   (my/setup-window-keys magit-mode-map))
