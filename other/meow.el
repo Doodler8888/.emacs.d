@@ -36,45 +36,45 @@
 (define-key meow-insert-state-keymap (kbd "M-=") 'tempel-expand)
 
 
-;; A variable to hold the change points
-(defvar my/last-change-points '()
-  "List of markers representing points before changes were made.")
+;; ;; A variable to hold the change points
+;; (defvar my/last-change-points '()
+;;   "List of markers representing points before changes were made.")
 
-(defvar my/forward-change-points '()
-  "List of markers representing points after changes were made.")
+;; (defvar my/forward-change-points '()
+;;   "List of markers representing points after changes were made.")
 
-(defun my/record-change-point (&rest _)
-  "Record the current location in `my/last-change-points'.
-We use a marker so that if the buffer is modified, the position still tracks correctly.
-Accepts and ignores any arguments to work with advice."
-  (push (copy-marker (point)) my/last-change-points))
+;; (defun my/record-change-point (&rest _)
+;;   "Record the current location in `my/last-change-points'.
+;; We use a marker so that if the buffer is modified, the position still tracks correctly.
+;; Accepts and ignores any arguments to work with advice."
+;;   (push (copy-marker (point)) my/last-change-points))
 
-(defun my/new-goto-last-change ()
-  "Go to the most recent change point."
-  (interactive)
-  (when my/last-change-points
-    ;; Save the current position into the forward stack
-    (push (copy-marker (point)) my/forward-change-points)
-    (let ((marker (pop my/last-change-points))) ;; Get the last change point
-      (if (marker-position marker)
-          (goto-char marker) ;; Jump to the position
-        (message "Invalid marker position")))))
+;; (defun my/new-goto-last-change ()
+;;   "Go to the most recent change point."
+;;   (interactive)
+;;   (when my/last-change-points
+;;     ;; Save the current position into the forward stack
+;;     (push (copy-marker (point)) my/forward-change-points)
+;;     (let ((marker (pop my/last-change-points))) ;; Get the last change point
+;;       (if (marker-position marker)
+;;           (goto-char marker) ;; Jump to the position
+;;         (message "Invalid marker position")))))
 
-(defun my/new-goto-next-change ()
-  "Go forward to the next change point if available."
-  (interactive)
-  (when my/forward-change-points
-    (let ((marker (pop my/forward-change-points))) ;; Get the forward point
-      (when (marker-position marker)
-        (push (copy-marker (point)) my/last-change-points) ;; Save current before moving
-        (goto-char marker)))))
+;; (defun my/new-goto-next-change ()
+;;   "Go forward to the next change point if available."
+;;   (interactive)
+;;   (when my/forward-change-points
+;;     (let ((marker (pop my/forward-change-points))) ;; Get the forward point
+;;       (when (marker-position marker)
+;;         (push (copy-marker (point)) my/last-change-points) ;; Save current before moving
+;;         (goto-char marker)))))
 
-;; Add advice to record the position before these commands execute
-(advice-add 'my/meow-smart-delete :before #'my/record-change-point)
-(advice-add 'my/meow-smart-comment  :before #'my/record-change-point)
-(advice-add 'my/meow-smart-paste  :before #'my/record-change-point)
-(advice-add 'my/meow-smart-paste-no-save  :before #'my/record-change-point)
-(add-hook 'meow-insert-exit-hook #'my/record-change-point)
+;; ;; Add advice to record the position before these commands execute
+;; (advice-add 'my/meow-smart-delete :before #'my/record-change-point)
+;; (advice-add 'my/meow-smart-comment  :before #'my/record-change-point)
+;; (advice-add 'my/meow-smart-paste  :before #'my/record-change-point)
+;; (advice-add 'my/meow-smart-paste-no-save  :before #'my/record-change-point)
+;; (add-hook 'meow-insert-exit-hook #'my/record-change-point)
 
 
 ;; (use-package meow-tree-sitter
@@ -1602,10 +1602,12 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("$" . my/meow-line-end)
    ;; '("0" . my/meow-line-start)
    '("g" . nil)
+   '("g ;" . goto-last-change)
+   '("g :" . goto-last-change-reverse)
    ;; '("g ;" . my-goto-last-change)
    ;; '("g :" . my-goto-last-change-reverse)
-   '("g ;" . my/new-goto-last-change)
-   '("g :" . my/new-goto-next-change)
+   ;; '("g ;" . my/new-goto-last-change)
+   ;; '("g :" . my/new-goto-next-change)
    '("g v" . (lambda () (interactive) (set-mark-command 4)))
    '("g c" . my/meow-smart-comment)
    '("g w" . my/meow-smart-fill)

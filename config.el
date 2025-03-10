@@ -610,38 +610,33 @@
 ;;   (my/goto-last-change -1))
 
 
-
 (use-package goto-chg)
 
-;; I've being using this code, but i don't remember why, so i commented it out.
-(defvar-local my-jump-ring '()
-  "Ring of positions from goto-last-change jumps.")
+;; ;; I've being using this code, but i don't remember why
+;; (defvar-local my-jump-ring '()
+;;   "Ring of positions from goto-last-change jumps.")
 
-(defvar-local my-jump-index 0
-  "Current position in jump ring.")
+;; (defvar-local my-jump-index 0
+;;   "Current position in jump ring.")
 
-(defun my-goto-last-change ()
-  "Wrapper for goto-last-change that stores jump positions."
-  (interactive)
-  (let ((old-pos (point)))
-    (message "Storing position: %d" old-pos)
-    (call-interactively 'goto-last-change)
-    (push old-pos my-jump-ring)
-    (setq my-jump-index 0)
-    (message "Jump ring now: %S" my-jump-ring)))
+;; (defun my-goto-last-change ()
+;;   "Wrapper for goto-last-change that stores jump positions."
+;;   (interactive)
+;;   (let ((old-pos (point)))
+;;     (call-interactively 'goto-last-change)
+;;     (push old-pos my-jump-ring)
+;;     (setq my-jump-index 0)))
 
-(defun my-goto-last-change-reverse ()
-  "Go back through stored jump positions."
-  (interactive)
-  (message "Current ring: %S, index: %d" my-jump-ring my-jump-index)
-  (if (null my-jump-ring)
-      (message "No previous jumps")
-    (let ((pos (nth my-jump-index my-jump-ring)))
-      (when pos
-        (goto-char pos)
-        (setq my-jump-index (1+ my-jump-index))
-        (when (>= my-jump-index (length my-jump-ring))
-          (setq my-jump-index 0))))))
+;; (defun my-goto-last-change-reverse ()
+;;   "Go back through stored jump positions."
+;;   (interactive)
+;;   (if (null my-jump-ring)
+;;     (let ((pos (nth my-jump-index my-jump-ring)))
+;;       (when pos
+;;         (goto-char pos)
+;;         (setq my-jump-index (1+ my-jump-index))
+;;         (when (>= my-jump-index (length my-jump-ring))
+;;           (setq my-jump-index 0))))))
 
 
 ;; ;; Avy

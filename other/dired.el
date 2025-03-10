@@ -203,5 +203,6 @@ Creates each file immediately after it is entered."
   ;; supposed to delete.
   ;; (define-key dired-mode-map (kbd "d") nil)
   (define-key dired-mode-map (kbd "b") 'my/dired-toggle-bak-extension)
+  (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
   (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))
 

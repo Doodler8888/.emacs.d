@@ -20,12 +20,13 @@
 ;;     "config.org"
 ;;     user-emacs-directory))
 
+(load "~/.emacs.d/other/evil.el")
 (load "~/.emacs.d/config.el")
 ;; (load "~/.emacs.d/other/icomplete.el")
 (load "~/.emacs.d/other/custom-functions.el")
 ;; (load "~/.emacs.d/other/my-autopairing.el")
 (load "~/.emacs.d/other/desktop-session.el")
-(load "~/.emacs.d/other/meow.el")
+;; (load "~/.emacs.d/other/meow.el")
 ;; (load "~/.emacs.d/other/meow-dot-repeat.el")
 (load "~/.emacs.d/eshell/eshell.el")
 (load "~/.emacs.d/other/dired.el")
