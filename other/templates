@@ -1,7 +1,6 @@
 emacs-lisp-mode
 (u
   "(use-package " p ")" n>
-  (tempel-done)  ;; Run this command so that tempel doesn't disable fonts and you don't have to run it yourself
   )
 
 emacs-lisp-mode

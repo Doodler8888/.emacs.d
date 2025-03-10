@@ -48,22 +48,22 @@
 (setq minibuffer-message-timeout 0)
 (setq inhibit-startup-screen t)
 
-;; (global-display-line-numbers-mode 1)
-;; (setq display-line-numbers 'visual
-;;       display-line-numbers-type 'relative)
-;; (add-hook 'conf-mode-hook 'display-line-numbers-mode)
-;; (add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
-;; (add-hook 'text-mode-hook 'display-line-numbers-mode)
-;; (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-;; (defun enable-line-numbers-in-messages-buffer ()
-;;   (with-current-buffer "*Messages*"
-;;     (display-line-numbers-mode 1)))
-;; (add-hook 'after-init-hook 'enable-line-numbers-in-messages-buffer)
-;; (advice-add 'message :after 
-;;             (lambda (&rest _) 
-;;               (when (get-buffer "*Messages*")
-;;                 (with-current-buffer "*Messages*"
-;;                   (display-line-numbers-mode 1)))))
+(global-display-line-numbers-mode 1)
+(setq display-line-numbers 'visual
+      display-line-numbers-type 'relative)
+(add-hook 'conf-mode-hook 'display-line-numbers-mode)
+(add-hook 'conf-space-mode-hook 'display-line-numbers-mode)
+(add-hook 'text-mode-hook 'display-line-numbers-mode)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(defun enable-line-numbers-in-messages-buffer ()
+  (with-current-buffer "*Messages*"
+    (display-line-numbers-mode 1)))
+(add-hook 'after-init-hook 'enable-line-numbers-in-messages-buffer)
+(advice-add 'message :after 
+            (lambda (&rest _) 
+              (when (get-buffer "*Messages*")
+                (with-current-buffer "*Messages*"
+                  (display-line-numbers-mode 1)))))
 
 (defun my-mode-line-major-mode ()
   "Returns a clean name of the current major mode."
@@ -237,14 +237,14 @@
       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
 
-(defun fov/disable-backups-for-gpg () 
-  "Disable backups and autosaving for files ending in \".gpg\"." 
-  (when (and (buffer-file-name) 
-             (s-ends-with-p ".gpg" (buffer-file-name) t)) 
-    (setq-local backup-inhibited t) 
-    (setq-local undo-tree-auto-save-history nil) 
-    (auto-save-mode -1))) 
-(add-hook 'find-file-hook #'fov/disable-backups-for-gpg)
+;; (defun fov/disable-backups-for-gpg () 
+;;   "Disable backups and autosaving for files ending in \".gpg\"." 
+;;   (when (and (buffer-file-name) 
+;;              (s-ends-with-p ".gpg" (buffer-file-name) t)) 
+;;     (setq-local backup-inhibited t) 
+;;     (setq-local undo-tree-auto-save-history nil) 
+;;     (auto-save-mode -1))) 
+;; (add-hook 'find-file-hook #'fov/disable-backups-for-gpg)
 
 ;; ;; First, disable auto-save globally
 ;; (setq auto-save-default nil)
@@ -1075,6 +1075,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (interactive)
   (project-find-file t))
 
+;; test
 (defcustom project-root-markers
   '("Cargo.toml" "compile_commands.json" "compile_flags.txt"
     "project.clj" ".git" "deps.edn" "shadow-cljs.edn")
@@ -1100,7 +1101,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
    (t (when-let* ((root (locate-dominating-file path #'project-root-p)))
         (cons 'transient (expand-file-name root))))))
 
-
+;; second
 ;; Embark
 
 (use-package embark
@@ -1115,7 +1116,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (with-eval-after-load 'embark
   (add-to-list 'embark-target-finders
                (lambda ()
-                 (when (use-region-p)
+                 (when (use-region-p) ;; third
                    (cons 'region (buffer-substring-no-properties
                                 (region-beginning)
                                 (region-end))))))
@@ -1484,6 +1485,9 @@ Prevents highlighting of the minibuffer command line itself."
 ;; Magit
 
 (require 'smerge-mode)
+
+;; For magit, otherwise the magit-format-file-nerd-icons option wont work
+(use-package nerd-icons)
 
 (use-package magit
   :ensure t
@@ -2035,7 +2039,7 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq browse-url-browser-function 'my/browse-url-default-browser)
   ;; (setq browse-url-browser-function 'browse-url-default-browser) ;; Make links to open a default web browser.
   (setq org-startup-with-inline-images t)
-  (setq org-edit-src-content-indentation 0)
+  ;; (setq org-edit-src-content-indentation 0)
   (setq org-blank-before-new-entry
         '((heading . nil)
           (plain-list-item . nil)))
@@ -2606,6 +2610,11 @@ If an eshell buffer for the directory already exists, switch to it."
   "Open a specific file."
   (interactive)
   (find-file "~/.emacs.d/other/templates"))
+
+(defun plan ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/plan/plan.org"))
 
 (defun q ()
   "Save all modified buffers without prompting, then kill Emacs."

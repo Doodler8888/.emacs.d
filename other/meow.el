@@ -53,6 +53,8 @@ Accepts and ignores any arguments to work with advice."
   "Go to the most recent change point."
   (interactive)
   (when my/last-change-points
+    ;; Save the current position into the forward stack
+    (push (copy-marker (point)) my/forward-change-points)
     (let ((marker (pop my/last-change-points))) ;; Get the last change point
       (if (marker-position marker)
           (goto-char marker) ;; Jump to the position
@@ -72,7 +74,7 @@ Accepts and ignores any arguments to work with advice."
 (advice-add 'my/meow-smart-comment  :before #'my/record-change-point)
 (advice-add 'my/meow-smart-paste  :before #'my/record-change-point)
 (advice-add 'my/meow-smart-paste-no-save  :before #'my/record-change-point)
-(add-hook 'meow-insert-enter-hook #'my/record-change-point)
+(add-hook 'meow-insert-exit-hook #'my/record-change-point)
 
 
 ;; (use-package meow-tree-sitter
@@ -991,89 +993,6 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
         (goto-char paste-start-pos)
         (back-to-indentation)))))
 
-;; (defun my/meow-smart-paste (&optional arg)
-;;   "Paste like Vim, handling both line-wise and regular pastes.
-;; With numeric prefix ARG, paste that many times.
-;; With raw prefix argument (C-u without a number), paste from the kill ring.
-;; When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
-;;   (interactive "P")
-;;   (let* ((raw-prefix (equal arg '(4)))
-;;          (numeric-prefix (and (integerp arg) (> arg 0)))
-;;          (repeat-count (if numeric-prefix arg 1))
-;;          (text-to-paste (if raw-prefix
-;;                            (current-kill (if (listp last-command-event)
-;;                                            0
-;;                                          (mod (- (aref (this-command-keys) 0) ?0)
-;;                                               kill-ring-max))
-;;                                        t)
-;;                          (or (gui-get-selection 'CLIPBOARD)
-;;                              (current-kill 0 t))))
-;;          (ends-with-newline (string-suffix-p "\n" text-to-paste))
-;;          (full-line-p (and ends-with-newline 
-;;                           (string-match-p "^\n*.*\n$" text-to-paste)
-;;                           (or (bolp) (not (region-active-p))))))
-;;     ;; If region is active, kill it first to update the kill ring
-;;     (when (region-active-p)
-;;       (let ((region-text (buffer-substring (region-beginning) (region-end))))
-;;         (delete-region (region-beginning) (region-end))
-;;         (kill-new region-text)))
-    
-;;     ;; Record initial position for line pastes
-;;     (let ((paste-start-pos (point)))
-;;       ;; Do the paste
-;;       (dotimes (_ repeat-count)
-;;         (if full-line-p
-;;             (progn
-;;               (unless (bolp) (forward-line) (beginning-of-line))
-;;               (setq paste-start-pos (point))
-;;               (insert text-to-paste)
-;;               (when (and (not (bolp)) (> repeat-count 1))
-;;                 (forward-line)))
-;;           (insert text-to-paste)))
-      
-;;       ;; Fix cursor position for line pastes to be more Vim-like
-;;       (when (and full-line-p ends-with-newline)
-;;         (goto-char paste-start-pos)
-;; 		(back-to-indentation)))))
-
-;; (defun my/meow-smart-paste (&optional arg)
-;;   "Paste like Vim, handling both line-wise and regular pastes.
-;; With numeric prefix ARG, paste that many times.
-;; With raw prefix argument (C-u without a number), paste from the kill ring.
-;; When pasting over a selection, it's replaced and the replaced text is saved to the kill ring."
-;;   (interactive "P")
-;;   (let* ((raw-prefix (equal arg '(4)))
-;;          (numeric-prefix (and (integerp arg) (> arg 0)))
-;;          (repeat-count (if numeric-prefix arg 1))
-;;          (text-to-paste (if raw-prefix
-;;                            (current-kill (if (listp last-command-event)
-;;                                            0
-;;                                          (mod (- (aref (this-command-keys) 0) ?0)
-;;                                               kill-ring-max))
-;;                                        t)
-;;                          (or (gui-get-selection 'CLIPBOARD)
-;;                              (current-kill 0 t))))
-;;          (ends-with-newline (string-suffix-p "\n" text-to-paste))
-;;          (full-line-p (and ends-with-newline 
-;;                           (string-match-p "^\n*.*\n$" text-to-paste)
-;;                           (or (bolp) (not (region-active-p))))))
-    
-;;     ;; If region is active, kill it first to update the kill ring
-;;     (when (region-active-p)
-;;       (let ((region-text (buffer-substring (region-beginning) (region-end))))
-;;         (delete-region (region-beginning) (region-end))
-;;         (kill-new region-text)))
-    
-;;     ;; Do the paste
-;;     (dotimes (_ repeat-count)
-;;       (if full-line-p
-;;           (progn
-;;             (unless (bolp) (forward-line) (beginning-of-line))
-;;             (insert text-to-paste)
-;;             (when (and (not (bolp)) (> repeat-count 1))
-;;               (forward-line)))
-;;         (insert text-to-paste)))))
-
 
 ;; It's a simplified version that doesn't work on a selection
 (defun my/meow-replace-char ()
@@ -1498,184 +1417,60 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
     ;; (call-interactively 'meow-mark-word)))
 
 
-;; ;; Store the last valid combination (selection + action)
-;; (defvar my-last-combination nil
-;;   "Stores the last valid combination of selection and action commands.")
-
-;; ;; Store last two executed commands (for building combinations)
-;; (defvar my-command-history nil
-;;   "List to store the last two commands with their arguments.")
-
-;; ;; Track whether the last action was a command or insert
-;; (defvar my-last-action 'command)
-
-;; ;; Expansion count (set via my-meow-digit)
-;; (defvar my-meow-expand-count nil
-;;   "Stores the number of times to expand the selection.")
-
-;; ;; Define groups for selection and action commands using command names
-;; (defvar my-selection-commands '(meow-inner-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection meow-back-word my/forward-list my/backward-list)
-;;   "Commands that create selections.")
-
-;; (defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete
-;;   surround-region-with-symbol change-surrounding-symbol delete-surrounding-symbol)
-;;   "Commands that operate on a selection.")
-
-;; (defun my-command-name (cmd)
-;;   "Get the command name from a command object."
-;;   (cond
-;;    ((symbolp cmd) cmd)
-;;    ((subrp cmd)
-;;     (intern (replace-regexp-in-string "#<subr \\(.+?\\)>" "\\1"
-;;                                       (prin1-to-string cmd))))
-;;    ((functionp cmd)
-;;     (let ((cmd-string (prin1-to-string cmd)))
-;;       (cond
-;;        ((string-match-p "my/generic-meow-smart-delete" cmd-string)
-;;         'my/meow-smart-delete)
-;;        ((and (string-match-p "meow-kill" cmd-string)
-;;              (string-match-p "meow-delete" cmd-string))
-;;         'my/meow-smart-delete)
-;;        ((string-match-p "surround-region-with-symbol" cmd-string)
-;;         'surround-region-with-symbol)
-;;        ((string-match-p "change-surrounding-symbol" cmd-string)
-;;         'surround-region-with-symbol)
-;;        ((string-match-p "Delete the symbols surrounding" cmd-string)
-;;         'delete-surrounding-symbol)
-;;        (t 'unknown-command))))
-;;    (t 'unknown-command)))
-
-;; (defun my-valid-combination-p (history)
-;;   "Check if the command history forms a valid combination."
-;;   (when (>= (length history) 2)
-;;     (let* ((first-cmd (my-command-name (caar history)))
-;;            (last-cmd (my-command-name (caar (last history)))))
-;;       (and (member first-cmd my-selection-commands)
-;;            (member last-cmd my-action-commands)))))
-
-;; (defun my-store-command (cmd args)
-;;   "Store a command and its arguments in the history.
-;; For delete-surrounding-symbol, force ARGS to nil."
-;;   (when (eq (my-command-name cmd) 'delete-surrounding-symbol)
-;;     (setq args nil))
-;;   (let ((command-entry (cons cmd args)))
-;;     (setq my-command-history 
-;;           (if (< (length my-command-history) 2)
-;;               (append my-command-history (list command-entry))
-;;             (append (cdr my-command-history) (list command-entry))))
-    
-;;     (when (my-valid-combination-p my-command-history)
-;;       (setq my-last-combination 
-;;             (list (car my-command-history)
-;;                   my-meow-expand-count
-;;                   (cadr my-command-history))))
-    
-;;     (when (member (my-command-name cmd) my-selection-commands)
-;;       (setq my-meow-expand-count nil))
-;;     (setq my-last-action 'command)))
-
-;; (defun my-replay-commands ()
-;;   "Replay the last valid combination."
-;;   (interactive)
-;;   (when my-last-combination
-;;     (let* ((selection (nth 0 my-last-combination))
-;;            (expand-count (nth 1 my-last-combination))
-;;            (action (nth 2 my-last-combination)))
-;;       (apply (car selection) (cdr selection))
-;;       (when expand-count
-;;         (meow-expand expand-count))
-;;       (apply (car action) (cdr action)))))
-
-;; ;; --- Command Tracking ---
-;; (defun my-track-command (orig-fun &rest args)
-;;   "Advice function to track command execution.
-;; For delete-surrounding-symbol, store no arguments."
-;;   (let ((cmd (my-command-name orig-fun)))
-;;     (if (eq cmd 'delete-surrounding-symbol)
+;; (defun forward-symbol-no-dot (n)
+;;   "Move forward N symbols, treating standalone dots as delimiters
+;; but preserving dots within identifiers and strings."
+;;   (interactive "p")
+;;   (let ((count (abs n))
+;;         (direction (if (< n 0) -1 1)))
+;;     (dotimes (_ count)
+;;       (if (> direction 0)
+;;           ;; Moving forward
+;;           (progn
+;;             (skip-syntax-forward " ")
+;;             (when (and (eq (char-after) ?.)
+;;                        (looking-at "\\.\\s-")) ; dot followed by whitespace
+;;               (forward-char)
+;;               (skip-syntax-forward " "))
+;;             (unless (eobp)
+;;               (if (derived-mode-p 'org-mode)
+;;                   (with-syntax-table (copy-syntax-table (syntax-table))
+;;                     (modify-syntax-entry ?. "w")
+;;                     (forward-symbol 1))
+;;                 (forward-symbol 1))))
+;;         ;; Moving backward
 ;;         (progn
-;;           (my-store-command orig-fun nil)
-;;           (apply orig-fun args))
-;;       (progn
-;;         (my-store-command orig-fun args)
-;;         (apply orig-fun args)))))
+;;           (skip-syntax-backward " ")
+;;           (when (and (eq (char-before) ?.)
+;;                      (looking-back "\\s-\\." (max (point-min) (- (point) 2))))
+;;             (backward-char)
+;;             (skip-syntax-backward " "))
+;;           (unless (bobp)
+;;             (if (derived-mode-p 'org-mode)
+;;                 (with-syntax-table (copy-syntax-table (syntax-table))
+;;                   (modify-syntax-entry ?. "w")
+;;                   (forward-symbol -1))
+;;               (forward-symbol -1))))))))
 
-;; (defun my-track-meow-expand (digit)
-;;   "Store expansion count for later replay."
-;;   (setq my-meow-expand-count digit))
+;; (defun backward-symbol-no-dot (n)
+;;   "Move backward N symbols, treating standalone dots as delimiters."
+;;   (forward-symbol-no-dot (- n)))
 
-;; ;; Advice specific Meow commands for tracking
-;; (dolist (cmd my-selection-commands)
-;;   (advice-add cmd :around #'my-track-command))
-;; (dolist (cmd my-action-commands)
-;;   (advice-add cmd :around #'my-track-command))
+;; (put 'symbol-no-dot 'forward-op 'forward-symbol-no-dot)
+;; (put 'symbol-no-dot 'backward-op 'backward-symbol-no-dot)
 
-;; ;; Advice to track expansion count
-;; (advice-add 'my-meow-digit :after (lambda (&rest args)
-;;                                    (my-track-meow-expand (car args))))
+;; (defvar meow-symbol-no-dot-thing 'symbol-no-dot
+;;   "The thing used for marking and movement by symbols when ignoring standalone dots.")
 
-;; ;; Reset expansion count for selection commands
-;; (defun my-reset-expand-count (&rest args)
-;;   "Reset the expansion count for selection commands."
-;;   (setq my-meow-expand-count nil))
+;; (defun meow-next-symbol-no-dot (n)
+;;   "Select to the end of the next Nth symbol, ignoring standalone dots."
+;;   (interactive "p")
+;;   (meow-next-thing meow-symbol-no-dot-thing 'symbol n))
 
-;; (dolist (cmd my-selection-commands)
-;;   (advice-add cmd :before #'my-reset-expand-count))
-
-
-(defun forward-symbol-no-dot (n)
-  "Move forward N symbols, treating standalone dots as delimiters
-but preserving dots within identifiers and strings."
-  (interactive "p")
-  (let ((count (abs n))
-        (direction (if (< n 0) -1 1)))
-    (dotimes (_ count)
-      (if (> direction 0)
-          ;; Moving forward
-          (progn
-            (skip-syntax-forward " ")
-            (when (and (eq (char-after) ?.)
-                       (looking-at "\\.\\s-")) ; dot followed by whitespace
-              (forward-char)
-              (skip-syntax-forward " "))
-            (unless (eobp)
-              (if (derived-mode-p 'org-mode)
-                  (with-syntax-table (copy-syntax-table (syntax-table))
-                    (modify-syntax-entry ?. "w")
-                    (forward-symbol 1))
-                (forward-symbol 1))))
-        ;; Moving backward
-        (progn
-          (skip-syntax-backward " ")
-          (when (and (eq (char-before) ?.)
-                     (looking-back "\\s-\\." (max (point-min) (- (point) 2))))
-            (backward-char)
-            (skip-syntax-backward " "))
-          (unless (bobp)
-            (if (derived-mode-p 'org-mode)
-                (with-syntax-table (copy-syntax-table (syntax-table))
-                  (modify-syntax-entry ?. "w")
-                  (forward-symbol -1))
-              (forward-symbol -1))))))))
-
-(defun backward-symbol-no-dot (n)
-  "Move backward N symbols, treating standalone dots as delimiters."
-  (forward-symbol-no-dot (- n)))
-
-(put 'symbol-no-dot 'forward-op 'forward-symbol-no-dot)
-(put 'symbol-no-dot 'backward-op 'backward-symbol-no-dot)
-
-(defvar meow-symbol-no-dot-thing 'symbol-no-dot
-  "The thing used for marking and movement by symbols when ignoring standalone dots.")
-
-(defun meow-next-symbol-no-dot (n)
-  "Select to the end of the next Nth symbol, ignoring standalone dots."
-  (interactive "p")
-  (meow-next-thing meow-symbol-no-dot-thing 'symbol n))
-
-(defun meow-back-symbol-no-dot (n)
-  "Select to the beginning of the previous Nth symbol, ignoring standalone dots."
-  (interactive "p")
-  (meow-next-thing meow-symbol-no-dot-thing 'symbol (- n)))
+;; (defun meow-back-symbol-no-dot (n)
+;;   "Select to the beginning of the previous Nth symbol, ignoring standalone dots."
+;;   (interactive "p")
+;;   (meow-next-thing meow-symbol-no-dot-thing 'symbol (- n)))
 
 
 (defun meow-setup ()
@@ -1689,11 +1484,11 @@ but preserving dots within identifiers and strings."
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
    '("b" . meow-back-word)
-   ;; '("B" . meow-back-symbol)
-   '("B" . meow-back-symbol-no-dot)
+   '("B" . meow-back-symbol)
+   ;; '("B" . meow-back-symbol-no-dot)
    '("e" . meow-next-word)
-   ;; '("E" . meow-next-symbol)
-   '("E" . meow-next-symbol-no-dot)
+   '("E" . meow-next-symbol)
+   ;; '("E" . meow-next-symbol-no-dot)
    ;; '("f" . meow-find)
    '("f" . my/meow-find)
    '("t" . meow-till)
@@ -1766,16 +1561,6 @@ but preserving dots within identifiers and strings."
    ;; '("3" . meow-expand-3)
    ;; '("2" . meow-expand-2)
    ;; '("1" . meow-expand-1)
-   ;; '("1" . (lambda () (interactive) (my-meow-digit-with-line-numbers 1)))
-   ;; '("2" . (lambda () (interactive) (my-meow-digit-with-line-numbers 2)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 3)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 4)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 5)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 6)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 7)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 8)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 9)))
-   ;; '("3" . (lambda () (interactive) (my-meow-digit-with-line-numbers 0)))
    '("1" . (lambda () (interactive) (my-meow-digit 1)))
    '("2" . (lambda () (interactive) (my-meow-digit 2)))
    '("3" . (lambda () (interactive) (my-meow-digit 3)))  
@@ -1796,8 +1581,8 @@ but preserving dots within identifiers and strings."
    ;; '("%" . my-match-paren-with-selection)
    '("a" . my/meow-append)
    '("b" . meow-back-word)
-   ;; '("B" . meow-back-symbol)
-   '("B" . meow-back-symbol-no-dot)
+   '("B" . meow-back-symbol)
+   ;; '("B" . meow-back-symbol-no-dot)
    ;; '("c" . meow-change)
    '("c" . my/meow-smart-change)
    ;; '("d" . meow-delete)
@@ -1805,8 +1590,8 @@ but preserving dots within identifiers and strings."
    '("d" . my/meow-smart-delete)
    '("D" . meow-backward-delete)
    '("e" . meow-next-word)
-   ;; '("E" . meow-next-symbol)
-   '("E" . meow-next-symbol-no-dot)
+   '("E" . meow-next-symbol)
+   ;; '("E" . meow-next-symbol-no-dot)
    ;; '("f" . meow-find)
    '("f" . my/meow-find)
    '("t" . meow-till)
@@ -1893,9 +1678,8 @@ but preserving dots within identifiers and strings."
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
-   ;; '("C-." . my-replay-sequence)
-   '("C-." . my-replay-commands)
-   '("C-." . my-replay-last-operation)
+   ;; '("C-." . my-replay-commands)
+   ;; '("C-." . my-replay-last-operation)
    ;; '("C-r" . undo-tree-redo)
    '("C-r" . undo-fu-only-redo)
    ;; '("C-r" . undo-redo)
@@ -2108,78 +1892,6 @@ but preserving dots within identifiers and strings."
 ;; (put 'my-symbol 'forward-op #'my-forward-symbol)
 ;; ;; Tell Meow to use our custom symbol definition
 ;; (setq meow-symbol-thing 'my-symbol)
-
-
-
-;; Original variable to track line number state
-(defvar my/line-numbers-state-before nil
-  "Stores the state of line numbers before command execution.")
-
-;; Advice for your original commands
-(defun my/with-relative-line-numbers-advice (orig-fun &rest args)
-  "Advice to enable relative line numbers during command execution."
-  (let ((my/line-numbers-state-before display-line-numbers))
-    ;; Enable relative line numbers if not already enabled
-    (unless (eq display-line-numbers 'relative)
-      (setq-local display-line-numbers 'relative))
-    (unwind-protect
-        (apply orig-fun args)
-      ;; Restore previous state after command execution
-      (unless (eq my/line-numbers-state-before 'relative)
-        (setq-local display-line-numbers my/line-numbers-state-before)))))
-
-;; Add the advice to your original commands
-(advice-add 'my/meow-smart-delete :around #'my/with-relative-line-numbers-advice)
-(advice-add 'my/meow-smart-save :around #'my/with-relative-line-numbers-advice)
-(advice-add 'my/meow-smart-change :around #'my/with-relative-line-numbers-advice)
-(advice-add 'my/meow-smart-comment :around #'my/with-relative-line-numbers-advice)
-
-
-;; (defvar my/line-numbers-timer nil
-;;   "Timer to revert line numbers after universal argument.")
-
-;; (defun my-cancel-line-numbers-timer ()
-;;   "Cancel any pending line numbers timer."
-;;   (when my/line-numbers-timer
-;;     (cancel-timer my/line-numbers-timer)
-;;     (setq my/line-numbers-timer nil)))
-
-;; (defun my-enable-line-numbers-with-timer ()
-;;   "Enable relative line numbers and schedule a timer to disable them."
-;;   (setq my/line-numbers-state-before display-line-numbers)
-;;   (setq-local display-line-numbers 'relative)
-;;   ;; Schedule the timer to revert the state after 2 seconds (adjust as needed)
-;;   (setq my/line-numbers-timer
-;;         (run-at-time "4 sec" nil
-;;                      (lambda ()
-;;                        (setq-local display-line-numbers my/line-numbers-state-before)
-;;                        (setq my/line-numbers-timer nil)))))
-
-;; (defun my-meow-digit-with-line-numbers (digit)
-;;   "Modified version of my-meow-digit that enables line numbers only when using universal-argument."
-;;   (interactive)
-;;   (if (not (and meow--expand-nav-function
-;;                 (region-active-p)
-;;                 (meow--selection-type)))
-;;       (progn
-;;         (my-enable-line-numbers-with-timer)
-;;         (universal-argument)
-;;         (meow-digit-argument))
-;;     (progn
-;;       (my-cancel-line-numbers-timer)
-;;       (meow-expand digit))))
-
-;; ;; Make sure selection commands explicitly disable line numbers
-;; (defun my/with-relative-line-numbers-and-disable-advice (orig-fun &rest args)
-;;   "Enable relative line numbers during command and disable after."
-;;   (my-cancel-line-numbers-timer)
-;;   (unwind-protect
-;;       (apply orig-fun args)
-;;     (setq-local display-line-numbers nil)))
-
-;; ;; Apply the advice to selection commands
-;; (advice-add 'my/select-line-for-up :around #'my/with-relative-line-numbers-and-disable-advice)
-;; (advice-add 'my/select-line-for-down :around #'my/with-relative-line-numbers-and-disable-advice)
 
 
 (meow-setup)
