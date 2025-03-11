@@ -978,7 +978,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   
   ;; Default for all buffers
   (setq completion-at-point-functions
-        (list #'tempel-complete  ; or #'tempel-expand
+        (list #'tempel-expand  ; or #'tempel-expand
               #'cape-file))
 
   ;; For ALL buffers except elisp and eshell
@@ -987,7 +987,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
               (unless (or (derived-mode-p 'emacs-lisp-mode)
                          (derived-mode-p 'eshell-mode))
                 (setq-local completion-at-point-functions
-                            (list #'tempel-complete  ; or #'tempel-expand
+                            (list #'tempel-expand  ; or #'tempel-expand
                                   #'cape-file
 								  ;; These one are probably for icomplete
 								  ;; (add-hook 'completion-at-point-functions #'tempel-complete nil t)
@@ -1009,7 +1009,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
     (add-hook (intern (concat (symbol-name mode) "-hook"))
               (lambda ()
                 (setq-local completion-at-point-functions
-                            (list #'tempel-complete  ; or #'tempel-expand
+                            (list #'tempel-expand  ; or #'tempel-expand
                                   #'elisp-completion-at-point
                                   #'cape-file)))))
   
@@ -1017,7 +1017,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-hook 'eval-expression-minibuffer-setup-hook
             (lambda ()
               (setq-local completion-at-point-functions
-                          (list #'tempel-complete  ; or #'tempel-expand
+                          (list #'tempel-expand  ; or #'tempel-expand
                                 #'elisp-completion-at-point
                                 #'cape-file)))))
 

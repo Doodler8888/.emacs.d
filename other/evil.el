@@ -30,6 +30,7 @@
   (define-key evil-normal-state-map (kbd "?") 'isearch-backward)
   (define-key evil-normal-state-map (kbd "l") 'forward-char)
   (define-key evil-normal-state-map (kbd "h") 'backward-char)
+  (define-key evil-normal-state-map (kbd "M-y") 'toggle-flymake-diagnostics)
   ;; (define-key evil-normal-state-map (kbd "j") 'next-line)
   ;; (define-key evil-normal-state-map (kbd "k") 'previous-line)
   ;; (define-key evil-normal-state-map (kbd "M-f") 'toggle-messages-buffer)

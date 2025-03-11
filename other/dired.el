@@ -207,6 +207,8 @@ Creates each file immediately after it is entered."
   (define-key dired-mode-map (kbd "k") 'dired-previous-line-preserve-column)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
+  (define-key dired-mode-map (kbd "I") 'dired-maybe-insert-subdir)
+  (define-key dired-mode-map (kbd "i") 'dired-toggle-read-only)
   (define-key dired-mode-map (kbd "/") 'isearch-forward)
   (define-key dired-mode-map (kbd "?") 'isearch-backward)
   (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))
