@@ -41,15 +41,15 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ;; ("D"  . docker-template)
     ;; ("d"  . toggle-docker-layout)
 
-    ("di" . docker-images)
-    ("dc" . docker-containers)
+    ;; ("di" . docker-images)
+    ;; ("dc" . docker-containers)
     ;; ("de" . daemons-enable)
     ;; ("dd" . daemons-disable)
     ;; ("du" . daemons-status)
     ;; ("dr" . daemons-restart)
 
-    ("dd" . my-decrement-number-forward)
-    ("ii" . my-increment-number-forward)
+    ("d" . my-decrement-number-forward)
+    ("i" . my-increment-number-forward)
     
     ("w"  . hydra-window-size/body)
 
@@ -68,7 +68,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("e" . open-eshell-in-current-directory)
     ;; ("ep" . eshell-pop) 
 
-    ("m" . toggle-messages-buffer)
+    ;; ("m" . toggle-messages-buffer)
+    ("m" . open-messages-buffer)
 
     ("cc" . Cp)
 
@@ -126,6 +127,10 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 ;; (define-key prog-mode-map (kbd "M-p") 'previous-error)
 (define-key prog-mode-map (kbd "C-x cc") 'compile)
 (define-key prog-mode-map (kbd "C-x cl") 'compile-last)
+;; (define-key isearch-mode-map (kbd "C-g") 'isearch-exit)
+(define-key isearch-mode-map (kbd "C-g") 'my/isearch-quit)
+(define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
+;; (define-key isearch-mode-map (kbd "C-<backspace>") 'isearch-abort)
 ;; (global-set-key (kbd "C-<backspace>") 'my/smart-backspace)
 
 ;; Can't use it, because i have C-w binding for the insert mode

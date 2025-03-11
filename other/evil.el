@@ -18,16 +18,22 @@
   (define-key evil-normal-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-  (define-key evil-normal-state-map (kbd "C-f") 'scroll-up-and-recenter)
-  (define-key evil-normal-state-map (kbd "C-b") 'scroll-down-and-recenter)
+  (define-key evil-normal-state-map (kbd "C-b") 'scroll-up-and-recenter)
+  (define-key evil-normal-state-map (kbd "C-f") 'scroll-down-and-recenter)
   (define-key evil-normal-state-map (kbd "C-u") 'evil-half-scroll-up-and-recenter)
   (define-key evil-normal-state-map (kbd "C-d") 'evil-half-scroll-down-and-recenter)
+  (define-key evil-normal-state-map (kbd "'") 'my-evil-find-and-select-inner)
+  (define-key evil-normal-state-map (kbd "\"") 'my-evil-find-and-select-outer)
+  (define-key evil-normal-state-map (kbd "n") 'my/search-next)
+  (define-key evil-normal-state-map (kbd "N") 'my/search-previous)
+  (define-key evil-normal-state-map (kbd "/") 'isearch-forward)
+  (define-key evil-normal-state-map (kbd "?") 'isearch-backward)
   (define-key evil-normal-state-map (kbd "l") 'forward-char)
   (define-key evil-normal-state-map (kbd "h") 'backward-char)
-  (define-key evil-normal-state-map (kbd "j") 'next-line)
-  (define-key evil-normal-state-map (kbd "k") 'previous-line)
-  (define-key evil-normal-state-map (kbd "M-f") 'toggle-messages-buffer)
-  (setq evil-shift-width 2))
+  ;; (define-key evil-normal-state-map (kbd "j") 'next-line)
+  ;; (define-key evil-normal-state-map (kbd "k") 'previous-line)
+  ;; (define-key evil-normal-state-map (kbd "M-f") 'toggle-messages-buffer)
+  (setq evil-shift-width 4))
 
 ;; (add-hook 'eshell-mode-hook (lambda () (undo-tree-mode 1)))
 ;; (add-hook 'wdired-mode-hook (lambda () (undo-tree-mode 1)))
@@ -63,11 +69,15 @@
   
   (evil-collection-init))
 
+(use-package evil-numbers)
 
-(add-hook 'dired-mode-hook #'evil-emacs-state)
-(with-eval-after-load 'dired
-  (define-key dired-mode-map (kbd "/") #'evil-search-forward)
-  (define-key dired-mode-map (kbd "?") #'evil-search-backward))
+(evil-set-initial-state 'dired-mode 'emacs)
+;; (with-eval-after-load 'dired
+;;   (define-key dired-mode-map (kbd "j") #'dired-next-line-preserve-column)
+;;   (define-key dired-mode-map (kbd "k") #'dired-previous-line-preserve-column)
+;;   (define-key dired-mode-map (kbd "-") #'dired-up-directory)
+;;   (define-key dired-mode-map (kbd "/") #'evil-search-forward)
+;;   (define-key dired-mode-map (kbd "?") #'evil-search-backward))
 
 (defun my-evil-yank-to-end-of-line ()
   "Yank text from the current point to the end of the line."
@@ -136,6 +146,22 @@
                         (my-fill-region beg end)))
 
 (defun my-evil-paste-before ()
+  "Paste before cursor without overwriting kill ring.
+If a region is active, the overwritten text is copied into the kill ring (and system clipboard)."
+  (interactive)
+  (let ((paste-text (current-kill 0 t)))
+    (if (use-region-p)
+        (let ((overwritten-text (buffer-substring (region-beginning) (region-end))))
+          (delete-region (region-beginning) (region-end))
+          (kill-new overwritten-text)
+          (insert paste-text))
+      (progn
+        (evil-insert-state)
+        (insert paste-text)
+        (evil-normal-state)
+        (backward-char)))))
+
+(defun my-evil-paste-before-void ()
   "Paste before cursor without overwriting kill ring."
   (interactive)
   (let ((text (current-kill 0 t)))
@@ -149,8 +175,9 @@
         (evil-normal-state)
         (backward-char)))))
 
-(with-eval-after-load 'evil
-  (define-key evil-visual-state-map "P" 'my-evil-paste-before))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-visual-state-map "p" 'my-evil-paste-before)
+;;   (define-key evil-visual-state-map "P" 'my-evil-paste-before-void))
 
 ;; Always use blank lines as paragraph delimiters in motions/text objects
 (define-advice forward-evil-paragraph (:around (orig-fun &rest args))
@@ -175,6 +202,8 @@
 
 (with-eval-after-load 'evil
   (define-key evil-insert-state-map (kbd "C-S-v") 'yank)
+  ;; (define-key evil-insert-state-map (kbd "C-y") 'evil-paste-before)
+  (define-key evil-insert-state-map (kbd "C-y") 'yank)
   (define-key evil-visual-state-map (kbd "{") 'evil-backward-paragraph)
   (define-key evil-visual-state-map (kbd "}") 'evil-forward-paragraph)
   (define-key evil-insert-state-map (kbd "M-w") 'evil-forward-word-begin)
@@ -185,23 +214,23 @@
   (define-key evil-normal-state-map (kbd "gq") 'FormatToThreshold)
   (define-key evil-visual-state-map (kbd "gq") 'FormatToThreshold))
 
-(defun my-move-beginning-of-line ()
-  "Move point to the first non-whitespace character of the line and enter insert mode."
-  (interactive)
-  (evil-first-non-blank)
-  (evil-insert-state))
+;; (defun my-move-beginning-of-line ()
+;;   "Move point to the first non-whitespace character of the line and enter insert mode."
+;;   (interactive)
+;;   (evil-first-non-blank)
+;;   (evil-insert-state))
 
-(defun my-move-end-of-line ()
-  "Move point to the very end of the line and enter insert mode."
-  (interactive)
-  (evil-end-of-line)
-  (evil-insert-state)
-  (unless (eolp)
-    (evil-append-line 1)))
+;; (defun my-move-end-of-line ()
+;;   "Move point to the very end of the line and enter insert mode."
+;;   (interactive)
+;;   (evil-end-of-line)
+;;   (evil-insert-state)
+;;   (unless (eolp)
+;;     (evil-append-line 1)))
 
-(with-eval-after-load 'evil
-  (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
-  (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
+;; (with-eval-after-load 'evil
+;;   (define-key evil-insert-state-map (kbd "M-i") 'my-move-beginning-of-line)
+;;   (define-key evil-insert-state-map (kbd "M-a") 'my-move-end-of-line))
 
 
 ;; Package keybindings
@@ -382,13 +411,17 @@
   (evil-define-key 'normal org-mode-map (kbd "]]") 'my-org-end-of-block))
 
 ;; Keybindings
-
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map (kbd "C-t") nil)
+  (define-key evil-normal-state-map (kbd "RET") 'newline)
   (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
   (define-key evil-insert-state-map (kbd "C-a") 'move-beginning-of-line)
+  (define-key evil-normal-state-map (kbd "g C-a") 'evil-numbers/inc-at-pt-incremental)
+  (define-key evil-normal-state-map (kbd "g C-x") 'evil-numbers/dec-at-pt-incremental)
+  ;; (define-key evil-normal-state-map (kbd "g C-a") 'my-smart-number-operation)
+  ;; (define-key evil-normal-state-map (kbd "g C-x") 'my-decrement-number-forward)
   ;; (evil-define-key 'normal 'global (kbd "M-^") 'projectile-run-async-shell-command-in-root)
-  (define-key evil-normal-state-map (kbd "gz") 'zoxide-travel))
+  (define-key evil-normal-state-map (kbd "gz") 'my/dir-switch))
   ;; (define-key evil-insert-state-map (kbd "C-f C-n") 'eshell-expand-filename-at-point))
 
 ;; (with-eval-after-load 'evil
@@ -474,8 +507,13 @@
   (evil-define-key 'normal debugger-mode-map
     "q" #'quit-window)
 
-  (evil-define-key 'normal messages-buffer-mode-map
-    "q" #'quit-window)
+  ;; Make sure messages buffer map is initialized
+  (with-current-buffer "*Messages*"
+    (unless (derived-mode-p 'messages-buffer-mode)
+      (messages-buffer-mode))
+    (evil-normalize-keymaps)  ;; Force keymaps to update
+    (evil-define-key 'normal messages-buffer-mode-map
+      "q" #'quit-window))
 
   (evil-define-key 'normal compilation-mode-map
     "q" #'quit-window)
@@ -511,5 +549,103 @@
 
 (with-eval-after-load 'evil
   (evil-define-key 'insert global-map
-    (kbd "M-`") (lambda () (interactive) (call-interactively #'tempel-next))
+    (kbd "M-l") (lambda () (interactive) (call-interactively #'tempel-next))
+    (kbd "M-=") (lambda () (interactive) (call-interactively #'tempel-expand))
     (kbd "M-~") (lambda () (interactive) (call-interactively #'tempel-previous))))
+
+(with-eval-after-load 'tempel
+  (add-hook 'evil-insert-state-exit-hook 
+            (lambda ()
+              (when tempel--active
+                (tempel-done)))))
+
+(use-package evil-textobj-tree-sitter :ensure t)
+
+;; bind `function.outer`(entire function block) to `f` for use in things like `vaf`, `yaf`
+(define-key evil-outer-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.outer"))
+;; bind `function.inner`(function block without name and args) to `f` for use in things like `vif`, `yif`
+(define-key evil-inner-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.inner"))
+
+;; Goto start of next function
+(define-key evil-normal-state-map
+            (kbd "]f")
+            (lambda ()
+              (interactive)
+              (evil-textobj-tree-sitter-goto-textobj "function.outer")))
+
+;; Goto start of previous function
+(define-key evil-normal-state-map
+            (kbd "[f")
+            (lambda ()
+              (interactive)
+              (evil-textobj-tree-sitter-goto-textobj "function.outer" t)))
+
+;; Goto end of next function
+(define-key evil-normal-state-map
+            (kbd "]F")
+            (lambda ()
+              (interactive)
+              (evil-textobj-tree-sitter-goto-textobj "function.outer" nil t)))
+
+;; Goto end of previous function
+(define-key evil-normal-state-map
+            (kbd "[F")
+            (lambda ()
+              (interactive)
+              (evil-textobj-tree-sitter-goto-textobj "function.outer" t t)))
+
+
+(defun my-evil-find-and-select-inner (arg)
+  "Prompt for a character, find it using `evil-find-char`. If not found, try `evil-find-char-backward`.
+If a numeric argument ARG is provided (via C-u), search (2*ARG-1) times before selecting.
+After finding, move one character forward/backward accordingly, then execute `vi{char}`."
+  (interactive "p") ;; Capture numeric argument
+  (let* ((char (read-char "Enter character: "))
+         (count (if arg (1- (* 2 arg)) 1)) ;; Calculate occurrences to search
+         (pos (save-excursion
+                (condition-case nil
+                    (progn
+                      (evil-find-char count char)
+                      (point))
+                  (error nil)))))
+    (if pos
+        (progn
+          (evil-find-char count char)
+          (forward-char))
+      (condition-case nil
+          (progn
+            (evil-find-char-backward count char)
+            (backward-char))
+        (error (user-error "Character not found"))))
+    (evil-visual-char)
+    (execute-kbd-macro (kbd (format "i%c" char)))))
+
+
+
+(defun my-evil-find-and-select-outer (arg)
+  "Prompt for a character, find it using `evil-find-char`. If not found, try `evil-find-char-backward`.
+If a numeric argument ARG is provided (via C-u), search (2*ARG-1) times before selecting.
+After finding, move one character forward/backward accordingly, then execute `va{char}`."
+  (interactive "p") ;; Capture numeric argument
+  (let* ((char (read-char "Enter character: "))
+         (count (if arg (1- (* 2 arg)) 1)) ;; Calculate occurrences to search
+         (pos (save-excursion
+                (condition-case nil
+                    (progn
+                      (evil-find-char count char)
+                      (point))
+                  (error nil)))))
+    (if pos
+        (progn
+          (evil-find-char count char)
+          (forward-char))
+      (condition-case nil
+          (progn
+            (evil-find-char-backward count char)
+            (backward-char))
+        (error (user-error "Character not found"))))
+    (evil-visual-char)
+    (execute-kbd-macro (kbd (format "a%c" char)))))
+
+
+

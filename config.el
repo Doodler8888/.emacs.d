@@ -857,9 +857,8 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (setq tempel-path "~/.emacs.d/other/templates")
 )
 
-(use-package tempel-collection
-  :ensure t)
-
+;; (use-package tempel-collection
+;;   :ensure t)
 
 ;; Orderless
 
@@ -1684,7 +1683,7 @@ If an eshell buffer for the directory already exists, switch to it."
   (buffer-terminator-mode 1))
 
 
-;; Envrc
+;; Envrc (direnv)
 
 (use-package envrc
   :ensure t
@@ -2621,3 +2620,4 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; I probably must set it after enabling line numbers. Enabling it from the
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
+

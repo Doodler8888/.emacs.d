@@ -221,53 +221,55 @@
 
 (defun my/simple-next-line (&optional arg)
   "Simple function to move to the next line and close selection if any."
+  (interactive "P")
   (when (region-active-p)
     (deactivate-mark))
   (next-line (or arg 1)))
 
 (defun my/simple-previous-line (&optional arg)
   "Simple function to move to the previous line and close selection if any."
+  (interactive "P")
   (when (region-active-p)
     (deactivate-mark))
   (previous-line (or arg 1)))
 
-(defun my/next-line-close-selection (&optional arg)
-  "Move to the next visual line while preserving the tracked column.
-If the point is not at the end of the line, update the tracked column.
-With prefix ARG, move that many lines."
-  (interactive "p")
-  (if (my/buffer-has-word-wrap-p)
-      (my/simple-next-line arg)
-    ;; Original logic for non-wrapped buffers
-    (when (region-active-p)
-      (deactivate-mark))
-    ;; Update tracked column only if not at the end of the line.
-    (unless (eolp)
-      (setq my/vertical-motion-goal-column (current-column)))
-    ;; Move ARG visual lines down, handling wrapped lines
-    (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
-      (next-line (or arg 1)))
-    ;; Move to the tracked column (defaulting to 0 if nil)
-    (move-to-column (or my/vertical-motion-goal-column 0))))
+;; (defun my/next-line-close-selection (&optional arg)
+;;   "Move to the next visual line while preserving the tracked column.
+;; If the point is not at the end of the line, update the tracked column.
+;; With prefix ARG, move that many lines."
+;;   (interactive "p")
+;;   (if (my/buffer-has-word-wrap-p)
+;;       (my/simple-next-line arg)
+;;     ;; Original logic for non-wrapped buffers
+;;     (when (region-active-p)
+;;       (deactivate-mark))
+;;     ;; Update tracked column only if not at the end of the line.
+;;     (unless (eolp)
+;;       (setq my/vertical-motion-goal-column (current-column)))
+;;     ;; Move ARG visual lines down, handling wrapped lines
+;;     (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
+;;       (next-line (or arg 1)))
+;;     ;; Move to the tracked column (defaulting to 0 if nil)
+;;     (move-to-column (or my/vertical-motion-goal-column 0))))
 
-(defun my/previous-line-close-selection (&optional arg)
-  "Move to the previous visual line while preserving the tracked column.
-If the point is not at the end of the line, update the tracked column.
-With prefix ARG, move that many lines."
-  (interactive "p")
-  (if (my/buffer-has-word-wrap-p)
-      (my/simple-previous-line arg)
-    ;; Original logic for non-wrapped buffers
-    (when (region-active-p)
-      (deactivate-mark))
-    ;; Update tracked column only if not at the end of the line.
-    (unless (eolp)
-      (setq my/vertical-motion-goal-column (current-column)))
-    ;; Move ARG visual lines up, handling wrapped lines
-    (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
-      (previous-line (or arg 1)))
-    ;; Move to the tracked column (defaulting to 0 if nil)
-    (move-to-column (or my/vertical-motion-goal-column 0))))
+;; (defun my/previous-line-close-selection (&optional arg)
+;;   "Move to the previous visual line while preserving the tracked column.
+;; If the point is not at the end of the line, update the tracked column.
+;; With prefix ARG, move that many lines."
+;;   (interactive "p")
+;;   (if (my/buffer-has-word-wrap-p)
+;;       (my/simple-previous-line arg)
+;;     ;; Original logic for non-wrapped buffers
+;;     (when (region-active-p)
+;;       (deactivate-mark))
+;;     ;; Update tracked column only if not at the end of the line.
+;;     (unless (eolp)
+;;       (setq my/vertical-motion-goal-column (current-column)))
+;;     ;; Move ARG visual lines up, handling wrapped lines
+;;     (let ((next-line-add-newlines nil)) ; Don't add newlines when at end of buffer
+;;       (previous-line (or arg 1)))
+;;     ;; Move to the tracked column (defaulting to 0 if nil)
+;;     (move-to-column (or my/vertical-motion-goal-column 0))))
 
 
 (defun my-match-paren-with-selection (arg)
@@ -1626,11 +1628,11 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("A" . meow-append-line-end)
    '("I" . meow-insert-line-start)
    ;; '("j" . meow-next)
-   '("j" . my/next-line-close-selection)
+   '("j" . my/simple-next-line)
    ;; '("j" . next-line)
    '("J" . meow-next-expand)
    ;; '("k" . meow-prev)
-   '("k" . my/previous-line-close-selection)
+   '("k" . my/simple-previous-line)
    ;; '("k" . previous-line)
    ;; '("K" . meow-prev-expand)
    ;; '("K" . eldoc-print-current-symbol-info)

@@ -1,7 +1,5 @@
 emacs-lisp-mode
-(u
-  "(use-package " p ")" n>
-  )
+(u "(use-package " p "\\)")
 
 emacs-lisp-mode
 (uu
@@ -64,11 +62,12 @@ python-ts-mode
 	"subprocess.run(\"" p "\", shell=True, check=True, capture_output=True)"
 	)
 
-python-ts-mode
-(pt
-  "print(f\"This is " p ": {" p "}\")")
-
 (main
     "if __name__ == \"__main__\":" n
     "    main()"
 )
+
+python-ts-mode
+(pt
+  "print(f\"This is " p ": {" p "}\")")
+
