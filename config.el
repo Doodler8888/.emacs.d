@@ -536,6 +536,7 @@
 (setq treesit-language-source-alist
       '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")
         (zig "https://github.com/maxxnino/tree-sitter-zig")
+        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
         (c3 "https://github.com/c3lang/tree-sitter-c3")))
 
 (use-package zig-ts-mode
@@ -1838,6 +1839,9 @@ If an eshell buffer for the directory already exists, switch to it."
                
                ((eq major-mode 'c-ts-mode)
                 (format "clang %s" buffer-file-name))
+
+			   ((eq major-mode 'dockerfile-mode)
+                (format "hadolint -f gnu %s" buffer-file-name))
                
                ;; Fallback to default compile command
                (t compile-command))))
@@ -2621,3 +2625,5 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
 
+
+;; (setq treesit-extra-load-path '("/usr/local/lib"))
