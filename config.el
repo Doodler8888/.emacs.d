@@ -118,6 +118,16 @@
                 mode-line-end-spaces))
 
 
+(defun my-rectangle-mode-cursor-change ()
+  "Change cursor color when entering or leaving rectangle-mark-mode."
+  (if rectangle-mark-mode
+      (set-cursor-color "purple") ; Color when rectangle-mark-mode is active
+    (set-cursor-color "white")))  ; Default cursor color
+
+;; Add hook to run when rectangle-mark-mode is toggled
+(add-hook 'rectangle-mark-mode-hook 'my-rectangle-mode-cursor-change)
+
+
 ;; Tabs
 
 (setq tab-bar-tab-name-format-function #'my-tab-bar-vim-name-format-function)
@@ -160,6 +170,9 @@
 (setq erc-nick "wurfkreuz")
 (global-set-key (kbd "C-x u") 'windmove-up)
 (save-some-buffers t)
+
+;; "Fixes" the bug with with the additional space at the end of a window
+(setq rectangle-indicate-zero-width-rectangle nil)
 
 (setq-default tab-width 4)
 (setq-default indent-tabs-mode t)
@@ -612,6 +625,13 @@
 
 
 (use-package goto-chg)
+
+(defadvice goto-last-change (around repeat-if-same-pos activate)
+  "Repeat goto-last-change if cursor position doesn't change."
+  (let ((old-pos (point)))
+    ad-do-it
+    (when (= old-pos (point))
+      (goto-last-change 1))))
 
 ;; ;; I've being using this code, but i don't remember why
 ;; (defvar-local my-jump-ring '()
@@ -2521,15 +2541,15 @@ If an eshell buffer for the directory already exists, switch to it."
   (interactive)
   (find-file "~/.dotfiles/bash/.bashrc"))
 
+(defun py ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/scripts/python/"))
+
 (defun sh ()
   "Open a specific file."
   (interactive)
   (find-file "~/.dotfiles/scripts/sh/"))
-
-(defun scr ()
-  "Open a specific file."
-  (interactive)
-  (find-file "~/.secret_dotfiles"))
 
 (defun ssh ()
   "Open a specific file."
