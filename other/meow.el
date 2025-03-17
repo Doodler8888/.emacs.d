@@ -570,201 +570,6 @@ START and END are optional boundaries (if nil, use current region)."
   (interactive "p\ncTill backward:")
   (meow-till (- arg) ch))
 
-(defun meow-find-and-select-inner (n ch)
-  "Find the next N occurrence of CH and select its inner content within current line only.
-If no forward match is found, search backward.
-Even-numbered occurrences (pairs) are skipped, so that you only count odd-numbered pairs."
-  (interactive "p\ncFind and select inner:")
-  (let* ((case-fold-search nil)
-         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-         (line-start (line-beginning-position))
-         (line-end (line-end-position))
-         (pos (point))
-         forward-pos
-         backward-pos
-         (thing-char (cond
-                      ((memq ch '(?\( ?\))) ?r)
-                      ((memq ch '(?\[ ?\])) ?s)
-                      ((memq ch '(?\{ ?\})) ?c)
-                      ((memq ch '(?' ?\" ?`)) ?g)
-                      (t nil))))
-    ;; Try forward search first
-    (save-excursion
-      (let ((found 0)
-            (limit line-end))
-        (goto-char line-start)
-        (while (and (< (point) limit)
-                    (search-forward ch-str limit t))
-          (setq found (1+ found))
-          (when (and (= (mod found 2) 1)
-                     (= (/ (+ found 1) 2) n))
-            (setq forward-pos (point))))))
-    
-    ;; If forward search fails, try backward search
-    (when (not forward-pos)
-      (save-excursion
-        (let ((found 0)
-              (limit line-start))
-          (goto-char line-end)
-          (while (and (> (point) limit)
-                      (search-backward ch-str limit t))
-            (setq found (1+ found))
-            (when (and (= (mod found 2) 1)
-                       (= (/ (+ found 1) 2) n))
-              (setq backward-pos (point)))))))
-    
-    (cond
-     ((not (or forward-pos backward-pos))
-      (message "char %s not found in current line" ch-str))
-     (forward-pos
-      (goto-char forward-pos)
-      (cond 
-       ;; Handle single quotes
-       ((eq ch ?')
-        (let ((bounds (meow--parse-single-quote nil)))
-          (when bounds
-            (set-mark (car bounds))
-            (goto-char (cdr bounds)))))
-       ;; Handle backticks explicitly
-       ((eq ch ?`)
-        (let ((start-pos (point)))
-          (backward-char)  ;; Move back to the opening backtick
-          (save-excursion
-            ;; Find the matching backtick
-            (forward-sexp)   ;; Move to the position after the closing backtick
-            (set-mark (1- (point))))  ;; Set mark one char before, excluding the closing backtick
-          (goto-char start-pos)))  ;; Return to the inner content (after opening backtick)
-       ;; Handle other paired delimiters
-       (thing-char
-        (if (memq ch '(?\) ?\] ?\}))
-            (progn
-              (backward-sexp)
-              (forward-char)
-              (set-mark (point))
-              (backward-char)
-              (forward-sexp)
-              (backward-char))
-          (meow-inner-of-thing thing-char)))))
-     (backward-pos
-      (goto-char backward-pos)
-      (cond
-       ;; Handle single quotes
-       ((eq ch ?')
-        (let ((bounds (meow--parse-single-quote nil)))
-          (when bounds
-            (set-mark (car bounds))
-            (goto-char (cdr bounds)))))
-       ;; Handle backticks explicitly
-       ((eq ch ?`)
-        (let ((start-pos (point)))
-          (save-excursion
-            ;; Find the matching backtick
-            (forward-sexp)   ;; Move to the matching closing backtick
-            (backward-char)  ;; Position before the closing backtick
-            (set-mark (point)))  ;; Set mark at end of inner content
-          ;; Now go to the beginning of inner content
-          (forward-char)))  ;; Move to position after opening backtick
-       ;; Handle other paired delimiters
-       (thing-char
-        (if (memq ch '(?\) ?\] ?\}))
-            (progn
-              (forward-char)
-              (backward-sexp)
-              (forward-char)
-              (set-mark (point))
-              (backward-char)
-              (forward-sexp)
-              (backward-char))
-          (meow-inner-of-thing thing-char))))))))
-
-(defun meow-find-and-select-outer (n ch)
-  "Find the next N occurrence of CH and select its outer content within current line only.
-If no forward match is found, search backward."
-  (interactive "p\ncFind and select outer:")
-  (let* ((case-fold-search nil)
-         (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-         (line-start (line-beginning-position))
-         (line-end (line-end-position))
-         (pos (point))
-         forward-pos
-         backward-pos
-         (pair-char (cond
-                     ((eq ch ?\() ?\))
-                     ((eq ch ?\)) ?\()
-                     ((eq ch ?\[) ?\])
-                     ((eq ch ?\]) ?\[)
-                     ((eq ch ?\{) ?\})
-                     ((eq ch ?\}) ?\{)
-                     ((memq ch '(?' ?\" ?`)) ch)
-                     (t nil))))
-    ;; Try forward search first
-    (save-excursion
-      (setq forward-pos (search-forward ch-str line-end t n)))
-    
-    ;; If forward search fails, try backward search
-    (when (not forward-pos)
-      (save-excursion
-        (setq backward-pos (search-backward ch-str line-start t n))))
-    
-    (cond
-     ((not (or forward-pos backward-pos))
-      (message "char %s not found in current line" ch-str))
-     (forward-pos
-      (goto-char forward-pos)
-      (if (memq ch '(?' ?\" ?`))
-          (let ((end-pos (save-excursion
-                           (when (search-forward ch-str line-end t)
-                             (point)))))
-            (if end-pos
-                (progn
-                  (set-mark (1- forward-pos))
-                  (goto-char end-pos))
-              (message "No closing %s found in current line" ch-str)))
-        (when pair-char
-          (if (memq ch '(?\) ?\] ?\}))
-              (progn
-                (set-mark (point))
-                (condition-case nil
-                    (backward-sexp)
-                  (scan-error (goto-char line-start)))
-                (when (< (point) line-start)
-                  (goto-char line-start)))
-            (progn
-              (backward-char)
-              (set-mark (point))
-              (condition-case nil
-                  (forward-sexp)
-                (scan-error (goto-char line-end)))
-              (when (> (point) line-end)
-                (goto-char line-end)))))))
-     (backward-pos
-      (goto-char backward-pos)
-      (if (memq ch '(?' ?\" ?`))
-          (let ((start-pos (save-excursion
-                             (when (search-backward ch-str line-start t)
-                               (point)))))
-            (if start-pos
-                (progn
-                  (set-mark (1+ backward-pos))
-                  (goto-char start-pos))
-              (message "No opening %s found in current line" ch-str)))
-        (when pair-char
-          (if (memq ch '(?\) ?\] ?\}))
-              (progn
-                (forward-char)
-                (set-mark (point))
-                (condition-case nil
-                    (backward-sexp)
-                  (scan-error (goto-char line-start)))
-                (when (< (point) line-start)
-                  (goto-char line-start)))
-            (progn
-              (set-mark (point))
-              (condition-case nil
-                  (forward-sexp)
-                (scan-error (goto-char line-end)))
-              (when (> (point) line-end)
-                (goto-char line-end))))))))))
 
 
 (defun select-inside-whitespace ()
@@ -1518,10 +1323,10 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("0" . my/meow-line-start)
    ;; '("0" . my-meow-line-or-digit-0)
    '("g" . nil)
-   '("g ;" . my/new-goto-last-change)
-   '("g :" . my/new-goto-next-changee)
-   ;; '("g ;" . goto-last-change)
-   ;; '("g :" . goto-last-change-reverse)
+   ;; '("g ;" . my/new-goto-last-change)
+   ;; '("g :" . my/new-goto-next-changee)
+   '("g ;" . goto-last-change)
+   '("g :" . goto-last-change-reverse)
    '("g v" . (lambda () (interactive) (set-mark-command 4)))
    '("g c" . my/meow-smart-comment)
    '("g g" . beginning-of-buffer)
@@ -1543,8 +1348,10 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("W" . meow-mark-symbol)
    '("y" . my/meow-smart-save)
    '("Y" . my/copy-to-end-of-line)
-   '("'" . meow-find-and-select-inner)
-   '("\"" . meow-find-and-select-outer)
+   ;; '("'" . meow-find-and-select-inner)
+   ;; '("\"" . meow-find-and-select-outer)
+   '("'" . find-and-select-inner)
+   '("\"" . find-and-select-outer)
    '("C-y" . my/yank-with-selection)
    ;; '(":" . execute-extended-command)
    '("<escape>" . meow-cancel-selection))
@@ -1613,6 +1420,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("E" . meow-next-symbol-no-dot)
    ;; '("f" . meow-find)
    '("f" . my/meow-find)
+   ;; '("f" . find-char-in-line-forward)
    '("t" . meow-till)
    '("T" . my/meow-till-backward)
    '("F" . my/meow-find-backward)
@@ -1707,8 +1515,10 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("C-M-m" . toggle-messages-buffer) ;; It's transaltes to M-RET
    '("M-y" . toggle-flymake-diagnostics)
    ;; '("'" . repeat)
-   '("'" . meow-find-and-select-inner)
-   '("\"" . meow-find-and-select-outer)
+   ;; '("'" . meow-find-and-select-inner)
+   ;; '("\"" . meow-find-and-select-outer)
+   '("'" . find-and-select-inner)
+   '("\"" . find-and-select-outer)
    ;; '("/" . my/conditional-search-or-avy)
    ;; '("/" . avy-goto-char-all-windows)
    '("/" . isearch-forward)
