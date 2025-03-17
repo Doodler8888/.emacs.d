@@ -219,11 +219,13 @@
         word-wrap-value 
         visual-line-mode-value)))
 
+
 (defun my/simple-next-line (&optional arg)
   "Simple function to move to the next line and close selection if any."
   (interactive "P")
   (when (region-active-p)
     (deactivate-mark))
+  (setq this-command 'next-line)
   (next-line (or arg 1)))
 
 (defun my/simple-previous-line (&optional arg)
@@ -231,7 +233,22 @@
   (interactive "P")
   (when (region-active-p)
     (deactivate-mark))
+  (setq this-command 'previous-line)
   (previous-line (or arg 1)))
+
+;; (defun my/simple-next-line (&optional arg)
+;;   "Simple function to move to the next line and close selection if any."
+;;   (interactive "P")
+;;   (when (region-active-p)
+;;     (deactivate-mark))
+;;   (next-line (or arg 1)))
+
+;; (defun my/simple-previous-line (&optional arg)
+;;   "Simple function to move to the previous line and close selection if any."
+;;   (interactive "P")
+;;   (when (region-active-p)
+;;     (deactivate-mark))
+;;   (previous-line (or arg 1)))
 
 ;; (defun my/next-line-close-selection (&optional arg)
 ;;   "Move to the next visual line while preserving the tracked column.
