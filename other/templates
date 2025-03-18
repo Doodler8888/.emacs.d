@@ -51,6 +51,7 @@ yaml-ts-mode
     "  labels:" n
     "    app: " (p "label value" (my/select-placeholder)) n)
 
+
 python-ts-mode
 (srsc
 	"subprocess.run(\"" p "\", shell=True, check=True)"

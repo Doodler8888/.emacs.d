@@ -10,21 +10,8 @@
 (load "~/.emacs.d/other/meow-parse.el")
 
 
-;; (defvar my/line-numbers-enabled-before nil
-;;   "Stores whether line numbers were enabled before command execution.")
-
-;; (defun my/with-line-numbers-advice (orig-fun &rest args)
-;;   "Advice to enable line numbers during command execution."
-;;   (let ((my/line-numbers-enabled-before display-line-numbers))
-;;     (unless display-line-numbers
-;;       (display-line-numbers-mode 1))
-;;     (unwind-protect
-;;         (apply orig-fun args)
-;;       (unless my/line-numbers-enabled-before
-;;         (display-line-numbers-mode -1)))))
-
-;; ;; Add the advice to your delete command
-;; (advice-add 'my/meow-smart-delete :around #'my/with-line-numbers-advice)
+;; This command is bound to M-i
+(define-key meow-insert-state-keymap (kbd "C-t") 'tab-to-tab-stop)
 
 
 (with-eval-after-load 'tempel
@@ -101,14 +88,6 @@
 ;; (setq-default indent-line-function nil)
 
 
-(defun insert-literal-tab ()
-  "Insert a literal tab character."
-  (interactive)
-  (insert "\t"))
-(global-set-key (kbd "C-M-i") #'insert-literal-tab)
-
-;; (with-eval-after-load 'completion-preview
-;;   (define-key completion-preview-active-mode-map (kbd "TAB") #'completion-at-point))
 (global-set-key (kbd "TAB") #'completion-at-point)
 
 ;; Argument count doesn't get reset right away when i use meow-next/prev
@@ -1507,7 +1486,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
-   ;; '("C-." . my-replay-commands)
+   '("C-." . my-replay-commands)
    ;; '("C-." . my-replay-last-operation)
    ;; '("C-r" . undo-tree-redo)
    '("C-r" . undo-fu-only-redo)
@@ -1616,7 +1595,9 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   :lighter " Rect-Override"
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "e") 'forward-word)
+            (define-key map (kbd "E") 'forward-symbol)
             (define-key map (kbd "b") 'backward-word)
+            (define-key map (kbd "B") 'backward-symbol)
             (define-key map (kbd "l") 'forward-char)
             (define-key map (kbd "h") 'backward-char)
 			(define-key map (kbd "t") 'meow-till-expand)

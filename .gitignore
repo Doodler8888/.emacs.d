@@ -54,6 +54,8 @@ multisession/
 
 .bookmarks
 
+messages/
+
 .config.org.~undo-tree~
 ielm-history.eld
 .ielm_history

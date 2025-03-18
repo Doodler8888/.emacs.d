@@ -203,8 +203,10 @@ Creates each file immediately after it is entered."
   ;; supposed to delete.
   ;; (define-key dired-mode-map (kbd "d") nil)
   (define-key dired-mode-map (kbd "b") 'my/dired-toggle-bak-extension)
-  (define-key dired-mode-map (kbd "j") 'dired-next-line-preserve-column)
-  (define-key dired-mode-map (kbd "k") 'dired-previous-line-preserve-column)
+  ;; (define-key dired-mode-map (kbd "j") 'dired-next-line-preserve-column)
+  ;; (define-key dired-mode-map (kbd "k") 'dired-previous-line-preserve-column)
+  (define-key dired-mode-map (kbd "j") 'dired-next-line)
+  (define-key dired-mode-map (kbd "k") 'dired-previous-line)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory)
   (define-key dired-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
   (define-key dired-mode-map (kbd "I") 'dired-maybe-insert-subdir)

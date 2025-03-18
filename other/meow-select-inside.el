@@ -69,7 +69,7 @@ or used raw (n) for mirrored ones."
           (find-char-in-line-forward forward-char-to-search effective-count)
           (forward-char)
           (my/select-inside-char (if is-mirrored (left-version-of ch) ch)))
-      (message "Character %s not found forward, trying backward" ch-str)
+      ;; (message "Character %s not found forward, trying backward" ch-str)
       (if (save-excursion (find-char-in-line-backward backward-char-to-search effective-count))
           (progn
             (find-char-in-line-backward backward-char-to-search effective-count)
@@ -96,7 +96,7 @@ or used raw (n) for mirrored ones."
           (find-char-in-line-forward forward-char-to-search effective-count)
           (forward-char)
           (my/select-outside-char (if is-mirrored (left-version-of ch) ch)))
-      (message "Character %s not found forward, trying backward" ch-str)
+      ;; (message "Character %s not found forward, trying backward" ch-str)
       (if (save-excursion (find-char-in-line-backward backward-char-to-search effective-count))
           (progn
             (find-char-in-line-backward backward-char-to-search effective-count)

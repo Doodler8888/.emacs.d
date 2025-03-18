@@ -183,24 +183,24 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
                             (flymake-show-diagnostics-buffer)))
                         t))
 
-;; (defun toggle-messages-buffer ()
-;;   "Toggle the display of Messages buffer and move point to penultimate non-whitespace character when showing buffer."
-;;   (interactive)
-;;   (toggle-special-buffer "\\*Messages\\*"
-;;                         (lambda () 
-;;                           (let ((messages-window (display-buffer "*Messages*")))
-;;                             (when messages-window
-;;                               (with-selected-window messages-window
-;;                                 (goto-char (point-max))
-;;                                 (skip-chars-backward " \t\n\r")
-;;                                 (when (> (point) (point-min))
-;;                                   (backward-char 1))))))
-;;                         t))
-
-(defun open-messages-buffer ()
-  "Open the *Messages* buffer."
+(defun toggle-messages-buffer ()
+  "Toggle the display of Messages buffer and move point to penultimate non-whitespace character when showing buffer."
   (interactive)
-  (switch-to-buffer "*Messages*"))
+  (toggle-special-buffer "\\*Messages\\*"
+                        (lambda () 
+                          (let ((messages-window (display-buffer "*Messages*")))
+                            (when messages-window
+                              (with-selected-window messages-window
+                                (goto-char (point-max))
+                                (skip-chars-backward " \t\n\r")
+                                (when (> (point) (point-min))
+                                  (backward-char 1))))))
+                        t))
+
+;; (defun open-messages-buffer ()
+;;   "Open the *Messages* buffer."
+;;   (interactive)
+;;   (switch-to-buffer "*Messages*"))
 
 (defun org-insert-row-with-floor ()
   "Insert a new row with a 'floor' above in an Org mode table."
@@ -827,24 +827,53 @@ are echoed; otherwise, fall back to `previous-error'."
 (define-key prog-mode-map (kbd "M-p") 'my/previous-error)
 
 
+;; (defun my/rectangle-replace-with-numbers (start end)
+;;   "Replace the content of the rectangle region with sequential numbers starting from 1."
+;;   (interactive "r")
+;;   (let* ((start-line (line-number-at-pos start))
+;;          (end-line (line-number-at-pos end))
+;;          (left-col (progn (goto-char start) (current-column)))
+;;          (right-col (progn (goto-char end) (current-column)))
+;;          (left-col (min left-col right-col))
+;;          (right-col (max left-col right-col))
+;;          (nlines (1+ (- end-line start-line))))
+;;     (delete-rectangle start end)
+;;     (goto-char (point-min))
+;;     (forward-line (1- start-line))
+;;     (dotimes (i nlines)
+;;       (move-to-column left-col t)
+;;       (insert (number-to-string (1+ i)))
+;;       (forward-line 1))))
+
 (defun my/rectangle-replace-with-numbers (start end)
-  "Replace the content of the rectangle region with sequential numbers starting from 1."
+  "Replace the content of the rectangle region with sequential numbers starting from the number in the first line's selection.
+If no number is found in the first line, default to 1."
   (interactive "r")
   (let* ((start-line (line-number-at-pos start))
          (end-line (line-number-at-pos end))
-         (left-col (progn (goto-char start) (current-column)))
-         (right-col (progn (goto-char end) (current-column)))
-         (left-col (min left-col right-col))
-         (right-col (max left-col right-col))
-         (nlines (1+ (- end-line start-line))))
+         (orig-left (progn (goto-char start) (current-column)))
+         (orig-right (progn (goto-char end) (current-column)))
+         (left-col (min orig-left orig-right))
+         (right-col (max orig-left orig-right))
+         (nlines (1+ (- end-line start-line)))
+         ;; Determine the starting number from the first line's rectangle.
+         (start-number
+          (save-excursion
+            (goto-char start)
+            (move-to-column left-col t)
+            (let ((num-str (buffer-substring-no-properties
+                            (point)
+                            (progn (move-to-column right-col t) (point)))))
+              (if (string-match "\\([0-9]+\\)" num-str)
+                  (string-to-number (match-string 1 num-str))
+                1)))))
     (delete-rectangle start end)
     (goto-char (point-min))
     (forward-line (1- start-line))
     (dotimes (i nlines)
       (move-to-column left-col t)
-      (insert (number-to-string (1+ i)))
+      (insert (number-to-string (+ start-number i)))
       (forward-line 1))))
-
 
 (defun my-increment-number-forward (&optional inc)
   "Increment the first number found at or after point by INC (default 1)."
@@ -890,138 +919,9 @@ Otherwise, increment the number at point by INC (default 1)."
   (isearch-abort))
 
 
-;; (defun my/find-and-select-inner (n ch)
-;;   "Find the next N occurrence of CH in the current line and select its inner content.
-;; Only odd-numbered occurrences (pairs) are considered. If no forward match is found, search backward.
-;; Works only within the current line."
-;;   (interactive "p\ncFind and select inner:")
-;;   (let* ((ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-;;          (line-start (line-beginning-position))
-;;          (line-end (line-end-position))
-;;          pos)
-;;     ;; Search forward for the nth odd occurrence.
-;;     (setq pos (save-excursion
-;;                 (goto-char line-start)
-;;                 (let ((count 0))
-;;                   (while (and (< (point) line-end)
-;;                               (search-forward ch-str line-end t))
-;;                     (setq count (1+ count))
-;;                     (when (and (= (mod count 2) 1)
-;;                                (= (/ (+ count 1) 2) n))
-;;                       (cl-return (point)))))))
-;;     ;; If not found, try backward search.
-;;     (unless pos
-;;       (setq pos (save-excursion
-;;                   (goto-char line-end)
-;;                   (let ((count 0))
-;;                     (while (and (> (point) line-start)
-;;                                 (search-backward ch-str line-start t))
-;;                       (setq count (1+ count))
-;;                       (when (and (= (mod count 2) 1)
-;;                                  (= (/ (+ count 1) 2) n))
-;;                         (cl-return (point))))))))
-;;     (if (not pos)
-;;         (message "Char %s not found in current line" ch-str)
-;;       (goto-char pos)
-;;       (cond
-;;        ;; Paired delimiters: if opening.
-;;        ((memq ch '(?\( ?\[ ?\{))
-;;         (let ((open pos))
-;;           (condition-case nil
-;;               (progn
-;;                 (forward-sexp)
-;;                 (set-mark (1+ open))
-;;                 (goto-char (1- (point))))
-;;             (error (message "No matching delimiter found")))))
-;;        ;; Paired delimiters: if closing.
-;;        ((memq ch '(?\) ?\] ?\}))
-;;         (condition-case nil
-;;           (progn
-;;             (backward-sexp)
-;;             (let ((open (point)))
-;;               (forward-sexp)
-;;               (set-mark (1+ open))
-;;               (goto-char (1- (point)))))
-;;           (error (message "No matching delimiter found"))))
-;;        ;; Quotes (single or double): assume found instance is the opening.
-;;        ((memq ch '(?\' ?\"))
-;;         (let ((start pos))
-;;           (if (search-forward ch-str line-end t)
-;;               (let ((end (point)))
-;;                 (set-mark (1+ start))
-;;                 (goto-char (1- end)))
-;;             (message "No closing %c found" ch))))
-;;        ;; Backtick: use a slightly different approach.
-;;        ((eq ch ?`)
-;;         (let ((start pos))
-;;           (backward-char) ; move to presumed opening backtick
-;;           (save-excursion
-;;             (condition-case nil
-;;                 (progn
-;;                   (forward-sexp)
-;;                   (set-mark (1- (point))))
-;;               (error (message "No matching backtick found"))))
-;;           (goto-char start)))
-;;        (t
-;;         (message "Character %s not recognized" ch-str))))))
-
-;; (defun my/find-and-select-outer (n ch)
-;;   "Find the next N occurrence of CH in the current line and select its outer content.
-;; If no forward match is found, search backward.
-;; Works only within the current line."
-;;   (interactive "p\ncFind and select outer:")
-;;   (let* ((ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-;;          (line-start (line-beginning-position))
-;;          (line-end (line-end-position))
-;;          pos)
-;;     ;; For outer selection, we use a simple forward (or backward) search.
-;;     (setq pos (or (save-excursion
-;;                     (goto-char line-start)
-;;                     (search-forward ch-str line-end t n))
-;;                   (save-excursion
-;;                     (goto-char line-end)
-;;                     (search-backward ch-str line-start t n))))
-;;     (if (not pos)
-;;         (message "Char %s not found in current line" ch-str)
-;;       (goto-char pos)
-;;       (cond
-;;        ;; For quotes (single, double), select from opening to closing.
-;;        ((memq ch '(?\' ?\")) 
-;;         (let ((start pos))
-;;           (if (search-forward ch-str line-end t)
-;;               (progn
-;;                 ;; outer selection includes the quotes
-;;                 (set-mark start)
-;;                 (goto-char (point)))
-;;             (message "No closing %c found" ch))))
-;;        ;; For backtick, similar idea.
-;;        ((eq ch ?`)
-;;         (let ((start pos))
-;;           (save-excursion
-;;             (if (condition-case nil
-;;                     (progn (forward-sexp) t)
-;;                   (error nil))
-;;                 (progn
-;;                   (backward-char)
-;;                   (set-mark (point)))
-;;               (message "No matching backtick found")))
-;;           (goto-char pos)))
-;;        ;; For paired delimiters: if opening.
-;;        ((memq ch '(?\( ?\[ ?\{))
-;;         (condition-case nil
-;;           (progn
-;;             (set-mark pos)
-;;             (forward-sexp)
-;;             (exchange-point-and-mark))
-;;           (error (message "No matching delimiter found"))))
-;;        ;; For paired delimiters: if closing.
-;;        ((memq ch '(?\) ?\] ?\}))
-;;         (condition-case nil
-;;           (progn
-;;             (backward-sexp)
-;;             (set-mark (point))
-;;             (forward-sexp)
-;;             (exchange-point-and-mark))
-;;           (error (message "No matching delimiter found"))))
-;;        (t
-;;         (message "Character %s not recognized" ch-str))))))
+(defun my/insert-n-tabs (n)
+  "Insert N tabs at point, respecting the buffer-local tab-width."
+  (interactive "nNumber of tabs to insert: ")
+  (let ((tab-text (make-string tab-width ?\s)))
+    (dotimes (_ n)
+      (insert tab-text))))

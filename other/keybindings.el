@@ -12,7 +12,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     
     ("ff" . project-find-file-all)
     ("fd" . project-find-dir)
-    ("fb" . ido-switch-buffer)
+    ;; ("fb" . ido-switch-buffer)
     ;; ("fy" . my/copy-kill-ring-to-clipboard)
 	("fy" . yank-pop)
     ;; ("ff" . ivy-fzf-project)
@@ -68,8 +68,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("e" . open-eshell-in-current-directory)
     ;; ("ep" . eshell-pop) 
 
-    ;; ("m" . toggle-messages-buffer)
-    ("m" . open-messages-buffer)
+    ("m" . toggle-messages-buffer)
+    ;; ("m" . open-messages-buffer)
 
     ("cc" . Cp)
 
@@ -262,27 +262,20 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (define-key org-mode-map (kbd "C-s C-o") 'my-org-outline))
 
 
-(defun my/yaml-newline-and-indent ()
-  "Insert a newline and indent. If the previous line ends with a colon,
-indent the new line with an extra two spaces."
-  (interactive)
-  (newline)
-  (let ((prev-ends-with-colon
-         (save-excursion
-           (forward-line -1)
-           (end-of-line)
-           (skip-chars-backward " \t")
-           (eq (char-before) ?:))))
-    (if prev-ends-with-colon
-        (indent-to (+ (current-indentation) 2))
-      (indent-for-tab-command))))
 
-;; For yaml-mode:
-(add-hook 'yaml-mode-hook
-          (lambda ()
-            (local-set-key (kbd "RET") #'my/yaml-newline-and-indent)))
+;; (defun my/yaml-newline-and-indent ()
+;;   "Insert a newline and indent. If the text before point ends with a colon,
+;; indent the new line with an extra two spaces."
+;;   (interactive)
+;;   (let ((prev-ends-with-colon (save-excursion
+;;                                 (skip-chars-backward " \t")
+;;                                 (eq (char-before) ?:))))
+;;     (newline)
+;;     (if prev-ends-with-colon
+;;         (indent-to (+ (current-indentation) 2))
+;;       (indent-for-tab-command))))
 
-;; And for yaml-ts-mode:
-(add-hook 'yaml-ts-mode-hook
-          (lambda ()
-            (local-set-key (kbd "RET") #'my/yaml-newline-and-indent)))
+;; ;; And for yaml-ts-mode:
+;; (add-hook 'yaml-ts-mode-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "RET") #'my/yaml-newline-and-indent)))

@@ -121,7 +121,7 @@
 (defun my-rectangle-mode-cursor-change ()
   "Change cursor color when entering or leaving rectangle-mark-mode."
   (if rectangle-mark-mode
-      (set-cursor-color "purple") ; Color when rectangle-mark-mode is active
+      (set-cursor-color "#c4a7e7") ; Color when rectangle-mark-mode is active
     (set-cursor-color "white")))  ; Default cursor color
 
 ;; Add hook to run when rectangle-mark-mode is toggled
@@ -175,6 +175,7 @@
 (setq rectangle-indicate-zero-width-rectangle nil)
 
 (setq-default tab-width 4)
+(add-hook 'yaml-ts-mode-hook (lambda () (setq tab-width 2)))
 (setq-default indent-tabs-mode t)
 
 (recentf-mode)
@@ -201,6 +202,7 @@
 ;; (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
 ;; Don't pair '<'
+;; I've tried to disable it only for org-mode and wasn't succesfull.
 (setq electric-pair-inhibit-predicate
       `(lambda (c)
         (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
@@ -231,6 +233,9 @@
 ;; ;; Executable on save if starts with '#!'
 (add-hook 'after-save-hook
         'executable-make-buffer-file-executable-if-script-p)
+
+(make-directory (concat user-emacs-directory "messages") t)
+(setq message-auto-save-directory "~/.emacs.d/messages")
 
 (make-directory (concat user-emacs-directory "auto-saves") t)
 (setq auto-save-file-name-transforms
@@ -443,10 +448,13 @@
             (lambda ()
               (set-face-attribute 'org-verbatim nil
                                   ;; :family "NotoSerifNerdFontPropo-CondensedExtraLight"
-                                  :family "NotoSerifNerdFont"
+                                  ;; :family "NotoSerifNerdFont"
+                                  :family "NotoSerif Nerd Font"
                                   :height 130
                                   ;; :foreground "#8bc34a"  ; Adjust the color as desired
-                                  :weight 'normal))))
+                                  ;; :weight 'normal))))
+                                  ;; :weight 'bold))))
+                                  :weight 'regular))))
 
 ;; Emoji support
 (when (member "Noto Color Emoji" (font-family-list))
@@ -549,6 +557,7 @@
 (setq treesit-language-source-alist
       '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")
         (zig "https://github.com/maxxnino/tree-sitter-zig")
+        (yaml "https://github.com/ikatyang/tree-sitter-yaml")
         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
         (c3 "https://github.com/c3lang/tree-sitter-c3")))
 
@@ -849,7 +858,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; (tempel-trigger-prefix "<")
 
   :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
-         ("M-*" . tempel-insert))
+         ("M-*" . tempel-insert)
+         ("C-j" . tempel-previous)
+         ("C-l" . tempel-next))
 
   :init
 
@@ -2032,8 +2043,6 @@ If an eshell buffer for the directory already exists, switch to it."
 
 
 ;; Org Mode
-;; General
-
 
 (defvar browse-url-default-browser-executable "/usr/bin/librewolf"
   "Path to the default browser executable.")
@@ -2057,6 +2066,8 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq browse-url-browser-function 'my/browse-url-default-browser)
   ;; (setq browse-url-browser-function 'browse-url-default-browser) ;; Make links to open a default web browser.
   (setq org-startup-with-inline-images t)
+  ;; ;; The idea here is to make org-babel to use bash-ts-mode instead of sh-mode
+  ;; (setq org-babel-sh-command "/bin/bash")
   ;; (setq org-edit-src-content-indentation 0)
   (setq org-blank-before-new-entry
         '((heading . nil)
@@ -2066,6 +2077,11 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq org-list-empty-line-terminates-plain-lists nil)
   (setq org-empty-line-terminates-plain-lists nil)
   )
+
+;; Fix org babel with bash-ts-mode
+(defun my-sh--guess-shell ()
+  "/bin/bash")
+(advice-add 'sh--guess-shell :override #'my-sh--guess-shell)
 
 (define-key org-mode-map (kbd "C-x p") #'yank-media)
 
@@ -2230,6 +2246,9 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'org-structure-template-alist '("se" . "src emacs-lisp"))
 (add-to-list 'org-structure-template-alist '("sf" . "src fundamental"))
 (add-to-list 'org-structure-template-alist '("st" . "src text"))
+(add-to-list 'org-structure-template-alist '("so" . "src toml"))
+(add-to-list 'org-structure-template-alist '("sy" . "src yaml-ts"))
+(add-to-list 'org-structure-template-alist '("sj" . "src json-ts"))
 (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
 (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
 (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
@@ -2645,5 +2664,3 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
 
-
-;; (setq treesit-extra-load-path '("/usr/local/lib"))

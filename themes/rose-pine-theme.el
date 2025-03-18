@@ -222,6 +222,7 @@
     `(org-drawer ((,class (:foreground ,rose-pine-subtext))))
     `(org-date ((,class (:foreground ,rose-pine-gold))))
     `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :weight regular))))
+    ;; `(org-code ((,class (:foreground ,rose-pine-foam :background ,rose-pine-blendedbg :weight regular))))
     ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,"#2a2c2d" :weight regular))))
 	
     ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :box (:line-width 1 :color ,rose-pine-fg2)))))
@@ -280,7 +281,7 @@
 
     ;; Tempel
     `(tempel-field ((,class (:foreground ,rose-pine-fg :background unspecified))))
-    `(tempel-default ((,class (:foreground ,rose-pine-fg :background ,rose-pine-blendedbg))))
+    `(tempel-default ((,class (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
     ;; `(tempel-form ((,class (:foreground ,rose-pine-fg :background ,rose-pine-iris))))
 
     ;; Swiper
@@ -363,6 +364,12 @@
 ;;                         :underline `(:style line :color "#c4a7e7" :underline undefined)))) ; rose-pine-iris
 
 ;; (add-hook 'after-init-hook 'my/set-flymake-faces)
+
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (face-remap-add-relative 'font-lock-variable-name-face
+                                    :foreground "#9ccfd8")))
+                                    ;; :weight 'bold)))
 
 ;;;###autoload
 (when load-file-name

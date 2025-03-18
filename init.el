@@ -28,7 +28,7 @@
 (load "~/.emacs.d/other/desktop-session.el")
 (load "~/.emacs.d/other/meow.el")
 (load "~/.emacs.d/other/meow-select-inside.el")
-;; (load "~/.emacs.d/other/meow-dot-repeat.el")
+(load "~/.emacs.d/other/meow-dot-repeat.el")
 (load "~/.emacs.d/eshell/eshell.el")
 (load "~/.emacs.d/other/dired.el")
 (load "~/.emacs.d/other/keybindings.el")
