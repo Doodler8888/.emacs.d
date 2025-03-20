@@ -369,7 +369,6 @@
           (lambda ()
             (face-remap-add-relative 'font-lock-variable-name-face
                                     :foreground "#9ccfd8")))
-                                    ;; :weight 'bold)))
 
 ;;;###autoload
 (when load-file-name

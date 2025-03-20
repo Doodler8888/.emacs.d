@@ -547,10 +547,10 @@
 
 (setq treesit-font-lock-level 4) ;; The default value is 3
 
-(use-package treesit-auto
-  :ensure t
-  :config
-  (global-treesit-auto-mode))
+;; (use-package treesit-auto
+;;   :ensure t
+;;   :config
+;;   (global-treesit-auto-mode))
 
 (use-package clojure-ts-mode)
 
@@ -565,10 +565,13 @@
   :vc (:url "https://codeberg.org/meow_king/zig-ts-mode"
             :rev :newest))
 
-(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 
-(add-hook 'yaml-ts-mode-hook (lambda () 
+;; (add-hook 'yaml-ts-mode-hook (lambda () 
+(add-hook 'yaml-mode-hook (lambda () 
   (auto-fill-mode -1)))
 
 
