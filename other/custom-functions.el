@@ -574,20 +574,6 @@ above with less indentation. Keep the cursor aligned with the calculated column.
             (buffer (cdr mapping)))
         (set-window-buffer window buffer)))))
 
-(defun my/transpose-windows ()
-  "Custom window transposition command.
-If there are 2 windows:
-  - Toggles between vertical and horizontal split
-  - Preserves the active window's position.
-If there are more than 2 windows:
-  - Calls `my-toggle-windows`."
-  (interactive)
-  (let ((windows (window-list)))
-    (if (= (length windows) 2)
-        (transpose-frame))
-      (when (> (length windows) 2)
-        (my/toggle-windows))))
-
 
 (defun my/toggle-case-based-on-first (start end)
   "Toggle the case of the selected region based on its first character.

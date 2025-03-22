@@ -435,3 +435,12 @@ If the file doesn't exist, display an error message."
         (eshell/cd choice)
         (eshell-kill-input)
         (eshell-emit-prompt)))))
+
+
+;; (add-hook 'eshell-mode-hook
+;;             (lambda ()
+;;               (local-set-key (kbd "C-l")
+;;                              (lambda ()
+;;                                (interactive)
+;;                                (eshell/clear 1)
+;;                                (eshell-send-input)))))

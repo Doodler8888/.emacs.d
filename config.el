@@ -11,6 +11,12 @@
   ;; TAB cycle if there are only few candidates
   ;; (completion-cycle-threshold 3)
 
+  (xref-search-program 'ripgrep)
+  (recentf-exclude (list "^/\\(?:ssh\\|su\\|sudo\\)?:"))
+  ;; (help-window-select t)
+  ; allows us to type a new path without having to delete the current one
+  ;; (file-name-shadow-mode 1)
+
   ;; Enable indentation+completion using the TAB key.
   ;; `completion-at-point' is often bound to M-TAB.
   (tab-always-indent 'complete)
@@ -47,6 +53,11 @@
 (tool-bar-mode -1)
 (setq minibuffer-message-timeout 0)
 (setq inhibit-startup-screen t)
+
+;; On Terminal: changes the vertical separator to a full vertical line
+;;              and truncation symbol to a right arrow
+(set-display-table-slot standard-display-table 'vertical-border ?\u2502)
+(set-display-table-slot standard-display-table 'truncation ?\u2192)
 
 (global-display-line-numbers-mode 1)
 (setq display-line-numbers 'visual
@@ -219,6 +230,12 @@
 (setq python-shell-interpreter "/usr/bin/python3")
 
 (defalias 'yes-or-no-p 'y-or-n-p)
+;; Add option "d" to whenever using C-x s or C-x C-c, allowing a quick preview
+;; of the diff of what you're asked to save.
+(add-to-list 'save-some-buffers-action-alist
+			 (list "d"
+				   (lambda (buffer) (diff-buffer-with-file (buffer-file-name buffer)))
+				   "show diff between the buffer and its file"))
 
 (use-package savehist
   :ensure nil
@@ -557,6 +574,7 @@
 (setq treesit-language-source-alist
       '((lua "https://github.com/tree-sitter-grammars/tree-sitter-lua")
         (zig "https://github.com/maxxnino/tree-sitter-zig")
+        (lua "https://github.com/tjdevries/tree-sitter-lua")
         (yaml "https://github.com/ikatyang/tree-sitter-yaml")
         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
         (c3 "https://github.com/c3lang/tree-sitter-c3")))
@@ -843,6 +861,60 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 (require 'ansi-color)
 (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
+
+
+;; Ibuffer
+
+(setq ibuffer-saved-filter-groups
+	'(("default"
+	   ("org" (or
+			   (mode . org-mode)
+			   (name . "^\\*Org Src")
+			   (name . "^\\*Org Agenda\\*$")))
+	   ("tramp" (name . "^\\*tramp.*"))
+	   ("emacs" (or
+				 (name . "^\\*scratch\\*$")
+				 (name . "^\\*Messages\\*$")
+				 (name . "^\\*Warnings\\*$")
+				 (name . "^\\*Shell Command Output\\*$")
+				 (name . "^\\*Async-native-compile-log\\*$")
+				 (name . "^\\*straight-")))
+	   ("ediff" (or
+				 (name . "^\\*ediff.*")
+				 (name . "^\\*Ediff.*")))
+	   ("dired" (mode . dired-mode))
+	   ("terminal" (or
+					(mode . term-mode)
+					(mode . shell-mode)
+					(mode . eshell-mode)))
+	   ("help" (or
+				(name . "^\\*Help\\*$")
+				(name . "^\\*info\\*$")
+				(name . "^\\*helpful"))))))
+
+(add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-switch-to-saved-filter-groups "default")))
+
+(setq ibuffer-show-empty-filter-groups nil) ; don't show empty groups
+
+
+;; Proced
+
+(use-package proced
+  :ensure nil
+  :defer t
+  :custom
+  (proced-enable-color-flag t)
+  (proced-tree-flag t)
+  (proced-auto-update-flag 'visible)
+  (proced-auto-update-interval 1)
+  (proced-descent t)
+  (proced-filter 'user) ;; We can change interactively with `s'
+  :config
+  (add-hook 'proced-mode-hook
+            (lambda ()
+              (proced-toggle-auto-update 1))))
 
 
 ;; Snippets
@@ -1456,7 +1528,7 @@ Prevents highlighting of the minibuffer command line itself."
     (">" enlarge-window-horizontally "increase width")
     ("<" shrink-window-horizontally "decrease width")
     ;; ("t" transpose-frame "transpose windows")
-    ;; ("t" my/transpose-windows "transpose windows")
+    ;; ("t" emacs-solo/transpose-split "transpose windows")
     ("r" rotate-windows "rotate windows")
     ("q" nil "quit")))
 
@@ -1768,26 +1840,18 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Compilation mode
 
-(require 'compile)
-
-;; It's specifically set for go compilation. Maybe it makes compilation mode to
-;; work incorrectly in other cases
-(setq compilation-error-screen-columns nil)
-
-;; ;; ;; It makes the moving pointer to the new window functionality to not work.
-;; (add-to-list 'display-buffer-alist
-;;       '(("\\*compilation\\*"
-;;          (display-buffer-reuse-window display-buffer-pop-up-window)
-;;          (reusable-frames . visible))))
-
-
-;; (defun my-keep-compilation-window ()
-;;   "Prevent the `*compilation*` window from being reused during error navigation."
-;;   (let ((window (get-buffer-window (compilation-find-buffer))))
-;;     (when window
-;;       (set-window-dedicated-p window t))))
-
-;; (add-hook 'compilation-mode-hook 'my-keep-compilation-window)
+(use-package compile
+  :ensure nil
+  :hook
+  (;; Not ideal, but I do not want this poluting the modeline
+   (compilation-start . (lambda () (setq compilation-in-progress nil))))
+  :custom
+  (compilation-always-kill t)
+  (compilation-scroll-output t)
+  (ansi-color-for-compilation-mode t)
+  :config
+  (setq compilation-error-screen-columns nil)
+  (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter))
 
 
 (add-to-list 'compilation-error-regexp-alist
@@ -2000,11 +2064,20 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Eglot
 
-(require 'eglot)
-
-;; This is to make lua-language-server to not stutter when i execute the
-;; 'newline' command
-(setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
+(use-package eglot
+  :ensure nil
+  :custom
+  (eglot-autoshutdown t)
+  (eglot-events-buffer-size 0)
+  (eglot-events-buffer-config '(:size 0 :format full))
+  (eglot-prefer-plaintext t)
+  (jsonrpc-event-hook nil)
+  (eglot-code-action-indications nil) ;; Emacs 31 -- annoying as hell
+  :init
+  ;; This is to make lua-language-server to not stutter when i execute the
+  ;; 'newline' command
+  (setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
+  (fset #'jsonrpc--log-event #'ignore))
 
 ;; (setq eglot-events-buffer-size 0)
 
@@ -2044,6 +2117,11 @@ If an eshell buffer for the directory already exists, switch to it."
 ;;     Kubernetes ["k8s-*.yaml"]
 ;; ))))))))
 
+;; SQL
+
+(add-to-list 'eglot-server-programs
+             '(sql-mode . ("sqls")))
+(add-hook 'sql-mode-hook 'eglot-ensure)
 
 ;; Org Mode
 
@@ -2667,3 +2745,5 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
 
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
