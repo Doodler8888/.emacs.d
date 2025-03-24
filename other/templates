@@ -9,39 +9,118 @@ emacs-lisp-mode
     "  " p n>
     ")")
 
-yaml-ts-mode
+yaml-mode
 (d
     "apiVersion: apps/v1" n
     "kind: Deployment" n
     "metadata:" n
-    "  name: " (p "deployment name") n
-    "  namespace: " (p "namespace name") n
+    "  name: " (p "my-deployment") n
+    "  namespace: " (p "default") n
     "  labels:" n
-    "    app: " (p "label value of the Deployment itself") n
+    "    app: " (p "my-app") n
     "spec:" n
-    "  replicas: " (p "number of replicas") n
+    "  replicas: " (p "1") n
     "  selector:" n
     "    matchLabels:" n
-    "      app: " (p "tells Deployment pods with which label it manage") n
+    "      app: " (p "my-app") n
     "  template:" n
     "    metadata:" n
     "      labels:" n
-    "        app: " (p "what label is going to be applied to new pods") n
+    "        app: " (p "my-app") n
     "    spec:" n
     "      containers:" n
-    "      - name: " (p "container name") n
-    "        image: " (p "image:tag") n
+    "      - name: " (p "my-container") n
+    "        image: " (p "nginx:latest") n
     "        ports:" n
-    "        - containerPort: " (p "port number") n
+    "        - containerPort: " (p "80") n
     "        resources:" n
     "          limits:" n
-    "            cpu: " (p "CPU units (e.g., 500m)") n
-    "            memory: " (p "memory units (e.g., 512Mi)") n
+    "            cpu: " (p "500m") n
+    "            memory: " (p "512Mi") n
     "          requests:" n
-    "            cpu: " (p "CPU units (e.g., 200m)") n
-    "            memory: " (p "memory units (e.g., 256Mi)"))
+    "            cpu: " (p "200m") n
+    "            memory: " (p "256Mi"))
 
-yaml-ts-mode
+yaml-mode
+(pv
+    "apiVersion: v1" n
+    "kind: PersistentVolume" n
+    "metadata:" n
+    "  name: " (p "my-pv") n
+    "  labels:" n
+    "    type: " (p "local") n
+    "spec:" n
+    "  storageClassName: " (p "manual") n
+    "  capacity:" n
+    "    storage: " (p "10Gi") n
+    "  accessModes:" n
+    "    - " (p "ReadWriteOnce") n
+    "  persistentVolumeReclaimPolicy: " (p "Retain") n
+    "  hostPath:" n
+    "    path: " (p "/data/my-pv"))
+
+yaml-mode
+(pvc
+    "apiVersion: v1" n
+    "kind: PersistentVolumeClaim" n
+    "metadata:" n
+    "  name: " (p "my-pvc") n
+    "  namespace: " (p "default") n
+    "spec:" n
+    "  storageClassName: " (p "standard") n
+    "  accessModes:" n
+    "    - " (p "ReadWriteOnce") n
+    "  resources:" n
+    "    requests:" n
+    "      storage: " (p "5Gi"))
+
+yaml-mode
+(service
+    "apiVersion: v1" n
+    "kind: Service" n
+    "metadata:" n
+    "  name: " (p "my-service") n
+    "  namespace: " (p "default") n
+    "spec:" n
+    "  selector:" n
+    "    app: " (p "my-app") n
+    "  ports:" n
+    "  - protocol: " (p "TCP") n
+    "    port: " (p "80") n
+    "    targetPort: " (p "8080") n
+    "  type: " (p "ClusterIP"))
+
+yaml-mode
+(statefulset
+    "apiVersion: apps/v1" n
+    "kind: StatefulSet" n
+    "metadata:" n
+    "  name: " (p "my-statefulset") n
+    "spec:" n
+    "  selector:" n
+    "    matchLabels:" n
+    "      app.kubernetes.io/name: " (p "my-app") n
+    "  replicas: " (p "1") n
+    "  template:" n
+    "    metadata:" n
+    "      labels:" n
+    "        app.kubernetes.io/name: " (p "my-app") n
+    "    spec:" n
+    "      containers:" n
+    "      - name: " (p "my-container") n
+    "        image: " (p "nginx:latest") n
+    "        ports:" n
+    "          - containerPort: " (p "80") n
+    "        volumeMounts:" n
+    "          - name: " (p "data-volume") n
+    "            mountPath: " (p "/data") n
+    "      volumes:" n
+    "        - name: " (p "data-volume") n
+    "          persistentVolumeClaim: " n
+    "            claimName: " (p "my-pvc") n
+    "  serviceName: " (p "my-statefulset-service"))
+
+yaml-mode
 (test
     "apiVersion: apps/v1" n
     "kind: Deployment" n
@@ -51,12 +130,16 @@ yaml-ts-mode
     "  labels:" n
     "    app: " (p "label value" (my/select-placeholder)) n)
 
+yaml-mode
+(name
+	"app.kubernetes.io/name: "
+)
 
 python-ts-mode
 (srsc
 	"subprocess.run(\"" p "\", shell=True, check=True)"
 )
-	
+
 
 python-ts-mode
 (sr
@@ -71,4 +154,3 @@ python-ts-mode
 python-ts-mode
 (pt
   "print(f\"This is " p ": {" p "}\")")
-

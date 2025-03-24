@@ -70,8 +70,8 @@
   (with-current-buffer "*Messages*"
     (display-line-numbers-mode 1)))
 (add-hook 'after-init-hook 'enable-line-numbers-in-messages-buffer)
-(advice-add 'message :after 
-            (lambda (&rest _) 
+(advice-add 'message :after
+            (lambda (&rest _)
               (when (get-buffer "*Messages*")
                 (with-current-buffer "*Messages*"
                   (display-line-numbers-mode 1)))))
@@ -272,13 +272,13 @@
       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
 
-;; (defun fov/disable-backups-for-gpg () 
-;;   "Disable backups and autosaving for files ending in \".gpg\"." 
-;;   (when (and (buffer-file-name) 
-;;              (s-ends-with-p ".gpg" (buffer-file-name) t)) 
-;;     (setq-local backup-inhibited t) 
-;;     (setq-local undo-tree-auto-save-history nil) 
-;;     (auto-save-mode -1))) 
+;; (defun fov/disable-backups-for-gpg ()
+;;   "Disable backups and autosaving for files ending in \".gpg\"."
+;;   (when (and (buffer-file-name)
+;;              (s-ends-with-p ".gpg" (buffer-file-name) t))
+;;     (setq-local backup-inhibited t)
+;;     (setq-local undo-tree-auto-save-history nil)
+;;     (auto-save-mode -1)))
 ;; (add-hook 'find-file-hook #'fov/disable-backups-for-gpg)
 
 ;; ;; First, disable auto-save globally
@@ -520,7 +520,7 @@
     (let* ((state (syntax-ppss))
            (in-string (nth 3 state))
            (string-start (nth 8 state))
-           (double-quote (and string-start 
+           (double-quote (and string-start
                             (eq ?\" (char-after string-start)))))
       (and in-string double-quote))))
 
@@ -564,10 +564,10 @@
 
 (setq treesit-font-lock-level 4) ;; The default value is 3
 
-;; (use-package treesit-auto
-;;   :ensure t
-;;   :config
-;;   (global-treesit-auto-mode))
+(use-package treesit-auto
+  :ensure t
+  :config
+  (global-treesit-auto-mode))
 
 (use-package clojure-ts-mode)
 
@@ -588,8 +588,8 @@
 ;; (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
 ;; (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 
-;; (add-hook 'yaml-ts-mode-hook (lambda () 
-(add-hook 'yaml-mode-hook (lambda () 
+;; (add-hook 'yaml-ts-mode-hook (lambda ()
+(add-hook 'yaml-mode-hook (lambda ()
   (auto-fill-mode -1)))
 
 
@@ -634,7 +634,7 @@
 ;; (defun my/goto-last-change (&optional n)
 ;;   "Move cursor through change history.
 ;; Without argument: go to previous change
-;; With numeric prefix: 
+;; With numeric prefix:
 ;;   - Positive N: go N steps back in history
 ;;   - Negative N: go N steps forward in history"
 ;;   (interactive "P")
@@ -810,7 +810,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   "Toggle between docker layout and previous layout."
   (interactive)
   (let ((mode-name (symbol-name major-mode)))
-    ;; (message "Current mode: %s, contains 'docker': %s" 
+    ;; (message "Current mode: %s, contains 'docker': %s"
     ;;          mode-name
     ;;          (if (string-match-p "docker" mode-name) "yes" "no"))
     (condition-case nil
@@ -1082,7 +1082,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   ;; :after corfu
   :config
   ;; (setq cape-dabbrev-check-other-buffers nil)
-  
+
   ;; Default for all buffers
   (setq completion-at-point-functions
         (list #'tempel-expand  ; or #'tempel-expand
@@ -1105,7 +1105,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                   ;; #'cape-dabbrev)))))
                                   #'my/buffer-words-capf
 								  (lambda ()
-									(when (and (boundp 'eglot--managed-mode) 
+									(when (and (boundp 'eglot--managed-mode)
                                                eglot--managed-mode)
                                       (eglot-completion-at-point))))))))
 
@@ -1119,7 +1119,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                             (list #'tempel-expand  ; or #'tempel-expand
                                   #'elisp-completion-at-point
                                   #'cape-file)))))
-  
+
   ;; Special case for eval-expression-minibuffer
   (add-hook 'eval-expression-minibuffer-setup-hook
             (lambda ()
@@ -1221,12 +1221,12 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                    (cons 'region (buffer-substring-no-properties
                                 (region-beginning)
                                 (region-end))))))
-  
+
   (add-to-list 'embark-pre-action-hooks
                '(find-file embark--mark-target))
-  
+
   (add-to-list 'embark-keymap-alist '(region . embark-region-map))
-  
+
   (define-key embark-region-map (kbd "RET") #'my/find-file-embark))
 
 
@@ -1411,7 +1411,7 @@ Prevents highlighting of the minibuffer command line itself."
   (interactive)
   (let* ((buffers (delete-dups (mapcar #'window-buffer (window-list))))
          (names (mapcar #'buffer-name buffers)))
-    (consult-line-multi 
+    (consult-line-multi
      `(:predicate ,(lambda (buf) (member (buffer-name buf) names))))))
 
 (defun consult-line-visible-region ()
@@ -1462,11 +1462,11 @@ Prevents highlighting of the minibuffer command line itself."
      ((or (string-match-p "Shell command:" prompt)
           (string-match-p "Async shell command:" prompt))
       (my-shell-command-history-and-insert))
-     
+
      ;; For eval expressions
      ((string-match-p "Eval:" prompt)
       (my-eval-history-and-insert))
-     
+
      ;; Default case: combine both histories
      (t
       (let* ((combined-history (append shell-command-history read-expression-history))
@@ -1678,11 +1678,11 @@ Prevents highlighting of the minibuffer command line itself."
       `(("\\*compilation\\*"
          (display-buffer-reuse-window display-buffer-pop-up-window)
          (reusable-frames . visible))
-        
+
         ("\\*Man "
          (display-buffer-reuse-window display-buffer-pop-up-window)
          (post-command-select-window . t))
-        
+
         ("\\*Async Shell Command\\*"
          (display-buffer-reuse-window display-buffer-pop-up-window)
          (post-command-select-window . t))))
@@ -1847,7 +1847,7 @@ If an eshell buffer for the directory already exists, switch to it."
    (compilation-start . (lambda () (setq compilation-in-progress nil))))
   :custom
   (compilation-always-kill t)
-  (compilation-scroll-output t)
+  ;; (compilation-scroll-output t)
   (ansi-color-for-compilation-mode t)
   :config
   (setq compilation-error-screen-columns nil)
@@ -1931,16 +1931,16 @@ If an eshell buffer for the directory already exists, switch to it."
               (cond
                ((eq major-mode 'bash-ts-mode)
                 (format "shellcheck -f gcc %s" buffer-file-name))
-			   
+
                ((eq major-mode 'python-ts-mode)
                 (format "python %s" buffer-file-name))
-               
+
                ((eq major-mode 'c-ts-mode)
                 (format "clang %s" buffer-file-name))
 
 			   ((eq major-mode 'dockerfile-mode)
                 (format "hadolint -f gnu %s" buffer-file-name))
-               
+
                ;; Fallback to default compile command
                (t compile-command))))
 
@@ -2064,20 +2064,23 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Eglot
 
-(use-package eglot
-  :ensure nil
-  :custom
-  (eglot-autoshutdown t)
-  (eglot-events-buffer-size 0)
-  (eglot-events-buffer-config '(:size 0 :format full))
-  (eglot-prefer-plaintext t)
-  (jsonrpc-event-hook nil)
-  (eglot-code-action-indications nil) ;; Emacs 31 -- annoying as hell
-  :init
-  ;; This is to make lua-language-server to not stutter when i execute the
-  ;; 'newline' command
-  (setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
-  (fset #'jsonrpc--log-event #'ignore))
+(require 'eglot)
+
+;; Aplying this config breaks something when i use yaml lsp
+;; (use-package eglot
+;;   :ensure nil
+;;   :custom
+;;   (eglot-autoshutdown t)
+;;   (eglot-events-buffer-size 0)
+;;   (eglot-events-buffer-config '(:size 0 :format full))
+;;   (eglot-prefer-plaintext t)
+;;   (jsonrpc-event-hook nil)
+;;   (eglot-code-action-indications nil) ;; Emacs 31 -- annoying as hell
+;;   :init
+;;   ;; This is to make lua-language-server to not stutter when i execute the
+;;   ;; 'newline' command
+;;   (setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
+;;   (fset #'jsonrpc--log-event #'ignore))
 
 ;; (setq eglot-events-buffer-size 0)
 
@@ -2106,6 +2109,25 @@ If an eshell buffer for the directory already exists, switch to it."
   ;;             (message "Python path: %s" (executable-find "python")))))
 
 
+;; Yaml
+
+(add-to-list 'eglot-server-programs
+             '((yaml-mode) "yaml-language-server" "--stdio"))
+
+;; Configure filetypes equivalent
+(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+
+;; Configure the schema mappings for Kubernetes
+(setq-default eglot-workspace-configuration
+              '((yaml
+                 (schemas . ((kubernetes . ["*/templates/*.yaml"
+                                           "*/kubernetes/*.yaml"
+                                           "*/templates/*.yml"]))))))
+
+;; Hook to start eglot automatically with yaml files
+(add-hook 'yaml-mode-hook 'eglot-ensure)
+
 ;; Example for dir-locals:
 
 ;; ((yaml-ts-mode . ((eglot-workspace-configuration . ((yaml schemas . ((
@@ -2132,7 +2154,7 @@ If an eshell buffer for the directory already exists, switch to it."
   "Browse URL using the default browser."
   (if (and browse-url-default-browser-executable
            (file-executable-p browse-url-default-browser-executable))
-      (start-process 
+      (start-process
        browse-url-default-browser-executable
        nil
        browse-url-default-browser-executable
@@ -2153,7 +2175,7 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq org-blank-before-new-entry
         '((heading . nil)
           (plain-list-item . nil)))
-  
+
   ;; Disable auto-blank-lines in self-insert-command
   (setq org-list-empty-line-terminates-plain-lists nil)
   (setq org-empty-line-terminates-plain-lists nil)

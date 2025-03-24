@@ -20,6 +20,7 @@ bookmarks
 /.lsp-session-v1
 /projectile-bookmarks.eld
 /recentf
+/recentf.eld
 /test
 /persp-confs/
 %backup%~
@@ -29,6 +30,7 @@ eshell_history
 /.cache
 .org-id-locations
 projects
+projects.eld
 /auto-saves
 /lsp-servers
 /.lsp-session-v1
@@ -60,8 +62,6 @@ messages/
 ielm-history.eld
 .ielm_history
 .ielm-history
-
-projects.eld
 
 \#config.org\#
 
