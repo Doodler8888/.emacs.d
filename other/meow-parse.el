@@ -54,7 +54,7 @@
 	  (while (and (not (bobp))
 				  (not (looking-at "^[[:space:]]*$"))
 				  (looking-at (format "^[[:space:]]*%s" comment-char)))
-		(message "Going up, current line: %s" 
+		(message "Going up, current line: %s"
 				(buffer-substring (line-beginning-position) (line-end-position)))
 		(forward-line -1))
 
@@ -70,7 +70,7 @@
 	  (forward-char (length comment-char))
 	  (backward-char 1)  ;; Move back one character to include first letter
 	  (setq block-start (point))
-	  (message "Block start at line %d, pos %d: '%s'" 
+	  (message "Block start at line %d, pos %d: '%s'"
 			  (line-number-at-pos) block-start
 			  (buffer-substring (line-beginning-position) (line-end-position)))
 
@@ -222,6 +222,18 @@ QUOTE-CHAR is the character used for quoting."
   "Parse the bounds for inside backtick quotes selection. Supports multi-line strings."
   (meow--parse-inside-quotes inner "/"))
 
+(defun meow--parse-inside-tildas (inner)
+  "Parse the bounds for inside backtick quotes selection. Supports multi-line strings."
+  (meow--parse-inside-quotes inner "~"))
+
+(defun meow--parse-inside-equals (inner)
+  "Parse the bounds for inside backtick quotes selection. Supports multi-line strings."
+  (meow--parse-inside-quotes inner "="))
+
+(defun meow--parse-inside-asterisks (inner)
+  "Parse the bounds for inside backtick quotes selection. Supports multi-line strings."
+  (meow--parse-inside-quotes inner "*"))
+
 ;; "aoirsetnoarise'oarisetn"
 
 ;; (defun meow--parse-outside-double-quotes (inner)
@@ -284,65 +296,48 @@ QUOTE-CHAR is the character used for quoting."
 ;;        ;; No quotes found
 ;;        (t nil)))))
 
+(defun meow--parse-outside (delim)
+  "Parse the bounds for a string enclosed by DELIM. Supports multi-line strings."
+  (save-excursion
+    (let* ((buffer-start (point-min))
+           (buffer-end (point-max))
+           (start (search-backward (char-to-string delim) buffer-start t))
+           (end (when start
+                  (save-excursion
+                    (goto-char start)
+                    (forward-char 1)
+                    (search-forward (char-to-string delim) buffer-end t)))))
+      (when (and start end)
+        (cons start end)))))
+
 (defun meow--parse-outside-double-quotes (inner)
   "Parse the bounds for outside double quotes selection. Supports multi-line strings."
-  (save-excursion
-	(let* ((buffer-end (point-max))
-		   (buffer-start (point-min))
-		   (start-quote (save-excursion
-						  (search-backward "\"" buffer-start t)))
-		   (end-quote (when start-quote
-						(save-excursion
-						  (goto-char start-quote)
-						  (forward-char 1)
-						  (search-forward "\"" buffer-end t)))))
-	  (when (and start-quote end-quote)
-		(cons start-quote end-quote)))))
+  (meow--parse-outside ?\"))
 
 (defun meow--parse-outside-slashes (inner)
-  "Parse the bounds for outside single quotes selection. Supports multi-line strings."
-  (save-excursion
-	(let* ((buffer-end (point-max))
-		   (buffer-start (point-min))
-		   (start-quote (save-excursion
-						  (search-backward "/" buffer-start t)))
-		   (end-quote (when start-quote
-						(save-excursion
-						  (goto-char start-quote)
-						  (forward-char 1)
-						  (search-forward "/" buffer-end t)))))
-	  (when (and start-quote end-quote)
-		(cons start-quote end-quote)))))
+  "Parse the bounds for outside slashes selection. Supports multi-line strings."
+  (meow--parse-outside ?/))
 
 (defun meow--parse-outside-single-quotes (inner)
   "Parse the bounds for outside single quotes selection. Supports multi-line strings."
-  (save-excursion
-	(let* ((buffer-end (point-max))
-		   (buffer-start (point-min))
-		   (start-quote (save-excursion
-						  (search-backward "'" buffer-start t)))
-		   (end-quote (when start-quote
-						(save-excursion
-						  (goto-char start-quote)
-						  (forward-char 1)
-						  (search-forward "'" buffer-end t)))))
-	  (when (and start-quote end-quote)
-		(cons start-quote end-quote)))))
+  (meow--parse-outside ?'))
 
 (defun meow--parse-outside-backtick-quotes (inner)
   "Parse the bounds for outside backtick quotes selection. Supports multi-line strings."
-  (save-excursion
-	(let* ((buffer-end (point-max))
-		   (buffer-start (point-min))
-		   (start-quote (save-excursion
-						  (search-backward "`" buffer-start t)))
-		   (end-quote (when start-quote
-						(save-excursion
-						  (goto-char start-quote)
-						  (forward-char 1)
-						  (search-forward "`" buffer-end t)))))
-	  (when (and start-quote end-quote)
-		(cons start-quote end-quote)))))
+  (meow--parse-outside ?`))
+
+(defun meow--parse-outside-tildas (inner)
+  "Parse the bounds for outside backtick quotes selection. Supports multi-line strings."
+  (meow--parse-outside ?~))
+
+(defun meow--parse-outside-equals (inner)
+  "Parse the bounds for outside backtick quotes selection. Supports multi-line strings."
+  (meow--parse-outside ?=))
+
+(defun meow--parse-outside-asterisks (inner)
+  "Parse the bounds for outside backtick quotes selection. Supports multi-line strings."
+  (meow--parse-outside ?*))
+
 
 ;; You might also want a combined function that finds the closest quotes
 (defun meow--parse-outside-quotes (inner)
@@ -410,14 +405,14 @@ or nil if no valid emphasis is found."
               ;; Calculate proper boundaries including both markers
               ;; but excluding any trailing whitespace
               (cons begin (+ begin (1+ last-tilde)))))))
-       
+
        ;; Regular handling for other emphasis types
        ((memq type '(bold italic strike-through underline))
         (when (and begin end)
           (let* ((raw-text (buffer-substring-no-properties begin end))
                  (trimmed-text (replace-regexp-in-string "[ \t\n]+\\'" "" raw-text)))
             (cons begin (+ begin (length trimmed-text))))))
-       
+
        ;; No valid emphasis found
        (t nil)))))
 
@@ -429,7 +424,7 @@ or nil if no valid emphasis is found."
 		 (type (org-element-type element))
 		 (begin (org-element-property :begin element))
 		 (end (org-element-property :end element))
-		 (raw-text (when (and begin end) 
+		 (raw-text (when (and begin end)
 					 (buffer-substring-no-properties begin end))))
 	(message "Type: %s, Begin: %s, End: %s, Raw text: %s"
 			 type begin end raw-text)))
@@ -447,7 +442,7 @@ or nil if no valid emphasis is found."
 ;; (add-to-list 'meow-char-thing-table '(?\. . my-sentence))
 (add-to-list 'meow-char-thing-table '(?w . whitespace))
 (add-to-list 'meow-char-thing-table '(?a . comment))
-(add-to-list 'meow-char-thing-table '(?o . org))
+;; (add-to-list 'meow-char-thing-table '(?o . org))
 
 (advice-add 'meow--parse-inner-of-thing-char :around
 			(lambda (orig-fun ch)
@@ -455,11 +450,14 @@ or nil if no valid emphasis is found."
 			   ((eq ch ?m) (meow--parse-inside-sentence t))
 			   ((eq ch ?w) (meow--parse-inside-whitespace t))
 			   ((eq ch ?g) (meow--parse-inside-double-quotes t))
-			   ((eq ch ?') (meow--parse-inside-single-quotes t))
+			   ;; ((eq ch ?') (meow--parse-inside-single-quotes t))
 			   ((eq ch ?`) (meow--parse-inside-backtick-quotes t))
 			   ((eq ch ?/) (meow--parse-inside-slashes t))
 			   ((eq ch ?a) (meow--parse-inside-comment t))
-			   ((eq ch ?o) (meow--parse-inside-org t))
+			   ((eq ch ?~) (meow--parse-inside-tildas t))
+			   ((eq ch ?=) (meow--parse-inside-equals t))
+			   ((eq ch ?*) (meow--parse-inside-asterisks t))
+			   ;; ((eq ch ?o) (meow--parse-inside-org t))
 			   (t (funcall orig-fun ch)))))
 
 (advice-add 'meow--parse-bounds-of-thing-char :around
@@ -468,9 +466,12 @@ or nil if no valid emphasis is found."
 			   ((eq ch ?w) (meow--parse-outside-whitespace t))
 			   ((eq ch ?m) (meow--parse-outside-sentence t))
 			   ((eq ch ?g) (meow--parse-outside-double-quotes t))
-			   ((eq ch ?') (meow--parse-outside-single-quotes t))
+			   ;; ((eq ch ?') (meow--parse-outside-single-quotes t))
 			   ((eq ch ?`) (meow--parse-outside-backtick-quotes t))
 			   ((eq ch ?/) (meow--parse-outside-slashes t))
 			   ((eq ch ?a) (meow--parse-outside-comment t))
-			   ((eq ch ?o) (meow--parse-outside-org t))
+			   ;; ((eq ch ?o) (meow--parse-outside-org t))
+			   ((eq ch ?~) (meow--parse-outside-tildas t))
+			   ((eq ch ?=) (meow--parse-outside-equals t))
+			   ((eq ch ?*) (meow--parse-outside-asterisks t))
 			   (t (funcall orig-fun ch)))))
