@@ -1,3 +1,5 @@
+(setq dired-listing-switches "-l --block-size=K")
+
 (defun tramp-file-name-with-doas (filename)
   "Convert FILENAME into a multi-hop file name with \"doas\"."
   (let ((tramp-file-name-with-method "doas"))
@@ -14,7 +16,7 @@
   "Create a symlink with sudo capability if needed."
   (interactive "P")
   (let* ((src-files (dired-get-marked-files t arg))
-         (dest (read-file-name (format "Symlink %s to: " 
+         (dest (read-file-name (format "Symlink %s to: "
                                        (if (cdr src-files) "files" "file"))
                                (dired-dwim-target-directory)))
          (dest-dir (if (file-directory-p dest) dest (file-name-directory dest)))
@@ -48,7 +50,7 @@
                     (let ((default-directory "/sudo::"))
                       (make-symbolic-link sudo-src sudo-dest t)))
                 (make-symbolic-link sudo-src sudo-dest t))
-              (message "Created symlink: %s -> %s" 
+              (message "Created symlink: %s -> %s"
                        (if use-sudo (concat "/sudo::..." (file-name-nondirectory src)) src)
                        (if use-sudo (concat "/sudo::..." (file-name-nondirectory sudo-dest)) sudo-dest)))
           (file-error
@@ -167,7 +169,7 @@ If the target file/directory exists, prompt to delete it before proceeding."
     (revert-buffer)
     (message "%s %s." msg-prefix (if any-copied "copied" "renamed")))))
 
-	
+
 (defun my/dired-create-empty-files ()
   "Create multiple empty files in current dired directory.
 Creates each file immediately after it is entered."
@@ -189,7 +191,7 @@ Creates each file immediately after it is entered."
   "Get size of file/directory at point using du."
   (interactive)
   (let* ((file (dired-get-filename))
-         (size (string-trim (shell-command-to-string 
+         (size (string-trim (shell-command-to-string
                             (format "du -sh %s" (shell-quote-argument file))))))
     (message "%s" size)))
 
@@ -214,4 +216,3 @@ Creates each file immediately after it is entered."
   (define-key dired-mode-map (kbd "/") 'isearch-forward)
   (define-key dired-mode-map (kbd "?") 'isearch-backward)
   (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))
-

@@ -4,6 +4,8 @@
   :custom
     ;; Support opening new minibuffers from inside existing minibuffers.
   (enable-recursive-minibuffers t)
+  (help-window-select t)
+  (file-name-shadow-mode 1)
   ;; Emacs 28 and newer: Hide commands in M-x which do not work in the current
   ;; mode.  Vertico commands are hidden in normal buffers. This setting is
   ;; useful beyond Vertico.
@@ -271,6 +273,12 @@
 (setq backup-directory-alist
       `((".*" . ,(concat user-emacs-directory "backups/"))))
 
+(defun my-disable-lockfiles-in-tramp ()
+  "Disable lockfiles when editing remote files via TRAMP."
+  (when (tramp-tramp-file-p (buffer-file-name))
+    (setq-local create-lockfiles nil)))
+
+(add-hook 'find-file-hook #'my-disable-lockfiles-in-tramp)
 
 ;; (defun fov/disable-backups-for-gpg ()
 ;;   "Disable backups and autosaving for files ending in \".gpg\"."
@@ -363,6 +371,8 @@
               "/home/wurfkreuz/.ghcup/bin"
               "/home/wurfkreuz/go/bin/"
               "/home/wurfkreuz/test-dir/"
+              "/home/wurfkreuz/.dotfiles/scripts/python"
+              "/home/wurfkreuz/.dotfiles/scripts/sh"
 			  "/home/wurfkreuz/perl5/bin"
               "/usr/bin")))
   ;; (setq exec-path (append paths exec-path))
@@ -917,14 +927,9 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
               (proced-toggle-auto-update 1))))
 
 
-;; Snippets
+;; Snippets/Tempel
 
-(defun my/select-placeholder ()
-  "Select the placeholder text on the current line."
-  (set-mark (point))
-  (end-of-line)
-  (point))
-
+(require 'base64)
 
 (use-package tempel
   :ensure t
@@ -963,6 +968,18 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   :config
   (setq tempel-path "~/.emacs.d/other/templates")
 )
+
+(with-eval-after-load 'tempel
+  (defun tempel-base64 (elt fields)
+	"Custom Tempel element that encodes the value of a field in Base64.
+     Usage in a template: (base64 FIELD-NAME)"
+	(pcase elt
+      (`(base64 ,field)
+       (let ((value (alist-get field fields)))
+		 (if value
+			 (base64-encode-string value t)
+           "")))))
+  (add-to-list 'tempel-user-elements #'tempel-base64))
 
 ;; (use-package tempel-collection
 ;;   :ensure t)
@@ -1527,6 +1544,7 @@ Prevents highlighting of the minibuffer command line itself."
     ("-" shrink-window "decrease height")
     (">" enlarge-window-horizontally "increase width")
     ("<" shrink-window-horizontally "decrease width")
+    ("t" transpose-window-layout "transpose windows")
     ;; ("t" transpose-frame "transpose windows")
     ;; ("t" emacs-solo/transpose-split "transpose windows")
     ("r" rotate-windows "rotate windows")
@@ -1550,8 +1568,12 @@ Prevents highlighting of the minibuffer command line itself."
  `(:application tramp :protocol "sudo" :machine ,(system-name))
  'remote-trash-directory)
 
-;; ;; Auto-revert for sudo files
-(add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
+;; Auto-revert for sudo files
+;; Hardcoding it like this causes problems
+;; (add-to-list 'auto-revert-remote-files "/sudo:root@localhost:/")
+
+;; (setq auto-revert-remote-files '("/ssh:" "/scp:" "/sudo:" "/sftp:"))
+(setq auto-revert-remote-files nil)
 
 ;; This setting isn't about the ability to change permission bits, but about
 ;; disabling confirmation on file renaming.
@@ -1692,22 +1714,22 @@ Prevents highlighting of the minibuffer command line itself."
         ;;  (display-buffer-reuse-window display-buffer-pop-up-window)
         ;;  (post-command-select-window . t))))
 
-;; Function to focus help buffer after it's displayed
-(defun my/focus-help-buffer (&rest _)
-  "Focus the help buffer after it's displayed."
-  (when (get-buffer "*Help*")
-    (let ((help-window (get-buffer-window "*Help*")))
-      (when help-window
-        (select-window help-window)))))
-
-;; Add advice to help-related functions
-(advice-add 'help-buffer-toggle :after #'my/focus-help-buffer)
-(advice-add 'describe-function :after #'my/focus-help-buffer)
-(advice-add 'describe-variable :after #'my/focus-help-buffer)
-(advice-add 'describe-key :after #'my/focus-help-buffer)
-(advice-add 'describe-mode :after #'my/focus-help-buffer)
-(advice-add 'describe-package :after #'my/focus-help-buffer)
-(advice-add 'view-echo-area-messages :after #'my/focus-help-buffer)
+;; I commented the code because i found the '(help-window-select t)' option
+;; ;; Function to focus help buffer after it's displayed
+;; (defun my/focus-help-buffer (&rest _)
+;;   "Focus the help buffer after it's displayed."
+;;   (when (get-buffer "*Help*")
+;;     (let ((help-window (get-buffer-window "*Help*")))
+;;       (when help-window
+;;         (select-window help-window)))))
+;; ;; Add advice to help-related functions
+;; (advice-add 'help-buffer-toggle :after #'my/focus-help-buffer)
+;; (advice-add 'describe-function :after #'my/focus-help-buffer)
+;; (advice-add 'describe-variable :after #'my/focus-help-buffer)
+;; (advice-add 'describe-key :after #'my/focus-help-buffer)
+;; (advice-add 'describe-mode :after #'my/focus-help-buffer)
+;; (advice-add 'describe-package :after #'my/focus-help-buffer)
+;; (advice-add 'view-echo-area-messages :after #'my/focus-help-buffer)
 
 (defun my-eldoc-print-and-switch ()
   "Print eldoc info and switch to its buffer."
@@ -1941,6 +1963,10 @@ If an eshell buffer for the directory already exists, switch to it."
 			   ((eq major-mode 'dockerfile-mode)
                 (format "hadolint -f gnu %s" buffer-file-name))
 
+			   ((and (eq major-mode 'nix-mode)
+					 (string-equal (buffer-name) "home.nix"))
+				(format "home-manager switch"))
+
                ;; Fallback to default compile command
                (t compile-command))))
 
@@ -1948,6 +1974,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-hook 'bash-ts-mode-hook #'my/set-compile-command)
 (add-hook 'python-ts-mode-hook #'my/set-compile-command)
 (add-hook 'c-ts-mode-hook #'my/set-compile-command)
+(add-hook 'nix-mode-hook #'my/set-compile-command)
 
 
 ;; (add-to-list 'compilation-error-regexp-alist 'shellcheck)
@@ -2112,7 +2139,8 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; Yaml
 
 (add-to-list 'eglot-server-programs
-             '((yaml-mode) "yaml-language-server" "--stdio"))
+             ;; '((yaml-mode) "yaml-language-server" "--stdio"))
+             '((yaml-ts-mode) "yaml-language-server" "--stdio"))
 
 ;; Configure filetypes equivalent
 (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
@@ -2127,6 +2155,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Hook to start eglot automatically with yaml files
 (add-hook 'yaml-mode-hook 'eglot-ensure)
+(add-hook 'yaml-ts-mode-hook 'eglot-ensure)
 
 ;; Example for dir-locals:
 
@@ -2354,7 +2383,8 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'org-structure-template-alist '("sj" . "src json-ts"))
 (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
 (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
-(add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
+(add-to-list 'org-structure-template-alist '("sc" . "src conf"))
+;; (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
 
 ;; It's displayed incorrectly in icomplete-vertical and causes a stutter with
 ;; vertico

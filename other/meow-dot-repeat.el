@@ -14,7 +14,7 @@
   "Stores the number of times to expand the selection.")
 
 ;; Define groups for selection and action commands using command names
-(defvar my-selection-commands '(meow-inner-of-thing meow-bounds-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till my-forward-char-with-selection my-backward-char-with-selection meow-back-word my/forward-list my/backward-list)
+(defvar my-selection-commands '(meow-inner-of-thing meow-bounds-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till meow-back-word)
   "Commands that create selections.")
 
 (defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete
@@ -59,17 +59,17 @@ For delete-surrounding-symbol, force ARGS to nil."
   (when (eq (my-command-name cmd) 'delete-surrounding-symbol)
     (setq args nil))
   (let ((command-entry (cons cmd args)))
-    (setq my-command-history 
+    (setq my-command-history
           (if (< (length my-command-history) 2)
               (append my-command-history (list command-entry))
             (append (cdr my-command-history) (list command-entry))))
-    
+
     (when (my-valid-combination-p my-command-history)
-      (setq my-last-combination 
+      (setq my-last-combination
             (list (car my-command-history)
                   my-meow-expand-count
                   (cadr my-command-history))))
-    
+
     (when (member (my-command-name cmd) my-selection-commands)
       (setq my-meow-expand-count nil))
     (setq my-last-action 'command)))
@@ -120,4 +120,3 @@ For delete-surrounding-symbol, store no arguments."
 
 (dolist (cmd my-selection-commands)
   (advice-add cmd :before #'my-reset-expand-count))
-

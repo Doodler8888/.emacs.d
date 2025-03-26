@@ -9,7 +9,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 (my-bind-keys "C-c "
   '(
     ;; ("ff" . project-find-file)
-    
+
     ("ff" . project-find-file-all)
     ("fd" . project-find-dir)
     ;; ("fb" . ido-switch-buffer)
@@ -50,7 +50,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("d" . my-decrement-number-forward)
     ("i" . my-increment-number-forward)
-    
+
     ("w"  . hydra-window-size/body)
 
     ("pt" . popper-toggle-type)
@@ -63,10 +63,10 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("vo" . eval-defun)
 
     ("j" . avy-jump-to-window)
-    
+
     ("E"  . eshell)
     ("e" . open-eshell-in-current-directory)
-    ;; ("ep" . eshell-pop) 
+    ;; ("ep" . eshell-pop)
 
     ("m" . toggle-messages-buffer)
     ;; ("m" . open-messages-buffer)
@@ -80,14 +80,14 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ("ud" . tramp-revert-buffer-with-doas)
     ("ue" . my-tramp-cleanup)
 
-    ("gm" . pop-global-mark) 
+    ("gm" . pop-global-mark)
 
     ("xx" . add-execute-permissions-to-current-file)
     ("xr" . add-write-permissions-to-current-file)
 
     ;; ("za" . my/zoxide-add)
     ;; ("za" . my/dir-add)
-    
+
     ;; ("mm" . messages)
     ;; ("mm" . toggle-messages-buffer)
 
@@ -175,6 +175,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   (define-key mode-map (kbd "C-w H") 'windmove-swap-states-left)
   (define-key mode-map (kbd "C-w J") 'windmove-swap-states-down)
   (define-key mode-map (kbd "C-w K") 'windmove-swap-states-up)
+  (define-key mode-map (kbd "C-w =") 'balance-windows)
   (define-key mode-map (kbd "C-w L") 'windmove-swap-states-right)
 
   ;; Select windows by number

@@ -15,7 +15,7 @@
 
 
 (with-eval-after-load 'tempel
-  (add-hook 'meow-insert-exit-hook 
+  (add-hook 'meow-insert-exit-hook
             (lambda ()
               (when tempel--active
                 (tempel-done)))))
@@ -102,7 +102,7 @@
 ;; (advice-add 'meow-prev :after #'my/reset-prefix-arg)
 
 ;; For number hints to work in org mode
-(setq meow-expand-exclude-mode-list 
+(setq meow-expand-exclude-mode-list
       (remove 'org-mode meow-expand-exclude-mode-list))
 
 
@@ -177,7 +177,7 @@
         (word-wrap-by-category (and (boundp 'word-wrap-by-category)
                                     word-wrap-by-category))
         (wrap-prefix-value (and (boundp 'wrap-prefix) wrap-prefix)))
-    
+
     ;; Print debug info to message buffer
   ;;   (message "Word wrap detection:
   ;; truncate-lines: %s (nil means wrapping is ON)
@@ -190,12 +190,12 @@
   ;;            visual-line-mode-value
   ;;            word-wrap-by-category
   ;;            wrap-prefix-value)
-    
-    ;; Logic: 
+
+    ;; Logic:
     ;; - truncate-lines = nil means line wrapping is ON
     ;; - visual-line-mode being active also means wrapping is ON
-    (or (not truncate-lines-value) 
-        word-wrap-value 
+    (or (not truncate-lines-value)
+        word-wrap-value
         visual-line-mode-value)))
 
 
@@ -272,7 +272,7 @@
   "Go to the matching parenthesis and select the enclosed text, including the delimiters.
 If not on a parenthesis, insert % or do nothing if in Meow mode."
   (interactive "p")
-  (cond 
+  (cond
    ((looking-at "\\s(")
     (let ((start (point)))
       (forward-sexp 1)
@@ -510,7 +510,7 @@ Adds spaces when using right brackets."
          (is-closing (assoc new-symbol reverse-pairs))
          (new-open (or (car is-opening) (cdr is-closing) new-symbol))
          (new-close (or (cdr is-opening) (car is-closing) new-symbol)))
-    (when (or 
+    (when (or
            (and (equal first-char (car (assoc first-char pairs)))
                 (equal last-char (cdr (assoc first-char pairs))))
            (and (member first-char '("\"" "'" "`" "/"))
@@ -528,7 +528,7 @@ START and END are optional boundaries (if nil, use current region)."
   (let* ((actual-start (or start (region-beginning)))
          (actual-end (or end (region-end)))
          (region-text (buffer-substring-no-properties actual-start actual-end)))
-    ;; (message "delete-surrounding-symbol: Initial region: %d - %d, text: \"%s\"" 
+    ;; (message "delete-surrounding-symbol: Initial region: %d - %d, text: \"%s\""
     ;;          actual-start actual-end region-text)
     (let ((content (substring region-text 1 -1)))
       ;; (message "delete-surrounding-symbol: Content after removing first and last char: \"%s\"" content)
@@ -683,11 +683,11 @@ When pasting over a selection, the replaced text is NOT saved to the kill ring."
                                           t)
                           (or (gui-get-selection 'CLIPBOARD)
                               (current-kill 0 t)))))
-    
+
     (when (region-active-p)
       ;; Simply delete the region without saving it to the kill ring
       (delete-region (region-beginning) (region-end)))
-    
+
     (dotimes (_ repeat-count)
       (if (string-suffix-p "\n" text-to-paste)
           (progn
@@ -708,7 +708,7 @@ If clipboard contains a single line, it pastes that line to all rows in the sele
       (yank)
     (let* ((clipboard-text (or (gui-get-selection 'CLIPBOARD) (current-kill 0 t)))
            (lines (split-string clipboard-text "\n"))
-           (start-col (save-excursion 
+           (start-col (save-excursion
                         (goto-char (region-beginning))
                         (current-column)))
            (start-line (line-number-at-pos (region-beginning)))
@@ -717,13 +717,13 @@ If clipboard contains a single line, it pastes that line to all rows in the sele
            (start-pos (region-beginning))
            ;; Handle the single-line clipboard case
            (single-line-mode (= 1 (length lines))))
-      
+
       ;; Delete rectangle
       (delete-rectangle (region-beginning) (region-end))
-      
+
       ;; Go to starting position
       (goto-char start-pos)
-      
+
       ;; Insert each line at the correct position
       (dotimes (i num-lines)
         (move-to-column start-col t)
@@ -735,7 +735,7 @@ If clipboard contains a single line, it pastes that line to all rows in the sele
             (insert (nth i lines))))
         (when (< i (1- num-lines))
           (forward-line 1)))
-      
+
       ;; Position cursor at the beginning of the pasted content
       (goto-char start-pos)
       (move-to-column start-col))))
@@ -764,7 +764,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
                           (or (gui-get-selection 'CLIPBOARD)
                               (current-kill 0 t))))
          (ends-with-newline (string-suffix-p "\n" text-to-paste))
-         (full-line-p (and ends-with-newline 
+         (full-line-p (and ends-with-newline
                            (string-match-p "^\n*.*\n$" text-to-paste)
                            (or (bolp) (not (region-active-p))))))
     ;; If region is active, kill it first to update the kill ring
@@ -772,12 +772,12 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       (let ((region-text (buffer-substring (region-beginning) (region-end))))
         (delete-region (region-beginning) (region-end))
         (kill-new region-text)))
-    
+
     ;; Move forward only if at the start of a line and pasting something with a newline
     ;; AND we're not at the end of the buffer
-    (when (and (bolp) ends-with-newline (not (eobp))) 
+    (when (and (bolp) ends-with-newline (not (eobp)))
       (forward-char))
-    
+
     ;; Record initial position for line pastes
     (let ((paste-start-pos (point)))
       ;; Do the paste
@@ -790,7 +790,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
               (when (and (not (bolp)) (> repeat-count 1))
                 (forward-line)))
           (insert text-to-paste)))
-      
+
       ;; Fix cursor position for line pastes to be more Vim-like
       (when (and full-line-p ends-with-newline)
         (goto-char paste-start-pos)
@@ -875,6 +875,12 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (interactive)
   (meow-line 1)
   (avy-goto-line))
+
+(defun my/generic-insert ()
+  "Like Vim's insert. Cancels any current selection."
+  (interactive)
+  (deactivate-mark)
+  (meow--switch-state 'insert))
 
 (defun meow-insert-line-start ()
   "Like Vim's I: move to first non-whitespace character and enter insert mode."
@@ -974,12 +980,12 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
         (cons (point-min)
               (min (point-max)
                    (1+ (line-end-position)))))
-       
+
        ;; Handle G (end of buffer)
        ((eq motion-cmd 'end-of-buffer)
         (cons (line-beginning-position)
               (point-max)))
-       
+
        ;; Handle k (up)
        ((eq motion-cmd 'previous-line)
         (cons (save-excursion
@@ -987,7 +993,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
                 (line-beginning-position))
               (min (point-max)
                    (1+ (line-end-position)))))
-       
+
 
        ;; Handle j (down) with special last-line handling
        ((eq motion-cmd 'next-line)
@@ -999,7 +1005,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
                        (min (point-max)
                             (line-beginning-position))))))
           (cons start end)))
-       
+
        ;; Handle M-{ (backward-paragraph)
        ((eq motion-cmd 'backward-paragraph)
         (let ((start (save-excursion
@@ -1036,7 +1042,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
         (current-column (current-column)))
     (cond
      ((and special-handler (funcall special-handler key current-column)))
-     
+
      ((and (>= key ?0) (<= key ?9))
       (let* ((num-str (string key))
              (next-key (read-key))
@@ -1052,7 +1058,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
             (funcall operator start end)
             (when current-column
               (move-to-column current-column))))))
-     
+
      (t
       (when-let* ((motion-cmd (my/get-motion-info key)))
         (let* ((bounds (my/get-line-bounds motion-cmd 1))
@@ -1089,7 +1095,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   "Handle special cases for delete operator."
   (when (eq key ?d)
     (kill-region (line-beginning-position)
-                 (min (point-max) 
+                 (min (point-max)
                       (1+ (line-end-position))))
     (move-to-column column)
     t))
@@ -1331,7 +1337,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("\"" . meow-find-and-select-outer)
    '("'" . find-and-select-inner)
    '("\"" . find-and-select-outer)
-   '("C-y" . my/yank-with-selection)
+   ;; '("C-y" . my/yank-with-selection)
    ;; '(":" . execute-extended-command)
    '("<escape>" . meow-cancel-selection))
    ;; '("<escape>" . ignore))
@@ -1368,13 +1374,13 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    ;; '("1" . meow-expand-1)
    '("1" . (lambda () (interactive) (my-meow-digit 1)))
    '("2" . (lambda () (interactive) (my-meow-digit 2)))
-   '("3" . (lambda () (interactive) (my-meow-digit 3)))  
-   '("4" . (lambda () (interactive) (my-meow-digit 4)))  
-   '("5" . (lambda () (interactive) (my-meow-digit 5)))  
-   '("6" . (lambda () (interactive) (my-meow-digit 6)))  
-   '("7" . (lambda () (interactive) (my-meow-digit 7)))  
-   '("8" . (lambda () (interactive) (my-meow-digit 8)))  
-   '("9" . (lambda () (interactive) (my-meow-digit 9)))  
+   '("3" . (lambda () (interactive) (my-meow-digit 3)))
+   '("4" . (lambda () (interactive) (my-meow-digit 4)))
+   '("5" . (lambda () (interactive) (my-meow-digit 5)))
+   '("6" . (lambda () (interactive) (my-meow-digit 6)))
+   '("7" . (lambda () (interactive) (my-meow-digit 7)))
+   '("8" . (lambda () (interactive) (my-meow-digit 8)))
+   '("9" . (lambda () (interactive) (my-meow-digit 9)))
    '("0" . (lambda () (interactive) (my-meow-digit 0)))
    ;; '("0" . (lambda () (interactive) (my-meow-line-or-digit-0)))
    '("-" . negative-argument)
@@ -1384,7 +1390,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
    ;; '("%" . my-match-paren-with-selection)
-   '("a" . my/meow-append)
+   ;; '("a" . my/meow-append)
+   '("a" . my/generic-append)
    '("b" . meow-back-word)
    '("B" . meow-back-symbol)
    ;; '("B" . meow-back-symbol-no-dot)
@@ -1426,7 +1433,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("s d" . delete-surrounding-symbol)
    '("h" . meow-left)
    '("H" . meow-left-expand)
-   '("i" . meow-insert)
+   ;; '("i" . meow-insert)
+   '("i" . my/generic-insert)
    ;; '("A" . meow-open-below)
    ;; '("I" . meow-open-above)
    '("A" . meow-append-line-end)
@@ -1505,7 +1513,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("M-v" . scroll-up-and-recenter)
    '("C-v" . scroll-down-and-recenter)
    '("C-M-y" . save-and-paste)
-   '("C-y" . my/yank-with-selection)
+   ;; '("C-y" . my/yank-with-selection)
    '("C-f" . my-forward-char-with-selection)
    '("C-b" . my-backward-char-with-selection)
    '("=" . my/meow-smart-indent)
@@ -1690,7 +1698,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 
 (advice-add 'meow--switch-to-motion :around #'my-wdired-finish-edit-advice)
 
-;; ;; Ignore slashes 
+;; ;; Ignore slashes
 ;; (defun my-forward-symbol (&optional arg)
 ;;   "Move forward across one balanced expression.
 ;; Treats slashes as part of the symbol."

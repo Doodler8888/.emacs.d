@@ -1,7 +1,7 @@
 (defun my/zoxide-add ()
   "Add directory to zoxide database using interactive selection."
   (interactive)
-  (let ((dir (expand-file-name 
+  (let ((dir (expand-file-name
               (read-directory-name "Add directory to zoxide: "))))
     (start-process "zoxide-add" nil "zoxide" "add" dir)
     (message "Added to zoxide: %s" dir)))
@@ -22,7 +22,7 @@ If DIR is nil, uses current directory."
   (let* ((dir-file (expand-file-name "~/.dirs"))
          (dir-to-add (if dir
                          (expand-file-name dir)
-                       (expand-file-name 
+                       (expand-file-name
                         (read-directory-name "Add directory: " default-directory)))))
     ;; Create .dirs if it doesn't exist
     (unless (file-exists-p dir-file)
@@ -71,9 +71,9 @@ shows the command before execution, and runs it asynchronously with progress sta
       (let* ((device-choice (completing-read "Select output device: " devices nil t))
              (device-name (car (split-string device-choice)))
              (output-device (concat "/dev/" device-name))
-             (dd-command (format "dd status=progress if=%s of=%s" 
+             (dd-command (format "dd status=progress if=%s of=%s"
                                input-file output-device)))
-        
+
         ;; Show the command and ask for confirmation
         (when (yes-or-no-p (format "Execute command:\n%s\n\nProceed? " dd-command))
           ;; Run the command asynchronously
@@ -109,7 +109,7 @@ shows the command before execution, and runs it asynchronously with progress sta
         (let* ((pos (point-at-bol))
                (level (org-outline-level))
                (heading (org-get-heading t t t t))
-               (display (format "%5d %s%s" 
+               (display (format "%5d %s%s"
                                 (line-number-at-pos pos)
                                 (make-string (* 2 (1- level)) ?\s)
                                 heading)))
@@ -135,10 +135,10 @@ shows the command before execution, and runs it asynchronously with progress sta
   (let (packages done)
     (while (not done)
       (condition-case nil
-          (let ((package (completing-read 
+          (let ((package (completing-read
                          (format "Package %s (C-g when done): "
-                                (if packages 
-                                    (format "[added: %s]" 
+                                (if packages
+                                    (format "[added: %s]"
                                             (mapconcat #'identity packages " "))
                                   ""))
                          (mapcar #'car package-alist)
@@ -146,7 +146,7 @@ shows the command before execution, and runs it asynchronously with progress sta
             (push package packages))
         (quit (setq done t))))
     (when packages
-      (package-isolate 
+      (package-isolate
        (mapcar (lambda (name)
                  (cadr (assoc (intern name) package-alist)))
                (nreverse packages))))))
@@ -169,7 +169,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
         (when show-buffer-fn
           (funcall show-buffer-fn)
           (when select-window
-            (select-window (get-buffer-window 
+            (select-window (get-buffer-window
                           (seq-find (lambda (buf)
                                     (string-match-p buffer-name-pattern (buffer-name buf)))
                                   (buffer-list))))))))))
@@ -187,7 +187,7 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   "Toggle the display of Messages buffer and move point to penultimate non-whitespace character when showing buffer."
   (interactive)
   (toggle-special-buffer "\\*Messages\\*"
-                        (lambda () 
+                        (lambda ()
                           (let ((messages-window (display-buffer "*Messages*")))
                             (when messages-window
                               (with-selected-window messages-window
@@ -251,8 +251,8 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (let* ((dir (or (vc-root-dir)
                   default-directory))
          (backend (vc-responsible-backend dir))
-         (branch-name (vc-read-revision 
-                      "Switch to branch: " 
+         (branch-name (vc-read-revision
+                      "Switch to branch: "
                       (list dir)
                       backend)))
     (vc-switch-branch dir branch-name)))
@@ -611,7 +611,7 @@ If it is lowercase, convert the entire region to uppercase."
   (interactive)
   (while (and (not (bolp))            ; while not at beginning of line
               (not (input-pending-p))) ; and no new input waiting
-    (delete-backward-char 1)))   
+    (delete-backward-char 1)))
 
 
 (defun execute-buffer-as-shell-script ()
@@ -623,8 +623,8 @@ If it is lowercase, convert the entire region to uppercase."
         (progn
           (save-buffer)
           ;; Temporarily remove the async shell command buffer settings
-          (setq display-buffer-alist 
-                (cl-remove-if (lambda (entry) 
+          (setq display-buffer-alist
+                (cl-remove-if (lambda (entry)
                                 (string= (car entry) "\\*Async Shell Command\\*"))
                               display-buffer-alist))
           (async-shell-command (concat "sh " (shell-quote-argument file-path)))
@@ -644,7 +644,7 @@ Creates a new async process each time, allowing multiple instances to run."
   (if last-async-command
       (progn
         (let* ((command last-async-command)
-               (buffer-name (generate-new-buffer-name 
+               (buffer-name (generate-new-buffer-name
                            (concat "*Async Command: " command "*"))))
           ;; Create new buffer for this instance
           (async-shell-command command buffer-name)
@@ -766,12 +766,12 @@ Prompts for the string to insert at each line's end."
       (let ((temp start-line))
         (setq start-line end-line)
         (setq end-line temp)))
-    
+
     ;; Start at the beginning of the first line
     (save-excursion
       (goto-char (point-min))
       (forward-line (1- start-line))
-      
+
       ;; Process each line in the rectangle
       (let ((lines-modified 0))
         (while (<= (line-number-at-pos) end-line)

@@ -1,16 +1,16 @@
 (defun left-version-of (ch)
   "Return the left version of a mirrored character if applicable; otherwise return CH."
-  (cond ((eq ch ?\)) ?\() 
-        ((eq ch ?\}) ?\{) 
-        ((eq ch ?\]) ?\[) 
+  (cond ((eq ch ?\)) ?\()
+        ((eq ch ?\}) ?\{)
+        ((eq ch ?\]) ?\[)
         ((eq ch ?\>) ?\<)
         (t ch)))
 
 (defun right-version-of (ch)
   "Return the right version of a mirrored character if applicable; otherwise return CH."
-  (cond ((eq ch ?\() ?\)) 
-        ((eq ch ?\{) ?\}) 
-        ((eq ch ?\[) ?\]) 
+  (cond ((eq ch ?\() ?\))
+        ((eq ch ?\{) ?\})
+        ((eq ch ?\[) ?\])
         ((eq ch ?\<) ?>)
         (t ch)))
 
@@ -136,7 +136,7 @@ The region selected will include both the opening and closing delimiters."
   (interactive "cSelect outside char: ")
   ;; If passed a right delimiter, always convert to its left version.
   (setq char (cond ((memq char '(?\) ?\} ?\] ?\>))
-                    (cond ((eq char ?\)) ?\() 
+                    (cond ((eq char ?\)) ?\()
                           ((eq char ?\}) ?\{)
                           ((eq char ?\]) ?\[)
                           ((eq char ?\>) ?\<)))
@@ -164,171 +164,3 @@ The region selected will include both the opening and closing delimiters."
           (push-mark close-pos t t)
           (activate-mark))
       (error "Cursor not inside a valid delimiter pair"))))
-
-
-;;     ;; If forward search fails, try backward search
-;;     (when (not forward-pos)
-;;       (save-excursion
-;;         (let ((found 0)
-;;               (limit line-start))
-;;           (goto-char line-end)
-;;           (while (and (> (point) limit)
-;;                       (search-backward ch-str limit t))
-;;             (setq found (1+ found))
-;;             (when (and (= (mod found 2) 1)
-;;                        (= (/ (+ found 1) 2) n))
-;;               (setq backward-pos (point)))))))
-    
-;;     (cond
-;;      ((not (or forward-pos backward-pos))
-;;       (message "char %s not found in current line" ch-str))
-;;      (forward-pos
-;;       (goto-char forward-pos)
-;;       (cond 
-;;        ;; Handle single quotes
-;;        ((eq ch ?')
-;;         (let ((bounds (meow--parse-single-quote nil)))
-;;           (when bounds
-;;             (set-mark (car bounds))
-;;             (goto-char (cdr bounds)))))
-;;        ;; Handle backticks explicitly
-;;        ((eq ch ?`)
-;;         (let ((start-pos (point)))
-;;           (backward-char)  ;; Move back to the opening backtick
-;;           (save-excursion
-;;             ;; Find the matching backtick
-;;             (forward-sexp)   ;; Move to the position after the closing backtick
-;;             (set-mark (1- (point))))  ;; Set mark one char before, excluding the closing backtick
-;;           (goto-char start-pos)))  ;; Return to the inner content (after opening backtick)
-;;        ;; Handle other paired delimiters
-;;        (thing-char
-;;         (if (memq ch '(?\) ?\] ?\}))
-;;             (progn
-;;               (backward-sexp)
-;;               (forward-char)
-;;               (set-mark (point))
-;;               (backward-char)
-;;               (forward-sexp)
-;;               (backward-char))
-;;           (meow-inner-of-thing thing-char)))))
-;;      (backward-pos
-;;       (goto-char backward-pos)
-;;       (cond
-;;        ;; Handle single quotes
-;;        ((eq ch ?')
-;;         (let ((bounds (meow--parse-single-quote nil)))
-;;           (when bounds
-;;             (set-mark (car bounds))
-;;             (goto-char (cdr bounds)))))
-;;        ;; Handle backticks explicitly
-;;        ((eq ch ?`)
-;;         (let ((start-pos (point)))
-;;           (save-excursion
-;;             ;; Find the matching backtick
-;;             (forward-sexp)   ;; Move to the matching closing backtick
-;;             (backward-char)  ;; Position before the closing backtick
-;;             (set-mark (point)))  ;; Set mark at end of inner content
-;;           ;; Now go to the beginning of inner content
-;;           (forward-char)))  ;; Move to position after opening backtick
-;;        ;; Handle other paired delimiters
-;;        (thing-char
-;;         (if (memq ch '(?\) ?\] ?\}))
-;;             (progn
-;;               (forward-char)
-;;               (backward-sexp)
-;;               (forward-char)
-;;               (set-mark (point))
-;;               (backward-char)
-;;               (forward-sexp)
-;;               (backward-char))
-;;           (meow-inner-of-thing thing-char))))))))
-
-;; (defun meow-find-and-select-outer (n ch)
-;;   "Find the next N occurrence of CH and select its outer content within current line only.
-;; If no forward match is found, search backward."
-;;   (interactive "p\ncFind and select outer:")
-;;   (let* ((case-fold-search nil)
-;;          (ch-str (if (eq ch 13) "\n" (char-to-string ch)))
-;;          (line-start (line-beginning-position))
-;;          (line-end (line-end-position))
-;;          (pos (point))
-;;          forward-pos
-;;          backward-pos
-;;          (pair-char (cond
-;;                      ((eq ch ?\() ?\))
-;;                      ((eq ch ?\)) ?\()
-;;                      ((eq ch ?\[) ?\])
-;;                      ((eq ch ?\]) ?\[)
-;;                      ((eq ch ?\{) ?\})
-;;                      ((eq ch ?\}) ?\{)
-;;                      ((memq ch '(?' ?\" ?`)) ch)
-;;                      (t nil))))
-;;     ;; Try forward search first
-;;     (save-excursion
-;;       (setq forward-pos (search-forward ch-str line-end t n)))
-    
-;;     ;; If forward search fails, try backward search
-;;     (when (not forward-pos)
-;;       (save-excursion
-;;         (setq backward-pos (search-backward ch-str line-start t n))))
-    
-;;     (cond
-;;      ((not (or forward-pos backward-pos))
-;;       (message "char %s not found in current line" ch-str))
-;;      (forward-pos
-;;       (goto-char forward-pos)
-;;       (if (memq ch '(?' ?\" ?`))
-;;           (let ((end-pos (save-excursion
-;;                            (when (search-forward ch-str line-end t)
-;;                              (point)))))
-;;             (if end-pos
-;;                 (progn
-;;                   (set-mark (1- forward-pos))
-;;                   (goto-char end-pos))
-;;               (message "No closing %s found in current line" ch-str)))
-;;         (when pair-char
-;;           (if (memq ch '(?\) ?\] ?\}))
-;;               (progn
-;;                 (set-mark (point))
-;;                 (condition-case nil
-;;                     (backward-sexp)
-;;                   (scan-error (goto-char line-start)))
-;;                 (when (< (point) line-start)
-;;                   (goto-char line-start)))
-;;             (progn
-;;               (backward-char)
-;;               (set-mark (point))
-;;               (condition-case nil
-;;                   (forward-sexp)
-;;                 (scan-error (goto-char line-end)))
-;;               (when (> (point) line-end)
-;;                 (goto-char line-end)))))))
-;;      (backward-pos
-;;       (goto-char backward-pos)
-;;       (if (memq ch '(?' ?\" ?`))
-;;           (let ((start-pos (save-excursion
-;;                              (when (search-backward ch-str line-start t)
-;;                                (point)))))
-;;             (if start-pos
-;;                 (progn
-;;                   (set-mark (1+ backward-pos))
-;;                   (goto-char start-pos))
-;;               (message "No opening %s found in current line" ch-str)))
-;;         (when pair-char
-;;           (if (memq ch '(?\) ?\] ?\}))
-;;               (progn
-;;                 (forward-char)
-;;                 (set-mark (point))
-;;                 (condition-case nil
-;;                     (backward-sexp)
-;;                   (scan-error (goto-char line-start)))
-;;                 (when (< (point) line-start)
-;;                   (goto-char line-start)))
-;;             (progn
-;;               (set-mark (point))
-;;               (condition-case nil
-;;                   (forward-sexp)
-;;                 (scan-error (goto-char line-end)))
-;;               (when (> (point) line-end)
-;;                 (goto-char line-end))))))))))
-

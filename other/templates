@@ -140,6 +140,17 @@ python-ts-mode
 	"subprocess.run(\"" p "\", shell=True, check=True)"
 )
 
+yaml-mode
+(secret
+  "apiVersion: v1" n
+  "kind: Secret" n
+  "metadata:" n
+  "  name: " (p "secret_name") n
+  "  namespace: " (p "default") n
+  "data:" n
+  "  username: " "value" n
+  "  password: " "value" n
+  "type: " (p "opaque"))
 
 python-ts-mode
 (sr

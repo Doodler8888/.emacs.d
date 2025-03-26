@@ -25,7 +25,7 @@
  (with-eval-after-load 'esh-mode
    ;; (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)
    ;; (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)
-    (define-key eshell-mode-map (kbd "C-f C-z") #'my/eshell-zoxide-cd)
+    ;; (define-key eshell-mode-map (kbd "C-f C-z") #'my/eshell-zoxide-cd)
     (define-key eshell-mode-map (kbd "M-l") #'my/eshell-clear)
     (define-key eshell-mode-map (kbd "C-s C-o") #'my-eshell-outline)))
 
@@ -129,11 +129,11 @@
 ;;      ;; Handle rm command
 ;;      ((string= command "rm")
 ;;       (eshell-command-result (concat "eshell/sudo /usr/bin/rm " (string-join args " "))))
-     
+
 ;;      ;; Handle apt and its subcommands
 ;;      ((string= command "apt")
 ;;       (eshell-command-result (concat "eshell/sudo apt " (string-join args " "))))
-     
+
 ;;      ((string= command "swapoff")
 ;;       (eshell-command-result (concat "eshell/sudo swapoff " (string-join args " "))))
 
@@ -152,26 +152,26 @@
 ;;          (args (cdr args)))
 ;;     (cond
 ;;      ((string= command "rm")
-;;       (let ((default-directory 
+;;       (let ((default-directory
 ;;              (if (and (car args) (file-name-absolute-p (car args)))
 ;;                  (file-name-directory (concat "/sudo::" (car args)))
 ;;                default-directory)))
-;;         (eshell-named-command 
+;;         (eshell-named-command
 ;;          "rm"
 ;;          (list (if (and (car args) (file-name-absolute-p (car args)))
 ;;                    (concat "/sudo::" (car args))
 ;;                  (car args))))))
 ;;      ((string= command "apt")
 ;;       (let ((default-directory "/sudo::/"))
-;;         (eshell-named-command 
+;;         (eshell-named-command
 ;;          "apt"
 ;;          args)))
 ;;      (t
-;;       (let ((default-directory 
+;;       (let ((default-directory
 ;;              (if (and (car args) (file-name-absolute-p (car args)))
 ;;                  (file-name-directory (concat "/sudo::" (car args)))
 ;;                default-directory)))
-;;         (eshell-named-command 
+;;         (eshell-named-command
 ;;          command
 ;;          (list (if (and (car args) (file-name-absolute-p (car args)))
 ;;                    (concat "/sudo::" (car args))
@@ -257,10 +257,10 @@ If the file doesn't exist, display an error message."
 (defun my/eshell-file-operation-advice (orig-fun &rest args)
   "Generic advice for eshell file operations to update buffers."
   (let* ((source (directory-file-name (expand-file-name (car args))))  ; Remove trailing slash
-         (dest (when (cadr args) 
+         (dest (when (cadr args)
                 (directory-file-name (expand-file-name (cadr args)))))  ; Remove trailing slash
          (affected-buffers nil))
-    
+
     ;; Store affected buffers before the operation
     (dolist (buf (buffer-list))
       (with-current-buffer buf
@@ -268,10 +268,10 @@ If the file doesn't exist, display an error message."
           (let ((buf-path (directory-file-name (expand-file-name buffer-file-name))))
             (when (string-prefix-p source buf-path)
               (push (cons buf-path buf) affected-buffers))))))
-    
+
     ;; Call original function
     (apply orig-fun args)
-    
+
     ;; Update stored buffers
     (dolist (buf-info affected-buffers)
       (let* ((old-path (car buf-info))
@@ -332,7 +332,7 @@ If the file doesn't exist, display an error message."
          (output (with-current-buffer "*eshell*"
                   (buffer-substring-no-properties start end))))
     (when (and output (not (string-empty-p output)))
-      (insert (string-trim-right 
+      (insert (string-trim-right
                (replace-regexp-in-string "^[^\n]*\\$ ?" "" output))))))
 
 (defun eshell-get-output-from-last-command ()
