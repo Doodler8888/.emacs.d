@@ -14,6 +14,31 @@
 (define-key meow-insert-state-keymap (kbd "C-t") 'tab-to-tab-stop)
 
 
+(defun my-yaml-smart-newline ()
+  "Insert a newline with mode-specific indentation in `my-yaml-mode`.
+If the current line ends with a colon (ignoring trailing whitespace),
+add one extra indent level."
+  (interactive)
+  (let ((current-line (buffer-substring-no-properties (line-beginning-position)
+                                                      (line-end-position)))
+        (need-extra-indent nil))
+    ;; Check if the current line ends with a colon, ignoring trailing whitespace.
+    (when (string-match-p ":\\s-*$" current-line)
+      (setq need-extra-indent t))
+    ;; Insert newline with default indentation.
+    (newline-and-indent)
+    ;; If a colon was found, add an extra indentation level.
+    (when need-extra-indent
+      (let ((current-indent (current-indentation)))
+        (indent-line-to (+ current-indent tab-width))))))
+
+;; Bind RET in meow-insert-state-keymap only for `my-yaml-mode`
+(defun my-yaml-setup-meow ()
+  (define-key meow-insert-state-keymap (kbd "RET") 'my-yaml-smart-newline))
+
+(add-hook 'my-yaml-mode-hook 'my-yaml-setup-meow)
+
+
 (with-eval-after-load 'tempel
   (add-hook 'meow-insert-exit-hook
             (lambda ()
@@ -893,7 +918,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (interactive)
   (unless (eolp)
     (forward-char))
-  (meow-insert))
+  (my/generic-insert))
 
 (defun my/meow-append ()
   "If selection is active, use meow-append. If not, use generic append."
