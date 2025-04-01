@@ -1,4 +1,4 @@
-(setq dired-listing-switches "-l --block-size=K")
+(setq dired-listing-switches "-lA --block-size=K")
 
 (defun tramp-file-name-with-doas (filename)
   "Convert FILENAME into a multi-hop file name with \"doas\"."

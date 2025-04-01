@@ -24,6 +24,7 @@
 (load "~/.emacs.d/config.el")
 ;; (load "~/.emacs.d/other/icomplete.el")
 (load "~/.emacs.d/other/custom-functions.el")
+(load "~/.emacs.d/other/my-yaml-mode.el")
 ;; (load "~/.emacs.d/other/my-autopairing.el")
 (load "~/.emacs.d/other/desktop-session.el")
 (load "~/.emacs.d/other/meow.el")
@@ -53,7 +54,7 @@
 					   lua-mode magit marginalia markdown-mode meow nerd-icons
 					   nix-mode orderless org-appear org-drill tempel
 					   terraform-mode treesit-auto undo-fu undo-fu-session
-					   vertico wgrep yaml-mode zig-ts-mode))
+					   vertico wgrep zig-ts-mode))
  '(package-vc-selected-packages
    '((crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")
 	 (emacs-crontab-mode :url "https://gitlab.com/Bacaliu/emacs-crontab-mode")

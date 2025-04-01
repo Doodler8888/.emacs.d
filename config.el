@@ -188,7 +188,7 @@
 (setq rectangle-indicate-zero-width-rectangle nil)
 
 (setq-default tab-width 4)
-(add-hook 'yaml-ts-mode-hook (lambda () (setq tab-width 2)))
+;; (add-hook 'yaml-ts-mode-hook (lambda () (setq tab-width 2)))
 (setq-default indent-tabs-mode t)
 
 (recentf-mode)
@@ -666,12 +666,12 @@
 
 (use-package goto-chg)
 
-(defadvice goto-last-change (around repeat-if-same-pos activate)
-  "Repeat goto-last-change if cursor position doesn't change."
-  (let ((old-pos (point)))
-    ad-do-it
-    (when (= old-pos (point))
-      (goto-last-change 1))))
+;; (defadvice goto-last-change (around repeat-if-same-pos activate)
+;;   "Repeat goto-last-change if cursor position doesn't change."
+;;   (let ((old-pos (point)))
+;;     ad-do-it
+;;     (when (= old-pos (point))
+;;       (goto-last-change 1))))
 
 ;; ;; I've being using this code, but i don't remember why
 ;; (defvar-local my-jump-ring '()
@@ -2028,8 +2028,8 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 (use-package dockerfile-mode
   :ensure t)
-(use-package yaml-mode
-  :ensure t)
+;; (use-package yaml-mode
+;;   :ensure t)
 (use-package nix-mode
   :ensure t)
 ;; (use-package systemd
