@@ -14,7 +14,7 @@
   "Stores the number of times to expand the selection.")
 
 ;; Define groups for selection and action commands using command names
-(defvar my-selection-commands '(meow-inner-of-thing meow-bounds-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till meow-back-word)
+(defvar my-selection-commands '(meow-inner-of-thing meow-bounds-of-thing meow-mark-word meow-next-word meow-next-symbol meow-find meow-till meow-back-word meow-beginning-of-thing meow-end-of-thing)
   "Commands that create selections.")
 
 (defvar my-action-commands '(my/meow-smart-delete my/generic-meow-smart-delete

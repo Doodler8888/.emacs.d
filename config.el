@@ -189,6 +189,7 @@
 
 (setq-default tab-width 4)
 ;; (add-hook 'yaml-ts-mode-hook (lambda () (setq tab-width 2)))
+(add-hook 'my-yaml-mode-hook (lambda () (setq tab-width 2)))
 (setq-default indent-tabs-mode t)
 
 (recentf-mode)
@@ -279,6 +280,9 @@
     (setq-local create-lockfiles nil)))
 
 (add-hook 'find-file-hook #'my-disable-lockfiles-in-tramp)
+
+;; Disable lockfiles, gives errors in general
+(setq create-lockfiles nil)
 
 ;; (defun fov/disable-backups-for-gpg ()
 ;;   "Disable backups and autosaving for files ending in \".gpg\"."
@@ -1545,11 +1549,32 @@ Prevents highlighting of the minibuffer command line itself."
     (">" enlarge-window-horizontally "increase width")
     ("<" shrink-window-horizontally "decrease width")
     ("t" transpose-window-layout "transpose windows")
+    ("f" flip-window-layout-horizontally "flip windows")
     ;; ("t" transpose-frame "transpose windows")
     ;; ("t" emacs-solo/transpose-split "transpose windows")
     ("r" rotate-windows "rotate windows")
     ("q" nil "quit")))
 
+
+;; Save fold
+
+(use-package savefold
+  :vc (:url "https://github.com/jcfk/savefold.el"
+			:rev :newest)
+  :init
+  (setq savefold-backends '(outline org))
+  (setq savefold-directory (locate-user-emacs-file "savefold"))  ;; default
+  :config
+  (savefold-mode 1))
+
+
+;; Tramp
+
+;; It can cause an error in some containers that loosk like this:
+;; File error: ‘tramp-histfile-override’ uses invalid file ‘/.tramp_history’
+;; signal: ‘tramp-histfile-override’ uses invalid file ‘/.tramp_history’
+;; This is why the setting is disabled
+(setq tramp-histfile-override nil)
 
 ;; Dired
 
@@ -2037,6 +2062,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package markdown-mode ;; can't be found by the package installer
   :ensure t)
 
+
 (define-generic-mode kdl-mode
   ;; Comment style
   '("//" ("/*" . "*/"))
@@ -2140,11 +2166,14 @@ If an eshell buffer for the directory already exists, switch to it."
 
 (add-to-list 'eglot-server-programs
              ;; '((yaml-mode) "yaml-language-server" "--stdio"))
+             '((my-yaml-mode) "yaml-language-server" "--stdio")
              '((yaml-ts-mode) "yaml-language-server" "--stdio"))
 
 ;; Configure filetypes equivalent
 (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.yaml\\'" . my-yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . my-yaml-mode))
 
 ;; Configure the schema mappings for Kubernetes
 (setq-default eglot-workspace-configuration
@@ -2155,6 +2184,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Hook to start eglot automatically with yaml files
 (add-hook 'yaml-mode-hook 'eglot-ensure)
+(add-hook 'my-yaml-mode-hook 'eglot-ensure)
 (add-hook 'yaml-ts-mode-hook 'eglot-ensure)
 
 ;; Example for dir-locals:
@@ -2208,6 +2238,7 @@ If an eshell buffer for the directory already exists, switch to it."
   ;; Disable auto-blank-lines in self-insert-command
   (setq org-list-empty-line-terminates-plain-lists nil)
   (setq org-empty-line-terminates-plain-lists nil)
+  (setq org-startup-folded 'showeverything) ;; it's set for the savefold package
   )
 
 ;; Fix org babel with bash-ts-mode

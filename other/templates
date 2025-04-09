@@ -130,6 +130,12 @@ yaml-mode
     "  labels:" n
     "    app: " (p "label value" (my/select-placeholder)) n)
 
+
+my-yaml-mode
+(root
+  "securityContext:" n
+  "  runAsUser: 0")
+
 yaml-mode
 (name
 	"app.kubernetes.io/name: "
