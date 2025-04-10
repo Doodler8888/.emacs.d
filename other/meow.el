@@ -529,7 +529,7 @@ Adds spaces when using right brackets."
          (content (substring region-text 1 -1))
          (new-symbol (char-to-string char))
          (pairs '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">")
-                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*") ("/" . "/") ("=" . "=")))
+                 ("\"" . "\"") ("'" . "'") ("`" . "`") ("*" . "*") ("/" . "/") ("=" . "=") ("~" . "~")))
          (reverse-pairs (mapcar (lambda (p) (cons (cdr p) (car p))) pairs))
          (is-opening (assoc new-symbol pairs))
          (is-closing (assoc new-symbol reverse-pairs))
