@@ -25,7 +25,7 @@
       (concat "\\(^/[^/:]*:\\|(ftp)$\\)\\|" desktop-files-not-to-save))
 
 ;; Disable the automatic desktop saving
-(setq desktop-auto-save-timeout nil)
+;; (setq desktop-auto-save-timeout nil)
 
 ;; Save desktop session functions
 (defun save-current-desktop-session ()
@@ -83,7 +83,7 @@ If no session is loaded, prompt to create a new one."
   (let* ((desktop-dir (concat user-emacs-directory "desktop/"))
          (session-dirs (directory-files desktop-dir nil "^[^.]"))
          (session-name (completing-read "Choose desktop session to delete: " session-dirs nil t)))
-    (when (and session-name 
+    (when (and session-name
                (not (string-empty-p session-name))
                (yes-or-no-p (format "Are you sure you want to delete the '%s' session? " session-name)))
       (let ((session-path (concat desktop-dir session-name)))
@@ -91,7 +91,7 @@ If no session is loaded, prompt to create a new one."
             (progn
               (delete-directory session-path t)
               ;; Reset current session if we're deleting the active one
-              (when (and current-desktop-session-name 
+              (when (and current-desktop-session-name
                          (string= current-desktop-session-name session-name))
                 (setq current-desktop-session-name nil)
                 (desktop-clear))
@@ -122,4 +122,4 @@ If no session is loaded, prompt to create a new one."
               (save-some-buffers t)))
 
 ;; Explicitly disable desktop-save-mode to prevent automatic saving
-(desktop-save-mode 0)
+(desktop-save-mode 1)

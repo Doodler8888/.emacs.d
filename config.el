@@ -2115,98 +2115,106 @@ If an eshell buffer for the directory already exists, switch to it."
 (setq eldoc-mode nil)
 
 
-;; Eglot
+;; ;; Eglot
 
-(require 'eglot)
+;; (require 'eglot)
 
-;; Aplying this config breaks something when i use yaml lsp
-;; (use-package eglot
-;;   :ensure nil
-;;   :custom
-;;   (eglot-autoshutdown t)
-;;   (eglot-events-buffer-size 0)
-;;   (eglot-events-buffer-config '(:size 0 :format full))
-;;   (eglot-prefer-plaintext t)
-;;   (jsonrpc-event-hook nil)
-;;   (eglot-code-action-indications nil) ;; Emacs 31 -- annoying as hell
-;;   :init
-;;   ;; This is to make lua-language-server to not stutter when i execute the
-;;   ;; 'newline' command
-;;   (setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
-;;   (fset #'jsonrpc--log-event #'ignore))
+;; (setq eglot-stay-out-of
+;;       '(
+;;         (lambda ()
+;;           (when buffer-file-name
+;;             (file-remote-p buffer-file-name)))
+;;         ))
 
-;; (setq eglot-events-buffer-size 0)
+;; ;; Aplying this config breaks something when i use yaml lsp
+;; ;; (use-package eglot
+;; ;;   :ensure nil
+;; ;;   :custom
+;; ;;   (eglot-autoshutdown t)
+;; ;;   (eglot-events-buffer-size 0)
+;; ;;   (eglot-events-buffer-config '(:size 0 :format full))
+;; ;;   (eglot-prefer-plaintext t)
+;; ;;   (jsonrpc-event-hook nil)
+;; ;;   (eglot-code-action-indications nil) ;; Emacs 31 -- annoying as hell
+;; ;;   :init
+;; ;;   ;; This is to make lua-language-server to not stutter when i execute the
+;; ;;   ;; 'newline' command
+;; ;;   (setq eglot-ignored-server-capabilities '(:documentOnTypeFormattingProvider))
+;; ;;   (fset #'jsonrpc--log-event #'ignore))
 
-(add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
-(add-hook 'nix-mode-hook 'eglot-ensure)
+;; ;; (setq eglot-events-buffer-size 0)
 
-;; (add-to-list 'eglot-server-programs '((c-ts-mode) "clangd"))
-;; (add-hook 'c-ts-mode-hook 'eglot-ensure)
+;; (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
+;; (add-hook 'nix-mode-hook 'eglot-ensure)
 
-(add-hook 'python-ts-mode-hook 'eglot-ensure)
-;; I need to prevent a situation where ansible-lint and eglot work on the same buffer.
-;; (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
-(add-hook 'terraform-mode-hook #'eglot-ensure)
+;; ;; (add-to-list 'eglot-server-programs '((c-ts-mode) "clangd"))
+;; ;; (add-hook 'c-ts-mode-hook 'eglot-ensure)
 
-(add-hook 'eglot-managed-mode-hook (lambda () (eldoc-mode -1)))
+;; (add-hook 'python-ts-mode-hook 'eglot-ensure)
+;; ;; I need to prevent a situation where ansible-lint and eglot work on the same buffer.
+;; ;; (add-hook 'yaml-ts-mode-hook #'eglot-ensure)
+;; (add-hook 'terraform-mode-hook #'eglot-ensure)
 
-(set-face-attribute 'eldoc-highlight-function-argument nil
-                    :inherit 'unspecified' :foreground 'unspecified' :weight 'medium)
-(set-face-attribute 'eglot-highlight-symbol-face nil
-                    :inherit 'unspecified' :foreground 'unspecified' :weight 'medium)
+;; (add-hook 'eglot-managed-mode-hook (lambda () (eldoc-mode -1)))
 
-
-  ;; (add-hook 'eglot-managed-mode-hook
-  ;;           (lambda ()
-  ;;             (message "Eglot started with env: VIRTUAL_ENV=%s" (getenv "VIRTUAL_ENV"))
-  ;;             (message "Python path: %s" (executable-find "python")))))
+;; (set-face-attribute 'eldoc-highlight-function-argument nil
+;;                     :inherit 'unspecified' :foreground 'unspecified' :weight 'medium)
+;; (set-face-attribute 'eglot-highlight-symbol-face nil
+;;                     :inherit 'unspecified' :foreground 'unspecified' :weight 'medium)
 
 
-;; Yaml
+;;   ;; (add-hook 'eglot-managed-mode-hook
+;;   ;;           (lambda ()
+;;   ;;             (message "Eglot started with env: VIRTUAL_ENV=%s" (getenv "VIRTUAL_ENV"))
+;;   ;;             (message "Python path: %s" (executable-find "python")))))
 
-(add-to-list 'eglot-server-programs
-             ;; '((yaml-mode) "yaml-language-server" "--stdio"))
-             '((my-yaml-mode) "yaml-language-server" "--stdio")
-             '((yaml-ts-mode) "yaml-language-server" "--stdio"))
 
-;; Configure filetypes equivalent
-(add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
-(add-to-list 'auto-mode-alist '("\\.yaml\\'" . my-yaml-mode))
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . my-yaml-mode))
+;; ;; Yaml
 
-;; Configure the schema mappings for Kubernetes
-(setq-default eglot-workspace-configuration
-              '((yaml
-                 (schemas . ((kubernetes . ["*/templates/*.yaml"
-                                           "*/kubernetes/*.yaml"
-                                           "*/templates/*.yml"]))))))
+;; (add-to-list 'eglot-server-programs
+;;              ;; '((yaml-mode) "yaml-language-server" "--stdio"))
+;;              '((my-yaml-mode) "yaml-language-server" "--stdio")
+;;              '((yaml-ts-mode) "yaml-language-server" "--stdio"))
 
-;; Hook to start eglot automatically with yaml files
-(add-hook 'yaml-mode-hook 'eglot-ensure)
-(add-hook 'my-yaml-mode-hook 'eglot-ensure)
-(add-hook 'yaml-ts-mode-hook 'eglot-ensure)
+;; ;; Configure filetypes equivalent
+;; (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yaml\\'" . my-yaml-mode))
+;; (add-to-list 'auto-mode-alist '("\\.yml\\'" . my-yaml-mode))
 
-;; Example for dir-locals:
+;; ;; Configure the schema mappings for Kubernetes
+;; (setq-default eglot-workspace-configuration
+;;               '((yaml
+;;                  (schemas . ((kubernetes . ["*/templates/*.yaml"
+;;                                            "*/kubernetes/*.yaml"
+;;                                            "*/templates/*.yml"]))))))
 
-;; ((yaml-ts-mode . ((eglot-workspace-configuration . ((yaml schemas . ((
-;;     https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json ".gitlab-ci.yml"
-;;     ./argocd-application.schema.json [
-;;         "/Apps/*"
-;;         "/apps.yaml"
-;;     ]
-;;     Kubernetes ["k8s-*.yaml"]
-;; ))))))))
+;; ;; Hook to start eglot automatically with yaml files
+;; (add-hook 'yaml-mode-hook 'eglot-ensure)
+;; (add-hook 'my-yaml-mode-hook 'eglot-ensure)
+;; (add-hook 'yaml-ts-mode-hook 'eglot-ensure)
 
-;; SQL
+;; ;; Example for dir-locals:
 
-(add-to-list 'eglot-server-programs
-             '(sql-mode . ("sqls")))
-(add-hook 'sql-mode-hook 'eglot-ensure)
+;; ;; ((yaml-ts-mode . ((eglot-workspace-configuration . ((yaml schemas . ((
+;; ;;     https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json ".gitlab-ci.yml"
+;; ;;     ./argocd-application.schema.json [
+;; ;;         "/Apps/*"
+;; ;;         "/apps.yaml"
+;; ;;     ]
+;; ;;     Kubernetes ["k8s-*.yaml"]
+;; ;; ))))))))
+
+;; ;; SQL
+
+;; (add-to-list 'eglot-server-programs
+;;              '(sql-mode . ("sqls")))
+;; (add-hook 'sql-mode-hook 'eglot-ensure)
+
 
 ;; Org Mode
 
-(defvar browse-url-default-browser-executable "/usr/bin/librewolf"
+(defvar browse-url-default-browser-executable "/snap/bin/vivaldi.vivaldi-stable"
   "Path to the default browser executable.")
 
 (defun my/browse-url-default-browser (url &rest _args)
