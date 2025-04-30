@@ -121,5 +121,5 @@ If no session is loaded, prompt to create a new one."
             (lambda (&rest _)
               (save-some-buffers t)))
 
-;; Explicitly disable desktop-save-mode to prevent automatic saving
-(desktop-save-mode 1)
+;; Don't remove this one, otherwise emacs automatically restores buffers
+(desktop-save-mode 0)

@@ -303,7 +303,7 @@
 (unless (file-exists-p desktop-dirname)
   (make-directory desktop-dirname))
 (desktop-save-mode 1)
-(setq desktop-save 't)
+;; (setq desktop-save 't)
 (setq desktop-path (list desktop-dirname))
 (setq desktop-auto-save-timeout 3600)
 
@@ -2423,6 +2423,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'org-structure-template-alist '("ss" . "src sql"))
 (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
 (add-to-list 'org-structure-template-alist '("sc" . "src conf"))
+(add-to-list 'org-structure-template-alist '("sd" . "src dockerfile"))
 ;; (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
 
 ;; It's displayed incorrectly in icomplete-vertical and causes a stutter with
