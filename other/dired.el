@@ -215,4 +215,6 @@ Creates each file immediately after it is entered."
   (define-key dired-mode-map (kbd "i") 'dired-toggle-read-only)
   (define-key dired-mode-map (kbd "/") 'isearch-forward)
   (define-key dired-mode-map (kbd "?") 'isearch-backward)
+  ;; if you set 'ESC' instead of '<escape>', it wont work
+  (define-key dired-mode-map (kbd "<escape>") 'keyboard-quit)
   (define-key dired-mode-map (kbd "T") 'my/dired-create-empty-files))

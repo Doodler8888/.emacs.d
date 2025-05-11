@@ -385,7 +385,7 @@
                         (getenv "PATH"))))
 
 (require 'midnight)
-(midnight-delay-set 'midnight-delay "10:00pm")
+(midnight-delay-set 'midnight-delay "07:00pm")
 
 (setq auto-revert-verbose nil)
 
@@ -1558,6 +1558,9 @@ Prevents highlighting of the minibuffer command line itself."
 
 ;; Save fold
 
+;; It causes 'end of file' error. If something like this will happen again, try
+;; to check the savefold folder and delete files one by one trying to pres 'C-x
+;; C-c'.
 (use-package savefold
   :vc (:url "https://github.com/jcfk/savefold.el"
 			:rev :newest)
@@ -1827,7 +1830,7 @@ If an eshell buffer for the directory already exists, switch to it."
       (kill-buffer buffer))))
 
 
-;; Buffer termination
+;; ;; Buffer termination
 
 (use-package buffer-terminator
   :ensure t
@@ -2824,7 +2827,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (defun plan ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.secret_dotfiles/plan/plan.org"))
+  (find-file "~/.secret_dotfiles/plan/"))
 
 (defun q ()
   "Save all modified buffers without prompting, then kill Emacs."
