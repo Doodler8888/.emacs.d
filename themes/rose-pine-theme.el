@@ -51,7 +51,7 @@
    `(fringe ((,class (:foreground ,rose-pine-blendedbg))))
 
    ;; Font lock
-   
+
    ;; `(show-paren-match ((,class (:foreground ,rose-pine-fg :weight bold :background ,rose-pine-subtle))))
    `(font-lock-builtin-face ((,class (:foreground ,rose-pine-love))))
    ;; `(font-lock-constant-face ((,class (:foreground ,rose-pine-gold))))
@@ -65,7 +65,7 @@
    `(font-lock-escape-face ((,class (:foreground ,rose-pine-gold))))
    `(font-lock-property-use-face ((,class (:foreground ,rose-pine-foam))))
 
-   
+
    `(sh-quoted-exec ((,class (:foreground ,rose-pine-iris))))
    `(sh-heredoc ((,class (:foreground ,rose-pine-iris))))
 
@@ -87,11 +87,15 @@
         		:font "NotoSansM Nerd Font Mono-12:weight=medium")
 
     ;; Hydra
-   `(hydra-face-amaranth ((,class (:foreground ,rose-pine-love))))
-   `(hydra-face-red ((,class (:foreground ,rose-pine-love))))
-   `(hydra-face-rose ((,class (:foreground ,rose-pine-rose))))
-   `(hydra-face-blue ((,class (:foreground ,rose-pine-iris))))
-       
+    `(hydra-face-amaranth ((,class (:foreground ,rose-pine-love))))
+    `(hydra-face-red ((,class (:foreground ,rose-pine-love))))
+    `(hydra-face-rose ((,class (:foreground ,rose-pine-rose))))
+    `(hydra-face-blue ((,class (:foreground ,rose-pine-iris))))
+
+    ;; Markdown
+    `(markdown-list-face ((,class (:foreground ,rose-pine-fg))))
+
+
     ;; Ivy
     `(ivy-current-match ((,class (:background ,rose-pine-bg2))))
     `(ivy-modified-buffer ((,class (:foreground ,rose-pine-fg))))
@@ -116,7 +120,7 @@
 
     ;; Vterm
     `(all-the-icons-ivy-rich-file-priv-no ((,class (:foreground ,rose-pine-subtext))))
-    
+
     ;; Avy
     `(avy-lead-face ((,class (:background ,rose-pine-bg2))))
     `(avy-lead-face-0 ((,class (:background ,rose-pine-bg2))))
@@ -134,13 +138,13 @@
     `(kubernetes-delete-mark ((,class (:foreground ,rose-pine-iris))))
     `(magit-section-heading ((,class (:foreground ,rose-pine-foam))))
     `(magit-section-highlight ((,class (:background ,rose-pine-subtle))))
-    
+
     ;; Docker
     `(docker-face-dangling ((,class (:foreground ,rose-pine-subtext))))
 
     ;; Eglot
     `(eglot-diagnostic-tag-unnecessary-face ((,class (:foreground ,rose-pine-subtext))))
-    
+
     ;; Ansi
     `(ansi-color-black ((,class (:foreground ,nord-black :background ,nord-black))))
     `(ansi-color-bright-black ((,class (:foreground ,nord-bright-black :background ,nord-bright-black))))
@@ -170,7 +174,7 @@
     `(haskell-operator-face ((,class (:foreground ,rose-pine-subtext))))  ; For operators
     `(haskell-definition-face ((,class (:foreground ,rose-pine-rose))))  ; For function definitions
     `(haskell-type-face ((,class (:foreground ,rose-pine-foam))))  ; For type annotations
- 
+
     ;; Terraform mode
     `(terraform-resource-type-face ((,class (:foreground ,rose-pine-iris))))
     `(terraform-builtin-face ((,class (:foreground ,rose-pine-rose))))
@@ -178,7 +182,7 @@
 
     ;; Clojure ts mode
     `(clojure-ts-keyword-face ((,class (:foreground ,rose-pine-foam))))
- 
+
     ;; Raku mode
     `(raku-operator ((,class (:foreground ,rose-pine-subtext))))
 
@@ -192,14 +196,14 @@
     `(dired-async-message ((,class (:foreground ,rose-pine-gold))))
     `(dired-async-mode-message ((,class (:foreground ,rose-pine-gold))))
     `(dired-broken-symlink ((,class (:foreground ,rose-pine-love))))
- 
+
     ;; Ansible mode
     `(ansible-task-label-face ((,class (:foreground ,rose-pine-foam))))
     `(ansible-section-face ((,class (:foreground ,rose-pine-iris))))
 
 	;; Perl mode
     `(perl-non-scalar-variable ((,class (:foreground ,rose-pine-fg))))
-	
+
     ;; Org mode
     ;; `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
     `(org-block ((t (:background unspecified))))  ; Set background color for org blocks
@@ -224,14 +228,14 @@
     `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :weight regular))))
     ;; `(org-code ((,class (:foreground ,rose-pine-foam :background ,rose-pine-blendedbg :weight regular))))
     ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,"#2a2c2d" :weight regular))))
-	
+
     ;; `(org-code ((,class (:foreground ,rose-pine-fg2 :background ,rose-pine-blendedbg :box (:line-width 1 :color ,rose-pine-fg2)))))
     `(org-verbatim ((,class (:foreground ,rose-pine-fg2))))
 
     ;; Python ts mode
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))
     `(font-lock-constant-face ((,class (:foreground ,rose-pine-foam))))
- 
+
     ;; Flymake
     `(flymake-end-of-line-diagnostics-face ((,class (:box nil))))
     `(flymake-error-echo-at-eol ((,class (:box nil))))
@@ -249,7 +253,7 @@
     `(completions-highlight ((,class (:background ,rose-pine-subtle))))
     `(icomplete-selected-match ((,class (:background ,rose-pine-subtle))))
     `(highlight ((,class (:background ,rose-pine-subtle))))
-    
+
     ;; Vertico
     `(vertico-current ((,class (:background ,rose-pine-subtle))))
     ;; `(vertico-current ((,class (:box (:line-width -1 :color ,rose-pine-rose)))))
@@ -264,7 +268,7 @@
     `(orderless-match-face-1 ((,class (:foreground ,rose-pine-iris :background ,rose-pine-subtext))))
     `(orderless-match-face-2 ((,class (:foreground ,rose-pine-foam :background ,rose-pine-subtext))))
     `(orderless-match-face-3 ((,class (:foreground ,rose-pine-gold :background ,rose-pine-subtext))))
-    
+
     ;; Ivy
     `(ivy-current-match ((,class (:background ,rose-pine-subtle))))
     `(ivy-minibuffer-match-face-1 ((,class (:background ,rose-pine-subtext))))
@@ -275,7 +279,7 @@
     ;; `(ivy-minibuffer-match-face-2 ((,class (:foreground ,rose-pine-fg))))
     ;; `(ivy-minibuffer-match-face-3 ((,class (:foreground ,rose-pine-fg))))
     ;; `(ivy-minibuffer-match-face-4 ((,class (:foreground ,rose-pine-fg))))
- 
+
     ;; Yassnippets
     `(yas-field-highlight-face ((,class (:background unspecified))))
 
@@ -299,11 +303,11 @@
     ;; Line numbers
     `(linum ((,class (:foreground ,rose-pine-subtext))))
     `(line-number ((,class (:foreground ,rose-pine-subtext))))
- 
+
     ;; Region
     ;; `(region ((,class (:background ,rose-pine-subtle))))
     `(region ((,class (:background ,"#262431"))))
- 
+
     ;; Mode line
     `(mode-line-buffer-id ((,class (:weight normal))))
     `(mode-line ((,class (:foreground ,rose-pine-love
@@ -314,7 +318,7 @@
  			      :background ,rose-pine-blendedlove
  			      :box (:line-width 1 :color ,rose-pine-bg)
  			      :weight normal))))  ; Set the weight to normal
- 
+
     ;; Eshell
     `(eshell-ls-special ((,class (:foreground ,rose-pine-iris))))
     `(eshell-ls-unreadable ((,class (:foreground ,rose-pine-fg2))))
@@ -336,7 +340,7 @@
     ;; `(meow-region-cursor-2 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
     ;; `(meow-region-cursor-3 ((,class (:foreground ,rose-pine-bg :background ,rose-pine-rose))))
     ;; meow-region-cursor-1
-    
+
     ;; More faces
     `(cursor ((,class (:foreground ,rose-pine-fg :background ,rose-pine-fg))))
     `(show-paren-mismatch ((,class (:foreground ,rose-pine-fg :background ,rose-pine-love))))

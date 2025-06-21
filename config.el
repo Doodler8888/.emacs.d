@@ -2423,10 +2423,11 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'org-structure-template-alist '("so" . "src toml"))
 (add-to-list 'org-structure-template-alist '("sy" . "src yaml-ts"))
 (add-to-list 'org-structure-template-alist '("sj" . "src json-ts"))
-(add-to-list 'org-structure-template-alist '("ss" . "src sql"))
+(add-to-list 'org-structure-template-alist '("sql" . "src sql"))
 (add-to-list 'org-structure-template-alist '("sg" . "src go-ts"))
 (add-to-list 'org-structure-template-alist '("sc" . "src conf"))
 (add-to-list 'org-structure-template-alist '("sd" . "src dockerfile"))
+(add-to-list 'org-structure-template-alist '("hcl" . "src hcl"))
 ;; (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
 
 ;; It's displayed incorrectly in icomplete-vertical and causes a stutter with
