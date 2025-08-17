@@ -199,44 +199,49 @@ Creates each file immediately after it is entered."
 
 
 
-(defvar my/minibuffer-path-ring nil
-  "List of directories from visible windows in the current frame.")
 
-(defvar my/minibuffer-path-ring-index 0
-  "Current index into `my/minibuffer-path-ring'.")
+;; Simple minibuffer-visible-windows path cycler (uses C-c C-n / C-c C-p)
 
-(defun my/update-minibuffer-path-ring ()
-  "Update `my/minibuffer-path-ring' with paths from all visible windows."
-  (setq my/minibuffer-path-ring
-        (delete-dups
-         (mapcar (lambda (win)
-                   (with-current-buffer (window-buffer win)
-                     default-directory))
-                 (window-list))))
-  (setq my/minibuffer-path-ring-index 0))
+(defvar my/minibuffer-paths nil
+  "Directories from buffers visible in current frame (collected on minibuffer entry).")
 
-(defun my/minibuffer-cycle-path (step)
-  "Insert next directory path from visible windows by STEP.
-Positive STEP moves forward, negative backward."
+(defvar my/minibuffer-path-index -1
+  "Current index into `my/minibuffer-paths'. Start at -1 so first C-c C-n inserts index 0.")
+
+(defun my/collect-visible-directories ()
+  (delete-dups
+   (mapcar (lambda (w)
+             (with-current-buffer (window-buffer w) default-directory))
+           (window-list))))
+
+(defun my/minibuffer-setup ()
+  "Prepare path list and local keys for minibuffer usage."
+  (setq my/minibuffer-paths (my/collect-visible-directories))
+  (setq my/minibuffer-path-index -1)
+  ;; use the keys you originally had:
+  (local-set-key (kbd "C-c C-n") #'my/minibuffer-next)
+  (local-set-key (kbd "C-c C-p") #'my/minibuffer-prev))
+
+(defun my/minibuffer-insert-current ()
+  (when (and my/minibuffer-paths (> (length my/minibuffer-paths) 0))
+    (delete-minibuffer-contents)
+    (insert (nth my/minibuffer-path-index my/minibuffer-paths))))
+
+(defun my/minibuffer-next ()
   (interactive)
-  (my/update-minibuffer-path-ring)
-  (setq my/minibuffer-path-ring-index
-        (mod (+ my/minibuffer-path-ring-index step)
-             (length my/minibuffer-path-ring)))
-  (delete-minibuffer-contents)
-  (insert (nth my/minibuffer-path-ring-index my/minibuffer-path-ring)))
+  (when (and my/minibuffer-paths (> (length my/minibuffer-paths) 0))
+    (setq my/minibuffer-path-index
+          (mod (1+ my/minibuffer-path-index) (length my/minibuffer-paths)))
+    (my/minibuffer-insert-current)))
 
-(defun my/minibuffer-cycle-path-next ()
+(defun my/minibuffer-prev ()
   (interactive)
-  (my/minibuffer-cycle-path 1))
+  (when (and my/minibuffer-paths (> (length my/minibuffer-paths) 0))
+    (setq my/minibuffer-path-index
+          (mod (1- my/minibuffer-path-index) (length my/minibuffer-paths)))
+    (my/minibuffer-insert-current)))
 
-(defun my/minibuffer-cycle-path-prev ()
-  (interactive)
-  (my/minibuffer-cycle-path -1))
-
-;; Bind directly
-(define-key minibuffer-local-map (kbd "C-c C-n") #'my/minibuffer-cycle-path-next)
-(define-key minibuffer-local-map (kbd "C-c C-p") #'my/minibuffer-cycle-path-prev)
+(add-hook 'minibuffer-setup-hook #'my/minibuffer-setup)
 
 
 (with-eval-after-load 'dired
