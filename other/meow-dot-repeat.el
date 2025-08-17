@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 ;; Store the last valid combination (selection + action)
 (defvar my-last-combination nil
   "Stores the last valid combination of selection and action commands.")

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (deftheme rose-pine "Rose Pine theme")
 
 (let ((class '((class color) (min-colors 89)))

@@ -3,6 +3,8 @@
 (add-to-list 'load-path "~/.source/org-mode/lisp")
 
 (require 'package)
+(require 'tramp)
+
 (setq use-package-always-ensure t)
 (setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
                          ("melpa" . "https://melpa.org/packages/")))
@@ -43,14 +45,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages
-   '(buffer-terminator cape clojure-ts-mode corfu crontab-mode docker
-					   dockerfile-mode embark-consult envrc f goto-chg
-					   helm-chart-mode helm-mode hydra lua-mode magit marginalia
-					   markdown-mode meow nerd-icons nix-mode orderless
-					   org-appear org-drill polymode savefold tempel
-					   terraform-mode treesit-auto undo-fu undo-fu-session
-					   vertico wgrep yaml-mode zig-ts-mode))
+ '(package-selected-packages nil)
  '(package-vc-selected-packages
    '((helm-mode :url "https://github.com/nnungest/helm-chart-mode")
 	 (helm-chart-mode :url "https://github.com/nnungest/helm-chart-mode")

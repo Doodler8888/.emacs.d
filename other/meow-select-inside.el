@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (defun left-version-of (ch)
   "Return the left version of a mirrored character if applicable; otherwise return CH."
   (cond ((eq ch ?\)) ?\()

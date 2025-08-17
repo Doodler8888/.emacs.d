@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (defun meow--parse-inside-whitespace (inner)
   "Parse the bounds for inside whitespace selection."
   (save-excursion

@@ -1,4 +1,4 @@
-;; Sessions - Simplified using built-in desktop functionality
+;; -*- lexical-binding: t -*-
 
 (defvar current-desktop-session-name nil
   "The name of the currently loaded desktop session.")

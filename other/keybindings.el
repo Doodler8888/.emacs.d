@@ -1,4 +1,4 @@
-;; Keybindings
+;; -*- lexical-binding: t -*-
 
 (defun my-bind-keys (keymap-prefix bindings)
   "Bind keys in KEYMAP-PREFIX.

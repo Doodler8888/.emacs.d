@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (setq dired-listing-switches "-lA --block-size=K")
 
 (defun tramp-file-name-with-doas (filename)
@@ -194,6 +196,47 @@ Creates each file immediately after it is entered."
          (size (string-trim (shell-command-to-string
                             (format "du -sh %s" (shell-quote-argument file))))))
     (message "%s" size)))
+
+
+
+(defvar my/minibuffer-path-ring nil
+  "List of directories from visible windows in the current frame.")
+
+(defvar my/minibuffer-path-ring-index 0
+  "Current index into `my/minibuffer-path-ring'.")
+
+(defun my/update-minibuffer-path-ring ()
+  "Update `my/minibuffer-path-ring' with paths from all visible windows."
+  (setq my/minibuffer-path-ring
+        (delete-dups
+         (mapcar (lambda (win)
+                   (with-current-buffer (window-buffer win)
+                     default-directory))
+                 (window-list))))
+  (setq my/minibuffer-path-ring-index 0))
+
+(defun my/minibuffer-cycle-path (step)
+  "Insert next directory path from visible windows by STEP.
+Positive STEP moves forward, negative backward."
+  (interactive)
+  (my/update-minibuffer-path-ring)
+  (setq my/minibuffer-path-ring-index
+        (mod (+ my/minibuffer-path-ring-index step)
+             (length my/minibuffer-path-ring)))
+  (delete-minibuffer-contents)
+  (insert (nth my/minibuffer-path-ring-index my/minibuffer-path-ring)))
+
+(defun my/minibuffer-cycle-path-next ()
+  (interactive)
+  (my/minibuffer-cycle-path 1))
+
+(defun my/minibuffer-cycle-path-prev ()
+  (interactive)
+  (my/minibuffer-cycle-path -1))
+
+;; Bind directly
+(define-key minibuffer-local-map (kbd "C-c C-n") #'my/minibuffer-cycle-path-next)
+(define-key minibuffer-local-map (kbd "C-c C-p") #'my/minibuffer-cycle-path-prev)
 
 
 (with-eval-after-load 'dired

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (require 'esh-cmd)  ;; Ensure that eshell command functions are loaded
 (require 'em-tramp) ; to load eshell’s sudo
 (require 'eshell) ; to load eshell’s sudo

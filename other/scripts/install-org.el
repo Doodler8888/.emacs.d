@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (defun install-org-from-source ()
   "Install org-mode from source."
   (interactive)

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (defun my/zoxide-add ()
   "Add directory to zoxide database using interactive selection."
   (interactive)
