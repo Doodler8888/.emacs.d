@@ -2428,6 +2428,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'org-structure-template-alist '("conf" . "src conf"))
 (add-to-list 'org-structure-template-alist '("docker" . "src dockerfile"))
 (add-to-list 'org-structure-template-alist '("hcl" . "src hcl"))
+(add-to-list 'org-structure-template-alist '("md" . "src markdown"))
 ;; (add-to-list 'org-structure-template-alist '("sc" . "src clojure-ts"))
 
 ;; It's displayed incorrectly in icomplete-vertical and causes a stutter with
@@ -2835,6 +2836,11 @@ If an eshell buffer for the directory already exists, switch to it."
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
+(defun tasks ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/job/tasks/"))
 
 
 ;; I probably must set it after enabling line numbers. Enabling it from the
