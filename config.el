@@ -2217,7 +2217,7 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Org Mode
 
-(defvar browse-url-default-browser-executable "/snap/bin/vivaldi.vivaldi-stable"
+(defvar browse-url-default-browser-executable "/usr/bin/vivaldi"
   "Path to the default browser executable.")
 
 (defun my/browse-url-default-browser (url &rest _args)
