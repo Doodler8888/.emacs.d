@@ -913,3 +913,15 @@ Otherwise, increment the number at point by INC (default 1)."
   (let ((tab-text (make-string tab-width ?\s)))
     (dotimes (_ n)
       (insert tab-text))))
+
+(defun my/copy-git-branch ()
+  "Copy the current Git branch name to the clipboard."
+  (interactive)
+  (let ((branch (string-trim
+                 (shell-command-to-string "git branch --show-current"))))
+    (if (string-empty-p branch)
+        (message "Not in a Git branch")
+      (kill-new branch)
+      (when (fboundp 'gui-set-selection) ;; for GUI Emacs
+        (gui-set-selection 'CLIPBOARD branch))
+      (message "Copied branch: %s" branch))))

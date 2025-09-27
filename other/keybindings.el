@@ -10,7 +10,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
   '(
     ;; ("ff" . project-find-file)
 
-    ("ff" . project-find-file-all)
+    ("ff" . project-find-file)
+    ("fa" . project-find-file-all)
     ("fd" . project-find-dir)
     ;; ("fb" . ido-switch-buffer)
     ;; ("fy" . my/copy-kill-ring-to-clipboard)
@@ -72,6 +73,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ;; ("m" . open-messages-buffer)
 
     ("cc" . Cp)
+    ("cb" . my/copy-git-branch)
 
     ;; ("cn" . next-error)
     ;; ("cp" . previous-error)

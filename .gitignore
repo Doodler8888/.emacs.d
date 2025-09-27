@@ -53,6 +53,7 @@ test.el
 meow.el.bak
 /undo-fu-session/
 multisession/
+custom.el
 
 .bookmarks
 

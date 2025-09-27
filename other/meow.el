@@ -1519,7 +1519,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("C" . my/meow-change-to-end-of-line)
    '("Y" . my/copy-to-end-of-line)
    '("D" . my/meow-delete-to-end-of-line)
-   '("C-." . my-replay-commands)
+   ;; '("C-." . my-replay-commands)
    ;; '("C-." . my-replay-last-operation)
    ;; '("C-r" . undo-tree-redo)
    '("C-r" . undo-fu-only-redo)

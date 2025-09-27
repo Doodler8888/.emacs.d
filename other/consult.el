@@ -7,8 +7,8 @@
   (let ((selected (consult-line)))
     (when-let* ((search-string (car consult--line-history)))
       (message "Search string: %S" search-string)
-      (let ((search-string-prop 
-             (propertize search-string 
+      (let ((search-string-prop
+             (propertize search-string
                          'isearch-case-fold-search t)))
         (push search-string-prop regexp-search-ring)
         ;; Set search direction to forward
@@ -82,7 +82,7 @@
          (occur-update-function (lambda (&rest _)
                                 (when-let* ((index vertico--index)
                                           (candidates vertico--candidates)
-                                          ((seq-find (lambda (c) 
+                                          ((seq-find (lambda (c)
                                                      (string-match "^[[:space:]]*[0-9]+:" c))
                                                    candidates))
                                           (cand (and (>= index 0)
@@ -94,9 +94,9 @@
                                     (goto-char (point-min))
                                     (forward-line (1- (string-to-number line-num)))
                                     (recenter))))))
-    
+
     (advice-add 'vertico--update :after occur-update-function)
-    
+
     (unwind-protect
         (condition-case nil
             (let ((choice (completing-read "Select line: " numbered-lines)))
@@ -117,7 +117,7 @@
                       (forward-line (1- (string-to-number line-num)))
                       (recenter))))))
           (quit (funcall restore-position)))
-      
+
       (advice-remove 'vertico--update occur-update-function))))
 
 ;; Add occur to get-last-search-pattern
@@ -131,4 +131,3 @@
    ((and (boundp 'isearch-string) (not (string-empty-p isearch-string)))
     (if isearch-regexp isearch-string (regexp-quote isearch-string)))
    (t "")))
-

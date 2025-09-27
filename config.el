@@ -78,6 +78,17 @@
                 (with-current-buffer "*Messages*"
                   (display-line-numbers-mode 1)))))
 
+(defun my-rectangle-mode-cursor-change ()
+  "Change cursor color when entering or leaving rectangle-mark-mode."
+  (if rectangle-mark-mode
+      (set-cursor-color "#c4a7e7") ; Color when rectangle-mark-mode is active
+    (set-cursor-color "white")))  ; Default cursor color
+
+;; Add hook to run when rectangle-mark-mode is toggled
+(add-hook 'rectangle-mark-mode-hook 'my-rectangle-mode-cursor-change)
+
+;; Statusline
+
 (defun my-mode-line-major-mode ()
   "Returns a clean name of the current major mode."
   (let ((mode (format "%s" major-mode)))
@@ -119,26 +130,43 @@
                   branch))))
         (error nil)))))
 
+(require 'project)
+
+(defun my-project-relative-path ()
+  "Return buffer path relative to project root, or full path if not in project."
+  (let* ((file (buffer-file-name))
+         (dir (and (eq major-mode 'dired-mode) default-directory))
+         (target (or file dir)))
+    (when target
+      (if-let* ((proj (project-current)))
+          (file-relative-name target (project-root proj))
+        target))))
+
+(defun my-buffer-name-display ()
+  "Display project-relative path for files/dired, or buffer name otherwise."
+  (if-let ((name (my-project-relative-path)))
+      (propertize name 'face 'mode-line-buffer-id)
+    (propertize "%b" 'face 'mode-line-buffer-id)))
+
+(defun my-modified-indicator ()
+  "Return '[+]' if buffer is modified, otherwise empty string."
+  (if (and (buffer-modified-p)
+           (buffer-file-name)) ;; только для файлов
+      "[+]"
+    ""))
+
 (setq-default mode-line-format
               '("%e"
-                (:eval (my-window-number))
+                ;; (:eval (my-window-number))
                 (:eval (my-buffer-name-display))
+                " "
+                (:eval (my-modified-indicator))
                 "  "
                 (:eval (my-mode-line-major-mode))
                 "  "
                 (:eval (or (my-vc-branch) ""))
                 (:eval (propertize " " 'display '(space :align-to (- right 12))))
                 mode-line-end-spaces))
-
-
-(defun my-rectangle-mode-cursor-change ()
-  "Change cursor color when entering or leaving rectangle-mark-mode."
-  (if rectangle-mark-mode
-      (set-cursor-color "#c4a7e7") ; Color when rectangle-mark-mode is active
-    (set-cursor-color "white")))  ; Default cursor color
-
-;; Add hook to run when rectangle-mark-mode is toggled
-(add-hook 'rectangle-mark-mode-hook 'my-rectangle-mode-cursor-change)
 
 
 ;; Tabs
@@ -407,6 +435,7 @@
 ;; I haven't tried them yet
 (setq isearch-lazy-count t)
 (setq isearch-lazy-highlight t)
+
 
 ;; Cursor
 
@@ -865,12 +894,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 (setq which-key-max-description-length 40)
 
 
-;; Wgrep
-
-(use-package wgrep
-  :ensure t)
-
-
 ;; Xterm-color
 
 (require 'ansi-color)
@@ -1323,7 +1346,10 @@ Prevents highlighting of the minibuffer command line itself."
   :init
   (marginalia-mode))
 
-(use-package consult)
+(use-package consult
+  :init
+  (setq consult-ripgrep-args
+        "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip"))
   ;; :ensure t
   ;; :config
   ;; (with-eval-after-load 'org
@@ -1537,6 +1563,24 @@ Prevents highlighting of the minibuffer command line itself."
   (advice-add 'with-editor-export-editor :around #'suppress-with-editor-export-message))
 
 
+;; Repeat-fu
+
+(use-package repeat-fu
+  :commands (repeat-fu-mode repeat-fu-execute)
+
+  :config
+  (setq repeat-fu-preset 'meow)
+
+  :hook
+  ((meow-mode)
+   .
+   (lambda ()
+     (when (and (not (minibufferp)) (not (derived-mode-p 'special-mode)))
+       (repeat-fu-mode)
+       (define-key meow-normal-state-keymap (kbd "C-.") 'repeat-fu-execute)
+       (define-key meow-insert-state-keymap (kbd "C-.") 'repeat-fu-execute)))))
+
+
 ;; Hydra
 
 (use-package hydra
@@ -1674,6 +1718,25 @@ Prevents highlighting of the minibuffer command line itself."
 ;;   (insert "n"))
 
 ;; (add-hook 'git-commit-setup-hook 'my-git-commit-setup)
+
+(with-eval-after-load 'magit
+  (defun my-magit-branch-rename (old new &optional force)
+    "Rename branch OLD to NEW, prefilling NEW with OLD."
+    (interactive
+     (let ((branch (magit-read-local-branch "Rename branch")))
+       (list branch
+             (magit-read-string-ns
+              (format "Rename branch '%s' to" branch)
+              branch   ;; дефолт — старое имя
+              'magit-revision-history)
+             current-prefix-arg)))
+    ;; здесь вызываем git напрямую, без рекурсии
+    (magit-call-git "branch" (if force "-M" "-m") old new)
+    ;; обновляем статус буфера
+    (magit-refresh))
+
+  ;; заменить оригинал
+  (advice-add 'magit-branch-rename :override #'my-magit-branch-rename))
 
 
 ;; Async shell command
