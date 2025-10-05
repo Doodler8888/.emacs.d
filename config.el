@@ -217,7 +217,7 @@
 
 (setq-default tab-width 4)
 ;; (add-hook 'yaml-ts-mode-hook (lambda () (setq tab-width 2)))
-(add-hook 'my-yaml-mode-hook (lambda () (setq tab-width 2)))
+;; (add-hook 'my-yaml-mode-hook (lambda () (setq tab-width 2)))
 (setq-default indent-tabs-mode t)
 
 (recentf-mode)
@@ -607,10 +607,20 @@
 
 (setq treesit-font-lock-level 4) ;; The default value is 3
 
-(use-package treesit-auto
-  :ensure t
-  :config
-  (global-treesit-auto-mode))
+(customize-set-variable 'treesit-enabled-modes
+                        '(python-ts-mode
+                          js-ts-mode
+                          css-ts-mode
+						  bash-ts-mode
+						  dockerfile-ts-mode
+						  go-ts-mode
+                          json-ts-mode))
+
+;; (use-package treesit-auto
+;;   :ensure t
+;;   :config
+;;   (add-to-list 'global-treesit-auto-modes '(not yaml-ts-mode))
+;;   (global-treesit-auto-mode))
 
 (use-package clojure-ts-mode)
 
@@ -632,8 +642,6 @@
 ;; (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 
 ;; (add-hook 'yaml-ts-mode-hook (lambda ()
-(add-hook 'yaml-mode-hook (lambda ()
-  (auto-fill-mode -1)))
 
 
 ;; Undo fu
@@ -1967,11 +1975,11 @@ If an eshell buffer for the directory already exists, switch to it."
   (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter))
 
 
-(add-to-list 'compilation-error-regexp-alist
-             'yaml)
-(add-to-list 'compilation-error-regexp-alist-alist
-             '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
-             )
+;; (add-to-list 'compilation-error-regexp-alist
+;;              'yaml)
+;; (add-to-list 'compilation-error-regexp-alist-alist
+;;              '(yaml "^\\(.*?\\):\\([0-9]+\\)" 1 2)
+;;              )
 
 ; Replace make -k with ansible-lint, with an UTF-8 locale to avoid crashes
 (defun ansible-lint-errors ()
@@ -2119,8 +2127,10 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t)
 (use-package dockerfile-mode
   :ensure t)
-;; (use-package yaml-mode
-;;   :ensure t)
+(use-package yaml-mode)
+  ;; :mode ("\\.ya?ml\\'" . yaml-mode)
+  ;; :hook (yaml-mode . (lambda ()
+  ;;                      (auto-fill-mode -1))))
 (use-package nix-mode
   :ensure t)
 ;; (use-package systemd
@@ -2909,6 +2919,5 @@ If an eshell buffer for the directory already exists, switch to it."
 ;; I probably must set it after enabling line numbers. Enabling it from the
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
-
 
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
