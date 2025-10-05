@@ -371,10 +371,73 @@
 
 ;; (add-hook 'after-init-hook 'my/set-flymake-faces)
 
-(add-hook 'yaml-mode-hook
+;; (add-hook 'yaml-mode-hook
+;;           (lambda ()
+;;             (face-remap-add-relative 'font-lock-variable-name-face
+;;                                      '(:foreground "#9ccfd8"))))
+
+(defface my-dockerfile-expansion-face
+  '((t :foreground "#c4a7e7"))
+  "Face for Dockerfile variable expansions like ${VAR}."
+  :group 'dockerfile)
+
+(defface my-dockerfile-path-face
+  '((t :foreground "#e0def4"))
+  "Face for Dockerfile paths."
+  :group 'dockerfile)
+
+(defface my-dockerfile-line-continuation-face
+  '((t :foreground "#6e6a86"))
+  "Face for line continuation backslashes."
+  :group 'dockerfile)
+
+(defface my-dockerfile-shell-command-face
+  '((t :foreground "#ebbcba"))
+  "Face for shell commands."
+  :group 'dockerfile)
+
+(defface my-dockerfile-user-param-face
+  '((t :foreground "#9ccfd8"))  ; rose pine foam
+  "Face for user parameters in ARG, USER, and COPY --chown."
+  :group 'dockerfile)
+
+(add-hook 'dockerfile-ts-mode-hook
           (lambda ()
-            (face-remap-add-relative 'font-lock-variable-name-face
-                                    :foreground "#9ccfd8")))
+            (setq-local treesit-font-lock-settings
+                        (append treesit-font-lock-settings
+                                (treesit-font-lock-rules
+                                 :language 'dockerfile
+                                 :feature 'custom-expansion
+                                 :override t
+                                 '((expansion) @my-dockerfile-expansion-face))
+                                (treesit-font-lock-rules
+                                 :language 'dockerfile
+                                 :feature 'custom-paths
+                                 :override t
+                                 '((path) @my-dockerfile-path-face))
+                                (treesit-font-lock-rules
+                                 :language 'dockerfile
+                                 :feature 'custom-continuation
+                                 :override t
+                                 '((line_continuation) @my-dockerfile-line-continuation-face))
+                                (treesit-font-lock-rules
+                                 :language 'dockerfile
+                                 :feature 'custom-shell
+                                 :override t
+                                 '((shell_fragment) @my-dockerfile-shell-command-face))
+                                (treesit-font-lock-rules
+                                 :language 'dockerfile
+                                 :feature 'custom-user-params
+                                 :override t
+                                 '(;; COPY/ADD --chown parameters
+                                   (param) @my-dockerfile-user-param-face
+                                   ;; ARG instruction parameters
+                                   (arg_instruction (unquoted_string) @my-dockerfile-user-param-face)
+                                   ;; USER instruction parameters
+                                   (user_instruction (unquoted_string) @my-dockerfile-user-param-face)))))
+            (treesit-font-lock-recompute-features
+             '(custom-expansion custom-paths custom-continuation custom-shell custom-user-params))))
+
 
 ;;;###autoload
 (when load-file-name
