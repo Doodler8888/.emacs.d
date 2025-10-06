@@ -129,7 +129,7 @@
     `(avy-lead-face-1 ((,class (:background ,rose-pine-bg2))))
     `(avy-lead-face-2 ((,class (:background ,rose-pine-bg2))))
 
-    ;; Kubernetes
+    ;; Kubernetes (probably relates to magit)
     `(kubernetes-context-name ((,class (:foreground ,rose-pine-fg))))
     `(kubernetes-namespace ((,class (:foreground ,rose-pine-fg))))
     `(kubernetes-dimmed ((,class (:foreground ,rose-pine-subtext))))
@@ -138,6 +138,8 @@
     `(kubernetes-progress-indicator ((,class (:foreground ,rose-pine-foam))))
     `(kubernetes-selector ((,class (:foreground ,rose-pine-fg))))
     `(kubernetes-delete-mark ((,class (:foreground ,rose-pine-iris))))
+
+	;; Magit
     `(magit-section-heading ((,class (:foreground ,rose-pine-foam))))
     `(magit-section-highlight ((,class (:background ,rose-pine-subtle))))
 
@@ -371,10 +373,53 @@
 
 ;; (add-hook 'after-init-hook 'my/set-flymake-faces)
 
-;; (add-hook 'yaml-mode-hook
-;;           (lambda ()
-;;             (face-remap-add-relative 'font-lock-variable-name-face
-;;                                      '(:foreground "#9ccfd8"))))
+
+(defface yaml-colon-face
+  '((t (:foreground "#908caa")))
+  "Face for colons after keys in YAML."
+  :group 'yaml)
+
+(defface yaml-bracket-face
+  '((t (:foreground "#908caa")))
+  "Face for brackets and braces in YAML values."
+  :group 'yaml)
+
+(defface yaml-dash-face
+  '((t (:foreground "#908caa")))
+  "Face for dashes in YAML lists."
+  :group 'yaml)
+
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            ;; Your existing face remaps
+            (face-remap-add-relative 'font-lock-variable-name-face
+                                     '(:foreground "#9ccfd8"))
+            (face-remap-add-relative 'default
+                                     '(:foreground "#f6c177"))
+            (face-remap-add-relative 'font-lock-constant-face
+                                     '(:foreground "#ebbcba"))
+
+            ;; Add custom font-lock for colons after keys only
+            (font-lock-add-keywords
+             nil
+             '(("^\\s-*[^:#\n]+\\(:\\)\\s-*\\(?:#\\|$\\|[^\n]\\)" 1 'yaml-colon-face prepend))
+             'append)
+
+            ;; Add custom font-lock for brackets not in strings or comments
+            (font-lock-add-keywords
+             nil
+             '(("[][{}]" 0 (let ((state (syntax-ppss)))
+                             (unless (or (nth 3 state) (nth 4 state))
+                               'yaml-bracket-face))
+                         prepend))
+             'append)
+
+            ;; Add custom font-lock for list dashes
+            (font-lock-add-keywords
+             nil
+             '(("^\\s-*\\(-\\)\\s-" 1 (unless (nth 4 (syntax-ppss)) 'yaml-dash-face) prepend))
+             'append)))
+
 
 (defface my-dockerfile-expansion-face
   '((t :foreground "#c4a7e7"))

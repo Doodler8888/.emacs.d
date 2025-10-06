@@ -144,7 +144,7 @@
 
 (defun my-buffer-name-display ()
   "Display project-relative path for files/dired, or buffer name otherwise."
-  (if-let ((name (my-project-relative-path)))
+  (if-let* ((name (my-project-relative-path)))
       (propertize name 'face 'mode-line-buffer-id)
     (propertize "%b" 'face 'mode-line-buffer-id)))
 
@@ -1280,6 +1280,32 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
   (add-to-list 'embark-keymap-alist '(region . embark-region-map))
 
   (define-key embark-region-map (kbd "RET") #'my/find-file-embark))
+
+;; Auto-enable grep-edit-mode for all grep buffers (when not running)
+(defun my/auto-grep-edit-mode ()
+  "Automatically enter grep-edit-mode after using embark-export."
+  (when (and (derived-mode-p 'grep-mode)
+             (not (get-buffer-process (current-buffer))))
+    (run-with-idle-timer 0.1 nil
+                         (lambda (buf)
+                           (when (buffer-live-p buf)
+                             (with-current-buffer buf
+                               (grep-change-to-grep-edit-mode))))
+                         (current-buffer))))
+
+(add-hook 'grep-mode-hook #'my/auto-grep-edit-mode)
+
+(defvar my/occur-edit-mode-enabled nil
+  "Flag to prevent recursive occur-edit-mode activation.")
+
+(defun my/auto-occur-edit-mode ()
+  "Automatically enter occur-edit-mode after using embark-export."
+  (unless my/occur-edit-mode-enabled
+    (when (derived-mode-p 'occur-mode)
+      (let ((my/occur-edit-mode-enabled t))
+        (occur-edit-mode)))))
+
+(add-hook 'occur-mode-hook #'my/auto-occur-edit-mode)
 
 
 ;; Vertico/Consult
@@ -2494,7 +2520,8 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-to-list 'org-structure-template-alist '("fund" . "src fundamental"))
 (add-to-list 'org-structure-template-alist '("text" . "src text"))
 (add-to-list 'org-structure-template-alist '("toml" . "src toml"))
-(add-to-list 'org-structure-template-alist '("yaml" . "src yaml-ts"))
+;; (add-to-list 'org-structure-template-alist '("yaml" . "src yaml-ts"))
+(add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
 (add-to-list 'org-structure-template-alist '("json" . "src json-ts"))
 (add-to-list 'org-structure-template-alist '("sql" . "src sql"))
 (add-to-list 'org-structure-template-alist '("go" . "src go-ts"))

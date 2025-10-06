@@ -65,7 +65,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("j" . avy-jump-to-window)
 
-    ("E"  . eshell)
+    ;; ("E"  . eshell)
     ("e" . open-eshell-in-current-directory)
     ;; ("ep" . eshell-pop)
 
@@ -185,6 +185,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (with-eval-after-load 'magit
   (my/setup-window-keys magit-mode-map))
+(with-eval-after-load 'grep
+  (my/setup-window-keys grep-mode-map))
 (with-eval-after-load 'dired
   (my/setup-window-keys dired-mode-map))
 (with-eval-after-load 'daemons
@@ -263,22 +265,3 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-s C-o") 'my-org-outline))
-
-
-
-;; (defun my/yaml-newline-and-indent ()
-;;   "Insert a newline and indent. If the text before point ends with a colon,
-;; indent the new line with an extra two spaces."
-;;   (interactive)
-;;   (let ((prev-ends-with-colon (save-excursion
-;;                                 (skip-chars-backward " \t")
-;;                                 (eq (char-before) ?:))))
-;;     (newline)
-;;     (if prev-ends-with-colon
-;;         (indent-to (+ (current-indentation) 2))
-;;       (indent-for-tab-command))))
-
-;; ;; And for yaml-ts-mode:
-;; (add-hook 'yaml-ts-mode-hook
-;;           (lambda ()
-;;             (local-set-key (kbd "RET") #'my/yaml-newline-and-indent)))

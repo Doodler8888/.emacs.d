@@ -121,7 +121,7 @@ yaml-mode
     "  serviceName: " (p "my-statefulset-service"))
 
 yaml-mode
-(test
+(test
     "apiVersion: apps/v1" n
     "kind: Deployment" n
     "metadata:" n
