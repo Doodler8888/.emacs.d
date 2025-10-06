@@ -2337,6 +2337,7 @@ If an eshell buffer for the directory already exists, switch to it."
   :config
   (setq browse-url-browser-function 'my/browse-url-default-browser)
   ;; (setq browse-url-browser-function 'browse-url-default-browser) ;; Make links to open a default web browser.
+  (setq org-src-fontify-natively t)
   (setq org-startup-with-inline-images t)
   ;; ;; The idea here is to make org-babel to use bash-ts-mode instead of sh-mode
   ;; (setq org-babel-sh-command "/bin/bash")
