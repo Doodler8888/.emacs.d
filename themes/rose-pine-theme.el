@@ -374,8 +374,54 @@
 ;; (add-hook 'after-init-hook 'my/set-flymake-faces)
 
 
+;; (defface yaml-colon-face
+;;   '((t (:foreground "#908caa")))
+;;   "Face for colons after keys in YAML."
+;;   :group 'yaml)
+
+;; (defface yaml-bracket-face
+;;   '((t (:foreground "#908caa")))
+;;   "Face for brackets and braces in YAML values."
+;;   :group 'yaml)
+
+;; (defface yaml-dash-face
+;;   '((t (:foreground "#908caa")))
+;;   "Face for dashes in YAML lists."
+;;   :group 'yaml)
+
+;; (add-hook 'yaml-mode-hook
+;;           (lambda ()
+;;             ;; Your existing face remaps
+;;             (face-remap-add-relative 'font-lock-variable-name-face
+;;                                      '(:foreground "#9ccfd8"))
+;;             (face-remap-add-relative 'default
+;;                                      '(:foreground "#f6c177"))
+;;             (face-remap-add-relative 'font-lock-constant-face
+;;                                      '(:foreground "#ebbcba"))
+
+;;             ;; Add custom font-lock for colons after keys only
+;;             (font-lock-add-keywords
+;;              nil
+;;              '(("^\\s-*[^:#\n]+\\(:\\)\\s-*\\(?:#\\|$\\|[^\n]\\)" 1 'yaml-colon-face prepend))
+;;              'append)
+
+;;             ;; Add custom font-lock for brackets not in strings or comments
+;;             (font-lock-add-keywords
+;;              nil
+;;              '(("[][{}]" 0 (let ((state (syntax-ppss)))
+;;                              (unless (or (nth 3 state) (nth 4 state))
+;;                                'yaml-bracket-face))
+;;                          prepend))
+;;              'append)
+
+;;             ;; Add custom font-lock for list dashes
+;;             (font-lock-add-keywords
+;;              nil
+;;              '(("^\\s-*\\(-\\)\\s-" 1 (unless (nth 4 (syntax-ppss)) 'yaml-dash-face) prepend))
+;;              'append)))
+
 (defface yaml-colon-face
-  '((t (:foreground "#908caa")))
+  '((t (:foreground "#908caa" :weight bold)))
   "Face for colons after keys in YAML."
   :group 'yaml)
 
@@ -389,40 +435,55 @@
   "Face for dashes in YAML lists."
   :group 'yaml)
 
-(add-hook 'yaml-mode-hook
-          (lambda ()
-            ;; Your existing face remaps
-            (face-remap-add-relative 'font-lock-variable-name-face
-                                     '(:foreground "#9ccfd8"))
-            (face-remap-add-relative 'default
-                                     '(:foreground "#f6c177"))
-            (face-remap-add-relative 'font-lock-constant-face
-                                     '(:foreground "#ebbcba"))
+;; Create dedicated faces for the colors you were trying to remap.
+;; This allows Org mode to "see" the colors and copy them.
+(defface yaml-custom-key-face
+  '((t (:foreground "#9ccfd8"))) ; Your variable-name-face color
+  "Face for YAML keys."
+  :group 'yaml)
 
-            ;; Add custom font-lock for colons after keys only
-            (font-lock-add-keywords
-             nil
-             '(("^\\s-*[^:#\n]+\\(:\\)\\s-*\\(?:#\\|$\\|[^\n]\\)" 1 'yaml-colon-face prepend))
-             'append)
+(defface yaml-custom-constant-face
+  '((t (:foreground "#ebbcba"))) ; Your constant-face color
+  "Face for YAML constants."
+  :group 'yaml)
 
-            ;; Add custom font-lock for brackets not in strings or comments
-            (font-lock-add-keywords
-             nil
-             '(("[][{}]" 0 (let ((state (syntax-ppss)))
-                             (unless (or (nth 3 state) (nth 4 state))
-                               'yaml-bracket-face))
-                         prepend))
-             'append)
 
-            ;; Add custom font-lock for list dashes
-            (font-lock-add-keywords
-             nil
-             '(("^\\s-*\\(-\\)\\s-" 1 (unless (nth 4 (syntax-ppss)) 'yaml-dash-face) prepend))
-             'append)))
+;; 2. Apply keywords Globally using `with-eval-after-load`
+;;    Note: We use 'yaml-mode as the first argument, not nil.
+
+(with-eval-after-load 'yaml-mode
+
+  ;; A. highlight keys with your custom color (overriding default variable-name-face)
+  ;;    matches "key:" structure
+  (font-lock-add-keywords
+   'yaml-mode
+   '(("^\\s-*\\([^:#\n]+\\):" 1 'yaml-custom-key-face prepend))
+   'append)
+
+  ;; B. Highlight colons independently
+  (font-lock-add-keywords
+   'yaml-mode
+   '(("^\\s-*[^:#\n]+\\(:\\)\\s-*\\(?:#\\|$\\|[^\n]\\)" 1 'yaml-colon-face prepend))
+   'append)
+
+  ;; C. Highlight brackets/braces (ignoring strings/comments)
+  (font-lock-add-keywords
+   'yaml-mode
+   '(("[][{}]" 0 (let ((state (syntax-ppss)))
+                   (unless (or (nth 3 state) (nth 4 state))
+                     'yaml-bracket-face))
+               prepend))
+   'append)
+
+  ;; D. Highlight list dashes
+  (font-lock-add-keywords
+   'yaml-mode
+   '(("^\\s-*\\(-\\)\\s-" 1 (unless (nth 4 (syntax-ppss)) 'yaml-dash-face) prepend))
+   'append))
 
 
 (defface my-dockerfile-expansion-face
-  '((t :foreground "#c4a7e7"))
+  '((t :foreground "#9ccfd8"))
   "Face for Dockerfile variable expansions like ${VAR}."
   :group 'dockerfile)
 
@@ -437,13 +498,8 @@
   :group 'dockerfile)
 
 (defface my-dockerfile-shell-command-face
-  '((t :foreground "#ebbcba"))
+  '((t :foreground "#c4a7e7"))
   "Face for shell commands."
-  :group 'dockerfile)
-
-(defface my-dockerfile-user-param-face
-  '((t :foreground "#9ccfd8"))  ; rose pine foam
-  "Face for user parameters in ARG, USER, and COPY --chown."
   :group 'dockerfile)
 
 (add-hook 'dockerfile-ts-mode-hook
@@ -474,9 +530,7 @@
                                  :language 'dockerfile
                                  :feature 'custom-user-params
                                  :override t
-                                 '(;; COPY/ADD --chown parameters
-                                   (param) @my-dockerfile-user-param-face
-                                   ;; ARG instruction parameters
+                                 '(;; ARG instruction parameters
                                    (arg_instruction (unquoted_string) @my-dockerfile-user-param-face)
                                    ;; USER instruction parameters
                                    (user_instruction (unquoted_string) @my-dockerfile-user-param-face)))))

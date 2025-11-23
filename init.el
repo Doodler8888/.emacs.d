@@ -46,13 +46,12 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(package-selected-packages
-   '(buffer-terminator cape clojure-ts-mode command-log-mode corfu crontab-mode
-					   docker dockerfile-mode embark-consult envrc goto-chg
-					   hydra inkpot-theme lua-mode magit marginalia
-					   markdown-mode meow nerd-icons nix-mode orderless
-					   org-appear org-drill package-utils repeat-fu savefold
-					   tempel terraform-mode treesit-auto undo-fu
-					   undo-fu-session vertico yaml-mode zig-ts-mode))
+   '(buffer-terminator cape clojure-ts-mode corfu crontab-mode docker
+					   dockerfile-mode embark-consult envrc goto-chg hydra magit
+					   marginalia markdown-mode meow nerd-icons nginx-mode
+					   nix-mode orderless org-appear org-drill repeat-fu
+					   savefold tempel terraform-mode undo-fu undo-fu-session
+					   vertico yaml-mode zig-ts-mode))
  '(package-vc-selected-packages
    '((macrursors :url "https://github.com/corytertel/macrursors")
 	 (helm-mode :url "https://github.com/nnungest/helm-chart-mode")

@@ -60,14 +60,14 @@
   ;;                                  lsp-ui-imenu elpaca minibuffer ivy proced
   ;;                                  docker magit package-menu debug))
   (setq evil-collection-mode-list '(wdired minibuffer debug))
-  
+
   ;; ;; Force normal state for package-menu-mode
   ;; (evil-set-initial-state 'package-menu-mode 'normal)
-  
+
   ;; ;; Debug hook to verify
   ;; (evil-set-initial-state 'package-menu-mode 'normal)
   ;; (evil-set-initial-state 'debugger-mode 'normal)
-  
+
   (evil-collection-init))
 
 (use-package evil-numbers)
@@ -255,7 +255,7 @@ If a region is active, the overwritten text is copied into the kill ring (and sy
 ;; (with-eval-after-load 'evil
 ;;   ;; First, ensure help-mode uses normal state instead of motion state
 ;;   (evil-set-initial-state 'help-mode 'normal)
-  
+
 ;;   ;; Then set our keybindings
 ;;   (define-key evil-visual-state-map (kbd "/") 'my/conditional-search-or-avy)
 ;;   (define-key evil-normal-state-map (kbd "/") 'my/conditional-search-or-avy))
@@ -495,7 +495,7 @@ If a region is active, the overwritten text is copied into the kill ring (and sy
   ;; For help-mode
   (evil-define-key 'normal help-mode-map
     "q" #'quit-window)
-  
+
   (evil-define-key 'normal Info-mode-map
     "q" #'quit-window)
 
@@ -555,7 +555,7 @@ If a region is active, the overwritten text is copied into the kill ring (and sy
     (kbd "M-~") (lambda () (interactive) (call-interactively #'tempel-previous))))
 
 (with-eval-after-load 'tempel
-  (add-hook 'evil-insert-state-exit-hook 
+  (add-hook 'evil-insert-state-exit-hook
             (lambda ()
               (when tempel--active
                 (tempel-done)))))
@@ -647,6 +647,3 @@ After finding, move one character forward/backward accordingly, then execute `va
         (error (user-error "Character not found"))))
     (evil-visual-char)
     (execute-kbd-macro (kbd (format "a%c" char)))))
-
-
-

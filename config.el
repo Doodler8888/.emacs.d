@@ -101,33 +101,70 @@
            (num (cl-position (selected-window) windows)))
       (format "%d " (1+ (or num 0))))))
 
+(defun my-mode-line-right-side ()
+  "Generate the Right Side string (Mode + Branch) to measure it."
+  (let ((branch (my-vc-branch)))
+    (if (and branch (not (string-empty-p branch)))
+        (concat (my-mode-line-major-mode) " " branch)
+      (my-mode-line-major-mode))))
+
+(defun my-mode-line-right-width ()
+  "Measure the width of the right side + 1 char padding."
+  (+ 1 (length (my-mode-line-right-side))))
+
 (defun my-buffer-name-display ()
-  "Get full path for files/dired, buffer name otherwise (TRAMP-safe)."
-  (if-let* ((name (cond ((buffer-file-name)
-                        (buffer-file-name))
-                       ((eq major-mode 'dired-mode)
-                        (directory-file-name default-directory))
-                       (t nil))))
-      (propertize name 'face 'mode-line-buffer-id)
-    (propertize "%b" 'face 'mode-line-buffer-id)))
+  "Display path, truncated to ensure a 3-char gap + safety margin."
+  (let* ((win-width (window-body-width))
+         ;; SAFETY #1: Assume window is 2 chars smaller to account for fringes/borders
+         (fringe-safety 3)
+
+         (right-width (my-mode-line-right-width))
+
+         (mod-len (if (and (buffer-modified-p) (buffer-file-name)) 4 0))
+
+         ;; SAFETY #2: The Math
+         ;; Reserve = RightSide + Mod + 3 (Gap) + FringeSafety
+         (reserved-space (+ right-width mod-len 3 fringe-safety))
+
+         (name (or (my-project-relative-path) "%b"))
+         (avail-width (- win-width reserved-space))
+         (final-width (max 10 avail-width)))
+
+    (if (> (length name) final-width)
+        (propertize (concat "..." (substring name (- (length name) final-width)))
+                    'face 'mode-line-buffer-id)
+      (propertize name 'face 'mode-line-buffer-id))))
+
+;; (defun my-buffer-name-display ()
+;;   "Display project-relative path for files/dired, or buffer name otherwise."
+;;   (if-let* ((name (my-project-relative-path)))
+;;       (propertize name 'face 'mode-line-buffer-id)
+;;     (propertize "%b" 'face 'mode-line-buffer-id)))
 
 (defun my-vc-branch ()
-  "Get the current Git branch name, if any."
+  "Get the current Git branch name, resilient to deleted directories."
   (when (and (or (buffer-file-name)
-                 (eq major-mode 'dired-mode))  ; Allow dired buffers
-             (not (file-remote-p (or (buffer-file-name) ;; ;; This line is very important, otherwise i will have problems with tramp
-                                    default-directory)))  ; Use default-directory for dired
+                 (eq major-mode 'dired-mode))
+             (not (file-remote-p (or (buffer-file-name) default-directory)))
              (not (or (eq major-mode 'eshell-mode)
-                     (eq major-mode 'special-mode)
-                     (string-prefix-p "*" (buffer-name)))))
+                      (eq major-mode 'special-mode)
+                      (string-prefix-p "*" (buffer-name)))))
     (with-temp-buffer
       (condition-case nil
-          (when (zerop (call-process "git" nil t nil "branch" "--show-current"))
-            (let ((branch (string-trim (buffer-string))))
-              (unless (string-empty-p branch)
-                (if (> (length branch) 40)
-                    (concat (substring branch 0 37) "...")
-                  branch))))
+          ;; FIX: Temporarily switch to the Project Root to run the git command.
+          ;; This ensures it works even if the current sub-folder was deleted.
+          (let ((default-directory
+                  (if-let ((proj (project-current)))
+                      (project-root proj)
+                    default-directory)))
+            (when (zerop (call-process "git" nil t nil "branch" "--show-current"))
+              (let ((branch (string-trim (buffer-string))))
+                (unless (string-empty-p branch)
+                  (let ((final-branch
+                         (if (> (length branch) 15)
+                             (concat (substring branch 0 12) "...")
+                           branch)))
+                    (format "[%s]" final-branch))))))
         (error nil)))))
 
 (require 'project)
@@ -142,32 +179,33 @@
           (file-relative-name target (project-root proj))
         target))))
 
-(defun my-buffer-name-display ()
-  "Display project-relative path for files/dired, or buffer name otherwise."
-  (if-let* ((name (my-project-relative-path)))
-      (propertize name 'face 'mode-line-buffer-id)
-    (propertize "%b" 'face 'mode-line-buffer-id)))
-
 (defun my-modified-indicator ()
   "Return '[+]' if buffer is modified, otherwise empty string."
   (if (and (buffer-modified-p)
            (buffer-file-name)) ;; только для файлов
-      "[+]"
+      " [+]"
     ""))
 
 (setq-default mode-line-format
               '("%e"
-                ;; (:eval (my-window-number))
+                ;; Left: Path
                 (:eval (my-buffer-name-display))
-                " "
-                (:eval (my-modified-indicator))
-                "  "
-                (:eval (my-mode-line-major-mode))
-                "  "
-                (:eval (or (my-vc-branch) ""))
-                (:eval (propertize " " 'display '(space :align-to (- right 12))))
-                mode-line-end-spaces))
 
+                ;; Left: Mod Indicator
+                (:eval (my-modified-indicator))
+
+                ;; Spacer: Align to (Right Edge - Right Width)
+                ;; Since 'my-buffer-name-display' already subtracted this width PLUS 3,
+                ;; there will physically be blank characters here before the alignment kicks in.
+                (:eval (propertize " " 'display
+                                   (list 'space :align-to
+                                         `(- right ,(my-mode-line-right-width)))))
+
+                ;; Right: The Text
+                (:eval (my-mode-line-right-side))
+
+                ;; Final padding
+                " "))
 
 ;; Tabs
 
@@ -1383,8 +1421,8 @@ Prevents highlighting of the minibuffer command line itself."
 (use-package consult
   :init
   (setq consult-ripgrep-args
-        "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip"))
-  ;; :ensure t
+        "rg --null --line-buffered --color=never --max-columns=1000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip --hidden"))
+;; :ensure t
   ;; :config
   ;; (with-eval-after-load 'org
   ;;   (define-key org-mode-map (kbd "C-s C-o") 'consult-imenu)))
@@ -2145,24 +2183,21 @@ If an eshell buffer for the directory already exists, switch to it."
 
 ;; Modes
 
-(use-package perl-mode
-  :ensure t)
-(use-package lua-mode
-  :ensure t)
-(use-package terraform-mode
-  :ensure t)
-(use-package dockerfile-mode
-  :ensure t)
+(use-package perl-mode)
+(use-package lua-mode)
+(use-package terraform-mode)
+(use-package dockerfile-mode)
 (use-package yaml-mode)
+(use-package nginx-mode
+  :custom
+  (nginx-indent-level 2))
   ;; :mode ("\\.ya?ml\\'" . yaml-mode)
   ;; :hook (yaml-mode . (lambda ()
   ;;                      (auto-fill-mode -1))))
-(use-package nix-mode
-  :ensure t)
+(use-package nix-mode)
 ;; (use-package systemd
 ;;   :ensure t)
-(use-package markdown-mode ;; can't be found by the package installer
-  :ensure t)
+(use-package markdown-mode) ;; can't be found by the package installer
 
 
 (define-generic-mode kdl-mode
@@ -2941,7 +2976,7 @@ If an eshell buffer for the directory already exists, switch to it."
 (defun tasks ()
   "Open a specific file."
   (interactive)
-  (find-file "~/job/tasks/"))
+  (find-file "~/.secret_dotfiles/job/tasks/"))
 
 
 ;; I probably must set it after enabling line numbers. Enabling it from the

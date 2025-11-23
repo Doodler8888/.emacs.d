@@ -247,17 +247,17 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
       (kill-new selected)
       (message "Selected text is now at the top of kill-ring. Use C-y to paste."))))
 
-(defun my-vc-switch-branch ()
-  "Switch branch using repository root directory."
-  (interactive)
-  (let* ((dir (or (vc-root-dir)
-                  default-directory))
-         (backend (vc-responsible-backend dir))
-         (branch-name (vc-read-revision
-                      "Switch to branch: "
-                      (list dir)
-                      backend)))
-    (vc-switch-branch dir branch-name)))
+;; (defun my-vc-switch-branch ()
+;;   "Switch branch using repository root directory."
+;;   (interactive)
+;;   (let* ((dir (or (vc-root-dir)
+;;                   default-directory))
+;;          (backend (vc-responsible-backend dir))
+;;          (branch-name (vc-read-revision
+;;                       "Switch to branch: "
+;;                       (list dir)
+;;                       backend)))
+;;     (vc-switch-branch dir branch-name)))
 
 (defun copy-buffer-to-new-buffer ()
   "Create a copy of the current buffer, placing the contents in a new named buffer."
@@ -347,21 +347,39 @@ SELECT-WINDOW if non-nil, select the window after showing buffer."
   (completion-preview-insert)
   (delete-backward-char 1))
 
-(defun scroll-down-and-recenter (arg)
-  "Scroll up ARG lines and recenter, preserving horizontal position."
+(defun scroll-down-and-recenter (&optional arg)
+  "Move cursor down half a screen (or ARG lines) and recenter."
   (interactive "P")
-  (let ((col (current-column)))    ; Save the column position
-    (scroll-up-command arg)
-    (recenter)
-    (move-to-column col)))         ; Restore the column position
+  (let ((lines (if arg (prefix-numeric-value arg)
+                 (/ (window-body-height) 2))))
+    ;; next-line moves the cursor and preserves the visual column
+    (next-line lines)
+    (recenter)))
 
-(defun scroll-up-and-recenter (arg)
-  "Scroll down ARG lines and recenter, preserving horizontal position."
+(defun scroll-up-and-recenter (&optional arg)
+  "Move cursor up half a screen (or ARG lines) and recenter."
   (interactive "P")
-  (let ((col (current-column)))    ; Save the column position
-    (scroll-down-command arg)
-    (recenter)
-    (move-to-column col)))         ; Restore the column position
+  (let ((lines (if arg (prefix-numeric-value arg)
+                 (/ (window-body-height) 2))))
+    ;; previous-line moves the cursor and preserves the visual column
+    (previous-line lines)
+    (recenter)))
+
+;; (defun scroll-down-and-recenter (arg)
+;;   "Scroll up ARG lines and recenter, preserving horizontal position."
+;;   (interactive "P")
+;;   (let ((col (current-column)))    ; Save the column position
+;;     (scroll-up-command arg)
+;;     (recenter)
+;;     (move-to-column col)))         ; Restore the column position
+
+;; (defun scroll-up-and-recenter (arg)
+;;   "Scroll down ARG lines and recenter, preserving horizontal position."
+;;   (interactive "P")
+;;   (let ((col (current-column)))    ; Save the column position
+;;     (scroll-down-command arg)
+;;     (recenter)
+;;     (move-to-column col)))         ; Restore the column position
 
 (defun scroll-half-up-and-recenter ()
   "Scroll up half screen and recenter, preserving horizontal position."
@@ -925,3 +943,78 @@ Otherwise, increment the number at point by INC (default 1)."
       (when (fboundp 'gui-set-selection) ;; for GUI Emacs
         (gui-set-selection 'CLIPBOARD branch))
       (message "Copied branch: %s" branch))))
+
+(defun my-newline-force-line-start ()
+  "Insert a newline and force it to start at the same column as the current line."
+  (interactive)
+  (let ((line-start-col (save-excursion
+                          (back-to-indentation)
+                          (current-column))))
+    (newline)
+    (back-to-indentation)
+    (let ((current-col (current-column)))
+      (when (/= current-col line-start-col)
+        (delete-char current-col)
+        (insert (make-string line-start-col ?\s))))))
+
+(defun my-org-fill-region-as-paragraph (from to &optional justify nosqueeze squeeze-after)
+  "Fill region, respecting Org src blocks by using their native major mode."
+  (if (org-in-src-block-p)
+      ;; Inside a src block - use the src block's major mode filling
+      (let* ((element (org-element-at-point))
+             (lang (org-element-property :language element))
+             (major-mode-func (intern (concat lang "-mode"))))
+        (if (fboundp major-mode-func)
+            ;; Temporarily switch to the src block's major mode for filling
+            (org-src-do-at-code-block
+             (fill-region-as-paragraph-default from to justify nosqueeze squeeze-after))
+          ;; Fallback if mode not found
+          (fill-region-as-paragraph-default from to justify nosqueeze squeeze-after)))
+    ;; Not in src block - use default filling
+    (fill-region-as-paragraph-default from to justify nosqueeze squeeze-after)))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (setq-local fill-region-as-paragraph-function
+                        #'my-org-fill-region-as-paragraph)))
+
+(defun my-git-switch-branch ()
+  "Switch branch, creating local tracking branches for remotes automatically.
+Running from project root ensures we don't crash if the current dir is deleted."
+  (interactive)
+  (let* ((proj (project-current t))
+         (root (project-root proj))
+         ;; Force the command to run from Project Root
+         (default-directory root))
+
+    ;; 1. Get list of all branches (local & remote)
+    (let* ((raw-branches
+            (split-string
+             (shell-command-to-string "git branch --all --format='%(refname:short)'")
+             "\n" t))
+
+           ;; 2. Clean up the list
+           (candidates
+            (delete-dups
+             (mapcar (lambda (b)
+                       ;; Strip "origin/" so "origin/feature" becomes just "feature".
+                       ;; When you 'git checkout feature', Git automatically
+                       ;; sets up tracking for 'origin/feature'.
+                       (if (string-prefix-p "origin/" b)
+                           (substring b 7)
+                         b))
+                     ;; Filter out HEAD pointer
+                     (seq-filter (lambda (b) (not (string-match-p "HEAD" b)))
+                                 raw-branches)))))
+
+      ;; 3. Ask user to select (using Vertico/Consult)
+      (let ((branch (completing-read "Checkout branch: " candidates)))
+
+        ;; 4. Perform the checkout
+        (message "Switching to %s..." branch)
+        (if (eq 0 (call-process "git" nil nil nil "checkout" branch))
+            (progn
+              (message "Switched to %s" branch)
+              ;; Reload the current buffer to see changes
+              (revert-buffer t t))
+          (error "Failed to switch to branch %s" branch))))))

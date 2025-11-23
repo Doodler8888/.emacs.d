@@ -1435,6 +1435,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("t" . meow-till)
    '("T" . my/meow-till-backward)
    '("F" . my/meow-find-backward)
+   ;; '("RET" . my-newline-force-line-start)
    ;; '("g" . meow-cancel-selection)
    ;; '("^" . my/meow-line-beginning)
    ;; '("$" . my/meow-line-end)
