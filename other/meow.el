@@ -1554,8 +1554,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (meow--switch-state 'magit)
   (setq meow--current-state 'magit))
 
-(meow-define-state magit
-  "Custom state for Magit."
+(meow-define-state custom
+  "Custom state for other modes."
   ;; Use the full keyboard
   :lighter " [MG]"
   :keymap (make-keymap))
@@ -1570,14 +1570,15 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
                   (shell-command-mode . normal)
                   (debugger-mode . normal)
                   (emacs-lisp-compilation-mode . normal)
-                  (magit-status-mode . magit)
-                  (magit-log-mode . magit)
-                  (magit-diff-mode . magit)
-                  (magit-process-mode . magit)
-                  (magit-stash-mode . magit)
-                  (magit-refs-mode . magit)
-                  (dired-mode . magit)
-                  (daemons-mode . magit)
+                  (magit-status-mode . custom)
+                  (magit-log-mode . custom)
+                  (magit-diff-mode . custom)
+                  (magit-process-mode . custom)
+                  (magit-stash-mode . custom)
+                  (magit-refs-mode . custom)
+                  (dired-mode . custom)
+                  (vc-dir-mode . custom)
+                  (daemons-mode . custom)
                   (docker-container-mode . motion)
                   (docker-image-mode . motion)
                   (docker-network-mode . motion)
@@ -1605,6 +1606,11 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (define-key dired-mode-map (kbd "W") 'Cpn)
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
+
+(with-eval-after-load 'vc-dir
+  ;; Add navigation to match your dired setup
+  (define-key vc-dir-mode-map (kbd "j") 'vc-dir-next-line)
+  (define-key vc-dir-mode-map (kbd "k") 'vc-dir-previous-line))
 
 (with-eval-after-load 'magit
   ;; (define-key magit-status-mode-map (kbd "j") 'magit-section-forward)
