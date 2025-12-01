@@ -1609,6 +1609,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 
 (with-eval-after-load 'vc-dir
   ;; Add navigation to match your dired setup
+  (define-key vc-dir-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
   (define-key vc-dir-mode-map (kbd "j") 'vc-dir-next-line)
   (define-key vc-dir-mode-map (kbd "k") 'vc-dir-previous-line))
 
