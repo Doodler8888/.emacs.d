@@ -1218,6 +1218,25 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
                                 #'elisp-completion-at-point
                                 #'cape-file)))))
 
+(use-package bash-completion
+  :config
+  (bash-completion-setup))
+
+;; advice for bash-completion
+(defun my/bash-completion-fix-docker (orig-fun str comp single)
+  "Pre-clean Docker candidates to remove descriptions before escaping.
+This fixes the 'compose\\ \\ \\ (Docker Compose)' issue."
+  (let* ((command (bash-completion--command comp))
+         (clean-str
+          (if (member command '("docker" "helm" "kubectl" "k"))
+              (replace-regexp-in-string "\\(?:  +\\|\t\\).*$" "" str)
+            str)))
+    (funcall orig-fun clean-str comp single)))
+
+(advice-add 'bash-completion-fix :around #'my/bash-completion-fix-docker)
+
+
+
 ;; ;; ;; For icomplete (?)
 ;; (defun my/force-completions ()
 ;;   (when (derived-mode-p 'bash-ts-mode 'sh-mode)

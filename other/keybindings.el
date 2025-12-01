@@ -186,6 +186,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
 (with-eval-after-load 'magit
   (my/setup-window-keys magit-mode-map))
+(with-eval-after-load 'vc-dir
+  (my/setup-window-keys vc-dir-mode-map))
 (with-eval-after-load 'grep
   (my/setup-window-keys grep-mode-map))
 (with-eval-after-load 'dired
