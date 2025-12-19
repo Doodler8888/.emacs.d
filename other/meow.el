@@ -927,6 +927,13 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       (meow-append)
     (my/generic-append)))
 
+(meow-normal-define-key
+ '("i" . (menu-item "smart-insert" meow-insert
+                    :filter (lambda (cmd)
+                              (if (my/beacon-active-p)
+                                  cmd ;; Run meow-insert (Record)
+                                'my/generic-insert))))) ;; Run custom (No Record)
+
 (defun meow-append-line-end ()
   "Like Vim's A: move to end of line and enter insert mode."
   (interactive)
@@ -1158,22 +1165,37 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
       (kill-new my/last-deleted-text)
       (setq my/last-deleted-text nil))))
 
-
 ;; I found a bug that after using rectangle mode with my current settings,
 ;; meow-change stops going into the insert mode.
 (defun my/meow-change ()
   "Delete the active region and enter `meow-insert` mode."
-  (interactive)
-  (when (region-active-p)
+  (interactive)  (when (region-active-p)
     (delete-region (region-beginning) (region-end)))
   (meow-insert))
 
 (defun my/meow-smart-change ()
-  "Enhanced change command with Vim-like behavior."
+  "Enhanced change command with Vim-like behavior (Normal Mode logic)."
   (interactive)
   (if (region-active-p)
       (my/meow-change)
     (my/handle-operator 'my/change-operator #'my/change-special-handler)))
+
+(defun my/beacon-active-p ()
+  "Return t if Meow beacons are active."
+  (or (bound-and-true-p meow-beacon-mode)
+      (bound-and-true-p meow--beacon-overlays)))
+
+(meow-normal-define-key
+ ;; When you press 'c':
+ ;; 1. Emacs checks the filter.
+ ;; 2. If beacons are active -> It runs 'meow-change' directly (Fixes macro recording).
+ ;; 3. If not -> It runs 'my/meow-smart-change' (Your custom behavior).
+ '("c" . (menu-item "smart-change" meow-change
+                    :filter (lambda (cmd)
+                              (if (my/beacon-active-p)
+                                  cmd
+                                'my/meow-smart-change)))))
+
 
 (defun my/change-operator (start end)
   "Delete region and enter insert mode."
@@ -1420,8 +1442,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("b" . meow-back-word)
    '("B" . meow-back-symbol)
    ;; '("B" . meow-back-symbol-no-dot)
-   ;; '("c" . meow-change)
-   '("c" . my/meow-smart-change)
+   ;; '("c" . my/meow-smart-change)
+   ;; '("c" . my/meow-change-wrapper)
    ;; '("d" . meow-delete)
    ;; '("d" . my/generic-meow-smart-delete)
    '("d" . my/meow-smart-delete)
@@ -1460,7 +1482,7 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("h" . meow-left)
    '("H" . meow-left-expand)
    ;; '("i" . meow-insert)
-   '("i" . my/generic-insert)
+   ;; '("i" . my/generic-insert)
    ;; '("A" . meow-open-below)
    ;; '("I" . meow-open-above)
    '("A" . meow-append-line-end)
@@ -1478,7 +1500,8 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
    '("l" . meow-right)
    '("L" . meow-right-expand)
    ;; '("m" . meow-block)
-   '("m" . rectangle-mark-mode)
+   ;; '("m" . rectangle-mark-mode)
+   '("m" . meow-grab)
    ;; '("m" . meow-join)
    '("n" . my/search-next)
    '("N" . my/search-previous)
