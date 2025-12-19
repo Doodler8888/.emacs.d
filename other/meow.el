@@ -1630,6 +1630,20 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
 
+(with-eval-after-load 'wdired
+  (defun my/meow-fix-wdired-state-delayed (&rest _)
+    "Force meow into the custom state when exiting wdired, with a tiny delay.
+This delay allows Meow's internal hooks to finish before we force the state."
+    (run-with-timer 0.01 nil
+                    (lambda ()
+                      (when (derived-mode-p 'dired-mode)
+                        (meow--switch-state 'custom)))))
+
+  ;; Apply to both finishing edits (C-c C-c) and aborting (C-c C-k)
+  (advice-add 'wdired-finish-edit :after #'my/meow-fix-wdired-state-delayed)
+  (advice-add 'wdired-abort-changes :after #'my/meow-fix-wdired-state-delayed))
+
+
 (with-eval-after-load 'vc-dir
   ;; Add navigation to match your dired setup
   (define-key vc-dir-mode-map (kbd "SPC") 'my-space-as-ctrl-c)
@@ -1744,15 +1758,15 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
             keymap))
 
 
-;; Meow has an advice that puts emacs into the motion state, but i need the
-;; magit state instead.
-(defun my-wdired-finish-edit-advice (&rest _)
-  "Switch to the appropriate Meow state after exiting wdired."
-  (if (derived-mode-p 'dired-mode)
-      (meow--switch-state 'magit) ;; Switch to magit state for dired
-    (meow--switch-state 'motion))) ;; Default to motion otherwise
+;; ;; Meow has an advice that puts emacs into the motion state, but i need the
+;; ;; magit state instead.
+;; (defun my-wdired-finish-edit-advice (&rest _)
+;;   "Switch to the appropriate Meow state after exiting wdired."
+;;   (if (derived-mode-p 'dired-mode)
+;;       (meow--switch-state 'magit) ;; Switch to magit state for dired
+;;     (meow--switch-state 'motion))) ;; Default to motion otherwise
 
-(advice-add 'meow--switch-to-motion :around #'my-wdired-finish-edit-advice)
+;; (advice-add 'meow--switch-to-motion :around #'my-wdired-finish-edit-advice)
 
 ;; ;; Ignore slashes
 ;; (defun my-forward-symbol (&optional arg)
