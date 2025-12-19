@@ -32,6 +32,7 @@
 (load "~/.emacs.d/other/keybindings.el")
 ;; (load "~/.emacs.d/other/save-org-headings.el")
 (load "~/.emacs.d/other/scripts/install-org.el")
+(load "~/.emacs.d/other/language-modes.el")
 
 ;; (load "~/.emacs.d/eshell/eshell-doc.el")
 ;; (load "~/.emacs.d/eshell/bak.el")

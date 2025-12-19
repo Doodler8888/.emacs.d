@@ -133,6 +133,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 ;; (define-key isearch-mode-map (kbd "C-g") 'isearch-exit)
 (define-key isearch-mode-map (kbd "C-g") 'my/isearch-quit)
 (define-key isearch-mode-map (kbd "<escape>") 'isearch-abort)
+
+;; (global-unset-key (kbd "C-s"))
 ;; (define-key isearch-mode-map (kbd "C-<backspace>") 'isearch-abort)
 ;; (global-set-key (kbd "C-<backspace>") 'my/smart-backspace)
 

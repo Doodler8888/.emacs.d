@@ -253,6 +253,7 @@ Creates each file immediately after it is entered."
   ;; supposed to delete.
   ;; (define-key dired-mode-map (kbd "d") nil)
   (define-key dired-mode-map (kbd "b") 'my/dired-toggle-bak-extension)
+  (define-key dired-mode-map (kbd "V") 'my/select-line-for-down)
   ;; (define-key dired-mode-map (kbd "j") 'dired-next-line-preserve-column)
   ;; (define-key dired-mode-map (kbd "k") 'dired-previous-line-preserve-column)
   (define-key dired-mode-map (kbd "j") 'dired-next-line)

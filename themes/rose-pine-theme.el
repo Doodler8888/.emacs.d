@@ -209,12 +209,12 @@
     `(perl-non-scalar-variable ((,class (:foreground ,rose-pine-fg))))
 
     ;; Org mode
-    ;; `(org-block ((t (:background ,rose-pine-blendedbg))))  ; Set background color for org blocks
-    `(org-block ((t (:background unspecified))))  ; Set background color for org blocks
-    ;; `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
-    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background unspecified))))  ; Set colors for begin line
-    ;; `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
-    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background unspecified))))
+    `(org-block ((t (:background ,rose-pine-blendedbg))))
+    `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))  ; Set colors for begin line
+    `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background ,rose-pine-blendedbg))))
+    ;; `(org-block ((t (:background unspecified))))
+    ;; `(org-block-begin-line ((t (:foreground ,rose-pine-subtext :background unspecified))))  ; Set colors for begin line
+    ;; `(org-block-end-line ((t (:foreground ,rose-pine-subtext :background unspecified))))
      ;; (set-face-attribute 'org-level-2 nil :foreground rose-pine-foam)
      ;; (set-face-attribute 'org-level-3 nil :foreground rose-pine-iris)
     `(org-level-1 ((,class (:foreground ,rose-pine-rose))))
