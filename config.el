@@ -1636,6 +1636,38 @@ Prevents highlighting of the minibuffer command line itself."
           (lambda ()
             (define-key eshell-hist-mode-map (kbd "M-r") 'my-eshell-history-choose)))
 
+(defun my/vertico-fix-face-precedence (cand)
+  "Reorder faces: Matches > Vertico > Org/Syntax.
+Ensures `vertico-current' doesn't hide `orderless' highlights,
+but still hides `org-block' backgrounds."
+  (let ((pos 0)
+        (end (length cand)))
+    (while (< pos end)
+      (let* ((next (next-single-property-change pos 'face cand end))
+             (val (get-text-property pos 'face cand)))
+        (when (and (listp val) (memq 'vertico-current val))
+          ;; Group faces into: Matches (High Prio) vs Others (Low Prio)
+          (let ((matches nil)
+                (others nil))
+            (dolist (f val)
+              (unless (eq f 'vertico-current)
+                (if (and (symbolp f)
+                         (or (string-prefix-p "orderless" (symbol-name f))
+                             (string-prefix-p "consult" (symbol-name f))
+                             (memq f '(isearch lazy-highlight))))
+                    (push f matches)
+                  (push f others))))
+            ;; Construct new order: (Matches... Vertico-Current Others...)
+            (put-text-property pos (or next end) 'face
+                               (append (nreverse matches)
+                                       (list 'vertico-current)
+                                       (nreverse others))
+                               cand)))
+        (setq pos (or next end)))))
+  cand)
+
+(advice-add 'vertico--format-candidate :filter-return #'my/vertico-fix-face-precedence)
+
 
 ;; With-editor
 

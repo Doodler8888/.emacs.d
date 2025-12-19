@@ -1118,8 +1118,26 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
 
 ;; Define the smart operators directly
 (defalias 'my/meow-smart-comment (my/make-smart-operator #'comment-or-uncomment-region ?c))
-(defalias 'my/meow-smart-fill (my/make-smart-operator #'fill-region ?w))
+;; (defalias 'my/meow-smart-fill (my/make-smart-operator #'fill-region ?w))
 (defalias 'my/meow-smart-indent (my/make-smart-operator #'indent-region ?=))
+(defun my/fill-dispatch (start end)
+  "Use `org-fill-paragraph` in Org mode, `fill-region` otherwise.
+Adapts `org-fill-paragraph` (which takes no bounds) to accept START and END."
+  (if (derived-mode-p 'org-mode)
+      (save-excursion
+        ;; Org-fill-paragraph acts on the active region if it exists.
+        ;; We temporarily activate the region corresponding to Meow's selection boundaries.
+        (goto-char start)
+        (push-mark end t t)
+        (activate-mark)
+        (condition-case nil
+            (org-fill-paragraph)
+          ;; If Org fails (e.g. read-only context), fail gracefully
+          (error nil))
+        (deactivate-mark))
+    ;; For all other modes, use the standard fill-region
+    (fill-region start end)))
+(defalias 'my/meow-smart-fill (my/make-smart-operator #'my/fill-dispatch ?w))
 ;; (defalias 'my/meow-smart-indent (my/make-smart-operator #'indent-region ?=))
 
 ;; Special handlers for each operator
