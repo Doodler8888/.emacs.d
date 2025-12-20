@@ -1686,6 +1686,43 @@ but still hides `org-block' backgrounds."
   (advice-add 'with-editor-export-editor :around #'suppress-with-editor-export-message))
 
 
+;; Layout translation
+
+;; (require 'quail)
+
+;; ;; 1. Define the Layout (Colemak)
+;; (quail-define-package
+;;  "russian-colemak" "Russian" "RU-Col" t
+;;  "Russian Colemak layout."
+;;  nil t t t t nil nil nil nil nil t)
+
+;; (quail-define-rules
+;;  ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
+;;  ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
+;;  ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю))
+
+(require 'quail)
+
+;; 1. Define the Layout (Colemak)
+(quail-define-package
+ "russian-colemak" "Russian" "RU-Col" t
+ "Russian Colemak layout."
+ nil t t t t nil nil nil nil nil t)
+
+(quail-define-rules
+ ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
+ ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
+ ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю))
+
+;; 2. Configure reverse-im
+(use-package reverse-im
+  :custom
+  (reverse-im-modifiers '(control meta hyper super nil))
+  (reverse-im-input-methods '("russian-colemak"))
+  :config
+  (reverse-im-mode t))
+
+
 ;; Repeat-fu
 
 (use-package repeat-fu

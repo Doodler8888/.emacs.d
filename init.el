@@ -51,7 +51,7 @@
 					 docker dockerfile-mode embark-consult envrc goto-chg hydra
 					 magit marginalia markdown-mode meow nerd-icons nginx-mode
 					 nix-mode orderless org-appear org-drill pcmpl-args
-					 repeat-fu savefold tempel terraform-mode undo-fu
+					 repeat-fu reverse-im savefold tempel terraform-mode undo-fu
 					 undo-fu-session vertico yaml-mode zig-ts-mode))
  '(package-vc-selected-packages
    '((macrursors :url "https://github.com/corytertel/macrursors")
