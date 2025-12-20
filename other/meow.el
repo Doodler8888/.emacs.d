@@ -780,18 +780,23 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
   (let* ((raw-prefix (equal arg '(4)))
          (numeric-prefix (and (integerp arg) (> arg 0)))
          (repeat-count (if numeric-prefix arg 1))
+         ;; --- FIX START ---
          (text-to-paste (if raw-prefix
                             (current-kill (if (listp last-command-event)
                                               0
                                             (mod (- (aref (this-command-keys) 0) ?0)
                                                  kill-ring-max))
                                           t)
-                          (or (gui-get-selection 'CLIPBOARD)
-                              (current-kill 0 t))))
+                          ;; Do NOT call gui-get-selection directly.
+                          ;; current-kill automatically checks the clipboard
+                          ;; AND decodes the UTF-8 bytes correctly.
+                          (current-kill 0)))
+         ;; --- FIX END ---
          (ends-with-newline (string-suffix-p "\n" text-to-paste))
          (full-line-p (and ends-with-newline
                            (string-match-p "^\n*.*\n$" text-to-paste)
                            (or (bolp) (not (region-active-p))))))
+
     ;; If region is active, kill it first to update the kill ring
     (when (region-active-p)
       (let ((region-text (buffer-substring (region-beginning) (region-end))))
