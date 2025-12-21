@@ -93,9 +93,8 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ;; ("mm" . messages)
     ;; ("mm" . toggle-messages-buffer)
 
-    ;; ("gbs" . my-vc-switch-branch)
-    ("gsb" . my-git-switch-branch)
-    ("gc" . vc-create-branch)
+    ("gs" . my-git-switch-branch)
+    ("gcb" . vc-create-branch)
 
     ))
 

@@ -1816,5 +1816,17 @@ This delay allows Meow's internal hooks to finish before we force the state."
     ;; Return to original position
     (goto-char pos)))
 
+(setq meow-keypad-ctrl-meta-prefix nil)
+(setq meow-keypad-meta-prefix nil)
+(setq meow-keypad-ctrl-prefix nil)
+
+;; If Meow was already loaded in this session, we forcibly unbind them
+;; to ensure the change takes effect without restarting Emacs.
+(with-eval-after-load 'meow
+  (when (boundp 'meow-keypad-state-keymap)
+    (define-key meow-keypad-state-keymap (kbd "g") nil)
+    (define-key meow-keypad-state-keymap (kbd "m") nil)
+    (define-key meow-keypad-state-keymap (kbd "c") nil)))
+
 (meow-setup)
 (meow-global-mode 1)
