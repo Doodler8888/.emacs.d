@@ -8,26 +8,24 @@
 (defvar my-last-op-type nil
   "Tracks the type of the last operation: 'command, 'insert, or 'change.")
 
-;; --- Command State ---
+;; --- Command State (Your Original Variables) ---
 (defvar my-last-combination nil
-  "Stores the last valid combination: (selection expand-count action).")
+  "Stores the last valid combination of selection and action commands.")
 
 (defvar my-command-history nil
-  "List to store the last two commands for validation.")
+  "List to store the last two commands with their arguments.")
+
+(defvar my-last-action 'command)
 
 (defvar my-meow-expand-count nil
   "Stores the number of times to expand the selection.")
 
-;; --- Insert State ---
+;; --- Insert/Change State ---
 (defvar my-insert-repeat--start-marker nil)
 (defvar my-insert-repeat--end-marker nil)
 (defvar my-insert-repeat--text nil)
-
-;; --- Change State (The new logic) ---
-(defvar my-pending-change-flag nil
-  "Flag set to t when a change command is executed, pending text insertion.")
-(defvar my-last-change-text nil
-  "Stores the text typed during the last change operation.")
+(defvar my-pending-change-flag nil)
+(defvar my-last-change-text nil)
 
 ;; --- Definitions ---
 (defvar my-selection-commands
@@ -36,7 +34,7 @@
     meow-back-word meow-beginning-of-thing meow-end-of-thing)
   "Commands that create selections.")
 
-;; ADDED: my/meow-smart-change and my/meow-change
+;; Added change commands to your action list
 (defvar my-action-commands
   '(my/meow-smart-delete my/generic-meow-smart-delete
     surround-region-with-symbol change-surrounding-symbol
@@ -69,7 +67,7 @@
         'change-surrounding-symbol)
        ((string-match-p "Delete the symbols surrounding" cmd-string)
         'delete-surrounding-symbol)
-       ;; ADDED: Identifiers for change commands
+       ;; Change support
        ((string-match-p "my/meow-smart-change" cmd-string)
         'my/meow-smart-change)
        ((string-match-p "my/meow-change" cmd-string)
@@ -86,41 +84,43 @@
            (member last-cmd my-action-commands)))))
 
 ;;;; ------------------------------------------------------------
-;;;; 3. COMMAND RECORDING LOGIC
+;;;; 3. COMMAND RECORDING LOGIC (Restored to your logic)
 ;;;; ------------------------------------------------------------
 
 (defun my-store-command (cmd args)
-  "Store a command and update state."
+  "Store a command and its arguments in the history.
+For delete-surrounding-symbol, force ARGS to nil."
   (when (eq (my-command-name cmd) 'delete-surrounding-symbol)
     (setq args nil))
 
-  (let ((command-entry (cons cmd args))
-        (cmd-name (my-command-name cmd)))
-
-    ;; Update history buffer
+  (let ((command-entry (cons cmd args)))
+    ;; 1. Update History
     (setq my-command-history
           (if (< (length my-command-history) 2)
               (append my-command-history (list command-entry))
             (append (cdr my-command-history) (list command-entry))))
 
-    ;; Check for valid combination
+    ;; 2. If Valid Combo -> Update Combination & Op Type
+    ;; If NOT valid -> Do NOT update (preserves previous valid combo)
     (when (my-valid-combination-p my-command-history)
       (setq my-last-combination
             (list (car my-command-history)
                   my-meow-expand-count
                   (cadr my-command-history)))
 
-      ;; LOGIC BRANCHING:
-      (if (or (eq cmd-name 'my/meow-smart-change)
-              (eq cmd-name 'my/meow-change))
-          ;; If it's a change command, prepare for incoming text
-          (setq my-pending-change-flag t)
-        ;; Otherwise, it's a standard command (like delete)
-        (setq my-pending-change-flag nil)
-        (setq my-last-op-type 'command)))
+      ;; INTEGRATION: Determine if this is a Command or a pending Change
+      (let ((op-name (my-command-name cmd)))
+        (if (or (eq op-name 'my/meow-smart-change)
+                (eq op-name 'my/meow-change))
+            (setq my-pending-change-flag t)
+          (setq my-pending-change-flag nil)
+          (setq my-last-op-type 'command))))
 
-    (when (member cmd-name my-selection-commands)
-      (setq my-meow-expand-count nil))))
+    ;; 3. Reset count (Your original logic)
+    (when (member (my-command-name cmd) my-selection-commands)
+      (setq my-meow-expand-count nil))
+
+    (setq my-last-action 'command)))
 
 (defun my-track-command (orig-fun &rest args)
   (let ((cmd (my-command-name orig-fun)))
@@ -154,14 +154,14 @@
                  my-insert-repeat--start-marker
                  my-insert-repeat--end-marker)))
 
-      ;; If we are in a pending change operation
+      ;; If we are in a pending change operation (Select -> Change -> [Insert])
       (if my-pending-change-flag
           (progn
-            (setq my-last-change-text text) ;; Allow empty text (e.g. change to nothing)
+            (setq my-last-change-text text)
             (setq my-last-op-type 'change)
             (setq my-pending-change-flag nil))
 
-        ;; If we are in a normal insert operation
+        ;; Else, it's a standalone insert (i / a)
         (when (not (string-empty-p text))
           (setq my-insert-repeat--text text)
           (setq my-last-op-type 'insert))))
@@ -241,6 +241,3 @@
 
 (advice-add 'my-meow-digit :after (lambda (&rest args)
                                     (my-track-meow-expand (car args))))
-
-;; Bind to dot
-(define-key meow-normal-state-keymap "." #'my/replay-last-operation)
