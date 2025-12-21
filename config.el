@@ -1688,19 +1688,6 @@ but still hides `org-block' backgrounds."
 
 ;; Layout translation
 
-;; (require 'quail)
-
-;; ;; 1. Define the Layout (Colemak)
-;; (quail-define-package
-;;  "russian-colemak" "Russian" "RU-Col" t
-;;  "Russian Colemak layout."
-;;  nil t t t t nil nil nil nil nil t)
-
-;; (quail-define-rules
-;;  ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
-;;  ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
-;;  ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю))
-
 (require 'quail)
 
 ;; 1. Define the Layout (Colemak)
@@ -1710,9 +1697,15 @@ but still hides `org-block' backgrounds."
  nil t t t t nil nil nil nil nil t)
 
 (quail-define-rules
+ ;; Lowercase
  ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
  ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
- ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю))
+ ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю)
+
+ ;; Uppercase & Shifted Punctuation
+ ("Q" ?Й) ("W" ?Ц) ("F" ?У) ("P" ?К) ("G" ?Е) ("J" ?Н) ("L" ?Г) ("U" ?Ш) ("Y" ?Щ) (":" ?З) ("{" ?Х) ("}" ?Ъ)
+ ("A" ?Ф) ("R" ?Ы) ("S" ?В) ("T" ?А) ("D" ?П) ("H" ?Р) ("N" ?О) ("E" ?Л) ("I" ?Д) ("O" ?Ж) ("\"" ?Э)
+ ("Z" ?Я) ("X" ?Ч) ("C" ?С) ("V" ?М) ("B" ?И) ("K" ?Т) ("M" ?Ь) ("<" ?Б) (">" ?Ю))
 
 ;; 2. Configure reverse-im
 (use-package reverse-im
@@ -1725,20 +1718,19 @@ but still hides `org-block' backgrounds."
 
 ;; Repeat-fu
 
-(use-package repeat-fu
-  :commands (repeat-fu-mode repeat-fu-execute)
+;; (use-package repeat-fu
+;;   :commands (repeat-fu-mode repeat-fu-execute)
 
-  :config
-  (setq repeat-fu-preset 'meow)
+;;   :config
+;;   (setq repeat-fu-preset 'meow)
 
-  :hook
-  ((meow-mode)
-   .
-   (lambda ()
-     (when (and (not (minibufferp)) (not (derived-mode-p 'special-mode)))
-       (repeat-fu-mode)
-       (define-key meow-normal-state-keymap (kbd "C-.") 'repeat-fu-execute)
-       (define-key meow-insert-state-keymap (kbd "C-.") 'repeat-fu-execute)))))
+;;   :hook
+;;   ((meow-mode)
+;;    .
+;;    (lambda ()
+;;      (when (and (not (minibufferp)) (not (derived-mode-p 'special-mode)))
+;;        (repeat-fu-mode)
+;;        (define-key meow-insert-state-keymap (kbd "C-.") 'repeat-fu-execute)))))
 
 
 ;; Hydra
@@ -2474,6 +2466,16 @@ If an eshell buffer for the directory already exists, switch to it."
   (setq org-empty-line-terminates-plain-lists nil)
   (setq org-startup-folded 'showeverything) ;; it's set for the savefold package
   )
+
+(defun my/org-inherit-checkbox (orig-fun &rest args)
+  "Advice to make `M-RET` (org-insert-item) inherit the checkbox status.
+If the current item has a checkbox, the new item will automatically have one [ ]."
+  (let ((has-checkbox (org-at-item-checkbox-p)))
+    (apply orig-fun args)
+    (when has-checkbox
+      (insert "[ ] "))))
+
+(advice-add 'org-insert-item :around #'my/org-inherit-checkbox)
 
 ;; Fix org babel with bash-ts-mode
 (defun my-sh--guess-shell ()
