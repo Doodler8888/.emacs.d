@@ -1,243 +1,225 @@
-;; -*- lexical-binding: t -*-
+;; -*- lexical-binding: t; -*-
 
-;;;; ------------------------------------------------------------
-;;;; 1. GLOBAL STATE & VARIABLES
-;;;; ------------------------------------------------------------
+;;;; ============================================================
+;;;; DEBUG
+;;;; ============================================================
 
-;; Determines what to replay: 'command, 'insert, or 'change
-(defvar my-last-op-type nil
-  "Tracks the type of the last operation: 'command, 'insert, or 'change.")
+(defvar my-dot-debug t)
 
-;; --- Command State (Your Original Variables) ---
-(defvar my-last-combination nil
-  "Stores the last valid combination of selection and action commands.")
+(defun my-dot-log (fmt &rest args)
+  (when my-dot-debug
+    (with-current-buffer (get-buffer-create "*my-dot-repeat-debug*")
+      (goto-char (point-max))
+      (insert (apply #'format
+                     (concat (format-time-string "[%H:%M:%S] ")
+                             fmt "\n")
+                     args)))))
 
-(defvar my-command-history nil
-  "List to store the last two commands with their arguments.")
+;;;; ============================================================
+;;;; STATE VARIABLES
+;;;; ============================================================
 
+(defvar my-last-operation nil)
+(defvar my-pending-change-combo nil)
+(defvar my-is-replaying nil "Guard to prevent recording during replay.")
+
+(defvar my-last-combination nil)
+(defvar my-command-history nil)
+(defvar my-meow-expand-count nil)
 (defvar my-last-action 'command)
 
-(defvar my-meow-expand-count nil
-  "Stores the number of times to expand the selection.")
+;;;; ============================================================
+;;;; COMMAND DEFINITIONS
+;;;; ============================================================
 
-;; --- Insert/Change State ---
-(defvar my-insert-repeat--start-marker nil)
-(defvar my-insert-repeat--end-marker nil)
-(defvar my-insert-repeat--text nil)
-(defvar my-pending-change-flag nil)
-(defvar my-last-change-text nil)
-
-;; --- Definitions ---
 (defvar my-selection-commands
-  '(meow-inner-of-thing meow-bounds-of-thing meow-mark-word
-    meow-next-word meow-next-symbol meow-find meow-till
-    meow-back-word meow-beginning-of-thing meow-end-of-thing)
-  "Commands that create selections.")
+  '(meow-inner-of-thing
+    meow-bounds-of-thing
+    meow-mark-word
+    meow-next-word
+    meow-next-symbol
+    meow-find
+    meow-till
+    meow-back-word
+    meow-beginning-of-thing
+    meow-end-of-thing))
 
-;; Added change commands to your action list
 (defvar my-action-commands
-  '(my/meow-smart-delete my/generic-meow-smart-delete
-    surround-region-with-symbol change-surrounding-symbol
+  '(my/meow-smart-delete
+    my/generic-meow-smart-delete
+    surround-region-with-symbol
+    change-surrounding-symbol
     delete-surrounding-symbol
-    my/meow-smart-change my/meow-change)
-  "Commands that operate on a selection.")
-
-;;;; ------------------------------------------------------------
-;;;; 2. HELPER FUNCTIONS
-;;;; ------------------------------------------------------------
+    my/meow-smart-change
+    my/meow-change))
 
 (defun my-command-name (cmd)
-  "Get the normalized symbol name from a command object."
   (cond
    ((symbolp cmd) cmd)
    ((subrp cmd)
-    (intern (replace-regexp-in-string "#<subr \\(.+?\\)>" "\\1"
-                                      (prin1-to-string cmd))))
+    (intern
+     (replace-regexp-in-string
+      "#<subr \\(.+?\\)>" "\\1"
+      (prin1-to-string cmd))))
    ((functionp cmd)
-    (let ((cmd-string (prin1-to-string cmd)))
+    (let ((s (prin1-to-string cmd)))
       (cond
-       ((string-match-p "my/generic-meow-smart-delete" cmd-string)
+       ((string-match-p "my/generic-meow-smart-delete" s)
         'my/meow-smart-delete)
-       ((and (string-match-p "meow-kill" cmd-string)
-             (string-match-p "meow-delete" cmd-string))
+       ((and (string-match-p "meow-kill" s)
+             (string-match-p "meow-delete" s))
         'my/meow-smart-delete)
-       ((string-match-p "surround-region-with-symbol" cmd-string)
+       ((string-match-p "surround-region-with-symbol" s)
         'surround-region-with-symbol)
-       ((string-match-p "change-surrounding-symbol" cmd-string)
+       ((string-match-p "change-surrounding-symbol" s)
         'change-surrounding-symbol)
-       ((string-match-p "Delete the symbols surrounding" cmd-string)
+       ((string-match-p "Delete the symbols surrounding" s)
         'delete-surrounding-symbol)
-       ;; Change support
-       ((string-match-p "my/meow-smart-change" cmd-string)
+       ((string-match-p "my/meow-smart-change" s)
         'my/meow-smart-change)
-       ((string-match-p "my/meow-change" cmd-string)
+       ((string-match-p "my/meow-change" s)
         'my/meow-change)
        (t 'unknown-command))))
    (t 'unknown-command)))
 
-(defun my-valid-combination-p (history)
-  "Check if the command history forms a valid combination."
-  (when (>= (length history) 2)
-    (let* ((first-cmd (my-command-name (caar history)))
-           (last-cmd (my-command-name (caar (last history)))))
-      (and (member first-cmd my-selection-commands)
-           (member last-cmd my-action-commands)))))
+;;;; ============================================================
+;;;; COMMAND TRACKING LOGIC
+;;;; ============================================================
 
-;;;; ------------------------------------------------------------
-;;;; 3. COMMAND RECORDING LOGIC (Restored to your logic)
-;;;; ------------------------------------------------------------
+(defun my-valid-combination-p (history)
+  (when (>= (length history) 2)
+    (let ((a (my-command-name (caar history)))
+          (b (my-command-name (caar (last history)))))
+      (and (member a my-selection-commands)
+           (member b my-action-commands)))))
 
 (defun my-store-command (cmd args)
-  "Store a command and its arguments in the history.
-For delete-surrounding-symbol, force ARGS to nil."
-  (when (eq (my-command-name cmd) 'delete-surrounding-symbol)
-    (setq args nil))
-
-  (let ((command-entry (cons cmd args)))
-    ;; 1. Update History
+  (let ((entry (cons cmd args))
+        (cmd-name (my-command-name cmd)))
     (setq my-command-history
           (if (< (length my-command-history) 2)
-              (append my-command-history (list command-entry))
-            (append (cdr my-command-history) (list command-entry))))
+              (append my-command-history (list entry))
+            (append (cdr my-command-history) (list entry))))
 
-    ;; 2. If Valid Combo -> Update Combination & Op Type
-    ;; If NOT valid -> Do NOT update (preserves previous valid combo)
     (when (my-valid-combination-p my-command-history)
       (setq my-last-combination
             (list (car my-command-history)
                   my-meow-expand-count
                   (cadr my-command-history)))
 
-      ;; INTEGRATION: Determine if this is a Command or a pending Change
-      (let ((op-name (my-command-name cmd)))
-        (if (or (eq op-name 'my/meow-smart-change)
-                (eq op-name 'my/meow-change))
-            (setq my-pending-change-flag t)
-          (setq my-pending-change-flag nil)
-          (setq my-last-op-type 'command))))
+      ;; If the action is a change command, don't set my-last-operation yet.
+      ;; Wait for the insert-stop hook to bundle it with text.
+      (if (or (eq cmd-name 'my/meow-smart-change)
+              (eq cmd-name 'my/meow-change))
+          (progn
+            (setq my-pending-change-combo my-last-combination)
+            (my-dot-log "PENDING CHANGE set => %S" my-last-combination))
 
-    ;; 3. Reset count (Your original logic)
-    (when (member (my-command-name cmd) my-selection-commands)
+        (setq my-pending-change-combo nil)
+        (setq my-last-operation (list 'commands my-last-combination))
+        (my-dot-log "COMBO recorded => %S" my-last-operation)))
+
+    (when (member cmd-name my-selection-commands)
       (setq my-meow-expand-count nil))
 
-    (setq my-last-action 'command)))
+    (setq my-last-action 'command)
+    (setq my-insert-recording-valid nil)))
 
-(defun my-track-command (orig-fun &rest args)
-  (let ((cmd (my-command-name orig-fun)))
-    (if (eq cmd 'delete-surrounding-symbol)
-        (progn (my-store-command orig-fun nil) (apply orig-fun args))
-      (progn (my-store-command orig-fun args) (apply orig-fun args)))))
+(defun my-track-command (orig &rest args)
+  ;; Only record if we are NOT in the middle of a replay
+  (unless my-is-replaying
+    (my-store-command orig args))
+  (apply orig args))
 
-(defun my-track-meow-expand (digit) (setq my-meow-expand-count digit))
-(defun my-reset-expand-count (&rest _) (setq my-meow-expand-count nil))
-
-;;;; ------------------------------------------------------------
-;;;; 4. INSERT RECORDING LOGIC (Marker Based)
-;;;; ------------------------------------------------------------
-
-(defun my-insert-repeat-start ()
-  "Start recording insert."
-  (unless my-insert-repeat--start-marker
-    (setq my-insert-repeat--start-marker (make-marker))
-    (setq my-insert-repeat--end-marker (make-marker)))
-
-  (set-marker-insertion-type my-insert-repeat--start-marker nil)
-  (set-marker my-insert-repeat--start-marker (point))
-  (set-marker-insertion-type my-insert-repeat--end-marker t)
-  (set-marker my-insert-repeat--end-marker (point)))
-
-(defun my-insert-repeat-stop ()
-  "Stop recording. Distinguish between 'Insert' and 'Change'."
-  (when (and my-insert-repeat--start-marker
-             my-insert-repeat--end-marker)
-    (let ((text (buffer-substring-no-properties
-                 my-insert-repeat--start-marker
-                 my-insert-repeat--end-marker)))
-
-      ;; If we are in a pending change operation (Select -> Change -> [Insert])
-      (if my-pending-change-flag
-          (progn
-            (setq my-last-change-text text)
-            (setq my-last-op-type 'change)
-            (setq my-pending-change-flag nil))
-
-        ;; Else, it's a standalone insert (i / a)
-        (when (not (string-empty-p text))
-          (setq my-insert-repeat--text text)
-          (setq my-last-op-type 'insert))))
-
-    (set-marker my-insert-repeat--start-marker nil)
-    (set-marker my-insert-repeat--end-marker nil)))
-
-(defun my-insert-repeat--insert-verbatim (text)
-  (let ((electric-pair-was-on (bound-and-true-p electric-pair-mode)))
-    (when electric-pair-was-on (electric-pair-mode -1))
-    (undo-boundary)
-    (insert text)
-    (undo-boundary)
-    (when electric-pair-was-on (electric-pair-mode 1))))
-
-;;;; ------------------------------------------------------------
-;;;; 5. UNIFIED REPLAY FUNCTION
-;;;; ------------------------------------------------------------
-
-(defun my/replay-last-operation ()
-  "Replay the last operation (Insert, Command, or Change)."
-  (interactive)
-  (cond
-   ;; CASE 1: Replay Text Insert
-   ((eq my-last-op-type 'insert)
-    (if my-insert-repeat--text
-        (my-insert-repeat--insert-verbatim my-insert-repeat--text)
-      (message "No insert text to replay")))
-
-   ;; CASE 2: Replay Command (e.g. Delete)
-   ((eq my-last-op-type 'command)
-    (if my-last-combination
-        (my/execute-combo my-last-combination)
-      (message "No command combination to replay")))
-
-   ;; CASE 3: Replay Change (Select + Delete + Insert Text)
-   ((eq my-last-op-type 'change)
-    (if my-last-combination
-        (progn
-          ;; 1. Execute the command (e.g. Select Word -> Change)
-          ;; This will leave us in Insert Mode
-          (my/execute-combo my-last-combination)
-
-          ;; 2. Insert the recorded text
-          (when my-last-change-text
-            (my-insert-repeat--insert-verbatim my-last-change-text))
-
-          ;; 3. Exit Insert Mode (return to Normal)
-          (meow-insert-exit))
-      (message "No change combination to replay")))
-
-   (t (message "Nothing recorded yet"))))
-
-(defun my/execute-combo (combo)
-  "Helper to execute a selection+action combination."
-  (let ((selection (nth 0 combo))
-        (expand-count (nth 1 combo))
-        (action (nth 2 combo)))
-    (apply (car selection) (cdr selection))
-    (when expand-count
-      (meow-expand expand-count))
-    (apply (car action) (cdr action))))
-
-;;;; ------------------------------------------------------------
-;;;; 6. HOOKS AND ADVICE SETUP
-;;;; ------------------------------------------------------------
-
-(add-hook 'meow-insert-enter-hook #'my-insert-repeat-start)
-(add-hook 'meow-insert-exit-hook  #'my-insert-repeat-stop)
+(defun my-track-meow-expand (digit)
+  (unless my-is-replaying
+    (setq my-meow-expand-count digit)))
 
 (dolist (cmd my-selection-commands)
-  (advice-add cmd :around #'my-track-command)
-  (advice-add cmd :before #'my-reset-expand-count))
+  (advice-add cmd :around #'my-track-command))
 
 (dolist (cmd my-action-commands)
   (advice-add cmd :around #'my-track-command))
 
-(advice-add 'my-meow-digit :after (lambda (&rest args)
-                                    (my-track-meow-expand (car args))))
+(advice-add 'my-meow-digit
+            :after (lambda (&rest args)
+                     (my-track-meow-expand (car args))))
+
+;;;; ============================================================
+;;;; INSERT RECORDING
+;;;; ============================================================
+
+(defvar my-insert-start-marker nil)
+(defvar my-insert-end-marker nil)
+(defvar my-insert-recording-valid nil)
+
+(defun my-insert-repeat-start ()
+  (unless my-is-replaying
+    (setq my-insert-recording-valid t)
+    (setq my-last-action 'insert)
+    (setq my-insert-start-marker (copy-marker (point) nil))
+    (set-marker-insertion-type my-insert-start-marker nil)
+    (setq my-insert-end-marker   (copy-marker (point) t))
+    (set-marker-insertion-type my-insert-end-marker t)))
+
+(defun my-insert-repeat-stop ()
+  (unless my-is-replaying
+    (when (and my-insert-recording-valid my-insert-start-marker my-insert-end-marker)
+      (let ((text (buffer-substring-no-properties my-insert-start-marker my-insert-end-marker)))
+        (unless (string-empty-p text)
+          (if my-pending-change-combo
+              (progn
+                (setq my-last-operation (list 'change my-pending-change-combo text))
+                (setq my-pending-change-combo nil)
+                (my-dot-log "CHANGE COMBO recorded => %S" my-last-operation))
+            (setq my-last-operation (list 'insert text))
+            (my-dot-log "INSERT recorded => %S" my-last-operation)))))
+    (set-marker my-insert-start-marker nil)
+    (set-marker my-insert-end-marker nil)))
+
+(add-hook 'meow-insert-enter-hook #'my-insert-repeat-start)
+(add-hook 'meow-insert-exit-hook  #'my-insert-repeat-stop)
+
+;;;; ============================================================
+;;;; REPLAY LOGIC
+;;;; ============================================================
+
+(defun my-replay-command-combo (combo)
+  (let ((sel (nth 0 combo))
+        (cnt (nth 1 combo))
+        (act (nth 2 combo)))
+    (apply (car sel) (cdr sel))
+    (when cnt (meow-expand cnt))
+    (apply (car act) (cdr act))))
+
+(defun my-replay-insert (text)
+  (let ((pair (bound-and-true-p electric-pair-mode)))
+    (when pair (electric-pair-mode -1))
+    (insert text)
+    (when pair (electric-pair-mode 1))))
+
+(defun my-repeat-last-operation ()
+  (interactive)
+  ;; CRITICAL: Bind the guard to t so tracked functions return early
+  (let ((my-is-replaying t))
+    (my-dot-log "DOT START. Operation=%S" my-last-operation)
+    (pcase my-last-operation
+      (`(commands ,combo)
+       (my-replay-command-combo combo))
+
+      (`(insert ,text)
+       (my-replay-insert text))
+
+      (`(change ,combo ,text)
+       (my-replay-command-combo combo)
+       (my-replay-insert text)
+       (meow-insert-exit))
+
+      (_
+       (message "Nothing to repeat")))))
+
+;;;; ============================================================
+;;;; KEY BINDING
+;;;; ============================================================
+
+(define-key meow-normal-state-keymap "." #'my-repeat-last-operation)
