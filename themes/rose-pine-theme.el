@@ -444,50 +444,57 @@ Handles anchors, chomping indicators, and complex indentation."
   "Face for YAML constants."
   :group 'yaml)
 
+(defface yaml-variable-face
+  '((t (:foreground "#c4a7e7"))) ; Gold/Yellow
+  "Face for variables like ${VAR}."
+  :group 'yaml)
 
 ;; 2. Apply keywords Globally using `with-eval-after-load`
 ;;    Note: We use 'yaml-mode as the first argument, not nil.
 
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (face-remap-add-relative 'font-lock-function-name-face 'default)))
+
 (with-eval-after-load 'yaml-mode
 
-  ;; 1. The core logic: Is the current line part of a block scalar content?
+  ;; 1. The core logic (Your existing code)
   (defun my/yaml-block-scalar-p ()
     "Return t if current point is inside a block scalar (| or >)."
     (save-excursion
       (let ((found nil)
             (searching t)
-            ;; If current line is empty, we look at the first non-empty line above
-            ;; to determine the "content indentation".
             (content-indent (progn
                               (beginning-of-line)
                               (while (and (looking-at-p "^\\s-*$") (not (bobp)))
                                 (forward-line -1))
                               (current-indentation))))
-
-        ;; Move up until we find a line with LESS indentation than the content
         (while (and searching (not (bobp)))
           (forward-line -1)
           (let ((indent (current-indentation)))
             (unless (looking-at-p "^\\s-*$")
               (cond
-               ;; We found the "parent" line
                ((< indent content-indent)
                 (setq searching nil)
-                ;; Check if this parent line is a block header (| or >)
-                ;; Using the regex from Version 4 of our test
                 (when (looking-at "^[ \t-]*\\(?:[^: \t\n]+:[ \t]*\\)?\\(?:&\\S-+[ \t]+\\)*\\([|>][-+0-9]*\\)[ \t]*\\(?:#.*\\)?$")
                   (setq found t)))
-               ;; If we hit 0 indent and it wasn't a header, it's not a block
                ((zerop indent)
                 (setq searching nil))))))
         found)))
 
-  ;; 2. Wrapper: Only returns the face if NOT in a string, comment, or block scalar.
+  ;; 2. Structure Wrapper (Your existing code)
   (defun my/yaml-structure-face (face)
     (let ((state (syntax-ppss)))
       (unless (or (nth 3 state)           ; Inside string
                   (nth 4 state)           ; Inside comment
                   (my/yaml-block-scalar-p)) ; Inside block scalar
+        face)))
+
+  ;; 3. NEW: Variable Wrapper
+  ;; Only prevents fontification inside comments. Allows it inside strings/blocks.
+  (defun my/yaml-variable-face (face)
+    (let ((state (syntax-ppss)))
+      (unless (nth 4 state) ; Inside comment
         face)))
 
   ;; --- APPLY RULES ---
@@ -518,7 +525,19 @@ Handles anchors, chomping indicators, and complex indentation."
    'yaml-mode
    '(("^\\s-*\\(-\\)\\s-"
       1 (my/yaml-structure-face 'yaml-dash-face) prepend))
-   'append))
+   'append)
+
+  ;; E. Variables ${VAR} ONLY
+  ;; The 't' at the end forces this face on top of existing string/scalar faces.
+  (font-lock-add-keywords
+   'yaml-mode
+   '(("\\(\\${[^}\n]+}\\)"
+      1 (unless (nth 4 (syntax-ppss))
+          'yaml-variable-face)
+      prepend))
+   'append)
+  )
+
 
 (defface my-dockerfile-expansion-face
   '((t :foreground "#9ccfd8"))
