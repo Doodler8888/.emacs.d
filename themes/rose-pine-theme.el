@@ -238,7 +238,7 @@
 
     ;; Python ts mode
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))
-    `(font-lock-constant-face ((,class (:foreground ,rose-pine-foam))))
+    `(font-lock-constant-face ((,class (:foreground ,rose-pine-rose))))
 
     ;; Flymake
     `(flymake-end-of-line-diagnostics-face ((,class (:box nil))))
@@ -361,64 +361,61 @@
 
 ))
 
-;; (defun my/set-flymake-faces ()
-;;   (with-eval-after-load 'flymake
-;;     (set-face-attribute 'flymake-error nil
-;;                         ;; :underline `(:style line :color "#e0def4")) ; rose-pine-gold
-;; 						:underline `(:style line :color "#e0def4" :underline undefined)) ; rose-pine-gold
-;;     (set-face-attribute 'flymake-warning nil
-;;                         :underline `(:style line :color "#f6c177" :underline undefined)) ; rose-pine-gold
-;;     (set-face-attribute 'flymake-note nil
-;;                         :underline `(:style line :color "#c4a7e7" :underline undefined)))) ; rose-pine-iris
 
-;; (add-hook 'after-init-hook 'my/set-flymake-faces)
+(defun my-yaml-test-identify-blocks-v4 ()
+  "Robust identification of YAML block scalars.
+Handles anchors, chomping indicators, and complex indentation."
+  (interactive)
+  (let ((debug-buf (get-buffer-create "*yaml-block-debug*")))
+    (with-current-buffer debug-buf (erase-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      ;; Regex breakdown:
+      ;; ^[ \t-]*              -> Start of line, optional spaces or list dashes
+      ;; \\(?:[^: \t\n]+:[ \t]*\\)? -> Optional key followed by a colon and spaces
+      ;; \\(?:&\\S-+[ \t]+\\)* -> Optional anchor(s) e.g. &anchor-name
+      ;; \\([|>][-+0-9]*\\)    -> Group 1: The mandatory indicator | or >
+      ;; [ \t]*\\(?:#.*\\)?$   -> Optional trailing space/comment until end of line
+      (while (re-search-forward "^[ \t-]*\\(?:[^: \t\n]+:[ \t]*\\)?\\(?:&\\S-+[ \t]+\\)*\\([|>][-+0-9]*\\)[ \t]*\\(?:#.*\\)?$" nil t)
+        (let ((state (syntax-ppss)))
+          ;; Check: are we inside a string? (nth 3)
+          (unless (nth 3 state)
+            (let* ((header-line-num (line-number-at-pos))
+                   (header-text (match-string 0))
+                   ;; Calculate indent of the line containing the | or >
+                   (start-indent (save-excursion
+                                   (beginning-of-line)
+                                   (current-indentation)))
+                   (block-content '())
+                   (searching t))
 
+              (save-excursion
+                (forward-line 1)
+                (while (and searching (not (eobp)))
+                  (let ((current-indent (current-indentation))
+                        (is-empty (looking-at-p "^\\s-*$")))
+                    (cond
+                     ;; Empty lines are part of the block
+                     (is-empty
+                      (push "" block-content))
+                     ;; Content must be indented MORE than the header line
+                     ((> current-indent start-indent)
+                      (push (buffer-substring (line-beginning-position) (line-end-position)) block-content))
+                     ;; Same or less indent means the block ended
+                     (t (setq searching nil))))
+                  (when searching (forward-line 1))))
 
-;; (defface yaml-colon-face
-;;   '((t (:foreground "#908caa")))
-;;   "Face for colons after keys in YAML."
-;;   :group 'yaml)
+              (with-current-buffer debug-buf
+                (insert (format "MATCH: Line %d | Header: %s | Base Indent: %d\n"
+                                header-line-num (string-trim header-text) start-indent))
+                (insert "CONTENT START:\n")
+                (if block-content
+                    (dolist (line (nreverse block-content))
+                      (insert "  > " line "\n"))
+                  (insert "  [Empty Block]\n"))
+                (insert "CONTENT END\n\n")))))))
+    (display-buffer debug-buf)))
 
-;; (defface yaml-bracket-face
-;;   '((t (:foreground "#908caa")))
-;;   "Face for brackets and braces in YAML values."
-;;   :group 'yaml)
-
-;; (defface yaml-dash-face
-;;   '((t (:foreground "#908caa")))
-;;   "Face for dashes in YAML lists."
-;;   :group 'yaml)
-
-;; (add-hook 'yaml-mode-hook
-;;           (lambda ()
-;;             ;; Your existing face remaps
-;;             (face-remap-add-relative 'font-lock-variable-name-face
-;;                                      '(:foreground "#9ccfd8"))
-;;             (face-remap-add-relative 'default
-;;                                      '(:foreground "#f6c177"))
-;;             (face-remap-add-relative 'font-lock-constant-face
-;;                                      '(:foreground "#ebbcba"))
-
-;;             ;; Add custom font-lock for colons after keys only
-;;             (font-lock-add-keywords
-;;              nil
-;;              '(("^\\s-*[^:#\n]+\\(:\\)\\s-*\\(?:#\\|$\\|[^\n]\\)" 1 'yaml-colon-face prepend))
-;;              'append)
-
-;;             ;; Add custom font-lock for brackets not in strings or comments
-;;             (font-lock-add-keywords
-;;              nil
-;;              '(("[][{}]" 0 (let ((state (syntax-ppss)))
-;;                              (unless (or (nth 3 state) (nth 4 state))
-;;                                'yaml-bracket-face))
-;;                          prepend))
-;;              'append)
-
-;;             ;; Add custom font-lock for list dashes
-;;             (font-lock-add-keywords
-;;              nil
-;;              '(("^\\s-*\\(-\\)\\s-" 1 (unless (nth 4 (syntax-ppss)) 'yaml-dash-face) prepend))
-;;              'append)))
 
 (defface yaml-colon-face
   '((t (:foreground "#908caa" :weight bold)))
@@ -453,34 +450,75 @@
 
 (with-eval-after-load 'yaml-mode
 
-  ;; A. highlight keys with your custom color (overriding default variable-name-face)
-  ;;    matches "key:" structure
+  ;; 1. The core logic: Is the current line part of a block scalar content?
+  (defun my/yaml-block-scalar-p ()
+    "Return t if current point is inside a block scalar (| or >)."
+    (save-excursion
+      (let ((found nil)
+            (searching t)
+            ;; If current line is empty, we look at the first non-empty line above
+            ;; to determine the "content indentation".
+            (content-indent (progn
+                              (beginning-of-line)
+                              (while (and (looking-at-p "^\\s-*$") (not (bobp)))
+                                (forward-line -1))
+                              (current-indentation))))
+
+        ;; Move up until we find a line with LESS indentation than the content
+        (while (and searching (not (bobp)))
+          (forward-line -1)
+          (let ((indent (current-indentation)))
+            (unless (looking-at-p "^\\s-*$")
+              (cond
+               ;; We found the "parent" line
+               ((< indent content-indent)
+                (setq searching nil)
+                ;; Check if this parent line is a block header (| or >)
+                ;; Using the regex from Version 4 of our test
+                (when (looking-at "^[ \t-]*\\(?:[^: \t\n]+:[ \t]*\\)?\\(?:&\\S-+[ \t]+\\)*\\([|>][-+0-9]*\\)[ \t]*\\(?:#.*\\)?$")
+                  (setq found t)))
+               ;; If we hit 0 indent and it wasn't a header, it's not a block
+               ((zerop indent)
+                (setq searching nil))))))
+        found)))
+
+  ;; 2. Wrapper: Only returns the face if NOT in a string, comment, or block scalar.
+  (defun my/yaml-structure-face (face)
+    (let ((state (syntax-ppss)))
+      (unless (or (nth 3 state)           ; Inside string
+                  (nth 4 state)           ; Inside comment
+                  (my/yaml-block-scalar-p)) ; Inside block scalar
+        face)))
+
+  ;; --- APPLY RULES ---
+
+  ;; A. Keys
   (font-lock-add-keywords
    'yaml-mode
-   '(("^\\s-*\\([^:#\n]+\\):" 1 'yaml-custom-key-face prepend))
+   '(("^\\s-*\\([^:#\n]+\\):\\(?:\\s-\\|$\\)"
+      1 (my/yaml-structure-face 'yaml-custom-key-face) prepend))
    'append)
 
-  ;; B. Highlight colons independently
+  ;; B. Colons
   (font-lock-add-keywords
    'yaml-mode
-   '(("^\\s-*[^:#\n]+\\(:\\)\\s-*\\(?:#\\|$\\|[^\n]\\)" 1 'yaml-colon-face prepend))
+   '(("^\\s-*[^:#\n]+\\(:\\)\\(?:\\s-\\|$\\)"
+      1 (my/yaml-structure-face 'yaml-colon-face) prepend))
    'append)
 
-  ;; C. Highlight brackets/braces (ignoring strings/comments)
+  ;; C. Brackets/Braces
   (font-lock-add-keywords
    'yaml-mode
-   '(("[][{}]" 0 (let ((state (syntax-ppss)))
-                   (unless (or (nth 3 state) (nth 4 state))
-                     'yaml-bracket-face))
-               prepend))
+   '(("[][{}]"
+      0 (my/yaml-structure-face 'yaml-bracket-face) prepend))
    'append)
 
-  ;; D. Highlight list dashes
+  ;; D. List Dashes
   (font-lock-add-keywords
    'yaml-mode
-   '(("^\\s-*\\(-\\)\\s-" 1 (unless (nth 4 (syntax-ppss)) 'yaml-dash-face) prepend))
+   '(("^\\s-*\\(-\\)\\s-"
+      1 (my/yaml-structure-face 'yaml-dash-face) prepend))
    'append))
-
 
 (defface my-dockerfile-expansion-face
   '((t :foreground "#9ccfd8"))
