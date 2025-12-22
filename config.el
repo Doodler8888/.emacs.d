@@ -2268,6 +2268,11 @@ If an eshell buffer for the directory already exists, switch to it."
 (use-package terraform-mode)
 (use-package dockerfile-mode)
 (use-package yaml-mode)
+;; otherwise i will get 'Error during redisplay: (jit-lock-function 1) signaled
+;; (wrong-type-argument characterp nil)' in some situations
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (setq-local syntax-propertize-function nil)))
 (use-package nginx-mode
   :custom
   (nginx-indent-level 2))

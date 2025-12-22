@@ -4,7 +4,7 @@
 ;;;; DEBUG
 ;;;; ============================================================
 
-(defvar my-dot-debug t)
+(defvar my-dot-debug nil)
 
 (defun my-dot-log (fmt &rest args)
   (when my-dot-debug
@@ -221,5 +221,3 @@
 ;;;; ============================================================
 ;;;; KEY BINDING
 ;;;; ============================================================
-
-(define-key meow-normal-state-keymap "." #'my-repeat-last-operation)
