@@ -236,67 +236,23 @@ QUOTE-CHAR is the character used for quoting."
   "Parse the bounds for inside backtick quotes selection. Supports multi-line strings."
   (meow--parse-inside-quotes inner "*"))
 
-;; "aoirsetnoarise'oarisetn"
-
-;; (defun meow--parse-outside-double-quotes (inner)
-;;   "Parse the bounds for outside quotes selection. Supports multi-line strings."
-;;   (save-excursion
-;;     (let* ((buffer-end (point-max))
-;;            (buffer-start (point-min))
-;;            (start-dquote (save-excursion
-;;                           (search-backward "\"" buffer-start t)))
-;;            (end-dquote (when start-dquote
-;;                          (save-excursion
-;;                            (goto-char start-dquote)
-;;                            (forward-char 1)
-;;                            (search-forward "\"" buffer-end t))))
-;;            (start-squote (save-excursion
-;;                           (search-backward "'" buffer-start t)))
-;;            (end-squote (when start-squote
-;;                          (save-excursion
-;;                            (goto-char start-squote)
-;;                            (forward-char 1)
-;;                            (search-forward "'" buffer-end t))))
-;;            (start-bquote (save-excursion
-;;                           (search-backward "`" buffer-start t)))
-;;            (end-bquote (when start-bquote
-;;                          (save-excursion
-;;                            (goto-char start-bquote)
-;;                            (forward-char 1)
-;;                            (search-forward "`" buffer-end t)))))
-;;       (cond
-;;        ;; Find the closest quote among all three types
-;;        ((and start-dquote end-dquote start-squote end-squote start-bquote end-bquote)
-;;         (let ((closest (max start-dquote start-squote start-bquote)))
-;;           (cond
-;;            ((= closest start-dquote) (cons start-dquote end-dquote))
-;;            ((= closest start-squote) (cons start-squote end-squote))
-;;            ((= closest start-bquote) (cons start-bquote end-bquote)))))
-
-;;        ;; Two types of quotes found
-;;        ((and start-dquote end-dquote start-squote end-squote)
-;;         (if (> start-dquote start-squote)
-;;             (cons start-dquote end-dquote)
-;;           (cons start-squote end-squote)))
-;;        ((and start-dquote end-dquote start-bquote end-bquote)
-;;         (if (> start-dquote start-bquote)
-;;             (cons start-dquote end-dquote)
-;;           (cons start-bquote end-bquote)))
-;;        ((and start-squote end-squote start-bquote end-bquote)
-;;         (if (> start-squote start-bquote)
-;;             (cons start-squote end-squote)
-;;           (cons start-bquote end-bquote)))
-
-;;        ;; Single quote type found
-;;        ((and start-dquote end-dquote)
-;;         (cons start-dquote end-dquote))
-;;        ((and start-squote end-squote)
-;;         (cons start-squote end-squote))
-;;        ((and start-bquote end-bquote)
-;;         (cons start-bquote end-bquote))
-
-;;        ;; No quotes found
-;;        (t nil)))))
+(defun meow--parse-inside-angles (inner)
+  "Parse the bounds for inside angle brackets selection. Supports multi-line strings."
+  (save-excursion
+    (let* ((buffer-end (point-max))
+           (buffer-start (point-min))
+           (current-pos (point))
+           (start-pos nil)
+           (end-pos nil))
+      ;; Find opening < before current position
+      (when (search-backward "<" buffer-start t)
+        (setq start-pos (point))
+        ;; Find closing > after opening
+        (when (search-forward ">" buffer-end t)
+          (setq end-pos (point))
+          ;; Check if current position is within this pair
+          (when (and (>= current-pos start-pos) (<= current-pos end-pos))
+            (cons (1+ start-pos) (1- end-pos))))))))
 
 (defun meow--parse-outside (delim)
   "Parse the bounds for a string enclosed by DELIM. Supports multi-line strings."
@@ -339,6 +295,20 @@ QUOTE-CHAR is the character used for quoting."
 (defun meow--parse-outside-asterisks (inner)
   "Parse the bounds for outside backtick quotes selection. Supports multi-line strings."
   (meow--parse-outside ?*))
+
+(defun meow--parse-outside-angles (inner)
+  "Parse the bounds for outside angle brackets selection. Supports multi-line strings."
+  (save-excursion
+    (let* ((buffer-start (point-min))
+           (buffer-end (point-max))
+           (start (search-backward "<" buffer-start t))
+           (end (when start
+                  (save-excursion
+                    (goto-char start)
+                    (forward-char 1)
+                    (search-forward ">" buffer-end t)))))
+      (when (and start end)
+        (cons start end)))))
 
 
 ;; You might also want a combined function that finds the closest quotes
@@ -455,10 +425,12 @@ or nil if no valid emphasis is found."
 			   ((eq ch ?') (meow--parse-inside-single-quotes t))
 			   ((eq ch ?`) (meow--parse-inside-backtick-quotes t))
 			   ((eq ch ?/) (meow--parse-inside-slashes t))
-			   ((eq ch ?a) (meow--parse-inside-comment t))
+			   ((eq ch ?#) (meow--parse-inside-comment t))
 			   ((eq ch ?~) (meow--parse-inside-tildas t))
 			   ((eq ch ?=) (meow--parse-inside-equals t))
 			   ((eq ch ?*) (meow--parse-inside-asterisks t))
+			   ((eq ch ?<) (meow--parse-inside-angles t))
+			   ((eq ch ?>) (meow--parse-inside-angles t))
 			   ;; ((eq ch ?o) (meow--parse-inside-org t))
 			   (t (funcall orig-fun ch)))))
 
@@ -471,9 +443,11 @@ or nil if no valid emphasis is found."
 			   ((eq ch ?') (meow--parse-outside-single-quotes t))
 			   ((eq ch ?`) (meow--parse-outside-backtick-quotes t))
 			   ((eq ch ?/) (meow--parse-outside-slashes t))
-			   ((eq ch ?a) (meow--parse-outside-comment t))
+			   ((eq ch ?#) (meow--parse-outside-comment t))
 			   ;; ((eq ch ?o) (meow--parse-outside-org t))
 			   ((eq ch ?~) (meow--parse-outside-tildas t))
 			   ((eq ch ?=) (meow--parse-outside-equals t))
 			   ((eq ch ?*) (meow--parse-outside-asterisks t))
+			   ((eq ch ?<) (meow--parse-outside-angles t))
+			   ((eq ch ?>) (meow--parse-outside-angles t))
 			   (t (funcall orig-fun ch)))))

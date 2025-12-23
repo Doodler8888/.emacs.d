@@ -49,11 +49,12 @@
  '(auth-source-save-behavior nil)
  '(package-selected-packages
    '(bash-completion buffer-terminator cape clojure-ts-mode corfu crontab-mode
-					 docker dockerfile-mode embark-consult envrc goto-chg hydra
-					 magit marginalia markdown-mode meow nerd-icons nginx-mode
-					 nix-mode orderless org-appear org-drill pcmpl-args
-					 repeat-fu reverse-im savefold tempel terraform-mode undo-fu
-					 undo-fu-session vertico yaml-mode zig-ts-mode))
+					 docker dockerfile-mode embark-consult envrc goto-chg
+					 groovy-mode hydra magit marginalia markdown-mode meow
+					 nerd-icons nginx-mode nix-mode orderless org-appear
+					 org-drill pcmpl-args repeat-fu reverse-im savefold tempel
+					 terraform-mode undo-fu undo-fu-session vertico yaml-mode
+					 zig-ts-mode))
  '(package-vc-selected-packages
    '((macrursors :url "https://github.com/corytertel/macrursors")
 	 (helm-mode :url "https://github.com/nnungest/helm-chart-mode")

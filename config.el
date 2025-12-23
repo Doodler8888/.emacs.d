@@ -660,6 +660,11 @@
 ;;   (add-to-list 'global-treesit-auto-modes '(not yaml-ts-mode))
 ;;   (global-treesit-auto-mode))
 
+(add-hook 'bash-ts-mode-hook
+          (lambda ()
+            (setq-local sh-basic-offset 4)
+            (setq-local sh-indentation 4)))
+
 (use-package clojure-ts-mode)
 
 (setq treesit-language-source-alist
@@ -1938,11 +1943,16 @@ but still hides `org-block' backgrounds."
 ;;                (display-buffer-reuse-window display-buffer-pop-up-window)
 ;;                (post-command-select-window . t)))
 
-
+;; Makes pointer to swapn at a designated window (don't use with compilation
+;; buffers because it's necessary there)
 (setq display-buffer-alist
       `(("\\*compilation\\*"
          (display-buffer-reuse-window display-buffer-pop-up-window)
          (reusable-frames . visible))
+
+        ;; ("\\*lint\\*"
+        ;;  (display-buffer-reuse-window display-buffer-pop-up-window)
+        ;;  (post-command-select-window . t))
 
         ("\\*Man "
          (display-buffer-reuse-window display-buffer-pop-up-window)
@@ -2194,8 +2204,8 @@ If an eshell buffer for the directory already exists, switch to it."
   "Set compilation command based on major mode"
   (setq-local compile-command
               (cond
-               ((eq major-mode 'bash-ts-mode)
-                (format "shellcheck -f gcc %s" buffer-file-name))
+               ;; ((eq major-mode 'bash-ts-mode)
+               ;;  (format "shellcheck -f gcc %s" buffer-file-name))
 
                ((eq major-mode 'python-ts-mode)
                 (format "python %s" buffer-file-name))
@@ -2261,12 +2271,52 @@ If an eshell buffer for the directory already exists, switch to it."
 (add-hook 'perl-mode-hook #'my-perl-set-compile-command)
 
 
+;; Linting
+
+(defvar-local my-lint-command nil
+  "Mode-specific default lint command.
+Use %s as placeholder for the current file name.")
+
+(defvar-local my-lint-last-command nil
+  "Last executed lint command for this buffer.")
+
+(defun my-lint ()
+  "Run linter for current buffer in compile mode.
+Uses the last command if available, otherwise the default `my-lint-command'."
+  (interactive)
+  (let* ((file-name (or (buffer-file-name)
+                        (error "Buffer is not visiting a file")))
+         (command (cond
+                   (my-lint-last-command my-lint-last-command)
+                   (my-lint-command (format my-lint-command file-name))
+                   (t (error "No lint command defined for this mode")))))
+    (compilation-start command nil (lambda (_) "*lint*"))))
+
+(defun my-lint-edit ()
+  "Prompt for lint command with pre-filled default, then execute it."
+  (interactive)
+  (let* ((file-name (or (buffer-file-name)
+                        (error "Buffer is not visiting a file")))
+         (default-cmd (or my-lint-last-command
+                          (when my-lint-command
+                            (format my-lint-command file-name))))
+         (command (read-string "Lint command: " default-cmd)))
+    (setq-local my-lint-last-command command)
+    (compilation-start command nil (lambda (_) "*lint*"))))
+
+;; Set up for bash-ts-mode
+(add-hook 'bash-ts-mode-hook
+          (lambda ()
+            (setq-local my-lint-command "shellcheck -f gcc %s")))
+
+
 ;; Modes
 
 (use-package perl-mode)
 (use-package lua-mode)
 (use-package terraform-mode)
 (use-package dockerfile-mode)
+(use-package groovy-mode)
 (use-package yaml-mode)
 ;; otherwise i will get 'Error during redisplay: (jit-lock-function 1) signaled
 ;; (wrong-type-argument characterp nil)' in some situations

@@ -25,6 +25,9 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("fe" . dired-jump)
 
+	("le" . my-lint-edit)
+	("ll" . my-lint)
+
     ("ss" . save-current-desktop-session)
     ("sd" . delete-desktop-session)
     ("sl" . load-desktop-with-name)

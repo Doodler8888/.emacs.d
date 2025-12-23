@@ -62,6 +62,8 @@
    `(font-lock-string-face ((,class (:foreground ,rose-pine-gold))))
    `(font-lock-type-face ((,class (:foreground ,rose-pine-iris))))
    `(font-lock-variable-name-face ((,class (:foreground ,rose-pine-fg))))
+   ;; `(font-lock-variable-use-face ((,class (:foreground ,rose-pine-iris))))
+   ;; `(font-lock-bracket-face ((,class (:foreground ,rose-pine-iris))))
    `(font-lock-comment-face ((,class (:foreground ,rose-pine-subtext))))
    `(font-lock-comment-delimiter-face ((,class (:foreground ,rose-pine-subtext))))
    `(font-lock-escape-face ((,class (:foreground ,rose-pine-gold))))
@@ -238,7 +240,7 @@
 
     ;; Python ts mode
     `(font-lock-number-face ((,class (:foreground ,rose-pine-subtext0))))
-    `(font-lock-constant-face ((,class (:foreground ,rose-pine-rose))))
+    `(font-lock-constant-face ((,class (:foreground ,rose-pine-love))))
 
     ;; Flymake
     `(flymake-end-of-line-diagnostics-face ((,class (:box nil))))
@@ -594,6 +596,22 @@ Handles anchors, chomping indicators, and complex indentation."
             (treesit-font-lock-recompute-features
              '(custom-expansion custom-paths custom-continuation custom-shell custom-user-params))))
 
+;; (defface my-bash-variable-expansion-face
+;;   '((t :foreground "#9ccfd8"))
+;;   "Face for bash variable expansions like $VAR."
+;;   :group 'bash)
+
+;; (add-hook 'bash-ts-mode-hook
+;;           (lambda ()
+;;             (setq-local treesit-font-lock-settings
+;;                         (append treesit-font-lock-settings
+;;                                 (treesit-font-lock-rules
+;;                                  :language 'bash
+;;                                  :feature 'custom-variable-expansion
+;;                                  :override t
+;;                                  '((simple_expansion) @my-bash-variable-expansion-face))))
+;;             (treesit-font-lock-recompute-features
+;;              '(custom-variable-expansion))))
 
 ;;;###autoload
 (when load-file-name

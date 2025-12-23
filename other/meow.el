@@ -939,6 +939,17 @@ When pasting over a selection, it's replaced and the replaced text is saved to t
                                   cmd ;; Run meow-insert (Record)
                                 'my/generic-insert))))) ;; Run custom (No Record)
 
+(meow-define-keys 'beacon
+  '("a" . meow-append)
+  '("v" . meow-visit))
+
+;; (meow-normal-define-key
+;;  '("a" . (menu-item "smart-append" meow-append
+;;                     :filter (lambda (cmd)
+;;                               (if (my/beacon-active-p)
+;;                                   cmd ;; Run meow-append (Record)
+;;                                 'my/generic-append))))) ;; Run custom (No Record)
+
 (defun meow-append-line-end ()
   "Like Vim's A: move to end of line and enter insert mode."
   (interactive)
