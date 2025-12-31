@@ -1693,32 +1693,32 @@ but still hides `org-block' backgrounds."
 
 ;; Layout translation
 
-(require 'quail)
+;; (require 'quail)
 
-;; 1. Define the Layout (Colemak)
-(quail-define-package
- "russian-colemak" "Russian" "RU-Col" t
- "Russian Colemak layout."
- nil t t t t nil nil nil nil nil t)
+;; ;; 1. Define the Layout (Colemak)
+;; (quail-define-package
+;;  "russian-colemak" "Russian" "RU-Col" t
+;;  "Russian Colemak layout."
+;;  nil t t t t nil nil nil nil nil t)
 
-(quail-define-rules
- ;; Lowercase
- ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
- ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
- ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю)
+;; (quail-define-rules
+;;  ;; Lowercase
+;;  ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
+;;  ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
+;;  ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю)
 
- ;; Uppercase & Shifted Punctuation
- ("Q" ?Й) ("W" ?Ц) ("F" ?У) ("P" ?К) ("G" ?Е) ("J" ?Н) ("L" ?Г) ("U" ?Ш) ("Y" ?Щ) (":" ?З) ("{" ?Х) ("}" ?Ъ)
- ("A" ?Ф) ("R" ?Ы) ("S" ?В) ("T" ?А) ("D" ?П) ("H" ?Р) ("N" ?О) ("E" ?Л) ("I" ?Д) ("O" ?Ж) ("\"" ?Э)
- ("Z" ?Я) ("X" ?Ч) ("C" ?С) ("V" ?М) ("B" ?И) ("K" ?Т) ("M" ?Ь) ("<" ?Б) (">" ?Ю))
+;;  ;; Uppercase & Shifted Punctuation
+;;  ("Q" ?Й) ("W" ?Ц) ("F" ?У) ("P" ?К) ("G" ?Е) ("J" ?Н) ("L" ?Г) ("U" ?Ш) ("Y" ?Щ) (":" ?З) ("{" ?Х) ("}" ?Ъ)
+;;  ("A" ?Ф) ("R" ?Ы) ("S" ?В) ("T" ?А) ("D" ?П) ("H" ?Р) ("N" ?О) ("E" ?Л) ("I" ?Д) ("O" ?Ж) ("\"" ?Э)
+;;  ("Z" ?Я) ("X" ?Ч) ("C" ?С) ("V" ?М) ("B" ?И) ("K" ?Т) ("M" ?Ь) ("<" ?Б) (">" ?Ю))
 
-;; 2. Configure reverse-im
-(use-package reverse-im
-  :custom
-  (reverse-im-modifiers '(control meta hyper super nil))
-  (reverse-im-input-methods '("russian-colemak"))
-  :config
-  (reverse-im-mode t))
+;; ;; 2. Configure reverse-im
+;; (use-package reverse-im
+;;   :custom
+;;   (reverse-im-modifiers '(control meta hyper super nil))
+;;   (reverse-im-input-methods '("russian-colemak"))
+;;   :config
+;;   (reverse-im-mode t))
 
 
 ;; Repeat-fu
@@ -2781,6 +2781,36 @@ If the current item has a checkbox, the new item will automatically have one [ ]
           (kill-new path-to-copy)
           (message "Copied path '%s' to the clipboard." path-to-copy))
       (message "Current buffer has no associated path to copy."))))
+
+(defun Cpr ()
+  "Copy the current path relative to the project root."
+  (interactive)
+  (let ((project (project-current))
+        (path-to-copy nil))
+
+    ;; 1. Determine the absolute path based on the buffer mode
+    (cond
+     ((eq major-mode 'dired-mode)
+      ;; Use default-directory for the current folder path.
+      ;; If you prefer the specific file under the cursor, use (dired-get-filename nil t) instead.
+      (setq path-to-copy default-directory))
+     ((eq major-mode 'eshell-mode)
+      (setq path-to-copy (eshell/pwd)))
+     (t
+      (setq path-to-copy (buffer-file-name))))
+
+    (unless path-to-copy
+      (user-error "Current buffer has no associated path."))
+
+    ;; 2. Calculate relative path
+    (if (not project)
+        (message "Not currently inside a project.")
+      (let* ((root (project-root project))
+             ;; file-relative-name automatically strips the root path from the file path.
+             ;; It also handles Tramp prefixes correctly (removing /ssh:host:.. from both sides).
+             (rel-path (file-relative-name path-to-copy root)))
+        (kill-new rel-path)
+        (message "Copied relative path '%s'." rel-path)))))
 
 (defun Cpn ()
   "Copy the full path of the current item under cursor"

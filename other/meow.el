@@ -1636,6 +1636,7 @@ Adapts `org-fill-paragraph` (which takes no bounds) to accept START and END."
                   (magit-stash-mode . custom)
                   (magit-refs-mode . custom)
                   (dired-mode . custom)
+                  (ibuffer-mode . custom)
                   (vc-dir-mode . custom)
                   (daemons-mode . custom)
                   (docker-container-mode . motion)

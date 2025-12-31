@@ -76,6 +76,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
     ;; ("m" . open-messages-buffer)
 
     ("cc" . Cp)
+    ("cr" . Cpr)
     ("cb" . my/copy-git-branch)
 
     ;; ("cn" . next-error)
