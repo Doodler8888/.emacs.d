@@ -1667,17 +1667,42 @@ Adapts `org-fill-paragraph` (which takes no bounds) to accept START and END."
   ;; (define-key daemons-mode-map (kbd ":") 'execute-extended-command)
   (define-key dired-mode-map (kbd "-") 'dired-up-directory))
 
-(with-eval-after-load 'wdired
-  (defun my/meow-fix-wdired-state-delayed (&rest _)
-    "Force meow into the custom state when exiting wdired, with a tiny delay.
-This delay allows Meow's internal hooks to finish before we force the state."
-    (run-with-timer 0.01 nil
-                    (lambda ()
-                      (when (derived-mode-p 'dired-mode)
-                        (meow--switch-state 'custom)))))
+;; wdired - beacon mode fix
+;; (with-eval-after-load 'wdired
+;;   (defun my/meow-fix-wdired-state-delayed (&rest _)
+;;     "Force meow into the custom state when exiting wdired, with a tiny delay.
+;; This delay allows Meow's internal hooks to finish before we force the state."
+;;     (run-with-timer 0.01 nil
+;;                     (lambda ()
+;;                       (when (derived-mode-p 'dired-mode)
+;;                         (meow--switch-state 'custom)))))
 
-  ;; Apply to both finishing edits (C-c C-c) and aborting (C-c C-k)
-  (advice-add 'wdired-finish-edit :after #'my/meow-fix-wdired-state-delayed)
+;;   ;; Apply to both finishing edits (C-c C-c) and aborting (C-c C-k)
+;;   (advice-add 'wdired-finish-edit :after #'my/meow-fix-wdired-state-delayed)
+;;   (advice-add 'wdired-abort-changes :after #'my/meow-fix-wdired-state-delayed))
+
+;; wdired - beacon mode fix
+(with-eval-after-load 'wdired
+
+  (defun my/meow-ensure-custom-state (buf attempt)
+    "Retry switching to custom state until dired-mode is confirmed active.
+Gives up after ~5 seconds (50 attempts × 0.1s)."
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (if (derived-mode-p 'dired-mode)
+            (meow--switch-state 'custom)
+          (when (< attempt 50)
+            (run-with-timer 0.1 nil
+                            #'my/meow-ensure-custom-state buf (1+ attempt)))))))
+
+  (defun my/meow-fix-wdired-state-delayed (&rest _)
+    "Schedule a retry loop to fix Meow state after exiting wdired.
+Works for both local and Tramp (remote) buffers."
+    (let ((buf (current-buffer)))
+      (run-with-timer 0.05 nil
+                      #'my/meow-ensure-custom-state buf 0)))
+
+  (advice-add 'wdired-finish-edit   :after #'my/meow-fix-wdired-state-delayed)
   (advice-add 'wdired-abort-changes :after #'my/meow-fix-wdired-state-delayed))
 
 

@@ -19,6 +19,7 @@
 
 ;; (load "~/.emacs.d/other/evil.el")
 (load "~/.emacs.d/config.el")
+(load "~/.emacs.d/other/macos.el")
 ;; (load "~/.emacs.d/other/icomplete.el")
 (load "~/.emacs.d/other/custom-functions.el")
 ;; (load "~/.emacs.d/other/my-yaml-mode.el")
@@ -47,14 +48,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages
-   '(bash-completion buffer-terminator cape clojure-ts-mode corfu crontab-mode
-					 docker dockerfile-mode embark-consult envrc goto-chg
-					 groovy-mode hydra magit marginalia markdown-mode meow
-					 nerd-icons nginx-mode nix-mode orderless org-appear
-					 org-drill pcmpl-args repeat-fu reverse-im savefold tempel
-					 terraform-mode undo-fu undo-fu-session vertico yaml-mode
-					 zig-ts-mode))
+ '(package-selected-packages nil)
  '(package-vc-selected-packages
    '((macrursors :url "https://github.com/corytertel/macrursors")
 	 (helm-mode :url "https://github.com/nnungest/helm-chart-mode")
