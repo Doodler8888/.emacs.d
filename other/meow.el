@@ -1470,6 +1470,7 @@ Adapts `org-fill-paragraph` (which takes no bounds) to accept START and END."
    '("." . meow-bounds-of-thing)
    '("[" . meow-beginning-of-thing)
    '("]" . meow-end-of-thing)
+   '("RET" . my-newline-force-line-start)
    ;; '("%" . my-match-paren-with-selection)
    ;; '("a" . my/meow-append)
    '("a" . my/generic-append)

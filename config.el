@@ -444,6 +444,7 @@
               "/home/wurfkreuz/.dotfiles/scripts/python"
               "/home/wurfkreuz/.dotfiles/scripts/sh"
 			  "/home/wurfkreuz/perl5/bin"
+			  "/opt/homebrew/bin"
               "/usr/bin")))
   ;; (setq exec-path (append paths exec-path))
   (setenv "PATH" (concat (string-join paths ":")
