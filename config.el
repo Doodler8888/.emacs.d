@@ -19,6 +19,9 @@
   ; allows us to type a new path without having to delete the current one
   ;; (file-name-shadow-mode 1)
 
+  ;; Otherwise pasting from system's clipboard on macos dosen't work
+  (setq select-enable-clipboard t
+	interprogram-paste-function #'gui-selection-value)
   ;; Enable indentation+completion using the TAB key.
   ;; `completion-at-point' is often bound to M-TAB.
   (tab-always-indent 'complete)
@@ -534,7 +537,7 @@
 (add-hook 'terraform-mode-hook 'my-terraform-mode-custom-faces)
 
 (when (member "NotoSansM Nerd Font Mono" (font-family-list))
-  (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
+  (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-14:weight=medium")
 
   ;; Set a different font for italics
   (set-face-attribute 'italic nil
@@ -704,240 +707,9 @@
 (make-directory "~/.emacs.d/undo-tree-history" t)
 
 
-;; (defvar-local change-history nil
-;;   "Ring of change positions for this buffer, most recent first.")
-
-;; (defvar-local change-history-index 0
-;;   "Current index in change history for navigation.")
-
-;; (defconst change-history-max 100
-;;   "Maximum number of change positions to remember.")
-
-;; (defun record-change-position (beg end length)
-;;   "Record change position in history.
-;; Added to `after-change-functions'."
-;;   (let ((pos (if (= length 0) end beg))) ; end for insertions, beg for deletions
-;;     (unless (and change-history
-;;                  (= pos (car change-history)))
-;;       (push pos change-history)
-;;       (when (> (length change-history) change-history-max)
-;;         (setq change-history (butlast change-history)))
-;;       (setq change-history-index 0))))
-
-;; (add-hook 'after-change-functions #'record-change-position)
-
-;; (defun my/goto-last-change (&optional n)
-;;   "Move cursor through change history.
-;; Without argument: go to previous change
-;; With numeric prefix:
-;;   - Positive N: go N steps back in history
-;;   - Negative N: go N steps forward in history"
-;;   (interactive "P")
-;;   (if (null change-history)
-;;       (message "No change history available.")
-;;     (let* ((len (length change-history))
-;;            (n (or n 1))
-;;            (new-index (+ change-history-index n))
-;;            (new-index (max 0 (min new-index (1- len)))))
-;;       (setq change-history-index new-index)
-;;       (goto-char (nth new-index change-history))
-;;       (message "Position %d/%d" (1+ new-index) len))))
-
-;; (defun goto-next-change ()
-;;   "Move forward through change history."
-;;   (interactive)
-;;   (my/goto-last-change -1))
-
+;; Go to last change
 
 (use-package goto-chg)
-
-;; (defadvice goto-last-change (around repeat-if-same-pos activate)
-;;   "Repeat goto-last-change if cursor position doesn't change."
-;;   (let ((old-pos (point)))
-;;     ad-do-it
-;;     (when (= old-pos (point))
-;;       (goto-last-change 1))))
-
-;; ;; I've being using this code, but i don't remember why
-;; (defvar-local my-jump-ring '()
-;;   "Ring of positions from goto-last-change jumps.")
-
-;; (defvar-local my-jump-index 0
-;;   "Current position in jump ring.")
-
-;; (defun my-goto-last-change ()
-;;   "Wrapper for goto-last-change that stores jump positions."
-;;   (interactive)
-;;   (let ((old-pos (point)))
-;;     (call-interactively 'goto-last-change)
-;;     (push old-pos my-jump-ring)
-;;     (setq my-jump-index 0)))
-
-;; (defun my-goto-last-change-reverse ()
-;;   "Go back through stored jump positions."
-;;   (interactive)
-;;   (if (null my-jump-ring)
-;;     (let ((pos (nth my-jump-index my-jump-ring)))
-;;       (when pos
-;;         (goto-char pos)
-;;         (setq my-jump-index (1+ my-jump-index))
-;;         (when (>= my-jump-index (length my-jump-ring))
-;;           (setq my-jump-index 0))))))
-
-
-;; ;; Avy
-
-;; (use-package avy
-;;   :ensure t
-;;   )
-
-;; (defun avy-jump-to-window ()
-;;   "Use avy to jump to a specific window."
-;;   (interactive)
-;;   (let ((avy-all-windows 'all-frames))
-;;     (avy-with avy-jump-to-window
-;;       (avy--process
-;;        (mapcar (lambda (w)
-;;                  (cons (window-start w) w))
-;;                (avy-window-list))
-;;        #'avy--overlay-post))))
-
-;; (with-eval-after-load 'avy
-;;   (defun avy-action-copy-word (pt)
-;;     "Copy word at PT and paste at current point (like evil's iw)."
-;;     (let ((original-window (selected-window))
-;;           (original-point (point)))
-;;       (save-excursion
-;;         (goto-char pt)
-;;         (let ((bounds (evil-inner-word)))
-;;           (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
-;;       (select-window original-window)
-;;       (goto-char original-point)
-;;       (yank))
-;;     t)
-
-;;   (defun avy-action-copy-WORD (pt)
-;;     "Copy WORD at PT and paste at current point (like evil's iW)."
-;;     (let ((original-window (selected-window))
-;;           (original-point (point)))
-;;       (save-excursion
-;;         (goto-char pt)
-;;         (let ((bounds (evil-inner-WORD)))
-;;           (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
-;;       (select-window original-window)
-;;       (goto-char original-point)
-;;       (yank))
-;;     t)
-
-;;   (defun avy-action-copy-quoted (pt)
-;;     "Copy quoted text at PT and paste at current point."
-;;     (let ((original-window (selected-window))
-;;           (original-point (point)))
-;;       (save-excursion
-;;         (goto-char pt)
-;;         (let ((bounds (evil-select-quote ?\" t t)))
-;;           (kill-ring-save (nth 0 bounds) (nth 1 bounds))))
-;;       (select-window original-window)
-;;       (goto-char original-point)
-;;       (yank))
-;;     t)
-
-;;   ;; Add to dispatch alist
-;;   (setf (alist-get ?w avy-dispatch-alist) 'avy-action-copy-word
-;;         (alist-get ?W avy-dispatch-alist) 'avy-action-copy-WORD
-;;         (alist-get ?\" avy-dispatch-alist) 'avy-action-copy-quoted))
-
-
-;; Docker
-
-(use-package docker
-  :ensure t
-  ;; :config
-  ;; It was defined in xterm block for some reason
-  ;; (with-eval-after-load 'vterm
-  ;;   (setq docker-vterm-support t)
-  ;;   (setq docker-container-shell-file-name "vterm"))
-  )
-
-(defun container-map-id (container-name)
-  "Display the UID and GID maps of a Docker container.
-Ask for the name of a Docker container, retrieve its PID, and display the UID and GID maps."
-  (interactive "sContainer name: ")
-  (let* ((pid (string-trim (shell-command-to-string (format "docker inspect --format '{{.State.Pid}}' %s" container-name))))
-         (uid-map-file (format "/proc/%s/uid_map" pid))
-         (gid-map-file (format "/proc/%s/gid_map" pid)))
-    (if (and (not (string-empty-p pid))
-             (file-exists-p uid-map-file)
-             (file-exists-p gid-map-file))
-        (with-output-to-temp-buffer "*Docker ID Maps*"
-          (princ (format "UID and GID maps for container '%s' (PID: %s):\n\n" container-name pid))
-          (princ "UID map:\n")
-          (princ (with-temp-buffer
-                   (insert-file-contents uid-map-file)
-                   (buffer-string)))
-          (princ "\nGID map:\n")
-          (princ (with-temp-buffer
-                   (insert-file-contents gid-map-file)
-                   (buffer-string))))
-      (message "Failed to retrieve UID and/or GID maps for container '%s'" container-name))))
-
-;; (defun docker-template ()
-;;   "Create docker.el windows with a specific layout"
-;;   (interactive)
-;;   (delete-other-windows)
-;;   (docker-images)
-;;   (docker-containers)
-;;   (transpose-frame)
-;;   (docker-volumes)
-;; )
-
-(defun docker-template ()
-  "Create docker.el windows with a specific layout"
-  (interactive)
-  (delete-other-windows)
-  (docker-images)
-  (docker-containers)
-  (transpose-frame)
-  (evil-window-move-very-bottom)
-)
-
-(defun toggle-docker-layout ()
-  "Toggle between docker layout and previous layout."
-  (interactive)
-  (let ((mode-name (symbol-name major-mode)))
-    ;; (message "Current mode: %s, contains 'docker': %s"
-    ;;          mode-name
-    ;;          (if (string-match-p "docker" mode-name) "yes" "no"))
-    (condition-case nil
-        (if (not (get-register ?d))
-            ;; First time setup
-            (progn
-              ;; (message "First time setup: creating docker layout")
-              (window-configuration-to-register ?p)
-              (docker-template)
-              (window-configuration-to-register ?d))
-          ;; Docker register exists - check if we're in docker mode
-          (if (string-match-p "docker" mode-name)
-              (progn
-                ;; (message "In docker mode, switching to previous layout")
-                (jump-to-register ?p))
-            (progn
-              ;; (message "Not in docker mode, switching to docker layout")
-              (window-configuration-to-register ?p)
-              (jump-to-register ?d))))
-      ;; Handle invalid register by doing first-time setup
-      (error
-       ;; (message "Invalid register detected, doing first-time setup")
-       (set-register ?p nil)
-       (set-register ?d nil)
-       (window-configuration-to-register ?p)
-       (docker-template)
-       (window-configuration-to-register ?d)))))
-
-;; (defun my-docker-shell ()
-;;   (interactive)
-;;   (let ((container-id (read-string "Enter container ID: ")))
-;;     (comint-run (format "docker exec -it %s /bin/sh" container-id))))
 
 
 ;; Which-key
@@ -986,24 +758,6 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
               (ibuffer-switch-to-saved-filter-groups "default")))
 
 (setq ibuffer-show-empty-filter-groups nil) ; don't show empty groups
-
-
-;; Proced
-
-(use-package proced
-  :ensure nil
-  :defer t
-  :custom
-  (proced-enable-color-flag t)
-  (proced-tree-flag t)
-  (proced-auto-update-flag 'visible)
-  (proced-auto-update-interval 1)
-  (proced-descent t)
-  (proced-filter 'user) ;; We can change interactively with `s'
-  :config
-  (add-hook 'proced-mode-hook
-            (lambda ()
-              (proced-toggle-auto-update 1))))
 
 
 ;; Snippets/Tempel
@@ -1062,6 +816,7 @@ Ask for the name of a Docker container, retrieve its PID, and display the UID an
 
 ;; (use-package tempel-collection
 ;;   :ensure t)
+
 
 ;; Orderless
 
@@ -2072,6 +1827,7 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t
   :config
   (envrc-global-mode))
+
 
 ;; Flymake
 
