@@ -21,7 +21,7 @@
 (load "~/.emacs.d/config.el")
 (load "~/.emacs.d/other/macos.el")
 ;; (load "~/.emacs.d/other/icomplete.el")
-(load "~/.emacs.d/other/custom-functions.el")
+(load "~/.emacs.d/other/commands.el")
 ;; (load "~/.emacs.d/other/my-yaml-mode.el")
 ;; (load "~/.emacs.d/other/my-autopairing.el")
 (load "~/.emacs.d/other/desktop-session.el")

@@ -35,6 +35,7 @@
 (defvar my-selection-commands
   '(meow-inner-of-thing
     meow-bounds-of-thing
+	find-and-select-inner
     meow-mark-word
     meow-next-word
     meow-next-symbol

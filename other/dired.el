@@ -117,6 +117,12 @@ If the target file/directory exists, prompt to delete it before proceeding."
   (let* ((files (dired-get-marked-files t current-prefix-arg))
          (num-files (length files))
          (msg-prefix (if (= num-files 1) "Item" "Items"))
+         ;; Determine if any file would be a non-bak (needs the copy prompt).
+         ;; Ask once upfront, only if relevant.
+         (any-non-bak (cl-some (lambda (f)
+                                 (not (string= (file-name-extension (file-name-nondirectory f) t) ".bak")))
+                               files))
+         (keep-original (and any-non-bak (y-or-n-p "Make copy? ")))
          any-copied)
     (setq any-copied nil)
     (dolist (file files)
@@ -124,14 +130,12 @@ If the target file/directory exists, prompt to delete it before proceeding."
              (name (file-name-nondirectory file))
              (ext (file-name-extension name t))
              (is-bak (string= ext ".bak"))
-             (keep-original (and (not is-bak) (y-or-n-p "Make copy? ")))
              (new-name (if is-bak
                            (file-name-sans-extension name)
                          (concat name ".bak")))
              (new-file (expand-file-name new-name dir))
              (proceed t)
-             old-path)  ;; will hold the pre-rename path for directories
-        ;; If target exists, ask to delete it.
+             old-path)
         (when (file-exists-p new-file)
           (if (yes-or-no-p (format "Target %s already exists. Delete it? " new-file))
               (if (file-directory-p new-file)
@@ -148,17 +152,13 @@ If the target file/directory exists, prompt to delete it before proceeding."
                   (copy-file file new-file t))
                 (setq any-copied t))
             (progn
-              ;; For directories, compute old-path before renaming.
               (when (file-directory-p file)
                 (setq old-path (file-truename file)))
-              ;; Rename the file/directory
               (rename-file file new-file t)
-              ;; Update any buffer visiting this file
               (let ((buffer (get-file-buffer file)))
                 (when buffer
                   (with-current-buffer buffer
                     (set-visited-file-name new-file nil t))))
-              ;; If it's a directory, update all buffers within that directory
               (when (file-directory-p new-file)
                 (let ((new-path (file-truename new-file)))
                   (dolist (buf (buffer-list))
@@ -166,10 +166,9 @@ If the target file/directory exists, prompt to delete it before proceeding."
                       (when (and buf-file old-path (string-prefix-p old-path buf-file))
                         (with-current-buffer buf
                           (let ((relative-path (substring buf-file (length old-path))))
-                            (set-visited-file-name (concat new-path relative-path) nil t))))))))))))
-    ;; Refresh the dired buffer and show a summary message.
+                            (set-visited-file-name (concat new-path relative-path) nil t)))))))))))))
     (revert-buffer)
-    (message "%s %s." msg-prefix (if any-copied "copied" "renamed")))))
+    (message "%s %s." msg-prefix (if any-copied "copied" "renamed"))))
 
 
 (defun my/dired-create-empty-files ()
