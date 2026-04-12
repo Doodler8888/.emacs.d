@@ -48,7 +48,13 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(package-selected-packages nil)
+ '(package-selected-packages
+   '(aio bash-completion buffer-terminator cape clojure-ts-mode corfu crontab-mode
+		 dockerfile-mode embark-consult envrc goto-chg groovy-mode hydra
+		 lua-mode magit marginalia markdown-mode meow nerd-icons nginx-mode
+		 nix-mode orderless org-appear org-drill reverse-im savefold tablist
+		 tempel terraform-mode undo-fu undo-fu-session vertico yaml-mode
+		 zig-ts-mode))
  '(package-vc-selected-packages
    '((macrursors :url "https://github.com/corytertel/macrursors")
 	 (helm-mode :url "https://github.com/nnungest/helm-chart-mode")

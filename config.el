@@ -438,21 +438,35 @@
 (setq enable-local-variables t)
 (setq enable-dir-local-variables t)
 
-(setenv "PERL5LIB" (concat (getenv "HOME") "/perl5/lib/perl5"))
-(setenv "PATH" (concat (getenv "HOME") "/perl5/bin:" (getenv "PATH")))
-(let ((paths '("/home/wurfkreuz/.nix-profile/bin"
-              "/home/wurfkreuz/.ghcup/bin"
-              "/home/wurfkreuz/go/bin/"
-              "/home/wurfkreuz/test-dir/"
-              "/home/wurfkreuz/.dotfiles/scripts/python"
-              "/home/wurfkreuz/.dotfiles/scripts/sh"
-			  "/home/wurfkreuz/perl5/bin"
-			  "/opt/homebrew/bin"
-              "/usr/bin")))
-  ;; (setq exec-path (append paths exec-path))
-  (setenv "PATH" (concat (string-join paths ":")
-                        ":"
-                        (getenv "PATH"))))
+;; (setenv "PATH" (concat (getenv "HOME") "/perl5/bin:" (getenv "PATH")))
+;; (let ((paths '("/home/wurfkreuz/.nix-profile/bin"
+;;               "/home/wurfkreuz/.ghcup/bin"
+;;               "/home/wurfkreuz/go/bin/"
+;;               "/home/wurfkreuz/test-dir/"
+;;               "/home/wurfkreuz/.dotfiles/scripts/python"
+;;               "/home/wurfkreuz/.dotfiles/scripts/sh"
+;;               "/home/wurfkreuz/perl5/bin"
+;;               "/opt/homebrew/bin"
+;;               "/usr/bin")))
+;;   ;; (setq exec-path (append paths exec-path))
+;;   (setenv "PATH" (concat (string-join paths ":")
+;;                         ":"
+;;                         (getenv "PATH"))))
+
+(let ((home (getenv "HOME")))
+  (let ((paths (list
+                (concat home "/.nix-profile/bin")
+                (concat home "/.ghcup/bin")
+                (concat home "/go/bin")
+                (concat home "/test-dir")
+                (concat home "/.dotfiles/scripts/python")
+                (concat home "/.dotfiles/scripts/sh")
+                (concat home "/perl5/bin")
+                "/opt/homebrew/bin"
+                "/usr/local/bin"
+                "/usr/bin")))
+    (setenv "PATH" (string-join paths ":"))
+    (setq exec-path paths)))
 
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "07:00pm")
@@ -1449,32 +1463,33 @@ but still hides `org-block' backgrounds."
 
 ;; Layout translation
 
-;; (require 'quail)
+(require 'quail)
 
-;; ;; 1. Define the Layout (Colemak)
-;; (quail-define-package
-;;  "russian-colemak" "Russian" "RU-Col" t
-;;  "Russian Colemak layout."
-;;  nil t t t t nil nil nil nil nil t)
+;; 1. Define the Layout (Colemak)
+(quail-define-package
+ "russian-colemak" "Russian" "RU-Col" t
+ "Russian Colemak layout."
+ nil t t t t nil nil nil nil nil t)
 
-;; (quail-define-rules
-;;  ;; Lowercase
-;;  ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
-;;  ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
-;;  ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю)
+(quail-define-rules
+ ;; Lowercase
+ ("q" ?й) ("w" ?ц) ("f" ?у) ("p" ?к) ("g" ?е) ("j" ?н) ("l" ?г) ("u" ?ш) ("y" ?щ) (";" ?з) ("[" ?х) ("]" ?ъ)
+ ("a" ?ф) ("r" ?ы) ("s" ?в) ("t" ?а) ("d" ?п) ("h" ?р) ("n" ?о) ("e" ?л) ("i" ?д) ("o" ?ж) ("'" ?э)
+ ("z" ?я) ("x" ?ч) ("c" ?с) ("v" ?м) ("b" ?и) ("k" ?т) ("m" ?ь) ("," ?б) ("." ?ю)
 
-;;  ;; Uppercase & Shifted Punctuation
-;;  ("Q" ?Й) ("W" ?Ц) ("F" ?У) ("P" ?К) ("G" ?Е) ("J" ?Н) ("L" ?Г) ("U" ?Ш) ("Y" ?Щ) (":" ?З) ("{" ?Х) ("}" ?Ъ)
-;;  ("A" ?Ф) ("R" ?Ы) ("S" ?В) ("T" ?А) ("D" ?П) ("H" ?Р) ("N" ?О) ("E" ?Л) ("I" ?Д) ("O" ?Ж) ("\"" ?Э)
-;;  ("Z" ?Я) ("X" ?Ч) ("C" ?С) ("V" ?М) ("B" ?И) ("K" ?Т) ("M" ?Ь) ("<" ?Б) (">" ?Ю))
+ ;; Uppercase & Shifted Punctuation
+ ("Q" ?Й) ("W" ?Ц) ("F" ?У) ("P" ?К) ("G" ?Е) ("J" ?Н) ("L" ?Г) ("U" ?Ш) ("Y" ?Щ) (":" ?З) ("{" ?Х) ("}" ?Ъ)
+ ("A" ?Ф) ("R" ?Ы) ("S" ?В) ("T" ?А) ("D" ?П) ("H" ?Р) ("N" ?О) ("E" ?Л) ("I" ?Д) ("O" ?Ж) ("\"" ?Э)
+ ("Z" ?Я) ("X" ?Ч) ("C" ?С) ("V" ?М) ("B" ?И) ("K" ?Т) ("M" ?Ь) ("<" ?Б) (">" ?Ю))
 
-;; ;; 2. Configure reverse-im
-;; (use-package reverse-im
-;;   :custom
-;;   (reverse-im-modifiers '(control meta hyper super nil))
-;;   (reverse-im-input-methods '("russian-colemak"))
-;;   :config
-;;   (reverse-im-mode t))
+;; 2. Configure reverse-im
+(use-package reverse-im
+  :custom
+  ;; (reverse-im-modifiers '(control meta hyper super nil))
+  (reverse-im-modifiers '(control meta hyper super))
+  (reverse-im-input-methods '("russian-colemak"))
+  :config
+  (reverse-im-mode t))
 
 
 ;; Repeat-fu
@@ -1505,8 +1520,8 @@ but still hides `org-block' backgrounds."
     ("-" shrink-window "decrease height")
     (">" enlarge-window-horizontally "increase width")
     ("<" shrink-window-horizontally "decrease width")
-    ("t" transpose-window-layout "transpose windows")
-    ("f" flip-window-layout-horizontally "flip windows")
+    ("t" window-layout-transpose "transpose windows")
+    ("f" window-layout-flip-leftright "flip windows")
     ;; ("t" transpose-frame "transpose windows")
     ;; ("t" emacs-solo/transpose-split "transpose windows")
     ("r" rotate-windows "rotate windows")
@@ -2916,3 +2931,5 @@ If the current item has a checkbox, the new item will automatically have one [ ]
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
 
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
+;; (setq whitespace-style '(face trailing tabs))
+;; (global-whitespace-mode 1)
