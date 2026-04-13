@@ -551,7 +551,7 @@
 (add-hook 'terraform-mode-hook 'my-terraform-mode-custom-faces)
 
 (when (member "NotoSansM Nerd Font Mono" (font-family-list))
-  (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-14:weight=medium")
+  (set-face-attribute 'default nil :font "NotoSansM Nerd Font Mono-12:weight=medium")
 
   ;; Set a different font for italics
   (set-face-attribute 'italic nil
@@ -1724,6 +1724,11 @@ but still hides `org-block' backgrounds."
         ;; ("\\*lint\\*"
         ;;  (display-buffer-reuse-window display-buffer-pop-up-window)
         ;;  (post-command-select-window . t))
+
+		("\\*vc-git\\*"
+		 (display-buffer-reuse-window display-buffer-pop-up-window)
+		 (inhibit-same-window . nil)
+		 (reusable-frames . visible))
 
         ("\\*Man "
          (display-buffer-reuse-window display-buffer-pop-up-window)
@@ -2919,6 +2924,11 @@ If the current item has a checkbox, the new item will automatically have one [ ]
   (interactive)
   (save-some-buffers t)
   (kill-emacs))
+
+(defun docs ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/markdown/"))
 
 (defun tasks ()
   "Open a specific file."
