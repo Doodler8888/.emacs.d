@@ -1837,6 +1837,8 @@ If an eshell buffer for the directory already exists, switch to it."
   :ensure t
   :custom
   (buffer-terminator-verbose nil)
+  (buffer-terminator-inactivity-timeout (* 120 60))
+  (buffer-terminator-interval (* 30 60))
   :config
   (buffer-terminator-mode 1))
 
@@ -2100,6 +2102,9 @@ Uses the last command if available, otherwise the default `my-lint-command'."
 (add-hook 'yaml-mode-hook
           (lambda ()
             (setq-local syntax-propertize-function nil)))
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (auto-fill-mode -1)))
 (use-package nginx-mode
   :custom
   (nginx-indent-level 2))
@@ -2934,6 +2939,21 @@ If the current item has a checkbox, the new item will automatically have one [ ]
   "Open a specific file."
   (interactive)
   (find-file "~/.secret_dotfiles/job/tasks/"))
+
+(defun help-dir ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.dotfiles/scripts/sh/help-files/"))
+
+(defun org-dir ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/org/"))
+
+(defun markdown-dir ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/markdown/"))
 
 
 ;; I probably must set it after enabling line numbers. Enabling it from the

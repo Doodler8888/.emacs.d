@@ -84,6 +84,7 @@ BINDINGS is an alist of (KEY . COMMAND) pairs."
 
     ("uu" . tramp-revert-buffer-with-sudo)
     ("ud" . tramp-revert-buffer-with-doas)
+    ("uk" . tramp-cleanup-all-buffers)
     ("ue" . my-tramp-cleanup)
 
     ("gm" . pop-global-mark)

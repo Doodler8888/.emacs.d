@@ -453,10 +453,28 @@ Handles anchors, chomping indicators, and complex indentation."
 
 ;; 2. Apply keywords Globally using `with-eval-after-load`
 ;;    Note: We use 'yaml-mode as the first argument, not nil.
-
 (add-hook 'yaml-mode-hook
           (lambda ()
-            (face-remap-add-relative 'font-lock-function-name-face 'default)))
+            (face-remap-add-relative 'font-lock-function-name-face 'default)
+            (face-remap-add-relative 'font-lock-type-face '(:foreground
+															"#31748f"))))
+
+(add-hook 'yaml-mode-hook
+  (lambda ()
+    ;; 1. Убираем "умное" поведение клавиш | и >
+    (define-key yaml-mode-map (kbd "|") 'self-insert-command)
+    (define-key yaml-mode-map (kbd ">") 'self-insert-command)
+
+    ;; 2. Ломаем регулярное выражение, которое ищет начало блоков,
+    ;; чтобы мод их просто не находил.
+    (setq-local yaml-block-literal-re "a^") ; "a^" — регулярка, которая никогда не сработает
+
+    ;; 3. Пересчитываем font-lock (подсветку), чтобы убрать правила для блоков
+    (setq font-lock-defaults
+          '((yaml-font-lock-keywords) ; тут мы могли бы отфильтровать список вручную
+            nil nil nil nil))
+    (font-lock-flush)
+    (font-lock-ensure)))
 
 (with-eval-after-load 'yaml-mode
 
@@ -488,8 +506,8 @@ Handles anchors, chomping indicators, and complex indentation."
   (defun my/yaml-structure-face (face)
     (let ((state (syntax-ppss)))
       (unless (or (nth 3 state)           ; Inside string
-                  (nth 4 state)           ; Inside comment
-                  (my/yaml-block-scalar-p)) ; Inside block scalar
+                  (nth 4 state))           ; Inside comment
+                  ;; (my/yaml-block-scalar-p)) ; Inside block scalar
         face)))
 
   ;; 3. NEW: Variable Wrapper
@@ -500,6 +518,12 @@ Handles anchors, chomping indicators, and complex indentation."
         face)))
 
   ;; --- APPLY RULES ---
+
+  (font-lock-add-keywords
+   'yaml-mode
+   '(("\\(?:{{[^}\n]*\\)\\(\"[^\"]+\"\\)\\(?:[^}\n]*}}\\)"
+      1 'font-lock-string-face t))
+   'append)
 
   ;; A. Keys
   (font-lock-add-keywords
