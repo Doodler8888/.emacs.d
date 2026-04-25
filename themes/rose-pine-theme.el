@@ -519,11 +519,11 @@ Handles anchors, chomping indicators, and complex indentation."
 
   ;; --- APPLY RULES ---
 
-  (font-lock-add-keywords
-   'yaml-mode
-   '(("\\(?:{{[^}\n]*\\)\\(\"[^\"]+\"\\)\\(?:[^}\n]*}}\\)"
-      1 'font-lock-string-face t))
-   'append)
+  ;; (font-lock-add-keywords
+  ;;  'yaml-mode
+  ;;  '(("\\(?:{{[^}\n]*\\)\\(\"[^\"]+\"\\)\\(?:[^}\n]*}}\\)"
+  ;;     1 'font-lock-string-face t))
+  ;;  'append)
 
   ;; A. Keys
   (font-lock-add-keywords

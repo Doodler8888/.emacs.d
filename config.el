@@ -13,6 +13,8 @@
   ;; TAB cycle if there are only few candidates
   ;; (completion-cycle-threshold 3)
 
+  (setq require-final-newline t)
+
   (xref-search-program 'ripgrep)
   (recentf-exclude (list "^/\\(?:ssh\\|su\\|sudo\\)?:"))
   ;; (help-window-select t)
@@ -260,6 +262,10 @@
 ;; (add-hook 'yaml-ts-mode-hook (lambda () (setq tab-width 2)))
 ;; (add-hook 'my-yaml-mode-hook (lambda () (setq tab-width 2)))
 (setq-default indent-tabs-mode t)
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+(setq whitespace-style '(face tabs tab-mark trailing))
+(global-whitespace-mode 1)
 
 (recentf-mode)
 
@@ -929,18 +935,21 @@
     (delete-dups words)))
 
 (defun my/buffer-words-capf ()
-  "Native CAPF for buffer words (4+ chars)."
+  "Native CAPF for buffer words (4+ chars). Handles $word by stripping the $ prefix."
   (let* ((bounds (bounds-of-thing-at-point 'symbol))
-         (current-input (when bounds (buffer-substring-no-properties (car bounds) (cdr bounds))))
-         (candidates (buffer-words-completion)))
+         (current-input (when bounds (buffer-substring-no-properties (car bounds) (cdr bounds)))))
     (when bounds
-      ;; Ensure we remove `current-input` before returning candidates
-      (setq candidates (remove current-input candidates))
-      (list (car bounds)          ; Start position
-            (cdr bounds)          ; End position
-            (lambda (string pred action)
-              (complete-with-action action candidates string pred))
-            :exclusive 'no))))    ; Allow combining with other CAPFs
+      ;; Strip leading $ from the input and adjust start position
+      (let* ((prefix-len (if (string-prefix-p "$" current-input) 1 0))
+             (start (+ (car bounds) prefix-len))
+             (end (cdr bounds))
+             (stripped-input (substring current-input prefix-len))
+             (candidates (buffer-words-completion)))
+        (setq candidates (remove stripped-input candidates))
+        (list start end
+              (lambda (string pred action)
+                (complete-with-action action candidates string pred))
+              :exclusive 'no)))))
 
 (use-package cape
   :ensure t
@@ -1624,7 +1633,7 @@ but still hides `org-block' backgrounds."
   )
 
 ;; Icons
-(setopt magit-format-file-function #'magit-format-file-nerd-icons)
+;; (setopt magit-format-file-function #'magit-format-file-nerd-icons)
 
 
 ;; Custom option for stash, because i don't know how else to execute 'stash
@@ -2907,7 +2916,7 @@ If the current item has a checkbox, the new item will automatically have one [ ]
 (defun todo ()
   "Open a specific file."
   (interactive)
-  (find-file "~/.secret_dotfiles/org/emacs/todo/todo-emacs.org"))
+  (find-file "~/.secret_dotfiles/org-education/emacs/todo/todo-emacs.org"))
 
 (defun steam ()
   "Open a specific file."
@@ -2935,6 +2944,11 @@ If the current item has a checkbox, the new item will automatically have one [ ]
   (interactive)
   (find-file "~/.secret_dotfiles/markdown/"))
 
+(defun job ()
+  "Open a specific file."
+  (interactive)
+  (find-file "~/.secret_dotfiles/job/"))
+
 (defun tasks ()
   "Open a specific file."
   (interactive)
@@ -2959,7 +2973,3 @@ If the current item has a checkbox, the new item will automatically have one [ ]
 ;; I probably must set it after enabling line numbers. Enabling it from the
 ;; original position make it to not work in many modes.
 (run-with-idle-timer 0 nil (lambda () (fringe-mode '(1 . 1))))
-
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-;; (setq whitespace-style '(face trailing tabs))
-;; (global-whitespace-mode 1)
